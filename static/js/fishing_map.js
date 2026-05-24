@@ -91,9 +91,11 @@
     var _markersPanelSort      = 'date'; // 'date' | 'name' | 'type'
     // Admin-defined custom habitat types (slugs not in VALID_HABITAT_TYPES)
     var _customHabitatTypes    = [];
-    // Remembered last-used type/color for successive habitat additions
-    var _lastHabitatType  = null;
-    var _lastHabitatColor = null;
+    // Remembered last-used type/color/style for successive habitat additions
+    var _lastHabitatType        = null;
+    var _lastHabitatColor       = null;
+    var _lastHabitatFillOpacity = null;
+    var _lastHabitatStrokeWeight = null;
     // Point-move state (drag a Point habitat to a new location)
     var _habitatPointMoveMode   = false;
     var _habitatPointMoveMarker = null;
@@ -4499,10 +4501,12 @@
         document.getElementById('fmap-habitat-name').value  = '';
         document.getElementById('fmap-habitat-type').value  = _addType;
         document.getElementById('fmap-habitat-color').value = _addColor;
+        var _addFo = _lastHabitatFillOpacity  != null ? _lastHabitatFillOpacity  : 0.35;
+        var _addSw = _lastHabitatStrokeWeight != null ? _lastHabitatStrokeWeight : 2.5;
         var _aFoEl = document.getElementById('fmap-habitat-fill-opacity');
-        if (_aFoEl) { _aFoEl.value = 0.35; var _aFoOut = document.getElementById('fmap-habitat-fill-opacity-val'); if (_aFoOut) _aFoOut.value = 0.35; }
+        if (_aFoEl) { _aFoEl.value = _addFo; var _aFoOut = document.getElementById('fmap-habitat-fill-opacity-val'); if (_aFoOut) _aFoOut.value = _addFo; }
         var _aSwEl = document.getElementById('fmap-habitat-stroke-weight');
-        if (_aSwEl) { _aSwEl.value = 2.5; var _aSwOut = document.getElementById('fmap-habitat-stroke-weight-val'); if (_aSwOut) _aSwOut.value = 2.5; }
+        if (_aSwEl) { _aSwEl.value = _addSw; var _aSwOut = document.getElementById('fmap-habitat-stroke-weight-val'); if (_aSwOut) _aSwOut.value = _addSw; }
         document.getElementById('fmap-habitat-desc').value  = '';
         var saveBtn = document.getElementById('fmap-habitat-save');
         if (saveBtn) saveBtn.dataset.habitatId = '';
@@ -5691,10 +5695,12 @@
                     stroke_weight: parseFloat((document.getElementById('fmap-habitat-stroke-weight') || {}).value || 2.5),
                     geometry:      _pendingHabitatGeom,
                 };
-                // Remember type + color for successive "Add Habitat" draws
+                // Remember type + color + style for successive "Add Habitat" draws
                 if (!habitatId) {
-                    _lastHabitatType  = payload.habitat_type;
-                    _lastHabitatColor = payload.fill_color;
+                    _lastHabitatType         = payload.habitat_type;
+                    _lastHabitatColor        = payload.fill_color;
+                    _lastHabitatFillOpacity  = payload.fill_opacity;
+                    _lastHabitatStrokeWeight = payload.stroke_weight;
                 }
                 // Snapshot previous state for undo when editing an existing habitat
                 var _prevHabData = (habitatId && _habitatEditData) ? {
@@ -6030,10 +6036,12 @@
                 // Snapshot geometry for undo before clearing
                 var _undoGeom = _overrideEditData ? _overrideEditData.geometry : null;
                 var _undoData = _overrideEditData ? {
-                    feature_key: _overrideEditData.featureKey,
-                    name:        _overrideEditData.name || null,
-                    description: _overrideEditData.desc || null,
-                    fill_color:  _overrideEditData.color || null,
+                    feature_key:   _overrideEditData.featureKey,
+                    name:          _overrideEditData.name || null,
+                    description:   _overrideEditData.desc || null,
+                    fill_color:    _overrideEditData.color || null,
+                    fill_opacity:  _overrideEditData.fill_opacity,
+                    stroke_weight: _overrideEditData.stroke_weight,
                 } : null;
                 overrideClearShapeBtn.disabled = true;
                 fetch('/api/v1/admin/habitat-overrides', {
