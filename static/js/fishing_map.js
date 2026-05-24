@@ -4581,6 +4581,10 @@
         _habitatDrawMode = true;
         _clearHabitatDraw();
         map.getContainer().style.cursor = 'crosshair';
+        var vcEl = document.getElementById('fmap-reshape-vertex-count');
+        if (vcEl) vcEl.textContent = '0 vertices · need 3 more';
+        var bar = document.getElementById('fmap-habitat-reshape-bar');
+        if (bar) bar.hidden = false;
         _showAdminToast('Click to place vertices · Backspace to undo · Enter or double-click to finish');
     }
 
@@ -4590,6 +4594,8 @@
         _habitatRedrawMode = false;
         _clearHabitatDraw();
         if (map) map.getContainer().style.cursor = '';
+        var bar = document.getElementById('fmap-habitat-reshape-bar');
+        if (bar) bar.hidden = true;
         var btn = document.getElementById('fmap-admin-habitat-btn');
         if (btn) { btn.classList.remove('fmap-ctrl-btn--active'); btn.setAttribute('aria-pressed', 'false'); }
         // If the user cancelled a Redraw session, restore the edit modal with original geometry
@@ -4617,7 +4623,19 @@
         }
 
         var n = _habitatDrawVerts.length;
-        var suffix = n < 3 ? ' · need ' + (3 - n) + ' more' : ' · Enter or double-click to finish';
+        var suffix = n < 3 ? ' · need ' + (3 - n) + ' more' : ' · Enter or click Done to finish';
+        var vcDrawEl = document.getElementById('fmap-reshape-vertex-count');
+        if (vcDrawEl) {
+            var _vcDrawArea = '';
+            if (n >= 3) {
+                var _vcDrawCoords = _habitatDrawVerts.map(function (c) { return [c[1], c[0]]; });
+                _vcDrawCoords.push(_vcDrawCoords[0]);
+                var _vcDrawGeom = { type: 'Polygon', coordinates: [_vcDrawCoords] };
+                var _vcDrawLabel = _polyAreaLabel(_vcDrawGeom);
+                if (_vcDrawLabel) _vcDrawArea = ' · ' + _vcDrawLabel;
+            }
+            vcDrawEl.textContent = n + (n === 1 ? ' vertex' : ' vertices') + (n < 3 ? ' · need ' + (3 - n) + ' more' : _vcDrawArea);
+        }
         _showAdminToast(n + (n === 1 ? ' vertex' : ' vertices') + suffix);
     }
 
@@ -4637,6 +4655,8 @@
         var wasRedraw = _habitatRedrawMode;
         _habitatRedrawMode = false;
         if (map) map.getContainer().style.cursor = '';
+        var _drawBar = document.getElementById('fmap-habitat-reshape-bar');
+        if (_drawBar) _drawBar.hidden = true;
         var btn = document.getElementById('fmap-admin-habitat-btn');
         if (btn) { btn.classList.remove('fmap-ctrl-btn--active'); btn.setAttribute('aria-pressed', 'false'); }
         // If redrawing an existing habitat's shape, re-open the edit modal with the new geometry
@@ -5951,7 +5971,10 @@
                         color: _pColorB, weight: 2, dashArray: '6,4', fillOpacity: 0.18, fillColor: _pColorB
                     }).addTo(map);
                 }
-                _showAdminToast('Last vertex removed (' + _habitatDrawVerts.length + ' remaining)');
+                var nUndo = _habitatDrawVerts.length;
+                var vcUndoEl = document.getElementById('fmap-reshape-vertex-count');
+                if (vcUndoEl) vcUndoEl.textContent = nUndo + (nUndo === 1 ? ' vertex' : ' vertices') + (nUndo < 3 ? ' · need ' + (3 - nUndo) + ' more' : ' · Enter or click Done to finish');
+                _showAdminToast('Last vertex removed (' + nUndo + ' remaining)');
             }
         });
 
@@ -6287,7 +6310,9 @@
         var reshapeDoneBtn = document.getElementById('fmap-habitat-reshape-done');
         if (reshapeDoneBtn) {
             reshapeDoneBtn.addEventListener('click', function () {
-                if (_habitatPointMoveMode) {
+                if (_habitatDrawMode) {
+                    _finishHabitatDraw();
+                } else if (_habitatPointMoveMode) {
                     _finishHabitatPointMove();
                 } else {
                     if (_habitatVertexMarkers.length < 3) {
@@ -6302,7 +6327,9 @@
         var reshapeCancelBtn = document.getElementById('fmap-habitat-reshape-cancel');
         if (reshapeCancelBtn) {
             reshapeCancelBtn.addEventListener('click', function () {
-                if (_habitatPointMoveMode) {
+                if (_habitatDrawMode) {
+                    _cancelHabitatDraw();
+                } else if (_habitatPointMoveMode) {
                     _cancelHabitatPointMove();
                     if (_habitatEditData) _openHabitatEditModal(_habitatEditData);
                 } else {
