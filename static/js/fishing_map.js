@@ -80,6 +80,7 @@
     var _overridePreviewOrigStyle = null; // original layer style before override modal opens
     // Management panel state
     var _habitatPanelOpen      = false;
+    var _habitatEditedFromPanel = false; // true when Edit was clicked from the panel (reopen on close)
     var _habitatPanelActiveTab = 'habitats'; // 'habitats' | 'overrides' | 'suppressed'
     var _overridesPanelData    = []; // cached override list for panel edit buttons
     var _overridesPanelSearch  = ''; // live search string for overrides tab
@@ -4444,6 +4445,17 @@
         _pendingHabitatGeom = null;
         var hDelBtn = document.getElementById('fmap-habitat-delete');
         if (hDelBtn) hDelBtn.disabled = false;
+        // If we came from the panel, reopen it so the admin can continue browsing
+        if (_habitatEditedFromPanel) {
+            _habitatEditedFromPanel = false;
+            _habitatPanelOpen = true;
+            var _rPanel = document.getElementById('fmap-habitat-panel');
+            var _rBtn = document.getElementById('fmap-admin-habitats-list-btn');
+            if (_rPanel) _rPanel.hidden = false;
+            if (_rBtn) { _rBtn.classList.add('fmap-ctrl-btn--active'); _rBtn.setAttribute('aria-pressed', 'true'); }
+            _habitatPanelActiveTab = 'habitats';
+            _refreshActivePanelTab();
+        }
         if (_wasNewDraw) {
             _showUndoToast('Drawn shape discarded', function () {
                 _habitatEditData = null;
@@ -5123,6 +5135,7 @@
                 var hid = btn.dataset.hid;
                 var hData = _habitatPanelAllData.filter(function (h) { return h.id === hid; })[0];
                 if (!hData) return;
+                _habitatEditedFromPanel = true;
                 _habitatPanelOpen = false;
                 var panel = document.getElementById('fmap-habitat-panel');
                 if (panel) panel.hidden = true;
