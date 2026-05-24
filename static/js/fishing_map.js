@@ -5389,7 +5389,6 @@
         var html = '';
         filtered.forEach(function (ov) {
             var displayName = esc(ov.name || ov.feature_key || '—');
-            var keyShort    = esc(String(ov.feature_key || '').slice(0, 40));
             var _swatchFo   = ov.fill_opacity != null ? ov.fill_opacity : 0.25;
             var colorSwatch = ov.fill_color
                 ? '<span class="fmap-override-swatch" style="border-color:' + esc(ov.fill_color) + '" title="Color · opacity ' + Math.round(_swatchFo * 100) + '%">'
@@ -5405,6 +5404,11 @@
             var typeBadge   = _fkInfo
                 ? '<span class="fmap-override-type-badge" style="border-color:' + esc(_fkColor) + ';color:' + esc(_fkColor) + '" title="AI feature type: ' + esc(_fkInfo.label) + '">' + esc(_fkInfo.label) + '</span>'
                 : '';
+            // Format lat/lng keys cleanly (4 dp) instead of showing raw precision
+            var _fkLat = parseFloat(_fkParts[0]), _fkLng = parseFloat(_fkParts[1]);
+            var keyShort = (!isNaN(_fkLat) && !isNaN(_fkLng) && _fkParts.length >= 2)
+                ? esc(_fkLat.toFixed(4) + ', ' + _fkLng.toFixed(4))
+                : esc(String(ov.feature_key || '').slice(0, 40));
             // Compute centroid for pan-to: prefer custom geometry, then AI layer bounds, then feature_key lat,lng,type pattern
             var panAttrs = '';
             if (ov.geometry_json) {
