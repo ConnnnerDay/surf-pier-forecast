@@ -4767,7 +4767,8 @@
 
         var _dotColor = (document.getElementById('fmap-habitat-color') || {}).value || '#8b5cf6';
         var dot = L.circleMarker([ll.lat, ll.lng], {
-            radius: 5, color: _dotColor, fillColor: _dotColor, fillOpacity: 0.9, weight: 2
+            radius: 5, color: _dotColor, fillColor: _dotColor, fillOpacity: 0.9, weight: 2,
+            interactive: false
         }).addTo(map);
         _habitatDrawMarkers.push(dot);
 
