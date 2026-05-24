@@ -7070,6 +7070,7 @@
                             properties: { id: s.id, spot_key: s.spot_key, name: s.name || null, type: s.type || null, created_at: s.created_at || null } });
                     });
                 }
+                if (!features.length) { _showAdminToast('Nothing to export on this tab', true); return; }
                 var geojsonStr = JSON.stringify({ type: 'FeatureCollection', features: features }, null, 2);
                 var blob = new Blob([geojsonStr], { type: 'application/geo+json' });
                 var url = URL.createObjectURL(blob);
@@ -7080,7 +7081,7 @@
                 a2.click();
                 document.body.removeChild(a2);
                 setTimeout(function () { URL.revokeObjectURL(url); }, 5000);
-                _showAdminToast('Downloading ' + features.length + ' features…');
+                _showAdminToast('Downloading ' + features.length + ' feature' + (features.length === 1 ? '' : 's') + '…');
             });
         }
 
