@@ -88,7 +88,7 @@
     var _habitatPanelActiveTab = 'habitats'; // 'habitats' | 'overrides' | 'suppressed' | 'markers'
     var _overridesPanelData    = []; // cached override list for panel edit buttons
     var _overridesPanelSearch  = ''; // live search string for overrides tab
-    var _overridesPanelSort    = 'date'; // 'date' | 'name'
+    var _overridesPanelSort    = 'date'; // 'date' | 'name' | 'type'
     var _suppressedPanelSearch = ''; // live search string for suppressed tab
     var _suppressedPanelData   = []; // cached suppressed list for search
     var _suppressedPanelSort   = 'date'; // 'date' | 'name' | 'type'
@@ -5323,6 +5323,12 @@
         }) : overrides.slice();
         filtered.sort(function (a, b) {
             if (_overridesPanelSort === 'name') return (a.name || a.feature_key || '').localeCompare(b.name || b.feature_key || '');
+            if (_overridesPanelSort === 'type') {
+                var _fkA = String(a.feature_key || '').split(','), _fkB = String(b.feature_key || '').split(',');
+                var _tA = (_fkA.length >= 3 ? _fkA[2].trim() : '') , _tB = (_fkB.length >= 3 ? _fkB[2].trim() : '');
+                var _lA = (AI_PICK_INFO[_tA] || {}).label || _tA, _lB = (AI_PICK_INFO[_tB] || {}).label || _tB;
+                return _lA.localeCompare(_lB) || (a.name || '').localeCompare(b.name || '');
+            }
             return (b.created_at || '').localeCompare(a.created_at || '');
         });
         _setTabCount('overrides', filtered.length, overrides.length);
@@ -6869,7 +6875,7 @@
 
         // ── Habitat sort ──────────────────────────────────────────────────────
         var sortCycle   = ['date', 'name', 'type', 'area'];
-        var sortCycle2  = ['date', 'name'];          // overrides: no "type" concept
+        var sortCycle2  = ['date', 'name', 'type'];  // overrides: type parsed from feature_key
         var sortLabels  = { date: 'Date ↓', name: 'Name ↑', type: 'Type ↑', area: 'Area ↓' };
         var sortBtn = document.getElementById('fmap-habitat-sort-btn');
         if (sortBtn) {
