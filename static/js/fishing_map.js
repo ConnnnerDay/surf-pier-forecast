@@ -5063,6 +5063,26 @@
 
     // ─── Habitat management panel ─────────────────────────────────────────────
 
+    var _BUILTIN_HABITAT_LABELS = {
+        surf:      'Surf / Beach',
+        grassflat: 'Seagrass Flat',
+        estuary:   'Estuary / Oyster',
+        reef:      'Reef',
+        mangrove:  'Mangrove',
+        kelp:      'Kelp Forest',
+        bottom:    'Bottom / Shoal',
+        tidalflat: 'Tidal Flat',
+        pelagic:   'Pelagic / Offshore',
+        general:   'General',
+    };
+
+    function _habitatTypeLabel(slug) {
+        if (!slug) return 'General';
+        if (_BUILTIN_HABITAT_LABELS[slug]) return _BUILTIN_HABITAT_LABELS[slug];
+        var ct = _customHabitatTypes.filter(function (t) { return t.slug === slug; })[0];
+        return ct ? ct.name : slug;
+    }
+
     var _habitatPanelAllData  = [];     // full unfiltered list from server
     var _habitatPanelSort     = 'date'; // 'date' | 'name' | 'type' | 'area'
     var _habitatPanelSearch   = '';     // live search string
@@ -5100,6 +5120,7 @@
             if (!q) return true;
             return (h.name || '').toLowerCase().indexOf(q) !== -1 ||
                    (h.habitat_type || '').toLowerCase().indexOf(q) !== -1 ||
+                   _habitatTypeLabel(h.habitat_type || 'general').toLowerCase().indexOf(q) !== -1 ||
                    (h.description || '').toLowerCase().indexOf(q) !== -1;
         });
 
@@ -5107,7 +5128,7 @@
             if (_habitatPanelSort === 'name') {
                 return (a.name || '').localeCompare(b.name || '');
             } else if (_habitatPanelSort === 'type') {
-                return (a.habitat_type || '').localeCompare(b.habitat_type || '');
+                return _habitatTypeLabel(a.habitat_type || 'general').localeCompare(_habitatTypeLabel(b.habitat_type || 'general'));
             } else if (_habitatPanelSort === 'area') {
                 return _polyAreaSqM(b.geometry) - _polyAreaSqM(a.geometry); // largest first
             }
@@ -5133,7 +5154,7 @@
         habitats.forEach(function (h) {
             var colorSafe = esc(h.fill_color || '#8b5cf6');
             var nameSafe  = esc(h.name || '(unnamed)');
-            var typeSafe  = esc(h.habitat_type || 'general');
+            var typeSafe  = esc(_habitatTypeLabel(h.habitat_type || 'general'));
             var latStr    = (h.lat != null) ? String(h.lat) : '';
             var lngStr    = (h.lng != null) ? String(h.lng) : '';
             var descShort = h.description ? esc(String(h.description).slice(0, 80)) + (h.description.length > 80 ? '…' : '') : '';
