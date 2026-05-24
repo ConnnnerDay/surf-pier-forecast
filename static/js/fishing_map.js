@@ -5036,11 +5036,13 @@
             var lngStr    = (h.lng != null) ? String(h.lng) : '';
             var descShort = h.description ? esc(String(h.description).slice(0, 80)) + (h.description.length > 80 ? '…' : '') : '';
             var titleText = h.description ? nameSafe + '&#10;' + esc(String(h.description).slice(0, 200)) : nameSafe;
+            var areaLabel = (h.geometry && h.geometry.type === 'Polygon') ? _polyAreaLabel(h.geometry) : null;
             html +=
                 '<div class="fmap-habitat-panel-item">' +
                 '<span class="fmap-habitat-panel-color" style="background:' + colorSafe + '"></span>' +
                 '<span class="fmap-habitat-panel-name" title="' + titleText + '">' + nameSafe + '</span>' +
                 '<span class="fmap-habitat-panel-type">' + typeSafe + '</span>' +
+                (areaLabel ? '<span class="fmap-habitat-panel-area" title="Approximate polygon area">' + esc(areaLabel) + '</span>' : '') +
                 (latStr ? '<button class="fmap-habitat-panel-view" data-hid="' + esc(h.id) + '" data-lat="' + latStr + '" data-lng="' + lngStr + '" title="Pan to on map" aria-label="Pan to ' + nameSafe + '">⌖</button>' : '') +
                 '<button class="fmap-habitat-panel-edit" data-hid="' + esc(h.id) + '">Edit</button>' +
                 '<button class="fmap-habitat-panel-del fmap-override-item-del" data-hid="' + esc(h.id) + '" aria-label="Delete ' + nameSafe + '">Delete</button>' +
@@ -5276,6 +5278,26 @@
                 if (ov.geometry_json) {
                     try { geom = JSON.parse(ov.geometry_json); } catch (_e) {}
                 }
+                // Pan to the feature so it's visible while editing
+                if (map) {
+                    var _panTarget = null;
+                    var _lyrEdit = _aiPolyByKey[String(ov.feature_key)];
+                    if (_lyrEdit && typeof _lyrEdit.getBounds === 'function') {
+                        try { _panTarget = _lyrEdit.getBounds().getCenter(); } catch (_e) {}
+                    }
+                    if (!_panTarget && geom) {
+                        var _gc = _centroidOfGeom(geom);
+                        if (_gc) _panTarget = _gc;
+                    }
+                    if (!_panTarget) {
+                        var _kp2 = String(ov.feature_key || '').split(',');
+                        if (_kp2.length >= 2) {
+                            var _kl = parseFloat(_kp2[0]), _kg = parseFloat(_kp2[1]);
+                            if (!isNaN(_kl) && !isNaN(_kg)) _panTarget = { lat: _kl, lng: _kg };
+                        }
+                    }
+                    if (_panTarget) map.flyTo([_panTarget.lat, _panTarget.lng], Math.max(map.getZoom(), 15));
+                }
                 _openOverrideModal(
                     ov.feature_key, String(ov.id),
                     ov.name || '', ov.description || '', ov.fill_color || '',
@@ -5471,6 +5493,26 @@
                         btn.disabled = false;
                         _showAdminToast('Unhide failed', true);
                     });
+            });
+        });
+
+        // Hover over a suppressed row → show a ghost marker at that location
+        var _suppressedGhost = null;
+        el.querySelectorAll('.fmap-override-item').forEach(function (row) {
+            var panBtn = row.querySelector('.fmap-suppressed-item-pan');
+            if (!panBtn) return;
+            var rLat = parseFloat(panBtn.dataset.lat), rLng = parseFloat(panBtn.dataset.lng);
+            if (isNaN(rLat) || isNaN(rLng) || !map) return;
+            row.addEventListener('mouseenter', function () {
+                if (_suppressedGhost) { _suppressedGhost.remove(); _suppressedGhost = null; }
+                _suppressedGhost = L.circleMarker([rLat, rLng], {
+                    radius: 14, color: '#ef4444', fillColor: '#ef4444',
+                    fillOpacity: 0.18, weight: 2, opacity: 0.7,
+                    dashArray: '4 3', interactive: false
+                }).addTo(map);
+            });
+            row.addEventListener('mouseleave', function () {
+                if (_suppressedGhost) { _suppressedGhost.remove(); _suppressedGhost = null; }
             });
         });
     }

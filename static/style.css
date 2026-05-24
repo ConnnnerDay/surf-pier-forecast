@@ -14708,6 +14708,15 @@ body.dark .wq-hdx-item {
   color: var(--text-muted, #6b7280);
   flex-shrink: 0;
 }
+.fmap-habitat-panel-area {
+  font-size: 0.68rem;
+  color: var(--text-muted, #6b7280);
+  background: rgba(0,0,0,0.06);
+  border-radius: 3px;
+  padding: 1px 5px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
 .fmap-habitat-panel-edit,
 .fmap-habitat-panel-view {
   background: none;
