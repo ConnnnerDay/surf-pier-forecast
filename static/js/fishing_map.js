@@ -4003,6 +4003,28 @@
         });
     }
 
+    // Briefly blink an AI overlay polygon to draw the eye after pan-to.
+    function _highlightAiOverlay(fKey) {
+        var lyr = _aiPolyByKey[String(fKey)];
+        if (!lyr) return;
+        var opts = lyr.options || {};
+        var origFill   = opts.fillOpacity  != null ? opts.fillOpacity  : 0.25;
+        var origWeight = opts.weight != null ? opts.weight : 2;
+        var count = 0;
+        var blink = setInterval(function () {
+            count++;
+            if (count % 2 === 0) {
+                lyr.setStyle({ fillOpacity: origFill, weight: origWeight });
+            } else {
+                lyr.setStyle({ fillOpacity: Math.min(0.75, origFill + 0.35), weight: origWeight + 2 });
+            }
+            if (count >= 6) {
+                clearInterval(blink);
+                lyr.setStyle({ fillOpacity: origFill, weight: origWeight });
+            }
+        }, 210);
+    }
+
     // Briefly bounce a custom marker's icon to draw the eye after pan-to.
     function _highlightCustomMarker(mid) {
         var found = _customMarkers.filter(function (cm) { return String(cm.id) === String(mid); })[0];
@@ -5556,6 +5578,7 @@
                     }
                 }
                 if (!_fitDone && !isNaN(lat) && !isNaN(lng) && map) map.flyTo([lat, lng], Math.max(map.getZoom(), 15));
+                if (fKey) _highlightAiOverlay(fKey);
             });
         });
 
@@ -5597,6 +5620,7 @@
                         }
                         if (_panTarget) map.flyTo([_panTarget.lat, _panTarget.lng], Math.max(map.getZoom(), 15));
                     }
+                    _highlightAiOverlay(String(ov.feature_key));
                 }
                 _overrideEditedFromPanel = true;
                 _openOverrideModal(
