@@ -4977,7 +4977,7 @@
                 savedOverride.color,
                 newGeojson,
                 true,  // geomIsOverride: user explicitly set this shape
-                null, null,
+                savedOverride.createdAt, savedOverride.updatedAt,
                 savedOverride.fill_opacity,
                 savedOverride.stroke_weight
             );
@@ -7174,7 +7174,9 @@
             fill_opacity:     fillOpacity != null ? fillOpacity : null,
             stroke_weight:    strokeWeight != null ? strokeWeight : null,
             geometry:         currentGeom || null,
-            geometryIsOverride: !!geomIsOverride
+            geometryIsOverride: !!geomIsOverride,
+            createdAt:        createdAt || null,
+            updatedAt:        updatedAt || null
         };
         var reshapeBtn = document.getElementById('fmap-override-reshape');
         if (reshapeBtn) reshapeBtn.hidden = !(currentGeom && currentGeom.type === 'Polygon');
