@@ -4453,6 +4453,8 @@
             reshapeBtn.hidden = !hasPolygon;
             reshapeBtn.dataset.habitatId = habitatData.id;
         }
+        var redrawBtn = document.getElementById('fmap-habitat-redraw');
+        if (redrawBtn) redrawBtn.hidden = !habitatData.id; // only for saved habitats
         // Show move button only for saved Point habitats
         var moveBtn = document.getElementById('fmap-habitat-move');
         if (moveBtn) {
@@ -4499,6 +4501,8 @@
         if (delBtn) delBtn.hidden = true;
         var reshapeBtn = document.getElementById('fmap-habitat-reshape');
         if (reshapeBtn) reshapeBtn.hidden = true;
+        var redrawBtn2 = document.getElementById('fmap-habitat-redraw');
+        if (redrawBtn2) redrawBtn2.hidden = true;
         var moveBtn2 = document.getElementById('fmap-habitat-move');
         if (moveBtn2) moveBtn2.hidden = true;
         var hint = document.getElementById('fmap-habitat-draw-hint');
@@ -4577,7 +4581,14 @@
         if (map) map.getContainer().style.cursor = '';
         var btn = document.getElementById('fmap-admin-habitat-btn');
         if (btn) { btn.classList.remove('fmap-ctrl-btn--active'); btn.setAttribute('aria-pressed', 'false'); }
-        _openHabitatAddModal(geometry);
+        // If redrawing an existing habitat's shape, re-open the edit modal with the new geometry
+        if (_habitatEditData) {
+            _habitatEditData = Object.assign({}, _habitatEditData, { geojson_geometry: geometry });
+            _pendingHabitatGeom = geometry;
+            _openHabitatEditModal(_habitatEditData);
+        } else {
+            _openHabitatAddModal(geometry);
+        }
     }
 
     function _saveHabitat(habitatId, payload, onSuccess, prevData) {
@@ -6091,6 +6102,20 @@
                 }
                 _startHabitatVertexEdit(_geomToReshape);
                 _showAdminToast('Drag vertices to reshape; right-click a vertex to delete it. Click Done when finished.');
+            });
+        }
+
+        // ── Redraw button (in habitat edit modal) — replace polygon from scratch ─
+        var redrawBtn3 = document.getElementById('fmap-habitat-redraw');
+        if (redrawBtn3) {
+            redrawBtn3.addEventListener('click', function () {
+                if (!_habitatEditData) return;
+                // Close the modal but keep _habitatEditData so _finishHabitatDraw
+                // knows to re-open the edit modal with the new geometry
+                _pendingHabitatGeom = null; // suppress "discarded" undo toast
+                _closeHabitatModal();
+                _startHabitatDraw();
+                _showAdminToast('Draw a new polygon to replace the current shape. Double-click to finish.');
             });
         }
 
