@@ -4260,8 +4260,9 @@
                 _lastRenderedSpotKey = null;
                 _renderFromCache();
 
-                // Click-to-add on map
+                // Click-to-add on map; cancel draw mode to avoid dual map-click handlers
                 if (adminEditMode) {
+                    if (_habitatDrawMode) _cancelHabitatDraw();
                     map.on('click', _onAdminMapClick);
                     map.getContainer().style.cursor = 'crosshair';
                 } else {
