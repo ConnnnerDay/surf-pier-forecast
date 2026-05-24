@@ -4688,8 +4688,9 @@
         var ll = e.latlng;
         _habitatDrawVerts.push([ll.lat, ll.lng]);
 
+        var _dotColor = (document.getElementById('fmap-habitat-color') || {}).value || '#8b5cf6';
         var dot = L.circleMarker([ll.lat, ll.lng], {
-            radius: 5, color: '#8b5cf6', fillColor: '#8b5cf6', fillOpacity: 0.9, weight: 2
+            radius: 5, color: _dotColor, fillColor: _dotColor, fillOpacity: 0.9, weight: 2
         }).addTo(map);
         _habitatDrawMarkers.push(dot);
 
@@ -6720,9 +6721,10 @@
         if (habitatColorEl) {
             habitatColorEl.addEventListener('input', function () {
                 var c = habitatColorEl.value;
-                // Live-update the draw preview polygon when in draw mode
-                if (_habitatDrawMode && _habitatDrawPreview) {
-                    _habitatDrawPreview.setStyle({ color: c, fillColor: c });
+                // Live-update the draw preview polygon and vertex dots when in draw mode
+                if (_habitatDrawMode) {
+                    if (_habitatDrawPreview) _habitatDrawPreview.setStyle({ color: c, fillColor: c });
+                    _habitatDrawMarkers.forEach(function (dm) { dm.setStyle({ color: c, fillColor: c }); });
                 }
                 // Live-update the reshape vertex preview polygon
                 if (_habitatVertexEditMode && _habitatVertexPreview) {
