@@ -423,6 +423,56 @@ class TestHabitatOverrides:
         data = resp.get_json()
         assert data["count"] == 2
 
+    def test_override_stores_and_returns_geometry_json(self, client):
+        uid = create_user("conner_ovgeom", "pw123456")
+        _make_admin(uid)
+        _login(client, uid)
+        geom = {"type": "Polygon", "coordinates": [[[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 0.0]]]}
+        resp = client.post(
+            "/api/v1/admin/habitat-overrides",
+            data=json.dumps({"feature_key": "geom_key", "name": "Shaped", "geometry_json": geom}),
+            headers=_headers(),
+        )
+        assert resp.status_code == 200
+        assert resp.get_json()["geometry_json"] is not None
+
+    def test_override_clear_geometry_sets_null(self, client):
+        uid = create_user("conner_ovgeom_clr", "pw123456")
+        _make_admin(uid)
+        _login(client, uid)
+        geom = {"type": "Polygon", "coordinates": [[[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 0.0]]]}
+        client.post("/api/v1/admin/habitat-overrides",
+                    data=json.dumps({"feature_key": "clr_key", "geometry_json": geom}),
+                    headers=_headers())
+        # Clear by sending geometry_json: null
+        resp = client.post("/api/v1/admin/habitat-overrides",
+                           data=json.dumps({"feature_key": "clr_key", "geometry_json": None}),
+                           headers=_headers())
+        assert resp.status_code == 200
+        assert resp.get_json()["geometry_json"] is None
+
+    def test_override_rejects_non_polygon_geometry(self, client):
+        uid = create_user("conner_ovgeom2", "pw123456")
+        _make_admin(uid)
+        _login(client, uid)
+        resp = client.post(
+            "/api/v1/admin/habitat-overrides",
+            data=json.dumps({"feature_key": "bad_geom", "geometry_json": {"type": "Point", "coordinates": [0.0, 0.0]}}),
+            headers=_headers(),
+        )
+        assert resp.status_code == 400
+
+    def test_override_rejects_polygon_with_too_few_vertices(self, client):
+        uid = create_user("conner_ovgeom3", "pw123456")
+        _make_admin(uid)
+        _login(client, uid)
+        resp = client.post(
+            "/api/v1/admin/habitat-overrides",
+            data=json.dumps({"feature_key": "few_verts", "geometry_json": {"type": "Polygon", "coordinates": [[[0.0, 0.0], [1.0, 0.0]]]}}),
+            headers=_headers(),
+        )
+        assert resp.status_code == 400
+
     def test_admin_can_delete_override(self, client):
         uid = create_user("conner_ov5", "pw123456")
         _make_admin(uid)

@@ -1050,6 +1050,7 @@
                         <button id="fmap-admin-delete" type="button" class="fmap-admin-delete-btn" hidden>Delete</button>
                         <button id="fmap-admin-save" type="button" class="fmap-admin-save-btn">Save</button>
                     </div>
+                    <p id="fmap-admin-audit" class="fmap-habitat-audit" hidden></p>
                 </div>
                 {% endif %}
 
@@ -1091,6 +1092,16 @@
                         <button type="button" class="fmap-color-swatch" data-color="#f97316" style="background:#f97316" title="Orange"></button>
                         <button type="button" class="fmap-color-swatch" data-color="#94a3b8" style="background:#94a3b8" title="Slate"></button>
                     </div>
+                    <div class="fmap-admin-slider-row">
+                        <label class="fmap-admin-slider-label" for="fmap-habitat-fill-opacity">Fill opacity</label>
+                        <input id="fmap-habitat-fill-opacity" type="range" min="0.05" max="1" step="0.05" value="0.35" class="fmap-admin-slider" aria-label="Fill opacity">
+                        <output id="fmap-habitat-fill-opacity-val" class="fmap-admin-slider-val" for="fmap-habitat-fill-opacity">0.35</output>
+                    </div>
+                    <div class="fmap-admin-slider-row">
+                        <label class="fmap-admin-slider-label" for="fmap-habitat-stroke-weight">Stroke weight</label>
+                        <input id="fmap-habitat-stroke-weight" type="range" min="0.5" max="8" step="0.5" value="2.5" class="fmap-admin-slider" aria-label="Stroke weight">
+                        <output id="fmap-habitat-stroke-weight-val" class="fmap-admin-slider-val" for="fmap-habitat-stroke-weight">2.5</output>
+                    </div>
                     <label class="fmap-admin-label fmap-admin-label--last">Description / notes
                         <textarea id="fmap-habitat-desc" rows="3" maxlength="1000" placeholder="Habitat notes or fishing tips" class="fmap-admin-input"></textarea>
                     </label>
@@ -1099,6 +1110,7 @@
                         <button id="fmap-habitat-delete" type="button" class="fmap-admin-delete-btn" hidden>Delete</button>
                         <button id="fmap-habitat-move" type="button" class="fmap-admin-reshape-btn" hidden title="Drag to reposition this point on the map">Move</button>
                         <button id="fmap-habitat-reshape" type="button" class="fmap-admin-reshape-btn" hidden title="Drag polygon vertices to reshape">Reshape</button>
+                        <button id="fmap-habitat-redraw" type="button" class="fmap-admin-reshape-btn" hidden title="Draw a completely new polygon to replace the current shape">Redraw</button>
                         <button id="fmap-habitat-save" type="button" class="fmap-admin-save-btn">Save</button>
                     </div>
                     <p id="fmap-habitat-audit" class="fmap-habitat-audit" hidden></p>
@@ -1114,21 +1126,48 @@
                         <strong id="fmap-override-modal-title" class="fmap-admin-modal-title">Override AI Feature</strong>
                         <button id="fmap-override-modal-close" type="button" class="fmap-admin-modal-close" aria-label="Close">✕</button>
                     </div>
+                    <p id="fmap-override-key-display" class="fmap-admin-feature-key" aria-label="Feature key"></p>
+                    <p id="fmap-override-area-hint" class="fmap-habitat-area-hint" hidden></p>
+                    <p id="fmap-override-audit" class="fmap-habitat-audit" hidden></p>
                     <label class="fmap-admin-label">Name Override
                         <input id="fmap-override-name" type="text" maxlength="200" placeholder="Leave blank to keep AI name" class="fmap-admin-input" autocomplete="off">
                     </label>
                     <label class="fmap-admin-label">Fill Color Override
                         <input id="fmap-override-color" type="color" value="#22c55e" class="fmap-admin-input fmap-admin-input--color">
                     </label>
+                    <div id="fmap-override-color-presets" class="fmap-color-presets" aria-label="Color presets">
+                        <button type="button" class="fmap-color-swatch" data-color="#22c55e" style="background:#22c55e" title="Green"></button>
+                        <button type="button" class="fmap-color-swatch" data-color="#4ade80" style="background:#4ade80" title="Lime"></button>
+                        <button type="button" class="fmap-color-swatch" data-color="#34d399" style="background:#34d399" title="Emerald"></button>
+                        <button type="button" class="fmap-color-swatch" data-color="#38bdf8" style="background:#38bdf8" title="Sky"></button>
+                        <button type="button" class="fmap-color-swatch" data-color="#818cf8" style="background:#818cf8" title="Indigo"></button>
+                        <button type="button" class="fmap-color-swatch" data-color="#f59e0b" style="background:#f59e0b" title="Amber"></button>
+                        <button type="button" class="fmap-color-swatch" data-color="#f97316" style="background:#f97316" title="Orange"></button>
+                        <button type="button" class="fmap-color-swatch" data-color="#94a3b8" style="background:#94a3b8" title="Slate"></button>
+                    </div>
+                    <div class="fmap-admin-slider-row">
+                        <label class="fmap-admin-slider-label" for="fmap-override-fill-opacity">Fill opacity</label>
+                        <input id="fmap-override-fill-opacity" type="range" min="0.05" max="1" step="0.05" value="0.25" class="fmap-admin-slider" aria-label="Fill opacity">
+                        <output id="fmap-override-fill-opacity-val" class="fmap-admin-slider-val" for="fmap-override-fill-opacity">0.25</output>
+                    </div>
+                    <div class="fmap-admin-slider-row">
+                        <label class="fmap-admin-slider-label" for="fmap-override-stroke-weight">Stroke weight</label>
+                        <input id="fmap-override-stroke-weight" type="range" min="0.5" max="8" step="0.5" value="2" class="fmap-admin-slider" aria-label="Stroke weight">
+                        <output id="fmap-override-stroke-weight-val" class="fmap-admin-slider-val" for="fmap-override-stroke-weight">2</output>
+                    </div>
                     <label class="fmap-admin-label fmap-admin-label--last">Description Override
                         <textarea id="fmap-override-desc" rows="3" maxlength="1000" placeholder="Leave blank to keep AI description" class="fmap-admin-input"></textarea>
                     </label>
                     <input type="hidden" id="fmap-override-feature-key">
                     <input type="hidden" id="fmap-override-id">
                     <p id="fmap-override-status" class="fmap-admin-status" role="status" aria-live="polite"></p>
-                    <div class="fmap-admin-footer">
-                        <button id="fmap-override-delete" type="button" class="fmap-admin-delete-btn" hidden>Remove Override</button>
-                        <button id="fmap-override-save" type="button" class="fmap-admin-save-btn">Save Override</button>
+                    <div class="fmap-admin-footer fmap-admin-footer--col">
+                        <button id="fmap-override-reshape" type="button" class="fmap-admin-secondary-btn" hidden>Edit Shape</button>
+                        <button id="fmap-override-clear-shape" type="button" class="fmap-admin-secondary-btn fmap-admin-secondary-btn--danger" hidden>Clear Shape Override</button>
+                        <div class="fmap-admin-footer-row">
+                            <button id="fmap-override-delete" type="button" class="fmap-admin-delete-btn" hidden>Remove Override</button>
+                            <button id="fmap-override-save" type="button" class="fmap-admin-save-btn">Save Override</button>
+                        </div>
                     </div>
                 </div>
                 {% endif %}
@@ -1136,7 +1175,8 @@
                 {% if g.user and g.user.get('is_admin') %}
                 {# Reshape floating bar — shown while vertex-editing a polygon #}
                 <div id="fmap-habitat-reshape-bar" class="fmap-habitat-reshape-bar" hidden>
-                    <span class="fmap-reshape-hint">Drag vertices to reshape. Shift+click to remove a vertex.</span>
+                    <span class="fmap-reshape-hint">Drag vertices to reshape · Right-click or Shift+click to remove a vertex · Click midpoint to add one · Enter to finish</span>
+                    <span id="fmap-reshape-vertex-count" class="fmap-reshape-vertex-count"></span>
                     <div class="fmap-reshape-actions">
                         <button id="fmap-habitat-reshape-done" type="button" class="fmap-admin-save-btn fmap-admin-save-btn--sm">Done</button>
                         <button id="fmap-habitat-reshape-cancel" type="button" class="fmap-admin-delete-btn fmap-admin-save-btn--sm">Cancel</button>
@@ -1146,12 +1186,14 @@
                 {# Habitat management panel — tabbed: Habitats / Overrides #}
                 <div id="fmap-habitat-panel" class="fmap-habitat-panel" hidden role="complementary" aria-label="Custom habitat management">
                     <div class="fmap-habitat-panel-hdr">
-                        <div class="fmap-panel-tabs" role="tablist">
-                            <button class="fmap-panel-tab fmap-panel-tab--active" data-tab="habitats" role="tab" aria-selected="true">Habitats</button>
-                            <button class="fmap-panel-tab" data-tab="overrides" role="tab" aria-selected="false">Overrides</button>
+                        <div class="fmap-panel-tabs" role="tablist" aria-label="Admin panel sections">
+                            <button id="fmap-tab-btn-habitats"  class="fmap-panel-tab fmap-panel-tab--active" data-tab="habitats"  role="tab" aria-selected="true"  aria-controls="fmap-panel-tab-habitats">Habitats</button>
+                            <button id="fmap-tab-btn-overrides" class="fmap-panel-tab"                        data-tab="overrides" role="tab" aria-selected="false" aria-controls="fmap-panel-tab-overrides">Overrides</button>
+                            <button id="fmap-tab-btn-suppressed" class="fmap-panel-tab"                       data-tab="suppressed" role="tab" aria-selected="false" aria-controls="fmap-panel-tab-suppressed">Suppressed</button>
+                            <button id="fmap-tab-btn-markers"   class="fmap-panel-tab"                        data-tab="markers"   role="tab" aria-selected="false" aria-controls="fmap-panel-tab-markers">Markers</button>
                         </div>
                         <div class="fmap-panel-hdr-actions">
-                            <button id="fmap-habitat-export-btn" type="button" class="fmap-panel-icon-btn" title="Export all as GeoJSON" aria-label="Export habitats as GeoJSON">
+                            <button id="fmap-habitat-export-btn" type="button" class="fmap-panel-icon-btn" title="Export active tab as GeoJSON" aria-label="Export current tab as GeoJSON">
                                 <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                             </button>
                             <button id="fmap-habitat-panel-close" type="button" class="fmap-admin-modal-close" aria-label="Close panel">✕</button>
@@ -1159,10 +1201,11 @@
                     </div>
 
                     {# ── Habitats tab ── #}
-                    <div id="fmap-panel-tab-habitats" role="tabpanel">
+                    <div id="fmap-panel-tab-habitats" role="tabpanel" aria-labelledby="fmap-tab-btn-habitats">
                         <div class="fmap-panel-controls">
                             <input id="fmap-habitat-search" type="search" placeholder="Search habitats…" class="fmap-admin-input fmap-admin-input--sm fmap-panel-search" autocomplete="off" aria-label="Search habitats">
                             <button id="fmap-habitat-sort-btn" type="button" class="fmap-panel-sort-btn" data-sort="date" aria-label="Sort habitats">Date ↓</button>
+                            <button id="fmap-habitat-panel-draw-btn" type="button" class="fmap-panel-sort-btn fmap-panel-draw-shortcut" title="Draw a new habitat polygon on the map" aria-label="Draw new habitat polygon">+ Draw</button>
                         </div>
                         <div id="fmap-habitat-panel-list" class="fmap-habitat-panel-list">
                             <p class="fmap-habitat-panel-empty">Loading…</p>
@@ -1180,8 +1223,34 @@
                     </div>
 
                     {# ── Overrides tab ── #}
-                    <div id="fmap-panel-tab-overrides" role="tabpanel" hidden>
+                    <div id="fmap-panel-tab-overrides" role="tabpanel" aria-labelledby="fmap-tab-btn-overrides" hidden>
+                        <div class="fmap-panel-controls">
+                            <input id="fmap-overrides-search" type="search" placeholder="Search overrides…" class="fmap-admin-input fmap-admin-input--sm fmap-panel-search" autocomplete="off" aria-label="Search overrides">
+                            <button id="fmap-overrides-sort-btn" type="button" class="fmap-panel-sort-btn" data-sort="date" aria-label="Sort overrides">Date ↓</button>
+                        </div>
                         <div id="fmap-overrides-panel-list" class="fmap-habitat-panel-list">
+                            <p class="fmap-habitat-panel-empty">Loading…</p>
+                        </div>
+                    </div>
+
+                    {# ── Custom markers tab ── #}
+                    <div id="fmap-panel-tab-markers" role="tabpanel" aria-labelledby="fmap-tab-btn-markers" hidden>
+                        <div class="fmap-panel-controls">
+                            <input id="fmap-markers-search" type="search" placeholder="Search markers…" class="fmap-admin-input fmap-admin-input--sm fmap-panel-search" autocomplete="off" aria-label="Search custom markers">
+                            <button id="fmap-markers-sort-btn" type="button" class="fmap-panel-sort-btn" data-sort="date" aria-label="Sort markers">Date ↓</button>
+                        </div>
+                        <div id="fmap-markers-panel-list" class="fmap-habitat-panel-list">
+                            <p class="fmap-habitat-panel-empty">Loading…</p>
+                        </div>
+                    </div>
+
+                    {# ── Suppressed spots tab ── #}
+                    <div id="fmap-panel-tab-suppressed" role="tabpanel" aria-labelledby="fmap-tab-btn-suppressed" hidden>
+                        <div class="fmap-panel-controls">
+                            <input id="fmap-suppressed-search" type="search" placeholder="Search suppressed…" class="fmap-admin-input fmap-admin-input--sm fmap-panel-search" autocomplete="off" aria-label="Search suppressed spots">
+                            <button id="fmap-suppressed-sort-btn" type="button" class="fmap-panel-sort-btn" data-sort="date" aria-label="Sort suppressed spots">Date ↓</button>
+                        </div>
+                        <div id="fmap-suppressed-panel-list" class="fmap-habitat-panel-list">
                             <p class="fmap-habitat-panel-empty">Loading…</p>
                         </div>
                     </div>

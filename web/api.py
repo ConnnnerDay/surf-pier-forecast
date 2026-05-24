@@ -87,6 +87,7 @@ from storage.sqlite import (
     delete_custom_habitat,
     delete_custom_habitat_type,
     delete_custom_marker,
+    restore_custom_marker,
     delete_habitat_override,
     delete_log_entry,
     delete_map_catch,
@@ -3129,6 +3130,19 @@ def custom_markers_delete(marker_id: int) -> Any:
     return jsonify({"deleted": marker_id})
 
 
+@bp.route("/api/map/custom-markers/<int:marker_id>/restore", methods=["POST"])
+def custom_markers_restore(marker_id: int) -> Any:
+    """Restore a soft-deleted custom marker (admin only)."""
+    err = _require_map_admin()
+    if err:
+        return err
+
+    ok = restore_custom_marker(marker_id)
+    if not ok:
+        return jsonify({"error": "Marker not found or not deleted"}), 404
+    return jsonify({"restored": marker_id})
+
+
 @bp.route("/api/map/suppress-spot", methods=["POST"])
 def suppress_spot_create() -> Any:
     """Hide an OSM/NOAA/ESRI spot from the map (admin only).
@@ -3220,6 +3234,10 @@ def admin_habitat_create_or_update() -> Any:
     name = str(data.get("name", ""))[:200]
     description = str(data.get("description", ""))[:1000]
     fill_color = str(data.get("fill_color", ""))[:20]
+    raw_fo = data.get("fill_opacity")
+    fill_opacity = max(0.0, min(1.0, float(raw_fo))) if raw_fo is not None else 0.35
+    raw_sw = data.get("stroke_weight")
+    stroke_weight = max(0.5, min(10.0, float(raw_sw))) if raw_sw is not None else 2.5
 
     geometry = data.get("geometry")
     if not isinstance(geometry, dict) or geometry.get("type") not in (
@@ -3267,6 +3285,8 @@ def admin_habitat_create_or_update() -> Any:
             name=name,
             description=description,
             fill_color=fill_color,
+            fill_opacity=fill_opacity,
+            stroke_weight=stroke_weight,
             geometry=geometry,
             lat=lat,
             lng=lng,
@@ -3283,6 +3303,8 @@ def admin_habitat_create_or_update() -> Any:
             lat,
             lng,
             g.user["id"],
+            fill_opacity=fill_opacity,
+            stroke_weight=stroke_weight,
         )
         return jsonify(created), 201
 
@@ -3366,7 +3388,8 @@ def admin_habitat_override_list() -> Any:
 def admin_habitat_override_upsert() -> Any:
     """Create or update a habitat override for an AI/OSM feature (admin only).
 
-    Body: { feature_key, name?, description?, fill_color? }
+    Body: { feature_key, name?, description?, fill_color?, geometry_json? }
+    geometry_json must be a JSON-encoded GeoJSON Polygon string if provided.
     """
     err = _require_map_admin()
     if err:
@@ -3377,14 +3400,50 @@ def admin_habitat_override_upsert() -> Any:
     if not feature_key:
         return jsonify({"error": "feature_key is required"}), 400
 
-    name = str(data.get("name", ""))[:200] if "name" in data else None
+    name = str(data.get("name") or "").strip()[:200] if "name" in data else None
     description = (
-        str(data.get("description", ""))[:1000] if "description" in data else None
+        str(data.get("description") or "").strip()[:1000] if "description" in data else None
     )
-    fill_color = str(data.get("fill_color", ""))[:20] if "fill_color" in data else None
+    fill_color = str(data.get("fill_color") or "").strip()[:20] if "fill_color" in data else None
+    fill_opacity: Optional[float] = None
+    if "fill_opacity" in data and data.get("fill_opacity") is not None:
+        fill_opacity = max(0.0, min(1.0, float(data["fill_opacity"])))
+    stroke_weight: Optional[float] = None
+    if "stroke_weight" in data and data.get("stroke_weight") is not None:
+        stroke_weight = max(0.5, min(10.0, float(data["stroke_weight"])))
+
+    # geometry_json: None means "key absent — don't touch stored value"
+    #                "" / null in body means "explicitly clear stored geometry"
+    #                a Polygon object/string means "store this shape"
+    geometry: Optional[str] = None        # None = don't update column
+    geometry_clear = False                 # True = set column to NULL
+    if "geometry_json" in data:
+        raw_geom = data["geometry_json"]
+        if raw_geom is None or raw_geom == "":
+            geometry_clear = True          # explicit clear
+        elif isinstance(raw_geom, dict):
+            if raw_geom.get("type") != "Polygon":
+                return jsonify({"error": "geometry_json must be a GeoJSON Polygon"}), 400
+            coords = raw_geom.get("coordinates")
+            if not coords or not coords[0] or len(coords[0]) < 3:
+                return jsonify({"error": "geometry_json Polygon must have at least 3 vertices"}), 400
+            geometry = _json_mod.dumps(raw_geom)
+        elif isinstance(raw_geom, str) and raw_geom.strip():
+            try:
+                parsed = _json_mod.loads(raw_geom)
+                if not isinstance(parsed, dict) or parsed.get("type") != "Polygon":
+                    return jsonify({"error": "geometry_json must be a GeoJSON Polygon"}), 400
+                coords = parsed.get("coordinates")
+                if not coords or not coords[0] or len(coords[0]) < 3:
+                    return jsonify({"error": "geometry_json Polygon must have at least 3 vertices"}), 400
+                geometry = raw_geom.strip()
+            except ValueError:
+                return jsonify({"error": "geometry_json is not valid JSON"}), 400
 
     row = upsert_habitat_override(
-        feature_key, name, description, fill_color, g.user["id"]
+        feature_key, name, description, fill_color, g.user["id"],
+        geometry, geometry_clear=geometry_clear,
+        fill_opacity=fill_opacity, stroke_weight=stroke_weight,
     )
     return jsonify(row), 200
 
@@ -3698,7 +3757,7 @@ def map_habitats_v1() -> Any:
 
     _habitats_cache_set(cache_key, all_features)
 
-    # Apply admin overrides to AI features (name/description/fill_color substitution)
+    # Apply admin overrides to AI features (name/description/fill_color/geometry)
     overrides = get_habitat_overrides()
     if overrides:
         for f in all_features:
@@ -3712,7 +3771,15 @@ def map_habitats_v1() -> Any:
                     f["override_description"] = ov["description"]
                 if ov.get("fill_color"):
                     f["override_fill_color"] = ov["fill_color"]
+                if ov.get("fill_opacity") is not None:
+                    f["override_fill_opacity"] = ov["fill_opacity"]
+                if ov.get("stroke_weight") is not None:
+                    f["override_stroke_weight"] = ov["stroke_weight"]
+                if ov.get("geometry_json"):
+                    f["override_geometry_json"] = ov["geometry_json"]
                 f["override_id"] = ov["id"]
+                f["override_created_at"] = ov.get("created_at")
+                f["override_updated_at"] = ov.get("updated_at")
 
     # Merge admin-drawn custom habitats in the same bbox
     try:
@@ -3731,6 +3798,8 @@ def map_habitats_v1() -> Any:
                 "osm_type": h["habitat_type"],
                 "habitat_type": h["habitat_type"],
                 "fill_color": h.get("fill_color") or "",
+                "fill_opacity": h.get("fill_opacity"),
+                "stroke_weight": h.get("stroke_weight"),
                 "score": 0,
                 "geojson_geometry": geom,  # preserved for client-side vertex editing
             }

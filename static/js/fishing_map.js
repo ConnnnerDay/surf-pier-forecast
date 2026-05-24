@@ -60,11 +60,16 @@
     var _aiAbort         = null;     // AbortController for the live AI habitat fetch
     var _AI_LS_KEY       = 'fmap_ai_cache_v1';  // localStorage key for AI picks
     var _AI_LS_TTL       = 21600000;             // 6 hours in ms
+    var _MARKER_TYPE_KEY = 'fmap_last_marker_type'; // localStorage key for last-used marker type
     // Admin habitat draw/edit state
     var _habitatDrawMode    = false;  // whether polygon draw mode is active
+    var _habitatRedrawMode  = false;  // true when draw is replacing an existing habitat's geometry
     var _habitatDrawVerts   = [];     // [L.LatLng] being collected
     var _habitatDrawMarkers = [];     // temporary vertex L.marker objects
     var _habitatDrawPreview = null;   // L.polyline preview during draw
+    var _habitatDrawRubberBand = null;        // rubber-band line from last vertex to cursor
+    var _habitatDrawRubberBandHandler = null; // cached mousemove listener
+    var _habitatModalPreview = null;  // temporary polygon shown on map while add modal is open
     var _pendingHabitatGeom = null;   // finished geometry waiting for modal save
     var _customHabitats     = [];     // [{id, leaflet, data}] — live custom habitat state
     var _showCustomHabitats = true;   // whether custom habitats are visible
@@ -73,10 +78,35 @@
     var _habitatVertexMarkers  = [];   // draggable L.marker objects at polygon vertices
     var _habitatVertexPreview  = null; // L.polygon showing reshaped outline
     var _habitatEditData       = null; // full feature data of habitat being edited
+    var _overrideEditData      = null; // {featureKey,overrideId,name,desc,color,geometry} for AI override reshape
+    var _aiPolyByKey           = {};   // featureKey → L.polygon for live override preview
+    var _overridePreviewOrigStyle = null; // original layer style before override modal opens
+    var _habitatEditOrigStyle    = null; // original layer style before habitat edit modal opens
     // Management panel state
     var _habitatPanelOpen      = false;
+    var _habitatEditedFromPanel = false; // true when Edit was clicked from the panel (reopen on close)
+    var _overrideEditedFromPanel = false; // same for override panel
+    var _markerEditedFromPanel = false;  // same for markers panel
+    var _habitatPanelActiveTab = 'habitats'; // 'habitats' | 'overrides' | 'suppressed' | 'markers'
+    var _overridesPanelData    = []; // cached override list for panel edit buttons
+    var _overridesPanelSearch  = ''; // live search string for overrides tab
+    var _overridesPanelSort    = 'date'; // 'date' | 'name' | 'type'
+    var _suppressedPanelSearch = ''; // live search string for suppressed tab
+    var _suppressedPanelData   = []; // cached suppressed list for search
+    var _suppressedPanelSort   = 'date'; // 'date' | 'name' | 'type'
+    var _suppressedGhost       = null; // ghost circleMarker shown on map when hovering a suppressed row
+    var _ovHoverActive         = null; // { fKey, origStyle } of the override currently highlighted by panel hover
+    var _markerHoverMid        = null; // id of the custom marker whose icon currently has fmap-marker-hover class
+    var _markersPanelSearch    = ''; // live search string for markers tab
+    var _markersPanelData      = []; // cached markers list for search
+    var _markersPanelSort      = 'date'; // 'date' | 'name' | 'type'
     // Admin-defined custom habitat types (slugs not in VALID_HABITAT_TYPES)
     var _customHabitatTypes    = [];
+    // Remembered last-used type/color/style for successive habitat additions
+    var _lastHabitatType        = null;
+    var _lastHabitatColor       = null;
+    var _lastHabitatFillOpacity = null;
+    var _lastHabitatStrokeWeight = null;
     // Point-move state (drag a Point habitat to a new location)
     var _habitatPointMoveMode   = false;
     var _habitatPointMoveMarker = null;
@@ -553,17 +583,23 @@
     // Attach hover-highlight events to a habitat polygon or polyline layer.
     // Closed polygons brighten fill + thicken border; open polylines just thicken.
     function _bindPolyHover(layer, isClosed) {
-        var baseWeight      = isClosed ? 2 : 3;
-        var baseFillOpacity = isClosed ? (layer.options.fillOpacity || 0.30) : 0;
         layer.on('mouseover', function () {
+            // Read current options so the hover delta is relative to any style changes
+            // applied after initial render (slider preview, panel hover highlight, etc.)
+            var curWeight = (layer.options.weight || (isClosed ? 2 : 3));
+            var curFill   = isClosed ? (layer.options.fillOpacity || 0.30) : 0;
+            layer._polyHoverBase = { weight: curWeight, fillOpacity: curFill };
             layer.setStyle({
-                weight:      baseWeight + 2,
-                fillOpacity: isClosed ? Math.min(baseFillOpacity + 0.25, 0.70) : 0
+                weight:      curWeight + 2,
+                fillOpacity: isClosed ? Math.min(curFill + 0.20, 0.80) : 0
             });
             if (layer.bringToFront) layer.bringToFront();
         });
         layer.on('mouseout', function () {
-            layer.setStyle({ weight: baseWeight, fillOpacity: baseFillOpacity });
+            if (layer._polyHoverBase) {
+                layer.setStyle(layer._polyHoverBase);
+                delete layer._polyHoverBase;
+            }
         });
     }
 
@@ -598,7 +634,7 @@
     // When no pills are active, renders everything from the general query.
     function renderAIHabitatSpots(features) {
         if (!aiPickLayer) return;
-        aiPickLayer.clearLayers();
+        aiPickLayer.clearLayers(); _aiPolyByKey = {};
         if (customHabitatLayer) customHabitatLayer.clearLayers();
         _customHabitats = [];
 
@@ -688,8 +724,20 @@
             var osmType = f.osmType || 'general';
             var info    = AI_PICK_INFO[osmType] || AI_PICK_INFO.general;
             var name    = f.name ? '<strong>' + esc(f.name) + '</strong><br>' : '';
-            var color   = AI_PICK_COLORS[osmType] || AI_PICK_COLORS.general;
+            var color   = f.override_fill_color || AI_PICK_COLORS[osmType] || AI_PICK_COLORS.general;
+            // Apply geometry override if admin has reshaped this feature
             var geom    = f.geometry;
+            if (f.override_geometry_json) {
+                try {
+                    var _ovGeom = JSON.parse(f.override_geometry_json);
+                    if (_ovGeom && _ovGeom.type === 'Polygon' &&
+                            Array.isArray(_ovGeom.coordinates) && _ovGeom.coordinates[0] &&
+                            _ovGeom.coordinates[0].length >= 3) {
+                        geom = _ovGeom.coordinates[0].map(function(c) { return [c[1], c[0]]; });
+                    }
+                } catch (_e) {}
+            }
+            if (!geom || geom.length < 2) return; // skip degenerate geometry
             var first   = geom[0];
             var last    = geom[geom.length - 1];
             var closed  = Math.abs(first[0] - last[0]) < 0.00002 &&
@@ -709,15 +757,17 @@
                          (maxLng - minLng) > _viewLngSpan * 0.6;
 
             var isClosed  = closed && !isHuge;
+            var _aiFillOp  = (f.override_fill_opacity  != null) ? parseFloat(f.override_fill_opacity)  : 0.25;
+            var _aiWeight  = (f.override_stroke_weight != null) ? parseFloat(f.override_stroke_weight) : (isClosed ? 2 : 3);
             var aiPolyCls = 'fmap-habitat-poly fmap-habitat-poly--' + osmType;
             var poly    = isClosed
                 ? L.polygon(geom, {
-                    color: color, weight: 2, opacity: 0.85,
-                    fillColor: color, fillOpacity: 0.25,
+                    color: color, weight: _aiWeight, opacity: 0.85,
+                    fillColor: color, fillOpacity: _aiFillOp,
                     className: aiPolyCls
                   })
                 : L.polyline(geom, {
-                    color: color, weight: 3, opacity: 0.85,
+                    color: color, weight: _aiWeight, opacity: 0.85,
                     dashArray: '10, 6',
                     className: aiPolyCls
                   });
@@ -728,17 +778,34 @@
                 { className: 'fmap-tooltip fmap-ai-tooltip', sticky: true }
             );
             // Click opens the spot-detail panel; admin in edit mode gets an override popup.
-            (function (spotData, rawFeature, lyr) {
-                lyr.on('click', function () {
+            (function (spotData, rawFeature, lyr, leafletGeom) {
+                lyr.on('click', function (e) {
                     if (adminEditMode && typeof MAP_IS_ADMIN !== 'undefined' && MAP_IS_ADMIN) {
+                        L.DomEvent.stopPropagation(e);
                         var osm_type_val = rawFeature.osm_type || rawFeature.osmType || '';
                         var fid = rawFeature.id || (rawFeature.lat + ',' + rawFeature.lng + ',' + osm_type_val);
+                        // Prefer stored override geometry; fall back to current AI geometry
+                        var currentGeom = null;
+                        var geomIsOverride = false;
+                        if (rawFeature.override_geometry_json) {
+                            try { currentGeom = JSON.parse(rawFeature.override_geometry_json); geomIsOverride = true; } catch (_e) {}
+                        }
+                        if (!currentGeom && leafletGeom && leafletGeom.length >= 3) {
+                            var ring = leafletGeom.map(function(c) { return [c[1], c[0]]; });
+                            currentGeom = { type: 'Polygon', coordinates: [ring] };
+                        }
                         _openOverrideModal(
                             String(fid),
                             rawFeature.override_id ? String(rawFeature.override_id) : '',
                             rawFeature.override_name || rawFeature.name || '',
                             rawFeature.override_description || rawFeature.description || '',
-                            rawFeature.override_fill_color || ''
+                            rawFeature.override_fill_color || color, // pre-fill with the AI feature's actual color
+                            currentGeom,
+                            geomIsOverride,
+                            rawFeature.override_created_at || null,
+                            rawFeature.override_updated_at || null,
+                            rawFeature.override_fill_opacity != null ? rawFeature.override_fill_opacity : lyr.options.fillOpacity,
+                            rawFeature.override_stroke_weight != null ? rawFeature.override_stroke_weight : lyr.options.weight
                         );
                     } else if (typeof window._fmapShowSpotDetail === 'function') {
                         _activeSpotMarker = null;
@@ -746,8 +813,13 @@
                     }
                 });
             }({ type: osmType, lat: f.lat, lng: f.lng,
-                name: f.name || info.label, tip: info.tip }, f, poly));
+                name: f.name || info.label, tip: info.tip }, f, poly, geom));
             aiPickLayer.addLayer(poly);
+            // Track by feature key so the override modal can live-preview style changes
+            (function(fKey, lyr) {
+                var _fid = String(fKey.id || (fKey.lat + ',' + fKey.lng + ',' + (fKey.osm_type || fKey.osmType || '')));
+                _aiPolyByKey[_fid] = lyr;
+            }(f, poly));
 
             // Centroid / midpoint markers for AI-picked habitat polygons —
             // mirrors the OSM layer by reusing the same CSS icon classes.
@@ -817,21 +889,28 @@
                 '<span class="fmap-tooltip-sub">' + esc(info.tip) + '</span>',
                 { className: 'fmap-tooltip fmap-ai-tooltip', direction: 'top', offset: [0, -7] }
             );
-            (function (rawFeature, marker) {
-                marker.on('click', function () {
+            (function (rawFeature, marker, ptOsmType) {
+                marker.on('click', function (e) {
                     if (adminEditMode && typeof MAP_IS_ADMIN !== 'undefined' && MAP_IS_ADMIN) {
+                        L.DomEvent.stopPropagation(e);
                         var osm_type_val = rawFeature.osm_type || rawFeature.osmType || '';
                         var fid = rawFeature.id || (rawFeature.lat + ',' + rawFeature.lng + ',' + osm_type_val);
+                        var _ptColor = rawFeature.override_fill_color || AI_PICK_COLORS[ptOsmType] || AI_PICK_COLORS.general;
                         _openOverrideModal(
                             String(fid),
                             rawFeature.override_id ? String(rawFeature.override_id) : '',
                             rawFeature.override_name || rawFeature.name || '',
                             rawFeature.override_description || rawFeature.description || '',
-                            rawFeature.override_fill_color || ''
+                            _ptColor,
+                            null, false,
+                            rawFeature.override_created_at || null,
+                            rawFeature.override_updated_at || null,
+                            rawFeature.override_fill_opacity != null ? rawFeature.override_fill_opacity : null,
+                            rawFeature.override_stroke_weight != null ? rawFeature.override_stroke_weight : null
                         );
                     }
                 });
-            }(f, m));
+            }(f, m, osmType));
             aiPickLayer.addLayer(m);
             pointCount++;
         });
@@ -860,13 +939,15 @@
                 '<br><span class="fmap-tooltip-sub fmap-custom-habitat-badge">Custom</span>' +
                 (adminEditMode ? '<br><em class="fmap-tooltip-sub">click to edit</em>' : '');
 
+            var _cFillOp  = (f.fill_opacity  != null) ? parseFloat(f.fill_opacity)  : 0.35;
+            var _cStrokeW = (f.stroke_weight != null) ? parseFloat(f.stroke_weight) : 2.5;
             var lyr;
             if (f.geometry && f.geometry.type === 'Polygon' && f.geometry.coordinates) {
                 // Polygon — convert GeoJSON [lng,lat] ring to Leaflet [lat,lng]
                 var ring = f.geometry.coordinates[0].map(function(c) { return [c[1], c[0]]; });
                 lyr = L.polygon(ring, {
-                    color: color, weight: 2.5, opacity: 1,
-                    fillColor: color, fillOpacity: 0.35,
+                    color: color, weight: _cStrokeW, opacity: 1,
+                    fillColor: color, fillOpacity: _cFillOp,
                     dashArray: adminEditMode ? '6,4' : null,
                     className: 'fmap-custom-habitat-poly'
                 });
@@ -874,8 +955,8 @@
             } else {
                 // Point marker
                 lyr = L.circleMarker([f.lat, f.lng], {
-                    radius: 9, color: color, weight: 2.5,
-                    fillColor: color, fillOpacity: 0.6,
+                    radius: 9, color: color, weight: _cStrokeW,
+                    fillColor: color, fillOpacity: _cFillOp,
                     className: 'fmap-custom-habitat-pt'
                 });
             }
@@ -885,8 +966,9 @@
             });
 
             (function (hData, hLyr) {
-                hLyr.on('click', function () {
+                hLyr.on('click', function (e) {
                     if (adminEditMode) {
+                        L.DomEvent.stopPropagation(e);
                         _openHabitatEditModal(hData);
                     } else if (typeof window._fmapShowSpotDetail === 'function') {
                         _activeSpotMarker = null;
@@ -924,14 +1006,14 @@
         if (!map || !aiPickLayer) return;
 
         if (map.getZoom() < 10) {
-            aiPickLayer.clearLayers();
+            aiPickLayer.clearLayers(); _aiPolyByKey = {};
             return;
         }
 
         var habitatTypes = _activeHabitatTypes();
         if (!habitatTypes) {
             // Only structure-type pills active — nothing for AI to show
-            aiPickLayer.clearLayers();
+            aiPickLayer.clearLayers(); _aiPolyByKey = {};
             return;
         }
 
@@ -964,7 +1046,7 @@
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (resp) {
             if (thisAiGen !== _aiReqGen) return;
-            if (!map || map.getZoom() < 10) { aiPickLayer.clearLayers(); return; }
+            if (!map || map.getZoom() < 10) { aiPickLayer.clearLayers(); _aiPolyByKey = {}; return; }
             var raw = (resp && resp.ok && resp.data && resp.data.features) || [];
             var features = raw.map(function (f) {
                 return {
@@ -3585,9 +3667,11 @@
     // Renders custom markers returned by /api/map/structures as draggable,
     // and wires a toolbar button + modal for add / edit / delete.
 
-    var adminEditMode    = false;
-    var _customMarkers   = [];  // [{id, leaflet, data}] — live custom marker state
-    var _adminPreviewPin = null; // temporary L.marker shown while the add modal is open
+    var adminEditMode       = false;
+    var _customMarkers     = [];  // [{id, leaflet, data}] — live custom marker state
+    var _adminPreviewPin   = null; // temporary L.marker shown while the add modal is open
+    var _markerEditOriginal = null; // snapshot of marker data when edit modal opens (for undo)
+    var _currentUndoFn     = null; // fn stored by _showUndoToast; triggered by Ctrl+Z
 
     function _customMarkerIcon(type, editMode) {
         if (!editMode) return makeFishingSpotIcon(type);
@@ -3624,6 +3708,14 @@
                 var prevLat = spot.lat, prevLng = spot.lng;
                 spot.lat = ll.lat;
                 spot.lng = ll.lng;
+                // If the edit panel is open for this marker, keep the lat/lng inputs in sync
+                var _saveBtn = document.getElementById('fmap-admin-save');
+                if (_saveBtn && _saveBtn.dataset.markerId === String(spot.id)) {
+                    var _latEl = document.getElementById('fmap-admin-lat');
+                    var _lngEl = document.getElementById('fmap-admin-lng');
+                    if (_latEl) _latEl.value = ll.lat.toFixed(6);
+                    if (_lngEl) _lngEl.value = ll.lng.toFixed(6);
+                }
 
                 fetch('/api/map/custom-markers/' + spot.id, {
                     method:  'PUT',
@@ -3632,14 +3724,30 @@
                 })
                 .then(function (r) {
                     if (!r.ok) throw new Error('HTTP ' + r.status);
-                    // Invalidate cache so panning away and back shows the new position
                     spotCache = {}; _spotCacheKeys = []; _spotBoundsCache = {};
                     try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
-                    _showAdminToast('Position saved');
+                    scheduleFishingSpotQuery();
+                    _refreshActivePanelTab();
+                    _showUndoToast('Position saved', function () {
+                        fetch('/api/map/custom-markers/' + spot.id, {
+                            method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ lat: prevLat, lng: prevLng }),
+                        })
+                        .then(function (r) {
+                            if (!r.ok) throw new Error('HTTP ' + r.status);
+                            spot.lat = prevLat; spot.lng = prevLng;
+                            m.setLatLng([prevLat, prevLng]);
+                            spotCache = {}; _spotCacheKeys = []; _spotBoundsCache = {};
+                            try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
+                            _showAdminToast('Position reverted');
+                            scheduleFishingSpotQuery();
+                            _refreshActivePanelTab();
+                        })
+                        .catch(function () { _showAdminToast('Revert failed', true); });
+                    });
                 })
                 .catch(function (err) {
                     console.warn('[admin] drag-save failed:', err);
-                    // Revert marker and data to the original position
                     spot.lat = prevLat;
                     spot.lng = prevLng;
                     m.setLatLng([prevLat, prevLng]);
@@ -3647,8 +3755,9 @@
                 });
             });
 
-            m.on('click', function () {
+            m.on('click', function (e) {
                 if (adminEditMode) {
+                    L.DomEvent.stopPropagation(e);
                     _openAdminEditPanel(spot);
                 } else {
                     var tip = spot.description || STRUCTURE_TIPS[spot.type] || '';
@@ -3686,10 +3795,16 @@
         document.getElementById('fmap-admin-lat').value  = lat.toFixed(6);
         document.getElementById('fmap-admin-lng').value  = lng.toFixed(6);
         document.getElementById('fmap-admin-name').value = '';
-        document.getElementById('fmap-admin-type').value = 'fishing';
+        var _typeEl = document.getElementById('fmap-admin-type');
+        var _lastType = null;
+        try { _lastType = localStorage.getItem(_MARKER_TYPE_KEY); } catch (_e) {}
+        if (_typeEl) _typeEl.value = (_lastType && _typeEl.querySelector('option[value="' + _lastType + '"]')) ? _lastType : 'fishing';
         document.getElementById('fmap-admin-desc').value = '';
         document.getElementById('fmap-admin-delete').hidden = true;
         document.getElementById('fmap-admin-save').dataset.markerId = '';
+        _markerEditOriginal = null;
+        var _auditEl = document.getElementById('fmap-admin-audit');
+        if (_auditEl) _auditEl.hidden = true;
 
         // Show a temporary pin so the admin can see exactly where the marker will land
         _removeAdminPreviewPin();
@@ -3714,9 +3829,28 @@
         document.getElementById('fmap-admin-type').value = spot.type || 'fishing';
         document.getElementById('fmap-admin-desc').value = spot.description || '';
         document.getElementById('fmap-admin-save').dataset.markerId = spot.id;
+        _markerEditOriginal = {
+            id:          spot.id,
+            lat:         spot.lat,
+            lng:         spot.lng,
+            name:        spot.name        || '',
+            type:        spot.type        || 'fishing',
+            description: spot.description || '',
+        };
         var delBtn = document.getElementById('fmap-admin-delete');
         delBtn.hidden = false;
         delBtn.dataset.markerId = spot.id;
+        var auditEl = document.getElementById('fmap-admin-audit');
+        if (auditEl) {
+            var ca = spot.created_at ? String(spot.created_at).replace('T', ' ').slice(0, 16) : null;
+            var ua = spot.updated_at ? String(spot.updated_at).replace('T', ' ').slice(0, 16) : null;
+            if (ca) {
+                auditEl.hidden = false;
+                auditEl.textContent = 'Added ' + ca + (ua && ua !== ca ? ' · Updated ' + ua : '');
+            } else {
+                auditEl.hidden = true;
+            }
+        }
         _openAdminModal();
     }
 
@@ -3727,6 +3861,8 @@
         if (backdrop) backdrop.hidden = false;
         var statusEl = document.getElementById('fmap-admin-status');
         if (statusEl) { statusEl.textContent = ''; statusEl.style.color = ''; }
+        var nameEl = document.getElementById('fmap-admin-name');
+        if (nameEl) setTimeout(function () { nameEl.focus(); }, 30);
     }
 
     function _closeAdminModal() {
@@ -3735,6 +3871,18 @@
         if (modal)    modal.hidden    = true;
         if (backdrop) backdrop.hidden = true;
         _removeAdminPreviewPin();
+        _markerEditOriginal = null;
+        // Reopen the panel on the markers tab if Edit was clicked from there
+        if (_markerEditedFromPanel) {
+            _markerEditedFromPanel = false;
+            _habitatPanelOpen = true;
+            _habitatPanelActiveTab = 'markers';
+            var _mrPanel = document.getElementById('fmap-habitat-panel');
+            var _mrBtn   = document.getElementById('fmap-admin-habitats-list-btn');
+            if (_mrPanel) _mrPanel.hidden = false;
+            if (_mrBtn) { _mrBtn.classList.add('fmap-ctrl-btn--active'); _mrBtn.setAttribute('aria-pressed', 'true'); }
+            _refreshActivePanelTab();
+        }
     }
 
     // Brief non-blocking toast shown after drag-saves and other silent actions.
@@ -3743,16 +3891,21 @@
         if (!t) {
             t = document.createElement('div');
             t.id = 'fmap-admin-toast';
-            t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);' +
+            t.setAttribute('role', 'status');
+            t.setAttribute('aria-live', 'polite');
+            t.setAttribute('aria-atomic', 'true');
+            t.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);' +
                 'z-index:4000;padding:8px 18px;border-radius:8px;font-size:.85rem;font-weight:600;' +
                 'color:#fff;pointer-events:none;transition:opacity .3s;white-space:nowrap';
             document.body.appendChild(t);
         }
+        // Stack above undo toast if it's visible
+        t.style.bottom = document.getElementById('fmap-undo-toast') ? '136px' : '80px';
         t.textContent = msg;
         t.style.background = isError ? '#dc2626' : '#16a34a';
         t.style.opacity = '1';
         clearTimeout(t._hideTimer);
-        t._hideTimer = setTimeout(function () { t.style.opacity = '0'; }, 2200);
+        t._hideTimer = setTimeout(function () { t.style.opacity = '0'; }, isError ? 4500 : 2200);
     }
 
     // Show an undo-delete toast with a clickable "Undo" button.
@@ -3761,8 +3914,12 @@
         duration = duration || 8000;
         var existing = document.getElementById('fmap-undo-toast');
         if (existing) existing.remove();
+        _currentUndoFn = onUndo || null;
         var t = document.createElement('div');
         t.id = 'fmap-undo-toast';
+        t.setAttribute('role', 'status');
+        t.setAttribute('aria-live', 'assertive');
+        t.setAttribute('aria-atomic', 'true');
         t.innerHTML = '<span>' + esc(msg) + '</span><button id="fmap-undo-toast-btn" type="button">Undo</button>';
         document.body.appendChild(t);
         var btn = document.getElementById('fmap-undo-toast-btn');
@@ -3770,11 +3927,47 @@
             btn.addEventListener('click', function () {
                 clearTimeout(t._hideTimer);
                 t.remove();
+                _currentUndoFn = null;
                 if (onUndo) onUndo();
             });
         }
-        t._hideTimer = setTimeout(function () { t.remove(); }, duration);
+        t._hideTimer = setTimeout(function () { t.remove(); _currentUndoFn = null; }, duration);
     }
+
+    // Ctrl+Z / Cmd+Z fires the current undo toast action if one is pending.
+    document.addEventListener('keydown', function (e) {
+        if (e.key !== 'z' || !(e.ctrlKey || e.metaKey) || e.shiftKey) return;
+        // Don't intercept Ctrl+Z when a text input has focus — let the browser handle it.
+        var tag = document.activeElement && document.activeElement.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+        var toast = document.getElementById('fmap-undo-toast');
+        if (!toast || !_currentUndoFn) return;
+        e.preventDefault();
+        var fn = _currentUndoFn;
+        _currentUndoFn = null;
+        clearTimeout(toast._hideTimer);
+        toast.remove();
+        fn();
+    });
+
+    // '/' focuses the search input of the active admin panel tab.
+    document.addEventListener('keydown', function (e) {
+        if (e.key !== '/' || e.ctrlKey || e.metaKey || e.altKey) return;
+        if (!_habitatPanelOpen) return;
+        var tag = document.activeElement && document.activeElement.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+        var tabSearchIds = {
+            habitats:   'fmap-habitat-search',
+            overrides:  'fmap-overrides-search',
+            suppressed: 'fmap-suppressed-search',
+            markers:    'fmap-markers-search',
+        };
+        var searchEl = document.getElementById(tabSearchIds[_habitatPanelActiveTab] || 'fmap-habitat-search');
+        if (!searchEl) return;
+        e.preventDefault();
+        searchEl.focus();
+        searchEl.select();
+    });
 
     // Default fill colors per built-in habitat type (mirrors _CUSTOM_HABITAT_COLORS).
     var _TYPE_DEFAULT_COLORS = {
@@ -3789,8 +3982,11 @@
             if (h.id !== hid || !h.leaflet) return;
             var lyr = h.leaflet;
             var opts = lyr.options || {};
-            var origFill  = opts.fillOpacity  != null ? opts.fillOpacity  : 0.35;
-            var origWeight = opts.weight != null ? opts.weight : 2.5;
+            // If a panel hover is active on this layer, read the true pre-hover
+            // style from _panelHoverOrig so the blink restores to the right values.
+            var baseStyle  = h._panelHoverOrig || opts;
+            var origFill   = baseStyle.fillOpacity  != null ? baseStyle.fillOpacity  : 0.35;
+            var origWeight = baseStyle.weight != null ? baseStyle.weight : 2.5;
             var count = 0;
             var blink = setInterval(function () {
                 count++;
@@ -3805,6 +4001,97 @@
                 }
             }, 210);
         });
+    }
+
+    // Briefly blink an AI overlay polygon to draw the eye after pan-to.
+    function _highlightAiOverlay(fKey) {
+        var lyr = _aiPolyByKey[String(fKey)];
+        if (!lyr) return;
+        var opts = lyr.options || {};
+        var origFill   = opts.fillOpacity  != null ? opts.fillOpacity  : 0.25;
+        var origWeight = opts.weight != null ? opts.weight : 2;
+        var count = 0;
+        var blink = setInterval(function () {
+            count++;
+            if (count % 2 === 0) {
+                lyr.setStyle({ fillOpacity: origFill, weight: origWeight });
+            } else {
+                lyr.setStyle({ fillOpacity: Math.min(0.75, origFill + 0.35), weight: origWeight + 2 });
+            }
+            if (count >= 6) {
+                clearInterval(blink);
+                lyr.setStyle({ fillOpacity: origFill, weight: origWeight });
+            }
+        }, 210);
+    }
+
+    // Briefly bounce a custom marker's icon to draw the eye after pan-to.
+    function _highlightCustomMarker(mid) {
+        var found = _customMarkers.filter(function (cm) { return String(cm.id) === String(mid); })[0];
+        if (!found || !found.leaflet) return;
+        var el = found.leaflet.getElement();
+        if (!el) {
+            // Marker not yet in DOM (map still panning); retry once after animation
+            setTimeout(function () {
+                var el2 = found.leaflet.getElement();
+                if (el2) { el2.classList.add('fmap-marker-pulse'); setTimeout(function () { el2.classList.remove('fmap-marker-pulse'); }, 1200); }
+            }, 700);
+            return;
+        }
+        el.classList.add('fmap-marker-pulse');
+        setTimeout(function () { el.classList.remove('fmap-marker-pulse'); }, 1200);
+    }
+
+    // Return {lat, lng} centroid for a GeoJSON Point or Polygon; null otherwise.
+    function _centroidOfGeom(geom) {
+        if (!geom) return null;
+        if (geom.type === 'Point' && geom.coordinates) {
+            return { lat: geom.coordinates[1], lng: geom.coordinates[0] };
+        }
+        if (geom.type === 'Polygon' && geom.coordinates && geom.coordinates[0]) {
+            var ring = geom.coordinates[0];
+            var n = ring.length;
+            // Exclude the closing duplicate vertex
+            if (n > 1 &&
+                ring[0][0] === ring[n - 1][0] &&
+                ring[0][1] === ring[n - 1][1]) { n--; }
+            if (n === 0) return null;
+            var sumLng = 0, sumLat = 0;
+            for (var i = 0; i < n; i++) { sumLng += ring[i][0]; sumLat += ring[i][1]; }
+            return { lat: sumLat / n, lng: sumLng / n };
+        }
+        return null;
+    }
+
+    // Approximate polygon area in m² using the Shoelace formula in geographic
+    // coordinates, scaled by the Earth's surface at the centroid latitude.
+    // Returns a human-friendly string like "3.2 ac" or "1.4 ha".
+    function _polyAreaSqM(geojsonPolygon) {
+        if (!geojsonPolygon || geojsonPolygon.type !== 'Polygon' || !geojsonPolygon.coordinates || !geojsonPolygon.coordinates[0]) return 0;
+        var ring = geojsonPolygon.coordinates[0];
+        var n = ring.length;
+        if (n < 3) return 0;
+        var R = 6371000;
+        var DEG = Math.PI / 180;
+        var area = 0, sumLat = 0;
+        for (var i = 0; i < n; i++) {
+            var j = (i + 1) % n;
+            area += (ring[i][0] * DEG) * (ring[j][1] * DEG) - (ring[j][0] * DEG) * (ring[i][1] * DEG);
+            sumLat += ring[i][1];
+        }
+        var centLat = (sumLat / n) * DEG;
+        var areaSqM = Math.abs(area / 2) * R * R * Math.cos(centLat);
+        return isNaN(areaSqM) ? 0 : areaSqM;
+    }
+
+    function _polyAreaLabel(geojsonPolygon) {
+        var areaSqM = _polyAreaSqM(geojsonPolygon);
+        if (areaSqM <= 0) return null;
+        var acres = areaSqM / 4046.86;
+        var hectares = areaSqM / 10000;
+        if (acres < 0.1 && areaSqM < 10000) return Math.round(areaSqM) + ' m²';
+        if (acres < 100) return acres.toFixed(1) + ' ac · ' + hectares.toFixed(1) + ' ha';
+        return Math.round(acres) + ' ac · ' + Math.round(hectares) + ' ha';
     }
 
     // ── Admin spot-suppression helpers ──────────────────────────────────────
@@ -3837,14 +4124,25 @@
                 hideBtn.addEventListener('click', function () {
                     hideBtn.disabled = true;
                     hideBtn.textContent = '…';
-                    _suppressSpot(spot, spotKey, function (err) {
+                    _suppressSpot(spot, spotKey, function (err, suppressionId) {
                         if (err) {
                             if (statusEl) statusEl.textContent = 'Failed: ' + err;
                             hideBtn.disabled = false;
                             hideBtn.textContent = 'Hide';
                         } else {
                             marker.closePopup();
-                            _showAdminToast('Spot hidden');
+                            _showUndoToast('Spot hidden', function () {
+                                fetch('/api/map/suppress-spot/' + encodeURIComponent(suppressionId), { method: 'DELETE' })
+                                    .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                                    .then(function () {
+                                        _showAdminToast('Spot restored');
+                                        spotCache = {}; _spotCacheKeys = []; _spotBoundsCache = {};
+                                        try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
+                                        scheduleFishingSpotQuery();
+                                        _refreshActivePanelTab();
+                                    })
+                                    .catch(function () { _showAdminToast('Restore failed', true); });
+                            });
                         }
                     });
                 });
@@ -3861,13 +4159,31 @@
                     if (nameEl) nameEl.value = spot.name || spotTypeLabel(spot.type);
                     if (typeEl) typeEl.value = spot.type || 'fishing';
                     // Also suppress the original so there's no duplicate
-                    _suppressSpot(spot, spotKey, function () {});
+                    _suppressSpot(spot, spotKey, function (err, suppressionId) {
+                        if (err) {
+                            _showAdminToast('Could not hide original spot — it may still appear on the map', true);
+                        } else {
+                            _showUndoToast('Original spot hidden', function () {
+                                fetch('/api/map/suppress-spot/' + encodeURIComponent(suppressionId), { method: 'DELETE' })
+                                    .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                                    .then(function () {
+                                        _showAdminToast('Original spot restored');
+                                        spotCache = {}; _spotCacheKeys = []; _spotBoundsCache = {};
+                                        try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
+                                        scheduleFishingSpotQuery();
+                                        _refreshActivePanelTab();
+                                    })
+                                    .catch(function () { _showAdminToast('Restore failed', true); });
+                            });
+                        }
+                    });
                 });
             }
         });
     }
 
-    // Call POST /api/map/suppress-spot for a spot; cb(null) on success, cb(errMsg) on failure.
+    // Call POST /api/map/suppress-spot for a spot.
+    // Callback: cb(null, suppressionId) on success, cb(errMsg) on failure.
     function _suppressSpot(spot, spotKey, cb) {
         fetch('/api/map/suppress-spot', {
             method:  'POST',
@@ -3882,11 +4198,15 @@
         })
         .then(function (r) {
             if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+        })
+        .then(function (data) {
             // Bust the local spot cache so the suppressed spot disappears on next render
             spotCache = {}; _spotCacheKeys = []; _spotBoundsCache = {};
             try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
             scheduleFishingSpotQuery();
-            cb(null);
+            _refreshActivePanelTab();
+            cb(null, data.id);
         })
         .catch(function (err) {
             console.warn('[admin] suppress spot failed:', err);
@@ -3897,14 +4217,22 @@
     function wireAdminMode() {
         if (typeof MAP_IS_ADMIN === 'undefined' || !MAP_IS_ADMIN) return;
 
-        // Escape closes modal; Tab trapped within while visible
+        // Escape closes modal; Tab trapped within; Ctrl+S / Cmd+S saves
         var _adminModalEl = document.getElementById('fmap-admin-modal');
         document.addEventListener('keydown', function (e) {
             if (!_adminModalEl || _adminModalEl.hidden) {
-                if (e.key === 'Escape') _closeAdminModal();
+                // Modal is not open: Escape only needs to dismiss a preview pin, not
+                // the full close path (which would spuriously reset _markerEditOriginal).
+                if (e.key === 'Escape') _removeAdminPreviewPin();
                 return;
             }
             if (e.key === 'Escape') { _closeAdminModal(); return; }
+            if (e.key === 's' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                var sb = document.getElementById('fmap-admin-save');
+                if (sb && !sb.disabled) sb.click();
+                return;
+            }
             _trapFocusOnTab(_adminModalEl, e);
         });
 
@@ -3932,8 +4260,9 @@
                 _lastRenderedSpotKey = null;
                 _renderFromCache();
 
-                // Click-to-add on map
+                // Click-to-add on map; cancel draw mode to avoid dual map-click handlers
                 if (adminEditMode) {
+                    if (_habitatDrawMode) _cancelHabitatDraw();
                     map.on('click', _onAdminMapClick);
                     map.getContainer().style.cursor = 'crosshair';
                 } else {
@@ -3954,10 +4283,26 @@
         if (saveBtn) {
             saveBtn.addEventListener('click', function () {
                 var markerId  = saveBtn.dataset.markerId;
+                var _prevMarkerData = (markerId && _markerEditOriginal && String(_markerEditOriginal.id) === String(markerId))
+                    ? {
+                        id:          _markerEditOriginal.id,
+                        lat:         _markerEditOriginal.lat,
+                        lng:         _markerEditOriginal.lng,
+                        name:        _markerEditOriginal.name,
+                        type:        _markerEditOriginal.type,
+                        description: _markerEditOriginal.description,
+                    }
+                    : null;
                 var statusEl  = document.getElementById('fmap-admin-status');
+                var lat = parseFloat(document.getElementById('fmap-admin-lat').value);
+                var lng = parseFloat(document.getElementById('fmap-admin-lng').value);
+                if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+                    if (statusEl) { statusEl.style.color = '#f87171'; statusEl.textContent = 'Invalid coordinates'; }
+                    return;
+                }
                 var payload   = {
-                    lat:         parseFloat(document.getElementById('fmap-admin-lat').value),
-                    lng:         parseFloat(document.getElementById('fmap-admin-lng').value),
+                    lat:         lat,
+                    lng:         lng,
                     name:        document.getElementById('fmap-admin-name').value.trim(),
                     type:        document.getElementById('fmap-admin-type').value,
                     description: document.getElementById('fmap-admin-desc').value.trim(),
@@ -3975,17 +4320,67 @@
                     body:    JSON.stringify(payload),
                 })
                 .then(function (r) {
-                    if (!r.ok) throw new Error('Server error ' + r.status);
+                    if (!r.ok) {
+                        return r.json().then(
+                            function (j) { throw new Error(j.error || ('Server error ' + r.status)); },
+                            function ()  { throw new Error('Server error ' + r.status); }
+                        );
+                    }
                     return r.json();
                 })
-                .then(function () {
+                .then(function (saved) {
                     saveBtn.disabled    = false;
                     saveBtn.textContent = 'Save';
+                    // Remember marker type for the next Add Marker (only for new markers)
+                    if (!markerId) {
+                        try { localStorage.setItem(_MARKER_TYPE_KEY, payload.type); } catch (_e) {}
+                    }
                     _closeAdminModal();
                     spotCache = {}; _spotCacheKeys = []; _spotBoundsCache = {};
                     try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
-                    _showAdminToast(markerId ? 'Marker updated' : 'Marker added');
                     scheduleFishingSpotQuery();
+                    _refreshActivePanelTab();
+                    if (_prevMarkerData) {
+                        _showUndoToast('Marker updated', function () {
+                            fetch('/api/map/custom-markers/' + _prevMarkerData.id, {
+                                method:  'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    lat:         _prevMarkerData.lat,
+                                    lng:         _prevMarkerData.lng,
+                                    name:        _prevMarkerData.name,
+                                    type:        _prevMarkerData.type,
+                                    description: _prevMarkerData.description,
+                                }),
+                            })
+                            .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                            .then(function () {
+                                _showAdminToast('Marker reverted');
+                                spotCache = {}; _spotCacheKeys = []; _spotBoundsCache = {};
+                                try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
+                                scheduleFishingSpotQuery();
+                                _refreshActivePanelTab();
+                            })
+                            .catch(function () { _showAdminToast('Revert failed', true); });
+                        });
+                    } else if (!markerId && saved && saved.id) {
+                        // Undo for new adds: delete the just-created marker
+                        var _newMid = saved.id;
+                        _showUndoToast('Marker added', function () {
+                            fetch('/api/map/custom-markers/' + _newMid, { method: 'DELETE' })
+                                .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                                .then(function () {
+                                    _showAdminToast('Marker removed');
+                                    spotCache = {}; _spotCacheKeys = []; _spotBoundsCache = {};
+                                    try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
+                                    scheduleFishingSpotQuery();
+                                    _refreshActivePanelTab();
+                                })
+                                .catch(function () { _showAdminToast('Undo failed', true); });
+                        });
+                    } else {
+                        _showAdminToast('Marker added');
+                    }
                 })
                 .catch(function (e) {
                     console.error('[admin] save marker failed:', e);
@@ -3999,40 +4394,15 @@
             });
         }
 
-        // ── Modal delete (two-tap confirmation — no blocking confirm dialog) ──
+        // ── Modal delete ──────────────────────────────────────────────────────
         var delBtn = document.getElementById('fmap-admin-delete');
         if (delBtn) {
-            var _delConfirmPending = false;
-            var _delConfirmTimer   = null;
-
             delBtn.addEventListener('click', function () {
                 var markerId = delBtn.dataset.markerId;
                 if (!markerId) return;
-
-                // First tap: ask for confirmation inline
-                if (!_delConfirmPending) {
-                    _delConfirmPending = true;
-                    delBtn.textContent = 'Confirm delete?';
-                    delBtn.style.background = '#991b1b';
-                    // Auto-reset after 3 s if they don't confirm
-                    _delConfirmTimer = setTimeout(function () {
-                        _delConfirmPending = false;
-                        delBtn.textContent = 'Delete';
-                        delBtn.style.background = '#dc2626';
-                    }, 3000);
-                    return;
-                }
-
-                // Second tap: execute delete
-                clearTimeout(_delConfirmTimer);
-                _delConfirmPending = false;
-                delBtn.textContent = 'Delete';
-                delBtn.style.background = '#dc2626';
-
                 var statusEl = document.getElementById('fmap-admin-status');
                 if (statusEl) { statusEl.textContent = ''; statusEl.style.color = ''; }
                 delBtn.disabled = true;
-
                 fetch('/api/map/custom-markers/' + markerId, { method: 'DELETE' })
                 .then(function (r) {
                     if (!r.ok) throw new Error('Server error ' + r.status);
@@ -4043,8 +4413,20 @@
                     _closeAdminModal();
                     spotCache = {}; _spotCacheKeys = []; _spotBoundsCache = {};
                     try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
-                    _showAdminToast('Marker deleted');
                     scheduleFishingSpotQuery();
+                    _refreshActivePanelTab();
+                    _showUndoToast('Marker deleted', function () {
+                        fetch('/api/map/custom-markers/' + markerId + '/restore', { method: 'POST' })
+                            .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                            .then(function () {
+                                _showAdminToast('Marker restored');
+                                spotCache = {}; _spotCacheKeys = []; _spotBoundsCache = {};
+                                try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
+                                scheduleFishingSpotQuery();
+                                _refreshActivePanelTab();
+                            })
+                            .catch(function () { _showAdminToast('Restore failed', true); });
+                    });
                 })
                 .catch(function (e) {
                     console.error('[admin] delete marker failed:', e);
@@ -4055,16 +4437,6 @@
                     }
                 });
             });
-
-            // Reset confirmation state when modal closes
-            var _origCloseAdminModal = _closeAdminModal;
-            _closeAdminModal = function () {
-                _delConfirmPending = false;
-                clearTimeout(_delConfirmTimer);
-                delBtn.textContent = 'Delete';
-                delBtn.style.background = '#dc2626';
-                _origCloseAdminModal();
-            };
         }
 
         // ── Modal close / backdrop ────────────────────────────────────────────
@@ -4073,6 +4445,51 @@
 
         var backdrop = document.getElementById('fmap-admin-backdrop');
         if (backdrop) backdrop.addEventListener('click', _closeAdminModal);
+
+        // ── Live preview pin while editing coordinates manually ────────────────
+        var latInput = document.getElementById('fmap-admin-lat');
+        var lngInput = document.getElementById('fmap-admin-lng');
+        function _updatePreviewPinFromInputs() {
+            var lat = parseFloat(latInput.value);
+            var lng = parseFloat(lngInput.value);
+            if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) return;
+            if (_adminPreviewPin) {
+                _adminPreviewPin.setLatLng([lat, lng]);
+            } else {
+                _adminPreviewPin = L.marker([lat, lng], {
+                    icon: L.divIcon({
+                        className: 'fmap-spot-wrap',
+                        html: '<span class="fmap-preview-pin">📍</span>',
+                        iconSize: [26, 26], iconAnchor: [13, 26],
+                    }),
+                    interactive: false,
+                }).addTo(map);
+            }
+        }
+        if (latInput) latInput.addEventListener('input', _updatePreviewPinFromInputs);
+        if (lngInput) lngInput.addEventListener('input', _updatePreviewPinFromInputs);
+
+        // ── Auto-fill description from STRUCTURE_TIPS when type changes ─────────
+        var adminTypeEl = document.getElementById('fmap-admin-type');
+        var adminDescEl = document.getElementById('fmap-admin-desc');
+        if (adminTypeEl && adminDescEl) {
+            adminTypeEl.addEventListener('change', function () {
+                if (adminDescEl.value.trim()) return; // don't overwrite the admin's text
+                var tip = STRUCTURE_TIPS[adminTypeEl.value] || '';
+                if (tip) adminDescEl.value = tip;
+            });
+        }
+
+        // Enter key in single-line inputs submits the marker modal
+        var adminNameInput = document.getElementById('fmap-admin-name');
+        [latInput, lngInput, adminNameInput].forEach(function (el) {
+            if (!el) return;
+            el.addEventListener('keydown', function (e) {
+                if (e.key !== 'Enter') return;
+                var sb = document.getElementById('fmap-admin-save');
+                if (sb && !sb.disabled) sb.click();
+            });
+        });
     }
 
     // ─── Admin habitat drawing / editing ─────────────────────────────────────
@@ -4086,6 +4503,9 @@
         if (backdrop) backdrop.hidden = false;
         var statusEl = document.getElementById('fmap-habitat-status');
         if (statusEl) { statusEl.textContent = ''; statusEl.style.color = ''; }
+        // Focus the name field so the user can type immediately
+        var nameEl = document.getElementById('fmap-habitat-name');
+        if (nameEl) setTimeout(function () { nameEl.focus(); }, 30);
     }
 
     function _closeHabitatModal() {
@@ -4093,7 +4513,35 @@
         var backdrop = document.getElementById('fmap-habitat-backdrop');
         if (modal)    modal.hidden    = true;
         if (backdrop) backdrop.hidden = true;
+        if (_habitatModalPreview && map) { map.removeLayer(_habitatModalPreview); _habitatModalPreview = null; }
+        // Restore the map layer's original style if the admin made live-preview changes but cancelled
+        if (_habitatEditOrigStyle) {
+            var _herFound = _customHabitats.filter(function (h) { return h.id === _habitatEditOrigStyle.id; })[0];
+            if (_herFound && _herFound.leaflet) _herFound.leaflet.setStyle(_habitatEditOrigStyle);
+            _habitatEditOrigStyle = null;
+        }
+        var _savedGeom = _pendingHabitatGeom;
+        var _wasNewDraw = !_habitatEditData && !!_pendingHabitatGeom;
         _pendingHabitatGeom = null;
+        var hDelBtn = document.getElementById('fmap-habitat-delete');
+        if (hDelBtn) hDelBtn.disabled = false;
+        // If we came from the panel, reopen it so the admin can continue browsing
+        if (_habitatEditedFromPanel) {
+            _habitatEditedFromPanel = false;
+            _habitatPanelOpen = true;
+            var _rPanel = document.getElementById('fmap-habitat-panel');
+            var _rBtn = document.getElementById('fmap-admin-habitats-list-btn');
+            if (_rPanel) _rPanel.hidden = false;
+            if (_rBtn) { _rBtn.classList.add('fmap-ctrl-btn--active'); _rBtn.setAttribute('aria-pressed', 'true'); }
+            _habitatPanelActiveTab = 'habitats';
+            _refreshActivePanelTab();
+        }
+        if (_wasNewDraw) {
+            _showUndoToast('Drawn shape discarded', function () {
+                _habitatEditData = null;
+                _openHabitatAddModal(_savedGeom);
+            });
+        }
     }
 
     function _openHabitatEditModal(habitatData) {
@@ -4115,6 +4563,18 @@
             }
         }
         document.getElementById('fmap-habitat-color').value = habitatData.fill_color || '#22c55e';
+        var _hFoEl = document.getElementById('fmap-habitat-fill-opacity');
+        if (_hFoEl) {
+            _hFoEl.value = (habitatData.fill_opacity != null) ? habitatData.fill_opacity : 0.35;
+            var _hFoOut = document.getElementById('fmap-habitat-fill-opacity-val');
+            if (_hFoOut) _hFoOut.value = parseFloat(_hFoEl.value);
+        }
+        var _hSwEl = document.getElementById('fmap-habitat-stroke-weight');
+        if (_hSwEl) {
+            _hSwEl.value = (habitatData.stroke_weight != null) ? habitatData.stroke_weight : 2.5;
+            var _hSwOut = document.getElementById('fmap-habitat-stroke-weight-val');
+            if (_hSwOut) _hSwOut.value = parseFloat(_hSwEl.value);
+        }
         document.getElementById('fmap-habitat-desc').value  = habitatData.description || '';
         var saveBtn = document.getElementById('fmap-habitat-save');
         if (saveBtn) saveBtn.dataset.habitatId = habitatData.id;
@@ -4129,6 +4589,8 @@
             reshapeBtn.hidden = !hasPolygon;
             reshapeBtn.dataset.habitatId = habitatData.id;
         }
+        var redrawBtn = document.getElementById('fmap-habitat-redraw');
+        if (redrawBtn) redrawBtn.hidden = !habitatData.id; // only for saved habitats
         // Show move button only for saved Point habitats
         var moveBtn = document.getElementById('fmap-habitat-move');
         if (moveBtn) {
@@ -4136,7 +4598,14 @@
             moveBtn.hidden = !hasPoint;
         }
         var hint = document.getElementById('fmap-habitat-draw-hint');
-        if (hint) hint.hidden = true;
+        if (hint) {
+            var _areaLabel = (_resolvedGeom && _resolvedGeom.type === 'Polygon') ? _polyAreaLabel(_resolvedGeom) : null;
+            if (_areaLabel) {
+                var _vCount = _resolvedGeom.coordinates && _resolvedGeom.coordinates[0] ? _resolvedGeom.coordinates[0].length - 1 : 0;
+                hint.hidden = false;
+                hint.textContent = 'Area ≈ ' + _areaLabel + (_vCount > 0 ? ' · ' + _vCount + ' vert' + (_vCount === 1 ? 'ex' : 'ices') : '');
+            } else { hint.hidden = true; }
+        }
         // Audit info: show created/updated timestamps when available
         var auditEl = document.getElementById('fmap-habitat-audit');
         if (auditEl) {
@@ -4152,6 +4621,24 @@
         // Use the resolved GeoJSON geometry for round-tripping back to the server
         _pendingHabitatGeom = _resolvedGeom;
         _habitatEditData = habitatData;
+        // Capture the true original map layer style for restore-on-cancel.
+        // If a panel hover is currently active on this layer, _panelHoverOrig holds
+        // the real pre-hover values; restoring it now avoids capturing the brightened
+        // hover style as the "original" (which would leave the layer permanently bright
+        // if the user cancels).
+        _habitatEditOrigStyle = null;
+        var _heoFound = _customHabitats.filter(function (h) { return h.id === habitatData.id; })[0];
+        if (_heoFound && _heoFound.leaflet) {
+            if (_heoFound._panelHoverOrig) {
+                // Restore true style from hover snapshot, then clear the hover state
+                _heoFound.leaflet.setStyle(_heoFound._panelHoverOrig);
+                _habitatEditOrigStyle = Object.assign({ id: habitatData.id }, _heoFound._panelHoverOrig);
+                delete _heoFound._panelHoverOrig;
+            } else {
+                var _heoOpts = _heoFound.leaflet.options || {};
+                _habitatEditOrigStyle = { id: habitatData.id, fillColor: _heoOpts.fillColor, color: _heoOpts.color, fillOpacity: _heoOpts.fillOpacity, weight: _heoOpts.weight };
+            }
+        }
         _openHabitatModal();
     }
 
@@ -4159,9 +4646,17 @@
         var modal = document.getElementById('fmap-habitat-modal');
         if (!modal) return;
         document.getElementById('fmap-habitat-modal-title').textContent = 'Add Habitat';
+        var _addType  = _lastHabitatType  || 'general';
+        var _addColor = _lastHabitatColor || _TYPE_DEFAULT_COLORS[_addType] || '#818cf8';
         document.getElementById('fmap-habitat-name').value  = '';
-        document.getElementById('fmap-habitat-type').value  = 'general';
-        document.getElementById('fmap-habitat-color').value = '#22c55e';
+        document.getElementById('fmap-habitat-type').value  = _addType;
+        document.getElementById('fmap-habitat-color').value = _addColor;
+        var _addFo = _lastHabitatFillOpacity  != null ? _lastHabitatFillOpacity  : 0.35;
+        var _addSw = _lastHabitatStrokeWeight != null ? _lastHabitatStrokeWeight : 2.5;
+        var _aFoEl = document.getElementById('fmap-habitat-fill-opacity');
+        if (_aFoEl) { _aFoEl.value = _addFo; var _aFoOut = document.getElementById('fmap-habitat-fill-opacity-val'); if (_aFoOut) _aFoOut.value = _addFo; }
+        var _aSwEl = document.getElementById('fmap-habitat-stroke-weight');
+        if (_aSwEl) { _aSwEl.value = _addSw; var _aSwOut = document.getElementById('fmap-habitat-stroke-weight-val'); if (_aSwOut) _aSwOut.value = _addSw; }
         document.getElementById('fmap-habitat-desc').value  = '';
         var saveBtn = document.getElementById('fmap-habitat-save');
         if (saveBtn) saveBtn.dataset.habitatId = '';
@@ -4169,14 +4664,35 @@
         if (delBtn) delBtn.hidden = true;
         var reshapeBtn = document.getElementById('fmap-habitat-reshape');
         if (reshapeBtn) reshapeBtn.hidden = true;
+        var redrawBtn2 = document.getElementById('fmap-habitat-redraw');
+        if (redrawBtn2) redrawBtn2.hidden = true;
         var moveBtn2 = document.getElementById('fmap-habitat-move');
         if (moveBtn2) moveBtn2.hidden = true;
         var hint = document.getElementById('fmap-habitat-draw-hint');
-        if (hint) hint.hidden = true;
+        if (hint) {
+            var _addAreaLabel = (geometry && geometry.type === 'Polygon') ? _polyAreaLabel(geometry) : null;
+            if (_addAreaLabel) {
+                var _addVCount = geometry.coordinates && geometry.coordinates[0] ? geometry.coordinates[0].length - 1 : 0;
+                hint.hidden = false;
+                hint.textContent = 'Area ≈ ' + _addAreaLabel + (_addVCount > 0 ? ' · ' + _addVCount + ' vert' + (_addVCount === 1 ? 'ex' : 'ices') : '');
+            } else { hint.hidden = true; }
+        }
         var auditEl2 = document.getElementById('fmap-habitat-audit');
         if (auditEl2) auditEl2.hidden = true;
         _pendingHabitatGeom = geometry;
         _habitatEditData = null;
+        // Show a dashed preview polygon on the map so the admin can see the drawn
+        // shape while filling in name/type/etc. in the form.
+        if (_habitatModalPreview && map) { map.removeLayer(_habitatModalPreview); _habitatModalPreview = null; }
+        if (map && geometry && geometry.type === 'Polygon') {
+            var _mpCoords = (geometry.coordinates[0] || []).map(function (c) { return [c[1], c[0]]; });
+            if (_mpCoords.length >= 3) {
+                _habitatModalPreview = L.polygon(_mpCoords, {
+                    color: _addColor, fillColor: _addColor, weight: 2, dashArray: '6,4',
+                    fillOpacity: _addFo * 0.6, interactive: false
+                }).addTo(map);
+            }
+        }
         _openHabitatModal();
     }
 
@@ -4185,24 +4701,63 @@
         _habitatDrawMarkers.forEach(function (m) { if (map) map.removeLayer(m); });
         _habitatDrawMarkers = [];
         if (_habitatDrawPreview && map) { map.removeLayer(_habitatDrawPreview); _habitatDrawPreview = null; }
+        if (_habitatDrawRubberBand && map) { map.removeLayer(_habitatDrawRubberBand); _habitatDrawRubberBand = null; }
+        if (_habitatDrawRubberBandHandler && map) {
+            map.off('mousemove', _habitatDrawRubberBandHandler);
+            _habitatDrawRubberBandHandler = null;
+        }
     }
 
     function _startHabitatDraw() {
         if (!map) return;
-        // Abandon any in-progress vertex edit so handles are cleaned up
+        // Abandon any in-progress vertex/point edit so handles are cleaned up
         if (_habitatVertexEditMode) _cancelHabitatVertexEdit();
+        if (_habitatPointMoveMode) _cancelHabitatPointMove();
         _habitatDrawMode = true;
         _clearHabitatDraw();
         map.getContainer().style.cursor = 'crosshair';
-        _showAdminToast('Click to add vertices. Double-click to finish polygon.');
+        var vcEl = document.getElementById('fmap-reshape-vertex-count');
+        if (vcEl) vcEl.textContent = '0 vertices · need 3 more';
+        var bar = document.getElementById('fmap-habitat-reshape-bar');
+        if (bar) bar.hidden = false;
+        var _doneBtn = document.getElementById('fmap-habitat-reshape-done');
+        if (_doneBtn) _doneBtn.disabled = true; // re-enabled once ≥ 3 vertices are placed
+        // Wire rubber-band line (last vertex → cursor) for visual guidance
+        if (!_habitatDrawRubberBandHandler) {
+            _habitatDrawRubberBandHandler = function (e) {
+                if (!_habitatDrawMode || _habitatDrawVerts.length === 0) {
+                    if (_habitatDrawRubberBand && map) { map.removeLayer(_habitatDrawRubberBand); _habitatDrawRubberBand = null; }
+                    return;
+                }
+                var last = _habitatDrawVerts[_habitatDrawVerts.length - 1];
+                var cursor = [e.latlng.lat, e.latlng.lng];
+                var _rbColor = (document.getElementById('fmap-habitat-color') || {}).value || '#8b5cf6';
+                if (_habitatDrawRubberBand) {
+                    _habitatDrawRubberBand.setLatLngs([last, cursor]);
+                    _habitatDrawRubberBand.setStyle({ color: _rbColor });
+                } else {
+                    _habitatDrawRubberBand = L.polyline([last, cursor], {
+                        color: _rbColor, weight: 1.5, dashArray: '5,4', opacity: 0.65, interactive: false
+                    }).addTo(map);
+                }
+            };
+            map.on('mousemove', _habitatDrawRubberBandHandler);
+        }
+        _showAdminToast('Click to place vertices · Backspace to undo · Enter or double-click to finish');
     }
 
     function _cancelHabitatDraw() {
         _habitatDrawMode = false;
+        var wasRedraw = _habitatRedrawMode;
+        _habitatRedrawMode = false;
         _clearHabitatDraw();
         if (map) map.getContainer().style.cursor = '';
+        var bar = document.getElementById('fmap-habitat-reshape-bar');
+        if (bar) bar.hidden = true;
         var btn = document.getElementById('fmap-admin-habitat-btn');
         if (btn) { btn.classList.remove('fmap-ctrl-btn--active'); btn.setAttribute('aria-pressed', 'false'); }
+        // If the user cancelled a Redraw session, restore the edit modal with original geometry
+        if (wasRedraw && _habitatEditData) _openHabitatEditModal(_habitatEditData);
     }
 
     function _onHabitatDrawClick(e) {
@@ -4210,8 +4765,10 @@
         var ll = e.latlng;
         _habitatDrawVerts.push([ll.lat, ll.lng]);
 
+        var _dotColor = (document.getElementById('fmap-habitat-color') || {}).value || '#8b5cf6';
         var dot = L.circleMarker([ll.lat, ll.lng], {
-            radius: 5, color: '#8b5cf6', fillColor: '#8b5cf6', fillOpacity: 0.9, weight: 2
+            radius: 5, color: _dotColor, fillColor: _dotColor, fillOpacity: 0.9, weight: 2,
+            interactive: false
         }).addTo(map);
         _habitatDrawMarkers.push(dot);
 
@@ -4219,10 +4776,32 @@
         if (_habitatDrawPreview) map.removeLayer(_habitatDrawPreview);
         if (_habitatDrawVerts.length >= 2) {
             var previewCoords = _habitatDrawVerts.concat([_habitatDrawVerts[0]]);
+            var _pColor = (document.getElementById('fmap-habitat-color') || {}).value || '#8b5cf6';
             _habitatDrawPreview = L.polygon(previewCoords, {
-                color: '#8b5cf6', weight: 2, dashArray: '6,4', fillOpacity: 0.15
+                color: _pColor, weight: 2, dashArray: '6,4', fillOpacity: 0.18, fillColor: _pColor,
+                interactive: false
             }).addTo(map);
         }
+
+        var n = _habitatDrawVerts.length;
+        if (n === 3) {
+            var _dbDoneBtn = document.getElementById('fmap-habitat-reshape-done');
+            if (_dbDoneBtn) _dbDoneBtn.disabled = false;
+        }
+        var suffix = n < 3 ? ' · need ' + (3 - n) + ' more' : ' · Enter or click Done to finish';
+        var vcDrawEl = document.getElementById('fmap-reshape-vertex-count');
+        if (vcDrawEl) {
+            var _vcDrawArea = '';
+            if (n >= 3) {
+                var _vcDrawCoords = _habitatDrawVerts.map(function (c) { return [c[1], c[0]]; });
+                _vcDrawCoords.push(_vcDrawCoords[0]);
+                var _vcDrawGeom = { type: 'Polygon', coordinates: [_vcDrawCoords] };
+                var _vcDrawLabel = _polyAreaLabel(_vcDrawGeom);
+                if (_vcDrawLabel) _vcDrawArea = ' · ' + _vcDrawLabel;
+            }
+            vcDrawEl.textContent = n + (n === 1 ? ' vertex' : ' vertices') + (n < 3 ? ' · need ' + (3 - n) + ' more' : _vcDrawArea);
+        }
+        _showAdminToast(n + (n === 1 ? ' vertex' : ' vertices') + suffix);
     }
 
     function _finishHabitatDraw() {
@@ -4238,13 +4817,24 @@
         };
         _clearHabitatDraw();
         _habitatDrawMode = false;
+        var wasRedraw = _habitatRedrawMode;
+        _habitatRedrawMode = false;
         if (map) map.getContainer().style.cursor = '';
+        var _drawBar = document.getElementById('fmap-habitat-reshape-bar');
+        if (_drawBar) _drawBar.hidden = true;
         var btn = document.getElementById('fmap-admin-habitat-btn');
         if (btn) { btn.classList.remove('fmap-ctrl-btn--active'); btn.setAttribute('aria-pressed', 'false'); }
-        _openHabitatAddModal(geometry);
+        // If redrawing an existing habitat's shape, re-open the edit modal with the new geometry
+        if (wasRedraw && _habitatEditData) {
+            _habitatEditData = Object.assign({}, _habitatEditData, { geojson_geometry: geometry });
+            _pendingHabitatGeom = geometry;
+            _openHabitatEditModal(_habitatEditData);
+        } else {
+            _openHabitatAddModal(geometry);
+        }
     }
 
-    function _saveHabitat(habitatId, payload, onSuccess) {
+    function _saveHabitat(habitatId, payload, onSuccess, prevData) {
         var url = '/api/v1/admin/habitats';
         if (habitatId) { payload.id = habitatId; }
 
@@ -4263,15 +4853,59 @@
             }
             return r.json();
         })
-        .then(function () {
+        .then(function (saved) {
+            _pendingHabitatGeom = null; // clear before close so the "discarded" toast doesn't fire
+            _habitatEditOrigStyle = null; // clear so _closeHabitatModal doesn't restore old style after save
             _closeHabitatModal();
             aiCache = {}; _aiCacheKeys = [];
             try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
-            _showAdminToast(habitatId ? 'Habitat updated' : 'Habitat added');
             scheduleAIQuery();
-            // Keep the management panel list fresh without requiring a reopen
             if (_habitatPanelOpen) _loadHabitatPanel();
             if (onSuccess) onSuccess();
+            if (habitatId && prevData) {
+                // Undo for edits: restore previous field values
+                _showUndoToast('Habitat updated', function () {
+                    fetch('/api/v1/admin/habitats', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            id:           habitatId,
+                            habitat_type: prevData.habitat_type || 'general',
+                            name:         prevData.name         || '',
+                            description:  prevData.description  || '',
+                            fill_color:   prevData.fill_color   || '',
+                            fill_opacity: prevData.fill_opacity != null ? prevData.fill_opacity : 0.35,
+                            stroke_weight: prevData.stroke_weight != null ? prevData.stroke_weight : 2.5,
+                            geometry:     prevData.geometry,
+                        }),
+                    })
+                    .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                    .then(function () {
+                        aiCache = {}; _aiCacheKeys = [];
+                        try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
+                        _showAdminToast('Habitat reverted');
+                        scheduleAIQuery();
+                        if (_habitatPanelOpen) _loadHabitatPanel();
+                    })
+                    .catch(function () { _showAdminToast('Revert failed', true); });
+                });
+            } else if (!habitatId && saved && saved.id) {
+                // Undo for new adds: delete the just-created habitat
+                var newId = saved.id;
+                _showUndoToast('Habitat added', function () {
+                    fetch('/api/v1/admin/habitats/' + encodeURIComponent(newId), { method: 'DELETE' })
+                        .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                        .then(function () {
+                            aiCache = {}; _aiCacheKeys = [];
+                            try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
+                            _showAdminToast('Habitat removed');
+                            scheduleAIQuery();
+                            if (_habitatPanelOpen) _loadHabitatPanel();
+                        })
+                        .catch(function () { _showAdminToast('Undo failed', true); });
+                });
+            } else {
+                _showAdminToast('Habitat added');
+            }
         })
         .catch(function (e) {
             console.error('[admin] save habitat failed:', e);
@@ -4286,6 +4920,9 @@
 
     function _startHabitatVertexEdit(geojson) {
         if (!map || !geojson || geojson.type !== 'Polygon') return;
+        if (_habitatDrawMode) _cancelHabitatDraw();
+        if (_habitatPointMoveMode) _cancelHabitatPointMove();
+        if (_habitatVertexEditMode) _cancelHabitatVertexEdit();
         _habitatVertexEditMode = true;
         var ring = geojson.coordinates[0];
         // GeoJSON rings close by repeating the first vertex — skip the duplicate
@@ -4307,6 +4944,8 @@
                 zIndexOffset: 500
             }).addTo(map);
             m.on('drag dragend', _updateHabitatVertexPreview);
+            m.on('dragend', _updateMidpointMarkers);
+            _wireVertexDelete(m);
             _habitatVertexMarkers.push(m);
         });
 
@@ -4314,7 +4953,27 @@
         _updateMidpointMarkers();
         var bar = document.getElementById('fmap-habitat-reshape-bar');
         if (bar) bar.hidden = false;
+        var _vesDoneBtn = document.getElementById('fmap-habitat-reshape-done');
+        if (_vesDoneBtn) _vesDoneBtn.disabled = false; // always ≥ 3 vertices in vertex-edit mode
         map.getContainer().style.cursor = 'default';
+    }
+
+    // Right-click (or long-press via contextmenu) on a vertex to remove it.
+    // Requires ≥ 4 vertices so the polygon retains its minimum of 3 after deletion.
+    function _wireVertexDelete(m) {
+        m.on('contextmenu', function (e) {
+            L.DomEvent.stop(e);
+            if (_habitatVertexMarkers.length <= 3) {
+                _showAdminToast('Polygon must keep at least 3 vertices', true);
+                return;
+            }
+            var idx = _habitatVertexMarkers.indexOf(m);
+            if (idx === -1) return;
+            _habitatVertexMarkers.splice(idx, 1);
+            if (map) map.removeLayer(m);
+            _updateHabitatVertexPreview();
+            _updateMidpointMarkers();
+        });
     }
 
     function _updateHabitatVertexPreview() {
@@ -4322,13 +4981,21 @@
             var ll = m.getLatLng();
             return [ll.lat, ll.lng];
         });
+        var _reshapeColor = (_overrideEditData && _overrideEditData.color)
+            ? _overrideEditData.color
+            : (_habitatEditData && _habitatEditData.fill_color)
+                ? _habitatEditData.fill_color
+                : ((document.getElementById('fmap-habitat-color') || {}).value || '#a855f7');
         if (!_habitatVertexPreview) {
             _habitatVertexPreview = L.polygon(coords, {
-                color: '#a855f7', weight: 2.5, dashArray: '6,4', fillOpacity: 0.15
+                color: _reshapeColor, fillColor: _reshapeColor,
+                weight: 2.5, dashArray: '6,4', fillOpacity: 0.18,
+                interactive: false
             });
             if (map) _habitatVertexPreview.addTo(map);
         } else {
             _habitatVertexPreview.setLatLngs(coords);
+            _habitatVertexPreview.setStyle({ color: _reshapeColor, fillColor: _reshapeColor });
         }
         _updateMidpointMarkers();
     }
@@ -4339,6 +5006,18 @@
         _habitatMidpointMarkers.forEach(function (m) { if (map) map.removeLayer(m); });
         _habitatMidpointMarkers = [];
         var n = _habitatVertexMarkers.length;
+        var vcEl = document.getElementById('fmap-reshape-vertex-count');
+        if (vcEl) {
+            var _vcArea = '';
+            if (n >= 3) {
+                var _vcCoords = _habitatVertexMarkers.map(function (m) { var ll = m.getLatLng(); return [ll.lng, ll.lat]; });
+                _vcCoords.push(_vcCoords[0]); // close ring
+                var _vcGeom = { type: 'Polygon', coordinates: [_vcCoords] };
+                var _vcLabel = _polyAreaLabel(_vcGeom);
+                if (_vcLabel) _vcArea = ' · ' + _vcLabel;
+            }
+            vcEl.textContent = n + ' vert' + (n === 1 ? 'ex' : 'ices') + _vcArea + ' · Enter or Done to finish';
+        }
         if (n < 2 || !map) return;
         for (var _mi = 0; _mi < n; _mi++) {
             var _a = _habitatVertexMarkers[_mi].getLatLng();
@@ -4371,8 +5050,11 @@
                         zIndexOffset: 500
                     }).addTo(map);
                     newM.on('drag dragend', _updateHabitatVertexPreview);
+                    newM.on('dragend', _updateMidpointMarkers);
+                    _wireVertexDelete(newM);
                     _habitatVertexMarkers.splice(insertAfter + 1, 0, newM);
                     _updateHabitatVertexPreview();
+                    _updateMidpointMarkers();
                 });
                 _habitatMidpointMarkers.push(mm);
             }(_mi));
@@ -4388,12 +5070,29 @@
             coords.push(coords[0]); // close the ring
         }
         var newGeojson = { type: 'Polygon', coordinates: [coords] };
-        _pendingHabitatGeom = newGeojson;
+        var savedOverride = _overrideEditData;
         _cancelHabitatVertexEdit();
-        // Re-open the edit modal with the updated geometry
-        if (_habitatEditData) {
-            _habitatEditData = Object.assign({}, _habitatEditData, { geojson_geometry: newGeojson });
-            _openHabitatEditModal(_habitatEditData);
+        if (savedOverride) {
+            // Reshaping an AI overlay — re-open override modal; geometry is now explicitly overridden
+            _openOverrideModal(
+                savedOverride.featureKey,
+                savedOverride.overrideId,
+                savedOverride.name,
+                savedOverride.desc,
+                savedOverride.color,
+                newGeojson,
+                true,  // geomIsOverride: user explicitly set this shape
+                savedOverride.createdAt, savedOverride.updatedAt,
+                savedOverride.fill_opacity,
+                savedOverride.stroke_weight
+            );
+        } else {
+            // Custom habitat reshape — set pending geometry for habitat save
+            _pendingHabitatGeom = newGeojson;
+            if (_habitatEditData) {
+                _habitatEditData = Object.assign({}, _habitatEditData, { geojson_geometry: newGeojson });
+                _openHabitatEditModal(_habitatEditData);
+            }
         }
     }
 
@@ -4416,6 +5115,9 @@
 
     function _startHabitatPointMove(habitatData) {
         if (!map || !habitatData) return;
+        if (_habitatDrawMode) _cancelHabitatDraw();
+        if (_habitatVertexEditMode) _cancelHabitatVertexEdit();
+        if (_habitatPointMoveMode) _cancelHabitatPointMove();
         _habitatPointMoveMode = true;
         // Resolve starting coordinates from GeoJSON geometry or lat/lng fallback
         var geom = habitatData.geojson_geometry || habitatData.geometry;
@@ -4470,9 +5172,49 @@
 
     // ─── Habitat management panel ─────────────────────────────────────────────
 
+    var _BUILTIN_HABITAT_LABELS = {
+        surf:      'Surf / Beach',
+        grassflat: 'Seagrass Flat',
+        estuary:   'Estuary / Oyster',
+        reef:      'Reef',
+        mangrove:  'Mangrove',
+        kelp:      'Kelp Forest',
+        bottom:    'Bottom / Shoal',
+        tidalflat: 'Tidal Flat',
+        pelagic:   'Pelagic / Offshore',
+        general:   'General',
+    };
+
+    function _habitatTypeLabel(slug) {
+        if (!slug) return 'General';
+        if (_BUILTIN_HABITAT_LABELS[slug]) return _BUILTIN_HABITAT_LABELS[slug];
+        var ct = _customHabitatTypes.filter(function (t) { return t.slug === slug; })[0];
+        return ct ? ct.name : slug;
+    }
+
     var _habitatPanelAllData  = [];     // full unfiltered list from server
-    var _habitatPanelSort     = 'date'; // 'date' | 'name' | 'type'
+    var _habitatPanelSort     = 'date'; // 'date' | 'name' | 'type' | 'area'
     var _habitatPanelSearch   = '';     // live search string
+
+    // Clear all four types of panel hover state (suppressed ghost, override highlight,
+    // habitat highlight, marker highlight).  Called whenever the panel closes or the
+    // active tab changes so highlights don't get stranded on the map.
+    function _clearPanelHoverState() {
+        if (_suppressedGhost) { _suppressedGhost.remove(); _suppressedGhost = null; }
+        if (_ovHoverActive) {
+            var _cpLyr = _aiPolyByKey[_ovHoverActive.fKey];
+            if (_cpLyr) _cpLyr.setStyle(_ovHoverActive.origStyle);
+            _ovHoverActive = null;
+        }
+        _customHabitats.forEach(function (h) {
+            if (h._panelHoverOrig && h.leaflet) { h.leaflet.setStyle(h._panelHoverOrig); delete h._panelHoverOrig; }
+        });
+        if (_markerHoverMid) {
+            var _cpMh = _customMarkers.filter(function (cm) { return String(cm.id) === _markerHoverMid; })[0];
+            if (_cpMh && _cpMh.leaflet) { var _cpEl = _cpMh.leaflet.getElement(); if (_cpEl) _cpEl.classList.remove('fmap-marker-hover'); }
+            _markerHoverMid = null;
+        }
+    }
 
     function _loadHabitatPanel() {
         var listEl = document.getElementById('fmap-habitat-panel-list');
@@ -4482,6 +5224,7 @@
             .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
             .then(function (data) {
                 _habitatPanelAllData = data.habitats || [];
+                _setTabCount('habitats', _habitatPanelAllData.length);
                 _applyHabitatPanelFilter();
             })
             .catch(function (e) {
@@ -4506,6 +5249,7 @@
             if (!q) return true;
             return (h.name || '').toLowerCase().indexOf(q) !== -1 ||
                    (h.habitat_type || '').toLowerCase().indexOf(q) !== -1 ||
+                   _habitatTypeLabel(h.habitat_type || 'general').toLowerCase().indexOf(q) !== -1 ||
                    (h.description || '').toLowerCase().indexOf(q) !== -1;
         });
 
@@ -4513,50 +5257,96 @@
             if (_habitatPanelSort === 'name') {
                 return (a.name || '').localeCompare(b.name || '');
             } else if (_habitatPanelSort === 'type') {
-                return (a.habitat_type || '').localeCompare(b.habitat_type || '');
+                return _habitatTypeLabel(a.habitat_type || 'general').localeCompare(_habitatTypeLabel(b.habitat_type || 'general'));
+            } else if (_habitatPanelSort === 'area') {
+                return _polyAreaSqM(b.geometry) - _polyAreaSqM(a.geometry); // largest first
             }
             // Default: date descending (newest first)
             return (b.created_at || '').localeCompare(a.created_at || '');
         });
 
+        _setTabCount('habitats', filtered.length, _habitatPanelAllData.length);
         _renderHabitatPanelList(filtered);
     }
 
     function _renderHabitatPanelList(habitats) {
         var el = document.getElementById('fmap-habitat-panel-list');
         if (!el) return;
+        var savedScroll = el.scrollTop;
+        // Restore any habitat highlighted by a previous row hover before replacing the list
+        _customHabitats.forEach(function (h) {
+            if (h._panelHoverOrig && h.leaflet) { h.leaflet.setStyle(h._panelHoverOrig); delete h._panelHoverOrig; }
+        });
         if (!habitats.length) {
-            el.innerHTML = '<p class="fmap-habitat-panel-empty">' +
-                (_habitatPanelSearch ? 'No habitats match your search.' : 'No custom habitats yet.') +
-                '</p>';
+            if (_habitatPanelSearch) {
+                el.innerHTML = '<p class="fmap-habitat-panel-empty">No habitats match your search.</p>';
+            } else {
+                el.innerHTML = '<p class="fmap-habitat-panel-empty">No custom habitats yet.' +
+                    '<br><button class="fmap-panel-draw-shortcut fmap-empty-draw-btn" id="fmap-habitat-empty-draw-btn">+ Draw a habitat</button></p>';
+                var _emptyDrawBtn = document.getElementById('fmap-habitat-empty-draw-btn');
+                if (_emptyDrawBtn) {
+                    _emptyDrawBtn.addEventListener('click', function () {
+                        _habitatPanelOpen = false;
+                        var _epEl = document.getElementById('fmap-habitat-panel');
+                        var _epListBtn = document.getElementById('fmap-admin-habitats-list-btn');
+                        if (_epEl) _epEl.hidden = true;
+                        if (_epListBtn) { _epListBtn.classList.remove('fmap-ctrl-btn--active'); _epListBtn.setAttribute('aria-pressed', 'false'); }
+                        var _epDrawBtn = document.getElementById('fmap-admin-habitat-btn');
+                        if (_epDrawBtn && !_epDrawBtn.hidden) {
+                            if (!_habitatDrawMode) _epDrawBtn.click();
+                        } else { _startHabitatDraw(); }
+                    });
+                }
+            }
             return;
         }
         var html = '';
         habitats.forEach(function (h) {
             var colorSafe = esc(h.fill_color || '#8b5cf6');
             var nameSafe  = esc(h.name || '(unnamed)');
-            var typeSafe  = esc(h.habitat_type || 'general');
+            var typeSafe  = esc(_habitatTypeLabel(h.habitat_type || 'general'));
             var latStr    = (h.lat != null) ? String(h.lat) : '';
             var lngStr    = (h.lng != null) ? String(h.lng) : '';
+            var descShort = h.description ? esc(String(h.description).slice(0, 80)) + (h.description.length > 80 ? '…' : '') : '';
+            var titleText = h.description ? nameSafe + '&#10;' + esc(String(h.description).slice(0, 200)) : nameSafe;
+            var areaLabel = (h.geometry && h.geometry.type === 'Polygon') ? _polyAreaLabel(h.geometry) : null;
+            var vertexCount = (h.geometry && h.geometry.type === 'Polygon' && h.geometry.coordinates && h.geometry.coordinates[0]) ? h.geometry.coordinates[0].length - 1 : 0;
+            var areaDisplay = areaLabel ? (areaLabel + (vertexCount > 2 ? ' · ' + vertexCount + 'v' : '')) : null;
             html +=
-                '<div class="fmap-habitat-panel-item">' +
+                '<div class="fmap-habitat-panel-item" style="border-left:3px solid ' + colorSafe + '">' +
                 '<span class="fmap-habitat-panel-color" style="background:' + colorSafe + '"></span>' +
-                '<span class="fmap-habitat-panel-name" title="' + nameSafe + '">' + nameSafe + '</span>' +
+                '<span class="fmap-habitat-panel-name" title="' + titleText + '">' + nameSafe + '</span>' +
                 '<span class="fmap-habitat-panel-type">' + typeSafe + '</span>' +
+                (areaDisplay ? '<span class="fmap-habitat-panel-area" title="Approximate area and vertex count">' + esc(areaDisplay) + '</span>' : '') +
                 (latStr ? '<button class="fmap-habitat-panel-view" data-hid="' + esc(h.id) + '" data-lat="' + latStr + '" data-lng="' + lngStr + '" title="Pan to on map" aria-label="Pan to ' + nameSafe + '">⌖</button>' : '') +
                 '<button class="fmap-habitat-panel-edit" data-hid="' + esc(h.id) + '">Edit</button>' +
+                '<button class="fmap-habitat-panel-del fmap-override-item-del" data-hid="' + esc(h.id) + '" aria-label="Delete ' + nameSafe + '">Delete</button>' +
+                (descShort ? '<span class="fmap-habitat-panel-desc">' + descShort + '</span>' : '') +
                 '</div>';
         });
         el.innerHTML = html;
+        el.scrollTop = savedScroll;
 
         el.querySelectorAll('.fmap-habitat-panel-view').forEach(function (btn) {
             btn.addEventListener('click', function () {
                 var lat = parseFloat(btn.dataset.lat);
                 var lng = parseFloat(btn.dataset.lng);
-                if (!isNaN(lat) && !isNaN(lng) && map) {
-                    map.flyTo([lat, lng], Math.max(map.getZoom(), 14));
-                    _highlightHabitatOnMap(btn.dataset.hid);
+                var hid = btn.dataset.hid;
+                if (!map) return;
+                var _fitDone = false;
+                if (hid) {
+                    var _hFound = _customHabitats.filter(function (h) { return h.id === hid; })[0];
+                    if (_hFound && _hFound.leaflet && typeof _hFound.leaflet.getBounds === 'function') {
+                        try {
+                            var _hb = _hFound.leaflet.getBounds();
+                            if (_hb.isValid()) { map.fitBounds(_hb.pad(0.15), { maxZoom: 17, animate: true }); _fitDone = true; }
+                        } catch (_e) {}
+                    }
                 }
+                if (!_fitDone && !isNaN(lat) && !isNaN(lng)) {
+                    map.flyTo([lat, lng], Math.max(map.getZoom(), 14));
+                }
+                _highlightHabitatOnMap(hid);
             });
         });
 
@@ -4565,24 +5355,131 @@
                 var hid = btn.dataset.hid;
                 var hData = _habitatPanelAllData.filter(function (h) { return h.id === hid; })[0];
                 if (!hData) return;
+                _habitatEditedFromPanel = true;
                 _habitatPanelOpen = false;
                 var panel = document.getElementById('fmap-habitat-panel');
                 if (panel) panel.hidden = true;
                 var listBtn = document.getElementById('fmap-admin-habitats-list-btn');
                 if (listBtn) { listBtn.classList.remove('fmap-ctrl-btn--active'); listBtn.setAttribute('aria-pressed', 'false'); }
+                // Fit the polygon in view (or fall back to centroid flyTo)
+                if (map) {
+                    var _heFound = _customHabitats.filter(function (h) { return h.id === hid; })[0];
+                    var _heFit = false;
+                    if (_heFound && _heFound.leaflet && typeof _heFound.leaflet.getBounds === 'function') {
+                        try {
+                            var _heb = _heFound.leaflet.getBounds();
+                            if (_heb.isValid()) { map.fitBounds(_heb.pad(0.15), { maxZoom: 17, animate: true }); _heFit = true; }
+                        } catch (_e) {}
+                    }
+                    if (!_heFit && hData.lat != null && hData.lng != null) {
+                        map.flyTo([hData.lat, hData.lng], Math.max(map.getZoom(), 14));
+                    }
+                    _highlightHabitatOnMap(hid);
+                }
                 _openHabitatEditModal(hData);
+            });
+        });
+
+        el.querySelectorAll('.fmap-habitat-panel-del').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var hid = btn.dataset.hid;
+                if (!hid) return;
+                btn.disabled = true;
+                fetch('/api/v1/admin/habitats/' + encodeURIComponent(hid), { method: 'DELETE' })
+                    .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+                    .then(function () {
+                        aiCache = {}; _aiCacheKeys = [];
+                        try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
+                        scheduleAIQuery();
+                        _loadHabitatPanel();
+                        _showUndoToast('Habitat deleted', function () {
+                            fetch('/api/v1/admin/habitats/' + encodeURIComponent(hid) + '/restore', { method: 'POST' })
+                                .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                                .then(function () {
+                                    _showAdminToast('Habitat restored');
+                                    aiCache = {}; _aiCacheKeys = [];
+                                    try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
+                                    scheduleAIQuery();
+                                    _loadHabitatPanel();
+                                })
+                                .catch(function () { _showAdminToast('Restore failed', true); });
+                        });
+                    })
+                    .catch(function () {
+                        btn.disabled = false;
+                        _showAdminToast('Delete failed', true);
+                    });
+            });
+        });
+
+        // Hover over a panel row → softly highlight the polygon on the map
+        el.querySelectorAll('.fmap-habitat-panel-item').forEach(function (row) {
+            var hid = (row.querySelector('[data-hid]') || {}).dataset && row.querySelector('[data-hid]').dataset.hid;
+            if (!hid) return;
+            row.addEventListener('mouseenter', function () {
+                var found = _customHabitats.filter(function (h) { return h.id === hid; })[0];
+                if (!found || !found.leaflet) return;
+                var opts = found.leaflet.options || {};
+                found._panelHoverOrig = { fillOpacity: opts.fillOpacity, weight: opts.weight };
+                found.leaflet.setStyle({
+                    fillOpacity: Math.min(0.8, (opts.fillOpacity || 0.35) + 0.25),
+                    weight: (opts.weight || 2.5) + 1.5
+                });
+            });
+            row.addEventListener('mouseleave', function () {
+                var found = _customHabitats.filter(function (h) { return h.id === hid; })[0];
+                if (!found || !found.leaflet || !found._panelHoverOrig) return;
+                found.leaflet.setStyle(found._panelHoverOrig);
+                delete found._panelHoverOrig;
             });
         });
     }
 
     // ─── Overrides tab ────────────────────────────────────────────────────────
 
+    // Refresh whichever panel tab is currently visible (if the panel is open).
+    function _refreshActivePanelTab() {
+        if (!_habitatPanelOpen) return;
+        // Sync visual tab button and content panel visibility to _habitatPanelActiveTab.
+        var tab = _habitatPanelActiveTab || 'habitats';
+        document.querySelectorAll('.fmap-panel-tab').forEach(function (btn) {
+            var isActive = btn.dataset.tab === tab;
+            btn.classList.toggle('fmap-panel-tab--active', isActive);
+            btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        });
+        ['habitats', 'overrides', 'suppressed', 'markers'].forEach(function (name) {
+            var el = document.getElementById('fmap-panel-tab-' + name);
+            if (el) el.hidden = (name !== tab);
+        });
+        if (tab === 'overrides')  _loadOverridesTab();
+        else if (tab === 'suppressed') _loadSuppressedTab();
+        else if (tab === 'markers') _loadMarkersTab();
+        else _loadHabitatPanel();
+    }
+
+    function _setTabCount(tabName, count, total) {
+        var labels = { habitats: 'Habitats', overrides: 'Overrides', suppressed: 'Suppressed', markers: 'Markers' };
+        var btn = document.querySelector('.fmap-panel-tab[data-tab="' + tabName + '"]');
+        if (!btn) return;
+        var suffix = '';
+        if (count !== null) {
+            suffix = (total != null && total !== count)
+                ? ' (' + count + '/' + total + ')'
+                : ' (' + count + ')';
+        }
+        btn.textContent = labels[tabName] + suffix;
+    }
+
     function _loadOverridesTab() {
         var el = document.getElementById('fmap-overrides-panel-list');
         if (el) el.innerHTML = '<p class="fmap-habitat-panel-empty">Loading…</p>';
         fetch('/api/v1/admin/habitat-overrides')
             .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
-            .then(function (data) { _renderOverridesList(data.overrides || []); })
+            .then(function (data) {
+                var list = data.overrides || [];
+                _setTabCount('overrides', list.length);
+                _renderOverridesList(list);
+            })
             .catch(function () {
                 if (el) el.innerHTML = '<p class="fmap-habitat-panel-empty">Failed to load.</p>';
             });
@@ -4591,59 +5488,563 @@
     function _renderOverridesList(overrides) {
         var el = document.getElementById('fmap-overrides-panel-list');
         if (!el) return;
-        if (!overrides.length) {
-            el.innerHTML = '<p class="fmap-habitat-panel-empty">No AI feature overrides yet.<br>' +
-                '<span style="font-size:.75rem;color:var(--text-muted,#6b7280)">Enter admin edit mode and click an AI feature to override its name or colour.</span></p>';
+        var savedScroll = el.scrollTop;
+        // Restore any polygon highlighted by a previous hover before replacing the list
+        if (_ovHoverActive) {
+            var _oRestLyr = _aiPolyByKey[_ovHoverActive.fKey];
+            if (_oRestLyr) _oRestLyr.setStyle(_ovHoverActive.origStyle);
+            _ovHoverActive = null;
+        }
+        _overridesPanelData = overrides; // cache for edit buttons (always full list)
+        var q = _overridesPanelSearch.toLowerCase().trim();
+        var filtered = q ? overrides.filter(function (ov) {
+            var _fkQ = String(ov.feature_key || '').split(',');
+            var _typeQ = _fkQ.length >= 3 ? _fkQ[2].trim().toLowerCase() : '';
+            var _labelQ = _typeQ && AI_PICK_INFO[_typeQ] ? AI_PICK_INFO[_typeQ].label.toLowerCase() : '';
+            return (ov.name || '').toLowerCase().indexOf(q) !== -1 ||
+                   (ov.feature_key || '').toLowerCase().indexOf(q) !== -1 ||
+                   (ov.description || '').toLowerCase().indexOf(q) !== -1 ||
+                   _labelQ.indexOf(q) !== -1;
+        }) : overrides.slice();
+        filtered.sort(function (a, b) {
+            if (_overridesPanelSort === 'name') return (a.name || a.feature_key || '').localeCompare(b.name || b.feature_key || '');
+            if (_overridesPanelSort === 'type') {
+                var _fkA = String(a.feature_key || '').split(','), _fkB = String(b.feature_key || '').split(',');
+                var _tA = (_fkA.length >= 3 ? _fkA[2].trim() : '') , _tB = (_fkB.length >= 3 ? _fkB[2].trim() : '');
+                var _lA = (AI_PICK_INFO[_tA] || {}).label || _tA, _lB = (AI_PICK_INFO[_tB] || {}).label || _tB;
+                return _lA.localeCompare(_lB) || (a.name || '').localeCompare(b.name || '');
+            }
+            return (b.created_at || '').localeCompare(a.created_at || '');
+        });
+        _setTabCount('overrides', filtered.length, overrides.length);
+        if (!filtered.length) {
+            el.innerHTML = '<p class="fmap-habitat-panel-empty">' +
+                (q ? 'No overrides match your search.' :
+                    'No AI feature overrides yet.<br><span style="font-size:.75rem;color:var(--text-muted,#6b7280)">Enter admin edit mode and click an AI feature to override its name or colour.</span>') +
+                '</p>';
             return;
         }
         var html = '';
-        overrides.forEach(function (ov) {
+        filtered.forEach(function (ov) {
             var displayName = esc(ov.name || ov.feature_key || '—');
-            var keyShort    = esc(String(ov.feature_key || '').slice(0, 40));
-            var colorStyle  = ov.fill_color ? 'background:' + esc(ov.fill_color) + ';width:12px;height:12px;border-radius:3px;display:inline-block;vertical-align:middle;margin-right:4px' : '';
+            var _swatchFo   = ov.fill_opacity != null ? ov.fill_opacity : 0.25;
+            var colorSwatch = ov.fill_color
+                ? '<span class="fmap-override-swatch" style="border-color:' + esc(ov.fill_color) + '" title="Color · opacity ' + Math.round(_swatchFo * 100) + '%">'
+                  + '<span style="background:' + esc(ov.fill_color) + ';opacity:' + _swatchFo + '"></span>'
+                  + '</span>'
+                : '';
+            var oid         = esc(String(ov.id));
+            // Parse habitat type from feature_key ("lat,lng,type" format)
+            var _fkParts    = String(ov.feature_key || '').split(',');
+            var _fkType     = _fkParts.length >= 3 ? _fkParts[2].trim().toLowerCase() : '';
+            var _fkInfo     = _fkType && AI_PICK_INFO[_fkType];
+            var _fkColor    = _fkType && AI_PICK_COLORS[_fkType] ? AI_PICK_COLORS[_fkType] : '';
+            var typeBadge   = _fkInfo
+                ? '<span class="fmap-override-type-badge" style="border-color:' + esc(_fkColor) + ';color:' + esc(_fkColor) + '" title="AI feature type: ' + esc(_fkInfo.label) + '">' + esc(_fkInfo.label) + '</span>'
+                : '';
+            // Format lat/lng keys cleanly (4 dp) instead of showing raw precision
+            var _fkLat = parseFloat(_fkParts[0]), _fkLng = parseFloat(_fkParts[1]);
+            var keyShort = (!isNaN(_fkLat) && !isNaN(_fkLng) && _fkParts.length >= 2)
+                ? esc(_fkLat.toFixed(4) + ', ' + _fkLng.toFixed(4))
+                : esc(String(ov.feature_key || '').slice(0, 40));
+            // Compute centroid for pan-to: prefer custom geometry, then AI layer bounds, then feature_key lat,lng,type pattern
+            var panAttrs = '';
+            if (ov.geometry_json) {
+                try {
+                    var geom = typeof ov.geometry_json === 'string' ? JSON.parse(ov.geometry_json) : ov.geometry_json;
+                    var c = _centroidOfGeom(geom);
+                    if (c) panAttrs = ' data-lat="' + c.lat + '" data-lng="' + c.lng + '"';
+                } catch (_e) {}
+            }
+            if (!panAttrs) {
+                // Try AI polygon layer bounds center
+                var _lyr = _aiPolyByKey[String(ov.feature_key)];
+                if (_lyr && typeof _lyr.getBounds === 'function') {
+                    try {
+                        var _bc = _lyr.getBounds().getCenter();
+                        panAttrs = ' data-lat="' + _bc.lat + '" data-lng="' + _bc.lng + '"';
+                    } catch (_e) {}
+                }
+            }
+            if (!panAttrs) {
+                // Try parsing feature_key as "lat,lng,type"
+                var _kp = String(ov.feature_key || '').split(',');
+                if (_kp.length >= 2) {
+                    var _klat = parseFloat(_kp[0]), _klng = parseFloat(_kp[1]);
+                    if (!isNaN(_klat) && !isNaN(_klng)) panAttrs = ' data-lat="' + _klat + '" data-lng="' + _klng + '"';
+                }
+            }
+            var fkeyAttr = ' data-fkey="' + esc(String(ov.feature_key || '')) + '"';
+            var descShort = ov.description ? esc(String(ov.description).slice(0, 80)) + (ov.description.length > 80 ? '…' : '') : '';
+            // Compute area for reshaped geometries
+            var _geomBadgeText = 'reshaped';
+            if (ov.geometry_json) {
+                try {
+                    var _gbGeom = typeof ov.geometry_json === 'string' ? JSON.parse(ov.geometry_json) : ov.geometry_json;
+                    if (_gbGeom && _gbGeom.type === 'Polygon') {
+                        var _gbArea = _polyAreaLabel(_gbGeom);
+                        if (_gbArea) _geomBadgeText = 'reshaped · ' + _gbArea;
+                    }
+                } catch (_e) {}
+            }
             html +=
                 '<div class="fmap-override-item">' +
                 '<div class="fmap-override-item-row">' +
-                (colorStyle ? '<span style="' + colorStyle + '"></span>' : '') +
+                colorSwatch +
                 '<span class="fmap-override-item-name" title="' + displayName + '">' + displayName + '</span>' +
-                '<button class="fmap-override-item-del" data-oid="' + esc(String(ov.id)) + '" aria-label="Remove override">Remove</button>' +
+                (panAttrs ? '<button class="fmap-override-item-pan" title="Pan to on map" aria-label="Pan to ' + displayName + '"' + panAttrs + fkeyAttr + '>⌖</button>' : '') +
+                '<button class="fmap-override-item-edit" data-oid="' + oid + '" aria-label="Edit override for ' + displayName + '">Edit</button>' +
+                '<button class="fmap-override-item-del" data-oid="' + oid + '" aria-label="Remove override">Remove</button>' +
                 '</div>' +
-                '<div class="fmap-override-item-key">' + keyShort + '</div>' +
+                '<div class="fmap-override-item-key">' + keyShort +
+                (typeBadge ? ' ' + typeBadge : '') +
+                (ov.geometry_json ? ' <span class="fmap-override-geom-badge" title="Custom shape stored">' + esc(_geomBadgeText) + '</span>' : '') +
+                '</div>' +
+                (descShort ? '<div class="fmap-override-item-desc">' + descShort + '</div>' : '') +
                 '</div>';
         });
         el.innerHTML = html;
+        el.scrollTop = savedScroll;
+
+        el.querySelectorAll('.fmap-override-item-pan').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var fKey = btn.dataset.fkey;
+                var lat = parseFloat(btn.dataset.lat), lng = parseFloat(btn.dataset.lng);
+                var _fitDone = false;
+                if (fKey && map) {
+                    var _panLyr = _aiPolyByKey[fKey];
+                    if (_panLyr && typeof _panLyr.getBounds === 'function') {
+                        try {
+                            var _pb = _panLyr.getBounds();
+                            if (_pb.isValid()) { map.fitBounds(_pb.pad(0.15), { maxZoom: 17, animate: true }); _fitDone = true; }
+                        } catch (_e) {}
+                    }
+                }
+                if (!_fitDone && !isNaN(lat) && !isNaN(lng) && map) map.flyTo([lat, lng], Math.max(map.getZoom(), 15));
+                if (fKey) _highlightAiOverlay(fKey);
+            });
+        });
+
+        el.querySelectorAll('.fmap-override-item-edit').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var oid = btn.dataset.oid;
+                var ov = _overridesPanelData.filter(function (o) { return String(o.id) === oid; })[0];
+                if (!ov) return;
+                var geom = null;
+                if (ov.geometry_json) {
+                    try { geom = JSON.parse(ov.geometry_json); } catch (_e) {}
+                }
+                // Fit the AI polygon bounds in view (fall back to centroid flyTo)
+                if (map) {
+                    var _lyrEdit = _aiPolyByKey[String(ov.feature_key)];
+                    var _ovFitDone = false;
+                    if (_lyrEdit && typeof _lyrEdit.getBounds === 'function') {
+                        try {
+                            var _ob = _lyrEdit.getBounds();
+                            if (_ob.isValid()) { map.fitBounds(_ob.pad(0.15), { maxZoom: 17, animate: true }); _ovFitDone = true; }
+                        } catch (_e) {}
+                    }
+                    if (!_ovFitDone && geom) {
+                        try {
+                            var _gl = L.geoJSON(geom);
+                            var _gb = _gl.getBounds();
+                            if (_gb.isValid()) { map.fitBounds(_gb.pad(0.15), { maxZoom: 17, animate: true }); _ovFitDone = true; }
+                        } catch (_e) {}
+                    }
+                    if (!_ovFitDone) {
+                        var _panTarget = null;
+                        if (geom) { var _gc = _centroidOfGeom(geom); if (_gc) _panTarget = _gc; }
+                        if (!_panTarget) {
+                            var _kp2 = String(ov.feature_key || '').split(',');
+                            if (_kp2.length >= 2) {
+                                var _kl = parseFloat(_kp2[0]), _kg = parseFloat(_kp2[1]);
+                                if (!isNaN(_kl) && !isNaN(_kg)) _panTarget = { lat: _kl, lng: _kg };
+                            }
+                        }
+                        if (_panTarget) map.flyTo([_panTarget.lat, _panTarget.lng], Math.max(map.getZoom(), 15));
+                    }
+                    _highlightAiOverlay(String(ov.feature_key));
+                }
+                _overrideEditedFromPanel = true;
+                _openOverrideModal(
+                    ov.feature_key, String(ov.id),
+                    ov.name || '', ov.description || '', ov.fill_color || '',
+                    geom, !!ov.geometry_json,
+                    ov.created_at, ov.updated_at,
+                    ov.fill_opacity, ov.stroke_weight
+                );
+            });
+        });
 
         el.querySelectorAll('.fmap-override-item-del').forEach(function (btn) {
-            var _confirmFlag = false, _confirmTimer = null;
             btn.addEventListener('click', function () {
                 var oid = btn.dataset.oid;
                 if (!oid) return;
-                if (!_confirmFlag) {
-                    _confirmFlag = true;
-                    btn.textContent = 'Confirm?';
-                    btn.style.background = 'rgba(220,38,38,.2)';
-                    _confirmTimer = setTimeout(function () {
-                        _confirmFlag = false;
-                        btn.textContent = 'Remove';
-                        btn.style.background = '';
-                    }, 3000);
-                    return;
-                }
-                clearTimeout(_confirmTimer);
+                // Snapshot for undo before the request
+                var _undoOv = _overridesPanelData.filter(function (o) { return String(o.id) === oid; })[0];
                 btn.disabled = true;
                 fetch('/api/v1/admin/habitat-overrides/' + encodeURIComponent(oid), { method: 'DELETE' })
                     .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
                     .then(function () {
                         aiCache = {}; _aiCacheKeys = [];
                         try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
-                        _showAdminToast('Override removed');
                         scheduleAIQuery();
                         _loadOverridesTab();
+                        if (_undoOv && _undoOv.feature_key) {
+                            _showUndoToast('Override removed', function () {
+                                var geomForUndo = null;
+                                try { if (_undoOv.geometry_json) geomForUndo = JSON.parse(_undoOv.geometry_json); } catch (_e) {}
+                                fetch('/api/v1/admin/habitat-overrides', {
+                                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ feature_key: _undoOv.feature_key, name: _undoOv.name || null, description: _undoOv.description || null, fill_color: _undoOv.fill_color || null, fill_opacity: _undoOv.fill_opacity, stroke_weight: _undoOv.stroke_weight, geometry_json: geomForUndo }),
+                                })
+                                .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                                .then(function () {
+                                    aiCache = {}; _aiCacheKeys = [];
+                                    try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
+                                    _showAdminToast('Override restored');
+                                    scheduleAIQuery();
+                                    _loadOverridesTab();
+                                })
+                                .catch(function () { _showAdminToast('Restore failed', true); });
+                            });
+                        } else {
+                            _showAdminToast('Override removed');
+                        }
                     })
                     .catch(function () {
                         btn.disabled = false;
                         _showAdminToast('Delete failed', true);
                     });
+            });
+        });
+
+        // Hover over an override row → softly highlight the AI polygon on the map
+        el.querySelectorAll('.fmap-override-item').forEach(function (row) {
+            var editBtn = row.querySelector('.fmap-override-item-edit');
+            var oid = editBtn && editBtn.dataset.oid;
+            if (!oid) return;
+            var ov = _overridesPanelData.filter(function (o) { return String(o.id) === oid; })[0];
+            if (!ov || !ov.feature_key) return;
+            var fKey = String(ov.feature_key);
+            row.addEventListener('mouseenter', function () {
+                var lyr = _aiPolyByKey[fKey];
+                if (!lyr) return;
+                var opts = lyr.options || {};
+                _ovHoverActive = { fKey: fKey, origStyle: { color: opts.color, fillColor: opts.fillColor, fillOpacity: opts.fillOpacity, weight: opts.weight } };
+                lyr.setStyle({
+                    fillOpacity: Math.min(0.8, (opts.fillOpacity || 0.25) + 0.25),
+                    weight: (opts.weight || 2) + 1.5
+                });
+            });
+            row.addEventListener('mouseleave', function () {
+                if (!_ovHoverActive || _ovHoverActive.fKey !== fKey) return;
+                var lyr = _aiPolyByKey[fKey];
+                if (lyr) lyr.setStyle(_ovHoverActive.origStyle);
+                _ovHoverActive = null;
+            });
+        });
+    }
+
+    // ─── Suppressed spots tab ─────────────────────────────────────────────────
+
+    function _loadSuppressedTab() {
+        var el = document.getElementById('fmap-suppressed-panel-list');
+        if (el) el.innerHTML = '<p class="fmap-habitat-panel-empty">Loading…</p>';
+        fetch('/api/map/suppress-spot')
+            .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+            .then(function (data) {
+                var list = data.suppressions || [];
+                _renderSuppressedList(list);
+            })
+            .catch(function () {
+                if (el) el.innerHTML = '<p class="fmap-habitat-panel-empty">Failed to load.</p>';
+            });
+    }
+
+    function _renderSuppressedList(suppressions) {
+        var el = document.getElementById('fmap-suppressed-panel-list');
+        if (!el) return;
+        var savedScroll = el.scrollTop;
+        // Clean up any ghost marker left from a previous hover (avoids map layer leaks on re-render)
+        if (_suppressedGhost) { _suppressedGhost.remove(); _suppressedGhost = null; }
+        _suppressedPanelData = suppressions;
+        var q = _suppressedPanelSearch.toLowerCase().trim();
+        var filtered = q ? suppressions.filter(function (s) {
+            return (s.name || '').toLowerCase().indexOf(q) !== -1 ||
+                   (s.spot_key || '').toLowerCase().indexOf(q) !== -1 ||
+                   (s.type || '').toLowerCase().indexOf(q) !== -1 ||
+                   (spotTypeLabel(s.type) || '').toLowerCase().indexOf(q) !== -1;
+        }) : suppressions.slice();
+        filtered.sort(function (a, b) {
+            if (_suppressedPanelSort === 'name') return (a.name || '').localeCompare(b.name || '');
+            if (_suppressedPanelSort === 'type') return (spotTypeLabel(a.type) || a.type || '').localeCompare(spotTypeLabel(b.type) || b.type || '');
+            return (b.created_at || '').localeCompare(a.created_at || '');
+        });
+        _setTabCount('suppressed', filtered.length, suppressions.length);
+        if (!filtered.length) {
+            el.innerHTML = '<p class=”fmap-habitat-panel-empty”>' +
+                (q ? 'No suppressed spots match your search.' :
+                    'No suppressed spots.<br><span style=”font-size:.75rem;color:var(--text-muted,#6b7280)”>In admin edit mode, click any spot and choose “Hide” to remove it from the map.</span>') +
+                '</p>';
+            return;
+        }
+        var html = '';
+        filtered.forEach(function (s) {
+            var nameSafe   = esc(s.name || s.spot_key || '—');
+            var typeSafe   = s.type ? esc(spotTypeLabel(s.type) || s.type) : '';
+            var sid        = esc(String(s.id));
+            var lat        = parseFloat(s.lat), lng = parseFloat(s.lng);
+            var hasCoords  = !isNaN(lat) && !isNaN(lng);
+            var hiddenDate = s.created_at ? esc(String(s.created_at).slice(0, 10)) : '';
+            html +=
+                '<div class="fmap-override-item">' +
+                '<div class="fmap-override-item-row">' +
+                '<span class="fmap-override-item-name" title="' + nameSafe + '">' + nameSafe + '</span>' +
+                (hasCoords ? '<button class="fmap-suppressed-item-pan" data-lat="' + lat + '" data-lng="' + lng + '" title="Pan to location" aria-label="Pan to ' + nameSafe + '">⌖</button>' : '') +
+                '<button class="fmap-suppressed-item-unhide" data-sid="' + sid + '" aria-label="Un-hide ' + nameSafe + '">Unhide</button>' +
+                '</div>' +
+                (typeSafe || hiddenDate
+                    ? '<div class="fmap-override-item-key">' +
+                      (typeSafe ? typeSafe : '') +
+                      (typeSafe && hiddenDate ? ' · ' : '') +
+                      (hiddenDate ? 'hidden ' + hiddenDate : '') +
+                      '</div>'
+                    : '') +
+                '</div>';
+        });
+        el.innerHTML = html;
+        el.scrollTop = savedScroll;
+
+        el.querySelectorAll('.fmap-suppressed-item-pan').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var lat = parseFloat(btn.dataset.lat), lng = parseFloat(btn.dataset.lng);
+                if (!isNaN(lat) && !isNaN(lng) && map) map.flyTo([lat, lng], Math.max(map.getZoom(), 16));
+            });
+        });
+
+        el.querySelectorAll('.fmap-suppressed-item-unhide').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var sid = btn.dataset.sid;
+                if (!sid) return;
+                var _undoSup = suppressions.filter(function (s) { return String(s.id) === sid; })[0];
+                btn.disabled = true;
+                fetch('/api/map/suppress-spot/' + encodeURIComponent(sid), { method: 'DELETE' })
+                    .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+                    .then(function () {
+                        spotCache = {}; _spotCacheKeys = []; _spotBoundsCache = {};
+                        try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
+                        scheduleFishingSpotQuery();
+                        _loadSuppressedTab();
+                        // Pan to the spot so the admin can see it re-appear
+                        if (_undoSup && !isNaN(parseFloat(_undoSup.lat)) && !isNaN(parseFloat(_undoSup.lng)) && map) {
+                            map.flyTo([parseFloat(_undoSup.lat), parseFloat(_undoSup.lng)], Math.max(map.getZoom(), 15));
+                        }
+                        if (_undoSup && _undoSup.spot_key) {
+                            _showUndoToast('Spot un-hidden', function () {
+                                fetch('/api/map/suppress-spot', {
+                                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ spot_key: _undoSup.spot_key, lat: _undoSup.lat, lng: _undoSup.lng, type: _undoSup.type || '', name: _undoSup.name || '' }),
+                                })
+                                .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                                .then(function () {
+                                    spotCache = {}; _spotCacheKeys = []; _spotBoundsCache = {};
+                                    try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
+                                    _showAdminToast('Spot re-hidden');
+                                    scheduleFishingSpotQuery();
+                                    _loadSuppressedTab();
+                                })
+                                .catch(function () { _showAdminToast('Re-hide failed', true); });
+                            });
+                        } else {
+                            _showAdminToast('Spot un-hidden');
+                        }
+                    })
+                    .catch(function () {
+                        btn.disabled = false;
+                        _showAdminToast('Unhide failed', true);
+                    });
+            });
+        });
+
+        // Hover over a suppressed row → show a ghost marker at that location
+        el.querySelectorAll('.fmap-override-item').forEach(function (row) {
+            var panBtn = row.querySelector('.fmap-suppressed-item-pan');
+            if (!panBtn) return;
+            var rLat = parseFloat(panBtn.dataset.lat), rLng = parseFloat(panBtn.dataset.lng);
+            if (isNaN(rLat) || isNaN(rLng) || !map) return;
+            row.addEventListener('mouseenter', function () {
+                if (_suppressedGhost) { _suppressedGhost.remove(); _suppressedGhost = null; }
+                _suppressedGhost = L.circleMarker([rLat, rLng], {
+                    radius: 14, color: '#ef4444', fillColor: '#ef4444',
+                    fillOpacity: 0.18, weight: 2, opacity: 0.7,
+                    dashArray: '4 3', interactive: false
+                }).addTo(map);
+            });
+            row.addEventListener('mouseleave', function () {
+                if (_suppressedGhost) { _suppressedGhost.remove(); _suppressedGhost = null; }
+            });
+        });
+    }
+
+    // ─── Markers tab ──────────────────────────────────────────────────────────
+
+    function _loadMarkersTab() {
+        var el = document.getElementById('fmap-markers-panel-list');
+        if (el) el.innerHTML = '<p class="fmap-habitat-panel-empty">Loading…</p>';
+        fetch('/api/map/custom-markers')
+            .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+            .then(function (data) {
+                _renderMarkersList(data.markers || []);
+            })
+            .catch(function () {
+                if (el) el.innerHTML = '<p class="fmap-habitat-panel-empty">Failed to load.</p>';
+            });
+    }
+
+    function _renderMarkersList(markers) {
+        var el = document.getElementById('fmap-markers-panel-list');
+        if (!el) return;
+        var savedScroll = el.scrollTop;
+        // Clear hover highlight that won't receive mouseleave after re-render
+        if (_markerHoverMid) {
+            var _mhFound = _customMarkers.filter(function (cm) { return String(cm.id) === _markerHoverMid; })[0];
+            if (_mhFound && _mhFound.leaflet) {
+                var _mhEl = _mhFound.leaflet.getElement();
+                if (_mhEl) _mhEl.classList.remove('fmap-marker-hover');
+            }
+            _markerHoverMid = null;
+        }
+        _markersPanelData = markers;
+        var q = _markersPanelSearch.toLowerCase().trim();
+        var filtered = q ? markers.filter(function (m) {
+            return (m.name || '').toLowerCase().indexOf(q) !== -1 ||
+                   (m.type || '').toLowerCase().indexOf(q) !== -1 ||
+                   (spotTypeLabel(m.type) || '').toLowerCase().indexOf(q) !== -1 ||
+                   (m.description || '').toLowerCase().indexOf(q) !== -1;
+        }) : markers.slice();
+        filtered.sort(function (a, b) {
+            if (_markersPanelSort === 'name') return (a.name || '').localeCompare(b.name || '');
+            if (_markersPanelSort === 'type') return (spotTypeLabel(a.type) || a.type || '').localeCompare(spotTypeLabel(b.type) || b.type || '');
+            return (b.created_at || '').localeCompare(a.created_at || '');
+        });
+        _setTabCount('markers', filtered.length, markers.length);
+        if (!filtered.length) {
+            el.innerHTML = '<p class="fmap-habitat-panel-empty">' +
+                (q ? 'No markers match your search.' :
+                    'No custom markers yet.<br><span style="font-size:.75rem;color:var(--text-muted,#6b7280)">In admin edit mode, click anywhere on the map to place a custom marker.</span>') +
+                '</p>';
+            return;
+        }
+        var html = '';
+        filtered.forEach(function (m) {
+            var nameSafe = esc(m.name || spotTypeLabel(m.type) || '—');
+            var typeSafe = m.type ? esc(spotTypeLabel(m.type) || m.type) : '';
+            var mid      = esc(String(m.id));
+            var lat      = parseFloat(m.lat), lng = parseFloat(m.lng);
+            var hasCoords = !isNaN(lat) && !isNaN(lng);
+            var descShort = m.description ? esc(String(m.description).slice(0, 80)) + (m.description.length > 80 ? '…' : '') : '';
+            var coordStr = hasCoords ? lat.toFixed(5) + ', ' + lng.toFixed(5) : '';
+            var addedDate = m.created_at ? esc(String(m.created_at).slice(0, 10)) : '';
+            var metaParts = [];
+            if (typeSafe) metaParts.push(typeSafe);
+            if (coordStr) metaParts.push(coordStr);
+            if (addedDate) metaParts.push('added ' + addedDate);
+            var metaLine = metaParts.length ? '<div class="fmap-override-item-key">' + metaParts.join(' · ') + '</div>' : '';
+            html +=
+                '<div class="fmap-override-item">' +
+                '<div class="fmap-override-item-row">' +
+                '<span class="fmap-override-item-name" title="' + nameSafe + '">' + nameSafe + '</span>' +
+                (hasCoords ? '<button class="fmap-suppressed-item-pan" data-lat="' + lat + '" data-lng="' + lng + '" data-mid="' + mid + '" title="Pan to location" aria-label="Pan to ' + nameSafe + '">⌖</button>' : '') +
+                '<button class="fmap-markers-panel-edit fmap-override-item-edit" data-mid="' + mid + '" aria-label="Edit ' + nameSafe + '">Edit</button>' +
+                '<button class="fmap-markers-panel-del fmap-override-item-del" data-mid="' + mid + '" aria-label="Delete ' + nameSafe + '">Delete</button>' +
+                '</div>' +
+                metaLine +
+                (descShort ? '<div class="fmap-override-item-desc">' + descShort + '</div>' : '') +
+                '</div>';
+        });
+        el.innerHTML = html;
+        el.scrollTop = savedScroll;
+
+        el.querySelectorAll('.fmap-suppressed-item-pan').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var lat = parseFloat(btn.dataset.lat), lng = parseFloat(btn.dataset.lng);
+                if (!isNaN(lat) && !isNaN(lng) && map) {
+                    map.flyTo([lat, lng], Math.max(map.getZoom(), 16));
+                    if (btn.dataset.mid) _highlightCustomMarker(btn.dataset.mid);
+                }
+            });
+        });
+
+        el.querySelectorAll('.fmap-markers-panel-edit').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var mid = btn.dataset.mid;
+                var marker = _markersPanelData.filter(function (m) { return String(m.id) === mid; })[0];
+                if (!marker) return;
+                if (map && !isNaN(parseFloat(marker.lat)) && !isNaN(parseFloat(marker.lng))) {
+                    map.flyTo([parseFloat(marker.lat), parseFloat(marker.lng)], Math.max(map.getZoom(), 15));
+                    _highlightCustomMarker(mid);
+                }
+                // Close the panel; set flag so it reopens when the modal is closed
+                _markerEditedFromPanel = true;
+                _habitatPanelOpen = false;
+                var _mpPanel = document.getElementById('fmap-habitat-panel');
+                if (_mpPanel) _mpPanel.hidden = true;
+                var _mpListBtn = document.getElementById('fmap-admin-habitats-list-btn');
+                if (_mpListBtn) { _mpListBtn.classList.remove('fmap-ctrl-btn--active'); _mpListBtn.setAttribute('aria-pressed', 'false'); }
+                _openAdminEditPanel(marker);
+            });
+        });
+
+        el.querySelectorAll('.fmap-markers-panel-del').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var mid = btn.dataset.mid;
+                if (!mid) return;
+                btn.disabled = true;
+                fetch('/api/map/custom-markers/' + mid, { method: 'DELETE' })
+                    .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+                    .then(function () {
+                        spotCache = {}; _spotCacheKeys = []; _spotBoundsCache = {};
+                        try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
+                        scheduleFishingSpotQuery();
+                        _loadMarkersTab();
+                        _showUndoToast('Marker deleted', function () {
+                            fetch('/api/map/custom-markers/' + mid + '/restore', { method: 'POST' })
+                                .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                                .then(function () {
+                                    _showAdminToast('Marker restored');
+                                    spotCache = {}; _spotCacheKeys = []; _spotBoundsCache = {};
+                                    try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
+                                    scheduleFishingSpotQuery();
+                                    _loadMarkersTab();
+                                })
+                                .catch(function () { _showAdminToast('Restore failed', true); });
+                        });
+                    })
+                    .catch(function () {
+                        btn.disabled = false;
+                        _showAdminToast('Delete failed', true);
+                    });
+            });
+        });
+
+        // Hover over a marker panel row → highlight the marker icon on the map
+        el.querySelectorAll('.fmap-override-item').forEach(function (row) {
+            var editBtn = row.querySelector('.fmap-markers-panel-edit');
+            var mid = editBtn && editBtn.dataset.mid;
+            if (!mid) return;
+            row.addEventListener('mouseenter', function () {
+                var found = _customMarkers.filter(function (cm) { return String(cm.id) === String(mid); })[0];
+                if (!found || !found.leaflet) return;
+                var iconEl = found.leaflet.getElement();
+                if (iconEl) { iconEl.classList.add('fmap-marker-hover'); _markerHoverMid = mid; }
+            });
+            row.addEventListener('mouseleave', function () {
+                if (_markerHoverMid === mid) _markerHoverMid = null;
+                var found = _customMarkers.filter(function (cm) { return String(cm.id) === String(mid); })[0];
+                if (!found || !found.leaflet) return;
+                var iconEl = found.leaflet.getElement();
+                if (iconEl) iconEl.classList.remove('fmap-marker-hover');
             });
         });
     }
@@ -4671,13 +6072,31 @@
             btn.addEventListener('click', function () {
                 var tid = btn.dataset.tid;
                 if (!tid) return;
+                var _undoType = _customHabitatTypes.filter(function (t) { return String(t.id) === tid; })[0];
+                btn.disabled = true;
                 fetch('/api/v1/admin/habitat-types/' + encodeURIComponent(tid), { method: 'DELETE' })
                     .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
                     .then(function () {
-                        _showAdminToast('Type removed');
                         _loadHabitatPanel();
+                        if (_undoType) {
+                            _showUndoToast('Type "' + (_undoType.name || '') + '" removed', function () {
+                                fetch('/api/v1/admin/habitat-types', {
+                                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ name: _undoType.name, default_color: _undoType.default_color }),
+                                })
+                                .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                                .then(function () {
+                                    _showAdminToast('Type restored');
+                                    _loadHabitatPanel();
+                                })
+                                .catch(function () { _showAdminToast('Restore failed', true); });
+                            });
+                        } else {
+                            _showAdminToast('Type removed');
+                        }
                     })
                     .catch(function (e) {
+                        btn.disabled = false;
                         _showAdminToast('Delete failed', true);
                         console.error('[admin] delete type failed:', e);
                     });
@@ -4739,6 +6158,13 @@
             map.on('dblclick', function (e) {
                 if (_habitatDrawMode) {
                     L.DomEvent.stop(e);
+                    // Two click events fire before dblclick — remove the last vertex
+                    // added by the second click so only intended vertices are kept.
+                    if (_habitatDrawVerts.length > 0) {
+                        _habitatDrawVerts.pop();
+                        var _dbLastM = _habitatDrawMarkers.pop();
+                        if (_dbLastM && map) map.removeLayer(_dbLastM);
+                    }
                     _finishHabitatDraw();
                 }
             });
@@ -4755,50 +6181,54 @@
                     return;
                 }
                 var payload = {
-                    habitat_type: document.getElementById('fmap-habitat-type').value,
-                    name:         document.getElementById('fmap-habitat-name').value.trim(),
-                    description:  document.getElementById('fmap-habitat-desc').value.trim(),
-                    fill_color:   document.getElementById('fmap-habitat-color').value,
-                    geometry:     _pendingHabitatGeom,
+                    habitat_type:  document.getElementById('fmap-habitat-type').value,
+                    name:          document.getElementById('fmap-habitat-name').value.trim(),
+                    description:   document.getElementById('fmap-habitat-desc').value.trim(),
+                    fill_color:    document.getElementById('fmap-habitat-color').value,
+                    fill_opacity:  parseFloat((document.getElementById('fmap-habitat-fill-opacity') || {}).value || 0.35),
+                    stroke_weight: parseFloat((document.getElementById('fmap-habitat-stroke-weight') || {}).value || 2.5),
+                    geometry:      _pendingHabitatGeom,
                 };
-                if (statusEl) { statusEl.textContent = ''; }
+                // Remember type + color + style for successive "Add Habitat" draws
+                if (!habitatId) {
+                    _lastHabitatType         = payload.habitat_type;
+                    _lastHabitatColor        = payload.fill_color;
+                    _lastHabitatFillOpacity  = payload.fill_opacity;
+                    _lastHabitatStrokeWeight = payload.stroke_weight;
+                }
+                // Snapshot previous state for undo when editing an existing habitat
+                var _prevHabData = (habitatId && _habitatEditData) ? {
+                    habitat_type:  _habitatEditData.habitat_type || _habitatEditData.osm_type || 'general',
+                    name:          _habitatEditData.name || '',
+                    description:   _habitatEditData.description || '',
+                    fill_color:    _habitatEditData.fill_color || '',
+                    fill_opacity:  _habitatEditData.fill_opacity != null ? _habitatEditData.fill_opacity : 0.35,
+                    stroke_weight: _habitatEditData.stroke_weight != null ? _habitatEditData.stroke_weight : 2.5,
+                    geometry:      _habitatEditData.geojson_geometry || _habitatEditData.geometry || null,
+                } : null;
+                if (statusEl) { statusEl.textContent = ''; statusEl.style.color = ''; }
                 saveBtn.disabled = true;
                 saveBtn.textContent = 'Saving…';
                 _saveHabitat(habitatId || null, payload, function () {
                     saveBtn.disabled = false;
                     saveBtn.textContent = 'Save';
-                });
+                }, _prevHabData);
             });
         }
 
         // ── Habitat modal delete ──────────────────────────────────────────────
         var delBtn = document.getElementById('fmap-habitat-delete');
         if (delBtn) {
-            var _hDelConfirm = false, _hDelTimer = null;
             delBtn.addEventListener('click', function () {
                 var habitatId = delBtn.dataset.habitatId;
                 if (!habitatId) return;
-                if (!_hDelConfirm) {
-                    _hDelConfirm = true;
-                    delBtn.textContent = 'Confirm delete?';
-                    delBtn.style.background = '#991b1b';
-                    _hDelTimer = setTimeout(function () {
-                        _hDelConfirm = false;
-                        delBtn.textContent = 'Delete';
-                        delBtn.style.background = '#dc2626';
-                    }, 3000);
-                    return;
-                }
-                clearTimeout(_hDelTimer);
-                _hDelConfirm = false;
-                delBtn.textContent = 'Delete';
-                delBtn.style.background = '#dc2626';
                 delBtn.disabled = true;
 
                 fetch('/api/v1/admin/habitats/' + encodeURIComponent(habitatId), { method: 'DELETE' })
                 .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
                 .then(function () {
                     delBtn.disabled = false;
+                    _pendingHabitatGeom = null; // clear before close so discarded-toast doesn't fire
                     _closeHabitatModal();
                     aiCache = {}; _aiCacheKeys = [];
                     try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
@@ -4839,30 +6269,133 @@
             _cancelHabitatDraw();
         });
 
-        // Escape closes habitat modal too
+        // Enter in habitat name field triggers save
+        var habitatNameInput = document.getElementById('fmap-habitat-name');
+        if (habitatNameInput) {
+            habitatNameInput.addEventListener('keydown', function (e) {
+                if (e.key !== 'Enter') return;
+                var sb = document.getElementById('fmap-habitat-save');
+                if (sb && !sb.disabled) sb.click();
+            });
+        }
+
+        // Escape closes habitat modal; Tab trapped within; Ctrl+S saves; Backspace/Delete undoes last draw vertex
+        var _habitatModalEl = document.getElementById('fmap-habitat-modal');
         document.addEventListener('keydown', function (e) {
+            if (_habitatModalEl && !_habitatModalEl.hidden) {
+                if (e.key === 'Escape') { _closeHabitatModal(); _cancelHabitatDraw(); return; }
+                if (e.key === 's' && (e.ctrlKey || e.metaKey)) {
+                    e.preventDefault();
+                    var sb = document.getElementById('fmap-habitat-save');
+                    if (sb && !sb.disabled) sb.click();
+                    return;
+                }
+                if (e.key === 'Tab') { _trapFocusOnTab(_habitatModalEl, e); return; }
+            }
             if (e.key === 'Escape') {
                 var hModal = document.getElementById('fmap-habitat-modal');
                 if (hModal && !hModal.hidden) { _closeHabitatModal(); _cancelHabitatDraw(); }
                 else if (_habitatDrawMode) _cancelHabitatDraw();
+            } else if (e.key === 'Enter' && _habitatDrawMode) {
+                if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) return;
+                if (_habitatDrawVerts.length >= 3) { e.preventDefault(); _finishHabitatDraw(); }
+            } else if ((e.key === 'Backspace' || e.key === 'Delete' || (e.key === 'z' && (e.ctrlKey || e.metaKey) && !e.shiftKey)) && _habitatDrawMode) {
+                // Undo last vertex during polygon draw (don't interfere with text inputs)
+                if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) return;
+                if (_habitatDrawVerts.length === 0) return;
+                e.preventDefault();
+                _habitatDrawVerts.pop();
+                var lastMarker = _habitatDrawMarkers.pop();
+                if (lastMarker && map) map.removeLayer(lastMarker);
+                if (_habitatDrawPreview && map) { map.removeLayer(_habitatDrawPreview); _habitatDrawPreview = null; }
+                if (_habitatDrawVerts.length >= 2) {
+                    var previewCoords = _habitatDrawVerts.concat([_habitatDrawVerts[0]]);
+                    var _pColorB = (document.getElementById('fmap-habitat-color') || {}).value || '#8b5cf6';
+                    _habitatDrawPreview = L.polygon(previewCoords, {
+                        color: _pColorB, weight: 2, dashArray: '6,4', fillOpacity: 0.18, fillColor: _pColorB,
+                        interactive: false
+                    }).addTo(map);
+                }
+                var nUndo = _habitatDrawVerts.length;
+                var vcUndoEl = document.getElementById('fmap-reshape-vertex-count');
+                if (vcUndoEl) vcUndoEl.textContent = nUndo + (nUndo === 1 ? ' vertex' : ' vertices') + (nUndo < 3 ? ' · need ' + (3 - nUndo) + ' more' : ' · Enter or click Done to finish');
+                var _undoDoneBtn = document.getElementById('fmap-habitat-reshape-done');
+                if (_undoDoneBtn) _undoDoneBtn.disabled = nUndo < 3;
+                _showAdminToast('Last vertex removed (' + nUndo + ' remaining)');
             }
         });
 
         // ── Override modal wiring ─────────────────────────────────────────────
+        var overrideReshapeBtn = document.getElementById('fmap-override-reshape');
+        if (overrideReshapeBtn) {
+            overrideReshapeBtn.addEventListener('click', function () {
+                if (!_overrideEditData || !_overrideEditData.geometry) return;
+                // Snapshot everything before _closeOverrideModal nulls _overrideEditData
+                var snap = {
+                    featureKey:       _overrideEditData.featureKey,
+                    overrideId:       _overrideEditData.overrideId,
+                    name:  (document.getElementById('fmap-override-name')  || {}).value || _overrideEditData.name,
+                    desc:  (document.getElementById('fmap-override-desc')  || {}).value || _overrideEditData.desc,
+                    color: (document.getElementById('fmap-override-color') || {}).value || _overrideEditData.color,
+                    fill_opacity:       parseFloat((document.getElementById('fmap-override-fill-opacity') || {}).value || 0.25),
+                    stroke_weight:      parseFloat((document.getElementById('fmap-override-stroke-weight') || {}).value || 2),
+                    geometry:           _overrideEditData.geometry,
+                    geometryIsOverride: !!_overrideEditData.geometryIsOverride,
+                    createdAt:          _overrideEditData.createdAt || null,
+                    updatedAt:          _overrideEditData.updatedAt || null
+                };
+                // Preserve panel-origin flag across the intermediate close so the re-opened
+                // override modal can still reopen the panel on final dismiss.
+                var _ovReshapeFromPanel = _overrideEditedFromPanel;
+                _overrideEditedFromPanel = false;
+                _closeOverrideModal();
+                _overrideEditedFromPanel = _ovReshapeFromPanel;
+                _overrideEditData = snap; // restore after close
+                // Fit the map to the polygon so vertices are always visible
+                if (map && snap.geometry.coordinates && snap.geometry.coordinates[0]) {
+                    try {
+                        var _ring = snap.geometry.coordinates[0];
+                        var _bounds = L.latLngBounds(_ring.map(function (c) { return [c[1], c[0]]; }));
+                        if (_bounds.isValid()) map.fitBounds(_bounds.pad(0.3), { maxZoom: 17, animate: true });
+                    } catch (_fe) {}
+                }
+                _startHabitatVertexEdit(snap.geometry);
+                _showAdminToast('Drag vertices to reshape · Right-click or Shift+click to remove · Enter or Done to finish.');
+            });
+        }
+
         var overrideSaveBtn = document.getElementById('fmap-override-save');
         if (overrideSaveBtn) {
             overrideSaveBtn.addEventListener('click', function () {
-                var featureKey = (document.getElementById('fmap-override-feature-key') || {}).value || '';
+                var featureKey  = (document.getElementById('fmap-override-feature-key') || {}).value || '';
+                var overrideId  = (document.getElementById('fmap-override-id') || {}).value || '';
                 if (!featureKey) return;
                 var statusEl = document.getElementById('fmap-override-status');
                 if (statusEl) { statusEl.textContent = ''; statusEl.style.color = ''; }
+                // Snapshot previous state for undo (only when editing an existing override)
+                var _prevOvData = (overrideId && _overrideEditData) ? {
+                    feature_key:   _overrideEditData.featureKey,
+                    name:          _overrideEditData.name || null,
+                    description:   _overrideEditData.desc || null,
+                    fill_color:    _overrideEditData.color || null,
+                    fill_opacity:  _overrideEditData.fill_opacity,
+                    stroke_weight: _overrideEditData.stroke_weight,
+                    geometry:      _overrideEditData.geometryIsOverride ? _overrideEditData.geometry : null,
+                } : null;
                 overrideSaveBtn.disabled = true;
                 overrideSaveBtn.textContent = 'Saving…';
+                // Only include geometry if the admin explicitly reshaped it or there was
+                // already a stored geometry override (geometryIsOverride=true).
+                var sendGeom = (_overrideEditData && _overrideEditData.geometryIsOverride)
+                    ? _overrideEditData.geometry : null;
                 var payload = {
-                    feature_key:  featureKey,
-                    name:         (document.getElementById('fmap-override-name') || {}).value || null,
-                    description:  (document.getElementById('fmap-override-desc') || {}).value || null,
-                    fill_color:   (document.getElementById('fmap-override-color') || {}).value || null,
+                    feature_key:   featureKey,
+                    name:          (document.getElementById('fmap-override-name') || {}).value || null,
+                    description:   (document.getElementById('fmap-override-desc') || {}).value || null,
+                    fill_color:    (document.getElementById('fmap-override-color') || {}).value || null,
+                    fill_opacity:  parseFloat((document.getElementById('fmap-override-fill-opacity') || {}).value || 0.25),
+                    stroke_weight: parseFloat((document.getElementById('fmap-override-stroke-weight') || {}).value || 2),
+                    geometry_json: sendGeom || null,
                 };
                 fetch('/api/v1/admin/habitat-overrides', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -4872,11 +6405,39 @@
                 .then(function () {
                     overrideSaveBtn.disabled = false;
                     overrideSaveBtn.textContent = 'Save Override';
+                    _overridePreviewOrigStyle = null; // keep new style; AI will re-render
                     _closeOverrideModal();
                     aiCache = {}; _aiCacheKeys = [];
                     try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
-                    _showAdminToast('Override saved');
                     scheduleAIQuery();
+                    _refreshActivePanelTab();
+                    if (_prevOvData) {
+                        _showUndoToast('Override saved', function () {
+                            fetch('/api/v1/admin/habitat-overrides', {
+                                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    feature_key:   _prevOvData.feature_key,
+                                    name:          _prevOvData.name,
+                                    description:   _prevOvData.description,
+                                    fill_color:    _prevOvData.fill_color,
+                                    fill_opacity:  _prevOvData.fill_opacity,
+                                    stroke_weight: _prevOvData.stroke_weight,
+                                    geometry_json: _prevOvData.geometry,
+                                }),
+                            })
+                            .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                            .then(function () {
+                                aiCache = {}; _aiCacheKeys = [];
+                                try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
+                                _showAdminToast('Override reverted');
+                                scheduleAIQuery();
+                                _refreshActivePanelTab();
+                            })
+                            .catch(function () { _showAdminToast('Revert failed', true); });
+                        });
+                    } else {
+                        _showAdminToast('Override saved');
+                    }
                 })
                 .catch(function (e) {
                     overrideSaveBtn.disabled = false;
@@ -4888,27 +6449,21 @@
 
         var overrideDelBtn = document.getElementById('fmap-override-delete');
         if (overrideDelBtn) {
-            var _ovDelConfirm = false, _ovDelTimer = null;
             overrideDelBtn.addEventListener('click', function () {
                 var overrideId = (document.getElementById('fmap-override-id') || {}).value || '';
                 if (!overrideId) return;
-                // Two-step confirmation (same pattern as habitat delete)
-                if (!_ovDelConfirm) {
-                    _ovDelConfirm = true;
-                    overrideDelBtn.textContent = 'Confirm remove?';
-                    overrideDelBtn.style.background = '#991b1b';
-                    _ovDelTimer = setTimeout(function () {
-                        _ovDelConfirm = false;
-                        overrideDelBtn.textContent = 'Remove Override';
-                        overrideDelBtn.style.background = '#dc2626';
-                    }, 3000);
-                    return;
-                }
-                clearTimeout(_ovDelTimer);
-                _ovDelConfirm = false;
-                overrideDelBtn.textContent = 'Remove Override';
-                overrideDelBtn.style.background = '#dc2626';
                 overrideDelBtn.disabled = true;
+                // Snapshot for undo before the request
+                var _undoOvData = _overrideEditData ? {
+                    feature_key:   _overrideEditData.featureKey,
+                    name:          _overrideEditData.name,
+                    description:   _overrideEditData.desc,
+                    fill_color:    _overrideEditData.color,
+                    fill_opacity:  _overrideEditData.fill_opacity,
+                    stroke_weight: _overrideEditData.stroke_weight,
+                    geometry:      _overrideEditData.geometry,
+                    geomIsOverride: _overrideEditData.geometryIsOverride
+                } : null;
                 fetch('/api/v1/admin/habitat-overrides/' + encodeURIComponent(overrideId), { method: 'DELETE' })
                 .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
                 .then(function () {
@@ -4916,8 +6471,35 @@
                     _closeOverrideModal();
                     aiCache = {}; _aiCacheKeys = [];
                     try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
-                    _showAdminToast('Override removed');
                     scheduleAIQuery();
+                    _refreshActivePanelTab();
+                    if (_undoOvData && _undoOvData.feature_key) {
+                        _showUndoToast('Override removed', function () {
+                            fetch('/api/v1/admin/habitat-overrides', {
+                                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    feature_key:   _undoOvData.feature_key,
+                                    name:          _undoOvData.name || null,
+                                    description:   _undoOvData.description || null,
+                                    fill_color:    _undoOvData.fill_color || null,
+                                    fill_opacity:  _undoOvData.fill_opacity,
+                                    stroke_weight: _undoOvData.stroke_weight,
+                                    geometry_json: _undoOvData.geomIsOverride ? _undoOvData.geometry : null,
+                                }),
+                            })
+                            .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                            .then(function () {
+                                aiCache = {}; _aiCacheKeys = [];
+                                try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
+                                _showAdminToast('Override restored');
+                                scheduleAIQuery();
+                                _refreshActivePanelTab();
+                            })
+                            .catch(function () { _showAdminToast('Restore failed', true); });
+                        });
+                    } else {
+                        _showAdminToast('Override removed');
+                    }
                 })
                 .catch(function (e) {
                     overrideDelBtn.disabled = false;
@@ -4929,16 +6511,152 @@
 
         var overrideCloseBtn = document.getElementById('fmap-override-modal-close');
         if (overrideCloseBtn) overrideCloseBtn.addEventListener('click', _closeOverrideModal);
+
+        // ESC closes the override modal; Tab trapped within; Ctrl+S / Enter saves
+        var _overrideModalEl = document.getElementById('fmap-override-modal');
+        document.addEventListener('keydown', function (e) {
+            if (_overrideModalEl && !_overrideModalEl.hidden) {
+                if (e.key === 'Escape') { _closeOverrideModal(); return; }
+                if (e.key === 's' && (e.ctrlKey || e.metaKey)) {
+                    e.preventDefault();
+                    var sb = document.getElementById('fmap-override-save');
+                    if (sb && !sb.disabled) sb.click();
+                    return;
+                }
+                if (e.key === 'Tab') { _trapFocusOnTab(_overrideModalEl, e); return; }
+            }
+        });
+        var overrideNameInput = document.getElementById('fmap-override-name');
+        if (overrideNameInput) {
+            overrideNameInput.addEventListener('keydown', function (e) {
+                if (e.key !== 'Enter') return;
+                var sb = document.getElementById('fmap-override-save');
+                if (sb && !sb.disabled) sb.click();
+            });
+        }
+
+        var overrideClearShapeBtn = document.getElementById('fmap-override-clear-shape');
+        if (overrideClearShapeBtn) {
+            overrideClearShapeBtn.addEventListener('click', function () {
+                var featureKey = (document.getElementById('fmap-override-feature-key') || {}).value || '';
+                if (!featureKey) return;
+                // Snapshot geometry for undo before clearing
+                var _undoGeom = _overrideEditData ? _overrideEditData.geometry : null;
+                var _undoData = _overrideEditData ? {
+                    feature_key:   _overrideEditData.featureKey,
+                    name:          _overrideEditData.name || null,
+                    description:   _overrideEditData.desc || null,
+                    fill_color:    _overrideEditData.color || null,
+                    fill_opacity:  _overrideEditData.fill_opacity,
+                    stroke_weight: _overrideEditData.stroke_weight,
+                } : null;
+                overrideClearShapeBtn.disabled = true;
+                fetch('/api/v1/admin/habitat-overrides', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ feature_key: featureKey, geometry_json: null }),
+                })
+                .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+                .then(function () {
+                    overrideClearShapeBtn.disabled = false;
+                    _closeOverrideModal();
+                    aiCache = {}; _aiCacheKeys = [];
+                    try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
+                    scheduleAIQuery();
+                    _refreshActivePanelTab();
+                    if (_undoGeom && _undoData) {
+                        _showUndoToast('Shape cleared — AI geometry restored', function () {
+                            fetch('/api/v1/admin/habitat-overrides', {
+                                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(Object.assign({}, _undoData, { geometry_json: _undoGeom })),
+                            })
+                            .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                            .then(function () {
+                                aiCache = {}; _aiCacheKeys = [];
+                                try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
+                                _showAdminToast('Custom shape restored');
+                                scheduleAIQuery();
+                                _refreshActivePanelTab();
+                            })
+                            .catch(function () { _showAdminToast('Restore failed', true); });
+                        });
+                    } else {
+                        _showAdminToast('Shape override cleared — AI geometry restored');
+                    }
+                })
+                .catch(function (e) {
+                    overrideClearShapeBtn.disabled = false;
+                    _showAdminToast('Clear failed — ' + e.message, true);
+                });
+            });
+        }
         var overrideBackdrop = document.getElementById('fmap-override-backdrop');
         if (overrideBackdrop) overrideBackdrop.addEventListener('click', _closeOverrideModal);
+
+        // ── Override fill-opacity / stroke-weight sliders ─────────────────────
+        var _ovFoSlider = document.getElementById('fmap-override-fill-opacity');
+        if (_ovFoSlider) {
+            _ovFoSlider.addEventListener('input', function () {
+                var _ovFoOut2 = document.getElementById('fmap-override-fill-opacity-val');
+                if (_ovFoOut2) _ovFoOut2.value = parseFloat(_ovFoSlider.value);
+                if (!_overrideEditData) return;
+                var lyr2 = _aiPolyByKey[String(_overrideEditData.featureKey)];
+                if (lyr2) lyr2.setStyle({ fillOpacity: parseFloat(_ovFoSlider.value) });
+            });
+        }
+        var _ovSwSlider = document.getElementById('fmap-override-stroke-weight');
+        if (_ovSwSlider) {
+            _ovSwSlider.addEventListener('input', function () {
+                var _ovSwOut2 = document.getElementById('fmap-override-stroke-weight-val');
+                if (_ovSwOut2) _ovSwOut2.value = parseFloat(_ovSwSlider.value);
+                if (!_overrideEditData) return;
+                var lyr2 = _aiPolyByKey[String(_overrideEditData.featureKey)];
+                if (lyr2) lyr2.setStyle({ weight: parseFloat(_ovSwSlider.value) });
+            });
+        }
 
         // ── Reshape button (in habitat edit modal) ────────────────────────────
         var reshapeBtn = document.getElementById('fmap-habitat-reshape');
         if (reshapeBtn) {
             reshapeBtn.addEventListener('click', function () {
                 if (!_pendingHabitatGeom || _pendingHabitatGeom.type !== 'Polygon') return;
+                var _geomToReshape = _pendingHabitatGeom;
+                _pendingHabitatGeom = null; // prevent discarded-toast on close (add-mode)
+                // Preserve panel-origin flag: _closeHabitatModal would consume it and reopen
+                // the panel, but for Reshape we want to stay panel-less during vertex edit
+                // and only reopen the panel when the re-opened edit modal is later dismissed.
+                var _reshapeFromPanel = _habitatEditedFromPanel;
+                _habitatEditedFromPanel = false;
                 _closeHabitatModal();
-                _startHabitatVertexEdit(_pendingHabitatGeom);
+                _habitatEditedFromPanel = _reshapeFromPanel;
+                // Fit the map to the polygon so vertices are always visible
+                if (map && _geomToReshape.coordinates && _geomToReshape.coordinates[0]) {
+                    try {
+                        var _hring = _geomToReshape.coordinates[0];
+                        var _hbounds = L.latLngBounds(_hring.map(function (c) { return [c[1], c[0]]; }));
+                        if (_hbounds.isValid()) map.fitBounds(_hbounds.pad(0.3), { maxZoom: 17, animate: true });
+                    } catch (_hfe) {}
+                }
+                _startHabitatVertexEdit(_geomToReshape);
+                _showAdminToast('Drag vertices to reshape · Right-click or Shift+click to remove · Enter or Done to finish.');
+            });
+        }
+
+        // ── Redraw button (in habitat edit modal) — replace polygon from scratch ─
+        var redrawBtn3 = document.getElementById('fmap-habitat-redraw');
+        if (redrawBtn3) {
+            redrawBtn3.addEventListener('click', function () {
+                if (!_habitatEditData) return;
+                // Close the modal but keep _habitatEditData so _finishHabitatDraw
+                // knows to re-open the edit modal with the new geometry.
+                // Preserve panel-origin flag across close so the re-opened modal can reopen the panel.
+                _pendingHabitatGeom = null; // suppress "discarded" undo toast
+                var _redrawFromPanel = _habitatEditedFromPanel;
+                _habitatEditedFromPanel = false;
+                _closeHabitatModal();
+                _habitatEditedFromPanel = _redrawFromPanel;
+                _habitatRedrawMode = true; // signal _finishHabitatDraw to re-open edit modal
+                _startHabitatDraw();
+                _showAdminToast('Draw a new polygon to replace the current shape. Double-click to finish.');
             });
         }
 
@@ -4947,7 +6665,12 @@
         if (moveBtn) {
             moveBtn.addEventListener('click', function () {
                 if (!_pendingHabitatGeom || _pendingHabitatGeom.type !== 'Point') return;
+                // Preserve panel-origin flag so point-move cancel/finish re-opens the edit modal,
+                // which then reopens the panel on final dismiss.
+                var _moveFromPanel = _habitatEditedFromPanel;
+                _habitatEditedFromPanel = false;
                 _closeHabitatModal();
+                _habitatEditedFromPanel = _moveFromPanel;
                 _startHabitatPointMove(_habitatEditData);
             });
         }
@@ -4956,7 +6679,9 @@
         var reshapeDoneBtn = document.getElementById('fmap-habitat-reshape-done');
         if (reshapeDoneBtn) {
             reshapeDoneBtn.addEventListener('click', function () {
-                if (_habitatPointMoveMode) {
+                if (_habitatDrawMode) {
+                    _finishHabitatDraw();
+                } else if (_habitatPointMoveMode) {
                     _finishHabitatPointMove();
                 } else {
                     if (_habitatVertexMarkers.length < 3) {
@@ -4971,15 +6696,37 @@
         var reshapeCancelBtn = document.getElementById('fmap-habitat-reshape-cancel');
         if (reshapeCancelBtn) {
             reshapeCancelBtn.addEventListener('click', function () {
-                if (_habitatPointMoveMode) {
+                if (_habitatDrawMode) {
+                    _cancelHabitatDraw();
+                } else if (_habitatPointMoveMode) {
                     _cancelHabitatPointMove();
                     if (_habitatEditData) _openHabitatEditModal(_habitatEditData);
                 } else {
+                    var savedOv = _overrideEditData;
                     _cancelHabitatVertexEdit();
-                    if (_habitatEditData) _openHabitatEditModal(_habitatEditData);
+                    if (savedOv) {
+                        // Restore override modal with original (pre-reshape) geometry
+                        _openOverrideModal(savedOv.featureKey, savedOv.overrideId,
+                            savedOv.name, savedOv.desc, savedOv.color,
+                            savedOv.geometry, savedOv.geometryIsOverride,
+                            savedOv.createdAt, savedOv.updatedAt,
+                            savedOv.fill_opacity, savedOv.stroke_weight);
+                    } else if (_habitatEditData) {
+                        _openHabitatEditModal(_habitatEditData);
+                    }
                 }
             });
         }
+
+        // Enter finishes vertex edit (mirrors draw mode); Escape cancels
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' && _habitatVertexEditMode) {
+                if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'BUTTON')) return;
+                e.preventDefault();
+                if (_habitatVertexMarkers.length >= 3) _finishHabitatVertexEdit();
+                return;
+            }
+        });
 
         // Escape closes vertex-edit or point-move mode
         document.addEventListener('keydown', function (e) {
@@ -4988,8 +6735,17 @@
                     _cancelHabitatPointMove();
                     if (_habitatEditData) _openHabitatEditModal(_habitatEditData);
                 } else if (_habitatVertexEditMode) {
+                    var savedOv = _overrideEditData;
                     _cancelHabitatVertexEdit();
-                    if (_habitatEditData) _openHabitatEditModal(_habitatEditData);
+                    if (savedOv) {
+                        _openOverrideModal(savedOv.featureKey, savedOv.overrideId,
+                            savedOv.name, savedOv.desc, savedOv.color,
+                            savedOv.geometry, savedOv.geometryIsOverride,
+                            savedOv.createdAt, savedOv.updatedAt,
+                            savedOv.fill_opacity, savedOv.stroke_weight);
+                    } else if (_habitatEditData) {
+                        _openHabitatEditModal(_habitatEditData);
+                    }
                 }
             }
         });
@@ -5007,10 +6763,15 @@
                         var d = Math.sqrt(Math.pow(mp.x - cp.x, 2) + Math.pow(mp.y - cp.y, 2));
                         if (d < minDist) { minDist = d; closest = m; }
                     });
-                    if (closest && _habitatVertexMarkers.length > 3) {
-                        map.removeLayer(closest);
-                        _habitatVertexMarkers = _habitatVertexMarkers.filter(function (m) { return m !== closest; });
-                        _updateHabitatVertexPreview();
+                    if (closest) {
+                        if (_habitatVertexMarkers.length <= 3) {
+                            _showAdminToast('Polygon must keep at least 3 vertices', true);
+                        } else {
+                            map.removeLayer(closest);
+                            _habitatVertexMarkers = _habitatVertexMarkers.filter(function (m) { return m !== closest; });
+                            _updateHabitatVertexPreview();
+                            _updateMidpointMarkers();
+                        }
                     }
                 }
             });
@@ -5026,7 +6787,11 @@
                 if (panel) panel.hidden = !_habitatPanelOpen;
                 listBtn.classList.toggle('fmap-ctrl-btn--active', _habitatPanelOpen);
                 listBtn.setAttribute('aria-pressed', _habitatPanelOpen ? 'true' : 'false');
-                if (_habitatPanelOpen) _loadHabitatPanel();
+                if (_habitatPanelOpen) {
+                    _refreshActivePanelTab();
+                } else {
+                    _clearPanelHoverState();
+                }
             });
         }
 
@@ -5038,11 +6803,18 @@
                 if (panel) panel.hidden = true;
                 var lb = document.getElementById('fmap-admin-habitats-list-btn');
                 if (lb) { lb.classList.remove('fmap-ctrl-btn--active'); lb.setAttribute('aria-pressed', 'false'); }
+                _clearPanelHoverState();
             });
         }
 
         // ── New type form ─────────────────────────────────────────────────────
         var newTypeAdd = document.getElementById('fmap-new-type-add');
+        var newTypeNameEl = document.getElementById('fmap-new-type-name');
+        if (newTypeNameEl && newTypeAdd) {
+            newTypeNameEl.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' && !newTypeAdd.disabled) newTypeAdd.click();
+            });
+        }
         if (newTypeAdd) {
             newTypeAdd.addEventListener('click', function () {
                 var nameEl   = document.getElementById('fmap-new-type-name');
@@ -5066,7 +6838,7 @@
                 })
                 .then(function () {
                     newTypeAdd.disabled = false;
-                    if (nameEl) nameEl.value = '';
+                    if (nameEl) { nameEl.value = ''; nameEl.focus(); }
                     if (statusEl) { statusEl.style.color = '#16a34a'; statusEl.textContent = 'Type added'; }
                     _showAdminToast('Habitat type added');
                     _loadHabitatPanel();
@@ -5078,14 +6850,138 @@
             });
         }
 
-        // ── Color presets (swatches in the edit modal) ───────────────────────
+        // ── Habitat type → suggested fill color (Add mode only) ─────────────
+        var _HABITAT_TYPE_COLORS = {
+            surf:      '#fbbf24', grassflat: '#22c55e', estuary:  '#34d399',
+            reef:      '#f59e0b', mangrove:  '#16a34a', kelp:     '#4ade80',
+            bottom:    '#94a3b8', tidalflat: '#6ee7b7', pelagic:  '#38bdf8',
+            general:   '#a78bfa',
+        };
+        var habitatTypeSelEl = document.getElementById('fmap-habitat-type');
+        if (habitatTypeSelEl) {
+            habitatTypeSelEl.addEventListener('change', function () {
+                // Only auto-suggest in Add mode (no existing habitat being edited)
+                if (_habitatEditData) return;
+                var suggested = _HABITAT_TYPE_COLORS[habitatTypeSelEl.value];
+                if (!suggested) return;
+                // Auto-suggest color for custom types that declare a default_color
+                var ct = _customHabitatTypes.filter(function (t) { return t.slug === habitatTypeSelEl.value; })[0];
+                if (ct && ct.default_color) suggested = ct.default_color;
+                var colorEl = document.getElementById('fmap-habitat-color');
+                if (colorEl) {
+                    colorEl.value = suggested;
+                    colorEl.dispatchEvent(new Event('input')); // trigger live preview
+                }
+            });
+        }
+
+        // ── Color presets (swatches in habitat and override modals) ─────────
         var presetsEl = document.getElementById('fmap-habitat-color-presets');
         if (presetsEl) {
             presetsEl.addEventListener('click', function (e) {
                 var sw = e.target.closest('.fmap-color-swatch');
                 if (!sw) return;
                 var colorEl = document.getElementById('fmap-habitat-color');
-                if (colorEl) colorEl.value = sw.dataset.color;
+                if (colorEl) {
+                    colorEl.value = sw.dataset.color;
+                    colorEl.dispatchEvent(new Event('input')); // trigger live preview
+                }
+            });
+        }
+        var ovPresetsEl = document.getElementById('fmap-override-color-presets');
+        if (ovPresetsEl) {
+            ovPresetsEl.addEventListener('click', function (e) {
+                var sw = e.target.closest('.fmap-color-swatch');
+                if (!sw) return;
+                var colorEl = document.getElementById('fmap-override-color');
+                if (colorEl) {
+                    colorEl.value = sw.dataset.color;
+                    colorEl.dispatchEvent(new Event('input'));
+                }
+            });
+        }
+
+        // ── Override color picker → live AI polygon preview ───────────────────
+        var ovColorEl = document.getElementById('fmap-override-color');
+        if (ovColorEl) {
+            ovColorEl.addEventListener('input', function () {
+                if (!_overrideEditData) return;
+                var lyr = _aiPolyByKey[String(_overrideEditData.featureKey)];
+                if (lyr) lyr.setStyle({ color: ovColorEl.value, fillColor: ovColorEl.value });
+            });
+        }
+
+        // ── Live color/opacity/weight preview while habitat modal is open ───────
+        var habitatColorEl = document.getElementById('fmap-habitat-color');
+        if (habitatColorEl) {
+            habitatColorEl.addEventListener('input', function () {
+                var c = habitatColorEl.value;
+                // Live-update the draw preview polygon and vertex dots when in draw mode
+                if (_habitatDrawMode) {
+                    if (_habitatDrawPreview) _habitatDrawPreview.setStyle({ color: c, fillColor: c });
+                    _habitatDrawMarkers.forEach(function (dm) { dm.setStyle({ color: c, fillColor: c }); });
+                }
+                // Live-update the reshape vertex preview polygon
+                if (_habitatVertexEditMode && _habitatVertexPreview) {
+                    _habitatVertexPreview.setStyle({ color: c, fillColor: c });
+                }
+                // Live-update the add-modal pending preview polygon
+                if (_habitatModalPreview) {
+                    _habitatModalPreview.setStyle({ color: c, fillColor: c });
+                }
+                // Live-update the existing habitat polygon when editing
+                if (_habitatEditData) {
+                    var hid = _habitatEditData.id;
+                    _customHabitats.forEach(function (h) {
+                        if (h.id !== hid || !h.leaflet) return;
+                        h.leaflet.setStyle({ fillColor: c, color: c });
+                    });
+                }
+            });
+        }
+
+
+        // ── Habitat fill-opacity slider ───────────────────────────────────────
+        var _foSlider = document.getElementById('fmap-habitat-fill-opacity');
+        if (_foSlider) {
+            _foSlider.addEventListener('input', function () {
+                var _foVal = parseFloat(_foSlider.value);
+                var _foOut = document.getElementById('fmap-habitat-fill-opacity-val');
+                if (_foOut) _foOut.value = _foVal;
+                // Live-update pending add-modal preview
+                if (_habitatModalPreview) _habitatModalPreview.setStyle({ fillOpacity: _foVal * 0.6 });
+                // Live-update reshape vertex preview
+                if (_habitatVertexEditMode && _habitatVertexPreview) _habitatVertexPreview.setStyle({ fillOpacity: _foVal });
+                // Live-preview: update the map layer if editing an existing habitat
+                if (_habitatEditData) {
+                    var _hid = _habitatEditData.id;
+                    _customHabitats.forEach(function (h) {
+                        if (h.id !== _hid || !h.leaflet) return;
+                        h.leaflet.setStyle({ fillOpacity: _foVal });
+                    });
+                }
+            });
+        }
+
+        // ── Habitat stroke-weight slider ──────────────────────────────────────
+        var _swSlider = document.getElementById('fmap-habitat-stroke-weight');
+        if (_swSlider) {
+            _swSlider.addEventListener('input', function () {
+                var _swVal = parseFloat(_swSlider.value);
+                var _swOut = document.getElementById('fmap-habitat-stroke-weight-val');
+                if (_swOut) _swOut.value = _swVal;
+                // Live-update pending add-modal preview
+                if (_habitatModalPreview) _habitatModalPreview.setStyle({ weight: _swVal });
+                // Live-update reshape vertex preview
+                if (_habitatVertexEditMode && _habitatVertexPreview) _habitatVertexPreview.setStyle({ weight: _swVal });
+                // Live-preview: update the map layer if editing an existing habitat
+                if (_habitatEditData) {
+                    var _hid2 = _habitatEditData.id;
+                    _customHabitats.forEach(function (h) {
+                        if (h.id !== _hid2 || !h.leaflet) return;
+                        h.leaflet.setStyle({ weight: _swVal });
+                    });
+                }
             });
         }
 
@@ -5101,25 +6997,75 @@
                     var ct = _customHabitatTypes.filter(function (t) { return t.slug === slug; })[0];
                     if (ct) suggested = ct.default_color;
                 }
-                if (suggested) colorEl2.value = suggested;
+                if (suggested) {
+                    colorEl2.value = suggested;
+                    colorEl2.dispatchEvent(new Event('input')); // trigger live preview
+                }
             });
         }
 
-        // ── Panel tabs (Habitats / Overrides) ────────────────────────────────
+        // ── Panel tabs (Habitats / Overrides / Suppressed / Markers) ─────────
         document.querySelectorAll('.fmap-panel-tab').forEach(function (tabBtn) {
             tabBtn.addEventListener('click', function () {
                 var tabName = tabBtn.dataset.tab;
+                // Clean up any lingering hover state from the tab we're leaving
+                _clearPanelHoverState();
+                _habitatPanelActiveTab = tabName;
                 document.querySelectorAll('.fmap-panel-tab').forEach(function (b) {
                     b.classList.toggle('fmap-panel-tab--active', b === tabBtn);
                     b.setAttribute('aria-selected', b === tabBtn ? 'true' : 'false');
                 });
                 var habTab = document.getElementById('fmap-panel-tab-habitats');
                 var ovTab  = document.getElementById('fmap-panel-tab-overrides');
+                var supTab = document.getElementById('fmap-panel-tab-suppressed');
+                var mkrTab = document.getElementById('fmap-panel-tab-markers');
                 if (habTab) habTab.hidden = (tabName !== 'habitats');
                 if (ovTab)  ovTab.hidden  = (tabName !== 'overrides');
-                if (tabName === 'overrides') _loadOverridesTab();
+                if (supTab) supTab.hidden = (tabName !== 'suppressed');
+                if (mkrTab) mkrTab.hidden = (tabName !== 'markers');
+                if (tabName === 'habitats')   _loadHabitatPanel();
+                if (tabName === 'overrides')  _loadOverridesTab();
+                if (tabName === 'suppressed') _loadSuppressedTab();
+                if (tabName === 'markers')    _loadMarkersTab();
+            });
+            // Arrow key / Home / End navigation between tabs (ARIA tablist pattern)
+            tabBtn.addEventListener('keydown', function (e) {
+                var tabs = Array.prototype.slice.call(document.querySelectorAll('.fmap-panel-tab'));
+                var idx = tabs.indexOf(tabBtn);
+                var target = null;
+                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                    target = tabs[(idx + 1) % tabs.length];
+                } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                    target = tabs[(idx - 1 + tabs.length) % tabs.length];
+                } else if (e.key === 'Home') {
+                    target = tabs[0];
+                } else if (e.key === 'End') {
+                    target = tabs[tabs.length - 1];
+                }
+                if (target) { e.preventDefault(); target.focus(); target.click(); }
             });
         });
+
+        // ── Overrides search ──────────────────────────────────────────────────
+        var ovSearchEl = document.getElementById('fmap-overrides-search');
+        if (ovSearchEl) {
+            ovSearchEl.addEventListener('input', function () {
+                _overridesPanelSearch = ovSearchEl.value;
+                _renderOverridesList(_overridesPanelData);
+                var lEl = document.getElementById('fmap-overrides-panel-list');
+                if (lEl) lEl.scrollTop = 0;
+            });
+            ovSearchEl.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') {
+                    ovSearchEl.value = '';
+                    _overridesPanelSearch = '';
+                    _renderOverridesList(_overridesPanelData);
+                    var lEl = document.getElementById('fmap-overrides-panel-list');
+                    if (lEl) lEl.scrollTop = 0;
+                    ovSearchEl.blur();
+                }
+            });
+        }
 
         // ── Habitat search ────────────────────────────────────────────────────
         var searchEl = document.getElementById('fmap-habitat-search');
@@ -5127,12 +7073,67 @@
             searchEl.addEventListener('input', function () {
                 _habitatPanelSearch = searchEl.value;
                 _applyHabitatPanelFilter();
+                var lEl = document.getElementById('fmap-habitat-panel-list');
+                if (lEl) lEl.scrollTop = 0;
+            });
+            searchEl.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') {
+                    searchEl.value = '';
+                    _habitatPanelSearch = '';
+                    _applyHabitatPanelFilter();
+                    var lEl = document.getElementById('fmap-habitat-panel-list');
+                    if (lEl) lEl.scrollTop = 0;
+                    searchEl.blur();
+                }
+            });
+        }
+
+        // ── Suppressed search ─────────────────────────────────────────────────
+        var supSearchEl = document.getElementById('fmap-suppressed-search');
+        if (supSearchEl) {
+            supSearchEl.addEventListener('input', function () {
+                _suppressedPanelSearch = supSearchEl.value;
+                _renderSuppressedList(_suppressedPanelData);
+                var lEl = document.getElementById('fmap-suppressed-panel-list');
+                if (lEl) lEl.scrollTop = 0;
+            });
+            supSearchEl.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') {
+                    supSearchEl.value = '';
+                    _suppressedPanelSearch = '';
+                    _renderSuppressedList(_suppressedPanelData);
+                    var lEl = document.getElementById('fmap-suppressed-panel-list');
+                    if (lEl) lEl.scrollTop = 0;
+                    supSearchEl.blur();
+                }
+            });
+        }
+
+        // ── Markers search ────────────────────────────────────────────────────
+        var mkrSearchEl = document.getElementById('fmap-markers-search');
+        if (mkrSearchEl) {
+            mkrSearchEl.addEventListener('input', function () {
+                _markersPanelSearch = mkrSearchEl.value;
+                _renderMarkersList(_markersPanelData);
+                var lEl = document.getElementById('fmap-markers-panel-list');
+                if (lEl) lEl.scrollTop = 0;
+            });
+            mkrSearchEl.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') {
+                    mkrSearchEl.value = '';
+                    _markersPanelSearch = '';
+                    _renderMarkersList(_markersPanelData);
+                    var lEl = document.getElementById('fmap-markers-panel-list');
+                    if (lEl) lEl.scrollTop = 0;
+                    mkrSearchEl.blur();
+                }
             });
         }
 
         // ── Habitat sort ──────────────────────────────────────────────────────
-        var sortCycle = ['date', 'name', 'type'];
-        var sortLabels = { date: 'Date ↓', name: 'Name ↑', type: 'Type ↑' };
+        var sortCycle   = ['date', 'name', 'type', 'area'];
+        var sortCycle2  = ['date', 'name', 'type'];  // overrides: type parsed from feature_key
+        var sortLabels  = { date: 'Date ↓', name: 'Name ↑', type: 'Type ↑', area: 'Area ↓' };
         var sortBtn = document.getElementById('fmap-habitat-sort-btn');
         if (sortBtn) {
             sortBtn.addEventListener('click', function () {
@@ -5144,17 +7145,119 @@
             });
         }
 
-        // ── GeoJSON export ────────────────────────────────────────────────────
+        // ── Habitats panel "Draw" shortcut ────────────────────────────────────
+        var panelDrawBtn = document.getElementById('fmap-habitat-panel-draw-btn');
+        if (panelDrawBtn) {
+            panelDrawBtn.addEventListener('click', function () {
+                // Close the panel, then delegate to the map toolbar draw button
+                _habitatPanelOpen = false;
+                var panelEl = document.getElementById('fmap-habitat-panel');
+                var listBtn = document.getElementById('fmap-admin-habitats-list-btn');
+                if (panelEl) panelEl.hidden = true;
+                if (listBtn) { listBtn.classList.remove('fmap-ctrl-btn--active'); listBtn.setAttribute('aria-pressed', 'false'); }
+                var drawBtn = document.getElementById('fmap-admin-habitat-btn');
+                if (drawBtn && !drawBtn.hidden) {
+                    // Only trigger if not already in draw mode
+                    if (!_habitatDrawMode) drawBtn.click();
+                } else {
+                    _startHabitatDraw();
+                }
+            });
+        }
+
+        // ── Overrides sort ────────────────────────────────────────────────────
+        var ovSortBtn = document.getElementById('fmap-overrides-sort-btn');
+        if (ovSortBtn) {
+            ovSortBtn.addEventListener('click', function () {
+                var idx = sortCycle2.indexOf(_overridesPanelSort);
+                _overridesPanelSort = sortCycle2[(idx + 1) % sortCycle2.length];
+                ovSortBtn.textContent = sortLabels[_overridesPanelSort];
+                ovSortBtn.dataset.sort = _overridesPanelSort;
+                _renderOverridesList(_overridesPanelData);
+            });
+        }
+
+        // ── Suppressed sort (date/name/type only — no area, these are points) ──
+        var supSortBtn = document.getElementById('fmap-suppressed-sort-btn');
+        if (supSortBtn) {
+            supSortBtn.addEventListener('click', function () {
+                var idx = sortCycle2.indexOf(_suppressedPanelSort);
+                _suppressedPanelSort = sortCycle2[(idx + 1) % sortCycle2.length];
+                supSortBtn.textContent = sortLabels[_suppressedPanelSort];
+                supSortBtn.dataset.sort = _suppressedPanelSort;
+                _renderSuppressedList(_suppressedPanelData);
+            });
+        }
+
+        // ── Markers sort (date/name/type only — no area, these are points) ───
+        var mkrSortBtn = document.getElementById('fmap-markers-sort-btn');
+        if (mkrSortBtn) {
+            mkrSortBtn.addEventListener('click', function () {
+                var idx = sortCycle2.indexOf(_markersPanelSort);
+                _markersPanelSort = sortCycle2[(idx + 1) % sortCycle2.length];
+                mkrSortBtn.textContent = sortLabels[_markersPanelSort];
+                mkrSortBtn.dataset.sort = _markersPanelSort;
+                _renderMarkersList(_markersPanelData);
+            });
+        }
+
+        // ── GeoJSON export (context-sensitive by active tab) ─────────────────
         var exportBtn = document.getElementById('fmap-habitat-export-btn');
         if (exportBtn) {
             exportBtn.addEventListener('click', function () {
-                var a = document.createElement('a');
-                a.href = '/api/v1/admin/habitats/export.geojson';
-                a.download = 'custom_habitats.geojson';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                _showAdminToast('Downloading GeoJSON…');
+                var tab = _habitatPanelActiveTab || 'habitats';
+                if (tab === 'habitats') {
+                    var a = document.createElement('a');
+                    a.href = '/api/v1/admin/habitats/export.geojson';
+                    a.download = 'custom_habitats.geojson';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    _showAdminToast('Downloading habitats GeoJSON…');
+                    return;
+                }
+                // Client-side export for other tabs
+                var features = [];
+                var filename = 'export.geojson';
+                if (tab === 'markers') {
+                    filename = 'custom_markers.geojson';
+                    (_markersPanelData || []).forEach(function (m) {
+                        if (isNaN(parseFloat(m.lat)) || isNaN(parseFloat(m.lng))) return;
+                        features.push({ type: 'Feature', geometry: { type: 'Point', coordinates: [parseFloat(m.lng), parseFloat(m.lat)] },
+                            properties: { id: m.id, name: m.name || null, type: m.type || null, description: m.description || null, created_at: m.created_at || null } });
+                    });
+                } else if (tab === 'overrides') {
+                    filename = 'ai_overrides.geojson';
+                    (_overridesPanelData || []).forEach(function (ov) {
+                        var geom = null;
+                        try { if (ov.geometry_json) geom = JSON.parse(ov.geometry_json); } catch (_e) {}
+                        if (!geom) {
+                            var _lyrEx = _aiPolyByKey[String(ov.feature_key)];
+                            if (_lyrEx && typeof _lyrEx.toGeoJSON === 'function') geom = _lyrEx.toGeoJSON().geometry;
+                        }
+                        features.push({ type: 'Feature', geometry: geom || null,
+                            properties: { id: ov.id, feature_key: ov.feature_key, name: ov.name || null, description: ov.description || null, fill_color: ov.fill_color || null, fill_opacity: ov.fill_opacity, stroke_weight: ov.stroke_weight, created_at: ov.created_at || null } });
+                    });
+                } else if (tab === 'suppressed') {
+                    filename = 'suppressed_spots.geojson';
+                    (_suppressedPanelData || []).forEach(function (s) {
+                        if (isNaN(parseFloat(s.lat)) || isNaN(parseFloat(s.lng))) return;
+                        features.push({ type: 'Feature', geometry: { type: 'Point', coordinates: [parseFloat(s.lng), parseFloat(s.lat)] },
+                            properties: { id: s.id, spot_key: s.spot_key, name: s.name || null, type: s.type || null, created_at: s.created_at || null } });
+                    });
+                }
+                if (!features.length) { _showAdminToast('Nothing to export on this tab', true); return; }
+                var geojsonStr = JSON.stringify({ type: 'FeatureCollection', features: features }, null, 2);
+                var blob = new Blob([geojsonStr], { type: 'application/geo+json' });
+                var url = URL.createObjectURL(blob);
+                var a2 = document.createElement('a');
+                a2.href = url;
+                a2.download = filename;
+                document.body.appendChild(a2);
+                a2.click();
+                document.body.removeChild(a2);
+                setTimeout(function () { URL.revokeObjectURL(url); }, 5000);
+                _showAdminToast('Downloading ' + features.length + ' feature' + (features.length === 1 ? '' : 's') + '…');
             });
         }
 
@@ -5166,6 +7269,22 @@
                 _updateHabitatTypeDropdown(data.types || []);
             })
             .catch(function () {});
+
+        // ── Unsaved-changes guard ─────────────────────────────────────────────
+        // Browser shows a generic "Leave site?" dialog when the admin navigates
+        // away mid-edit so unsaved form data is not silently discarded.
+        window.addEventListener('beforeunload', function (e) {
+            var modalOpen =
+                (_getHidden('fmap-habitat-modal')  === false) ||
+                (_getHidden('fmap-admin-modal')    === false) ||
+                (_getHidden('fmap-override-modal') === false) ||
+                _habitatDrawMode || _habitatVertexEditMode || _habitatPointMoveMode;
+            if (modalOpen) e.returnValue = '';
+        });
+        function _getHidden(id) {
+            var el = document.getElementById(id);
+            return el ? el.hidden : true;
+        }
     }
 
     // Wire habitat type filter checkboxes in the layers panel.
@@ -5201,11 +7320,11 @@
         }
     }
 
-    function _openOverrideModal(featureKey, overrideId, currentName, currentDesc, currentColor) {
+    function _openOverrideModal(featureKey, overrideId, currentName, currentDesc, currentColor, currentGeom, geomIsOverride, createdAt, updatedAt, fillOpacity, strokeWeight) {
         var modal = document.getElementById('fmap-override-modal');
         var backdrop = document.getElementById('fmap-override-backdrop');
         if (!modal) return;
-        document.getElementById('fmap-override-modal-title').textContent = 'Override AI Feature';
+        document.getElementById('fmap-override-modal-title').textContent = overrideId ? 'Edit AI Override' : 'Override AI Feature';
         var nameEl = document.getElementById('fmap-override-name');
         if (nameEl) nameEl.value = currentName || '';
         var descEl = document.getElementById('fmap-override-desc');
@@ -5214,14 +7333,101 @@
         if (colorEl) colorEl.value = currentColor || '#22c55e';
         var keyEl = document.getElementById('fmap-override-feature-key');
         if (keyEl) keyEl.value = featureKey || '';
+        var keyDisplay = document.getElementById('fmap-override-key-display');
+        if (keyDisplay) {
+            var _kdParts = String(featureKey || '').split(',');
+            var _kdLat = parseFloat(_kdParts[0]), _kdLng = parseFloat(_kdParts[1]);
+            var _kdType = _kdParts.length >= 3 ? _kdParts[2].trim() : '';
+            var _kdInfo = _kdType && AI_PICK_INFO[_kdType];
+            keyDisplay.textContent = (!isNaN(_kdLat) && !isNaN(_kdLng))
+                ? _kdLat.toFixed(4) + ', ' + _kdLng.toFixed(4) + (_kdInfo ? ' · ' + _kdInfo.label : (_kdType ? ' · ' + _kdType : ''))
+                : (featureKey || '');
+        }
         var idEl = document.getElementById('fmap-override-id');
         if (idEl) idEl.value = overrideId || '';
         var delBtn = document.getElementById('fmap-override-delete');
         if (delBtn) delBtn.hidden = !overrideId;
         var statusEl = document.getElementById('fmap-override-status');
         if (statusEl) { statusEl.textContent = ''; statusEl.style.color = ''; }
+        var auditEl = document.getElementById('fmap-override-audit');
+        if (auditEl) {
+            var ca = createdAt ? String(createdAt).replace('T', ' ').slice(0, 16) : null;
+            var ua = updatedAt ? String(updatedAt).replace('T', ' ').slice(0, 16) : null;
+            if (ca) {
+                auditEl.hidden = false;
+                auditEl.textContent = 'Added ' + ca + (ua && ua !== ca ? ' · Updated ' + ua : '');
+            } else {
+                auditEl.hidden = true;
+            }
+        }
+        var _ovFoEl = document.getElementById('fmap-override-fill-opacity');
+        if (_ovFoEl) {
+            _ovFoEl.value = (fillOpacity != null) ? fillOpacity : 0.25;
+            var _ovFoOut = document.getElementById('fmap-override-fill-opacity-val');
+            if (_ovFoOut) _ovFoOut.value = parseFloat(_ovFoEl.value);
+        }
+        var _ovSwEl = document.getElementById('fmap-override-stroke-weight');
+        if (_ovSwEl) {
+            _ovSwEl.value = (strokeWeight != null) ? strokeWeight : 2;
+            var _ovSwOut = document.getElementById('fmap-override-stroke-weight-val');
+            if (_ovSwOut) _ovSwOut.value = parseFloat(_ovSwEl.value);
+        }
+        // Store context for reshape; geomIsOverride tracks whether geometry should be saved
+        _overrideEditData = {
+            featureKey:       featureKey,
+            overrideId:       overrideId,
+            name:             currentName || '',
+            desc:             currentDesc || '',
+            color:            currentColor || '#22c55e',
+            fill_opacity:     fillOpacity != null ? fillOpacity : null,
+            stroke_weight:    strokeWeight != null ? strokeWeight : null,
+            geometry:         currentGeom || null,
+            geometryIsOverride: !!geomIsOverride,
+            createdAt:        createdAt || null,
+            updatedAt:        updatedAt || null
+        };
+        var reshapeBtn = document.getElementById('fmap-override-reshape');
+        if (reshapeBtn) reshapeBtn.hidden = !(currentGeom && currentGeom.type === 'Polygon');
+        var clearShapeBtn = document.getElementById('fmap-override-clear-shape');
+        if (clearShapeBtn) clearShapeBtn.hidden = !geomIsOverride; // only when a shape is actually stored
+        // Area hint — show when a custom polygon geometry override exists
+        var _ovAreaHint = document.getElementById('fmap-override-area-hint');
+        if (_ovAreaHint) {
+            var _ovAreaLabel = (geomIsOverride && currentGeom && currentGeom.type === 'Polygon')
+                ? _polyAreaLabel(currentGeom) : null;
+            if (_ovAreaLabel) {
+                var _ovVCount = currentGeom.coordinates && currentGeom.coordinates[0] ? currentGeom.coordinates[0].length - 1 : 0;
+                _ovAreaHint.textContent = 'Custom shape · Area ≈ ' + _ovAreaLabel + (_ovVCount > 0 ? ' · ' + _ovVCount + ' vert' + (_ovVCount === 1 ? 'ex' : 'ices') : '');
+                _ovAreaHint.hidden = false;
+            } else {
+                _ovAreaHint.hidden = true;
+            }
+        }
         if (modal) modal.hidden = false;
         if (backdrop) backdrop.hidden = false;
+        // Capture the AI polygon's true original style for live-preview restore.
+        // If an override panel hover is active on this layer, restore it first so
+        // we capture the pre-hover style rather than the temporarily-brightened one.
+        var _prevLyr = _aiPolyByKey[String(featureKey)];
+        if (_prevLyr && typeof _prevLyr.options === 'object') {
+            if (_ovHoverActive && _ovHoverActive.fKey === String(featureKey)) {
+                _prevLyr.setStyle(_ovHoverActive.origStyle);
+                _overridePreviewOrigStyle = Object.assign({}, _ovHoverActive.origStyle);
+                _ovHoverActive = null;
+            } else {
+                _overridePreviewOrigStyle = {
+                    color:       _prevLyr.options.color,
+                    fillColor:   _prevLyr.options.fillColor,
+                    fillOpacity: _prevLyr.options.fillOpacity,
+                    weight:      _prevLyr.options.weight
+                };
+            }
+        } else {
+            _overridePreviewOrigStyle = null;
+        }
+        // Focus the name field so the user can type immediately
+        var _nameEl = document.getElementById('fmap-override-name');
+        if (_nameEl) setTimeout(function () { _nameEl.focus(); }, 30);
     }
 
     function _closeOverrideModal() {
@@ -5229,6 +7435,34 @@
         var backdrop = document.getElementById('fmap-override-backdrop');
         if (modal)    modal.hidden    = true;
         if (backdrop) backdrop.hidden = true;
+        // Restore AI polygon style if we were live-previewing
+        if (_overrideEditData && _overridePreviewOrigStyle) {
+            var _restLyr = _aiPolyByKey[String(_overrideEditData.featureKey)];
+            if (_restLyr) _restLyr.setStyle(_overridePreviewOrigStyle);
+        }
+        _overridePreviewOrigStyle = null;
+        _overrideEditData = null;
+        var delBtn = document.getElementById('fmap-override-delete');
+        if (delBtn) delBtn.disabled = false;
+        var clrBtn = document.getElementById('fmap-override-clear-shape');
+        if (clrBtn) clrBtn.disabled = false;
+        var statusEl = document.getElementById('fmap-override-status');
+        if (statusEl) { statusEl.textContent = ''; statusEl.style.color = ''; }
+        var auditEl = document.getElementById('fmap-override-audit');
+        if (auditEl) auditEl.hidden = true;
+        var _ovAreaHintEl = document.getElementById('fmap-override-area-hint');
+        if (_ovAreaHintEl) _ovAreaHintEl.hidden = true;
+        // Reopen the panel on the overrides tab if Edit was clicked from there
+        if (_overrideEditedFromPanel) {
+            _overrideEditedFromPanel = false;
+            _habitatPanelOpen = true;
+            _habitatPanelActiveTab = 'overrides';
+            var _rPanel = document.getElementById('fmap-habitat-panel');
+            var _rBtn   = document.getElementById('fmap-admin-habitats-list-btn');
+            if (_rPanel) _rPanel.hidden = false;
+            if (_rBtn) { _rBtn.classList.add('fmap-ctrl-btn--active'); _rBtn.setAttribute('aria-pressed', 'true'); }
+            _refreshActivePanelTab();
+        }
     }
 
     // ─── SST Stations overlay (ArcGIS Live Feeds / NOAA CoRIS) ──────────────
@@ -6845,7 +9079,7 @@
                 // Render favorite pins; hide OSM structures and AI habitats
                 renderFavoriteSpots();
                 fishingSpotLayer && fishingSpotLayer.clearLayers();
-                aiPickLayer && aiPickLayer.clearLayers();
+                aiPickLayer && aiPickLayer.clearLayers(); _aiPolyByKey = {};
                 return;
             }
             // Restore OSM spots and AI habitats for non-mine categories
