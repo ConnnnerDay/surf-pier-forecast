@@ -6995,24 +6995,24 @@
             });
         }
 
-        // ── Suppressed sort ───────────────────────────────────────────────────
+        // ── Suppressed sort (date/name/type only — no area, these are points) ──
         var supSortBtn = document.getElementById('fmap-suppressed-sort-btn');
         if (supSortBtn) {
             supSortBtn.addEventListener('click', function () {
-                var idx = sortCycle.indexOf(_suppressedPanelSort);
-                _suppressedPanelSort = sortCycle[(idx + 1) % sortCycle.length];
+                var idx = sortCycle2.indexOf(_suppressedPanelSort);
+                _suppressedPanelSort = sortCycle2[(idx + 1) % sortCycle2.length];
                 supSortBtn.textContent = sortLabels[_suppressedPanelSort];
                 supSortBtn.dataset.sort = _suppressedPanelSort;
                 _renderSuppressedList(_suppressedPanelData);
             });
         }
 
-        // ── Markers sort ──────────────────────────────────────────────────────
+        // ── Markers sort (date/name/type only — no area, these are points) ───
         var mkrSortBtn = document.getElementById('fmap-markers-sort-btn');
         if (mkrSortBtn) {
             mkrSortBtn.addEventListener('click', function () {
-                var idx = sortCycle.indexOf(_markersPanelSort);
-                _markersPanelSort = sortCycle[(idx + 1) % sortCycle.length];
+                var idx = sortCycle2.indexOf(_markersPanelSort);
+                _markersPanelSort = sortCycle2[(idx + 1) % sortCycle2.length];
                 mkrSortBtn.textContent = sortLabels[_markersPanelSort];
                 mkrSortBtn.dataset.sort = _markersPanelSort;
                 _renderMarkersList(_markersPanelData);
