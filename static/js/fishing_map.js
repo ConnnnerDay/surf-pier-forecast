@@ -6533,7 +6533,7 @@
                         _openOverrideModal(savedOv.featureKey, savedOv.overrideId,
                             savedOv.name, savedOv.desc, savedOv.color,
                             savedOv.geometry, savedOv.geometryIsOverride,
-                            null, null,
+                            savedOv.createdAt, savedOv.updatedAt,
                             savedOv.fill_opacity, savedOv.stroke_weight);
                     } else if (_habitatEditData) {
                         _openHabitatEditModal(_habitatEditData);
@@ -6555,7 +6555,7 @@
                         _openOverrideModal(savedOv.featureKey, savedOv.overrideId,
                             savedOv.name, savedOv.desc, savedOv.color,
                             savedOv.geometry, savedOv.geometryIsOverride,
-                            null, null,
+                            savedOv.createdAt, savedOv.updatedAt,
                             savedOv.fill_opacity, savedOv.stroke_weight);
                     } else if (_habitatEditData) {
                         _openHabitatEditModal(_habitatEditData);
