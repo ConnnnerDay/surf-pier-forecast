@@ -6673,7 +6673,20 @@
                 if (panel) panel.hidden = !_habitatPanelOpen;
                 listBtn.classList.toggle('fmap-ctrl-btn--active', _habitatPanelOpen);
                 listBtn.setAttribute('aria-pressed', _habitatPanelOpen ? 'true' : 'false');
-                if (_habitatPanelOpen) _refreshActivePanelTab();
+                if (_habitatPanelOpen) {
+                    _refreshActivePanelTab();
+                } else {
+                    // Clean up any hover highlights/ghosts that won't receive mouseleave
+                    if (_suppressedGhost) { _suppressedGhost.remove(); _suppressedGhost = null; }
+                    if (_ovHoverActive) {
+                        var _oLyrClose = _aiPolyByKey[_ovHoverActive.fKey];
+                        if (_oLyrClose) _oLyrClose.setStyle(_ovHoverActive.origStyle);
+                        _ovHoverActive = null;
+                    }
+                    _customHabitats.forEach(function (h) {
+                        if (h._panelHoverOrig && h.leaflet) { h.leaflet.setStyle(h._panelHoverOrig); delete h._panelHoverOrig; }
+                    });
+                }
             });
         }
 
