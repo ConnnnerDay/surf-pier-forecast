@@ -5236,7 +5236,12 @@
         filtered.forEach(function (ov) {
             var displayName = esc(ov.name || ov.feature_key || '—');
             var keyShort    = esc(String(ov.feature_key || '').slice(0, 40));
-            var colorStyle  = ov.fill_color ? 'background:' + esc(ov.fill_color) + ';width:12px;height:12px;border-radius:3px;display:inline-block;vertical-align:middle;margin-right:4px' : '';
+            var _swatchFo   = ov.fill_opacity != null ? ov.fill_opacity : 0.25;
+            var colorSwatch = ov.fill_color
+                ? '<span class="fmap-override-swatch" style="border-color:' + esc(ov.fill_color) + '" title="Color · opacity ' + Math.round(_swatchFo * 100) + '%">'
+                  + '<span style="background:' + esc(ov.fill_color) + ';opacity:' + _swatchFo + '"></span>'
+                  + '</span>'
+                : '';
             var oid         = esc(String(ov.id));
             // Compute centroid for pan-to: prefer custom geometry, then AI layer bounds, then feature_key lat,lng,type pattern
             var panAttrs = '';
@@ -5269,7 +5274,7 @@
             html +=
                 '<div class="fmap-override-item">' +
                 '<div class="fmap-override-item-row">' +
-                (colorStyle ? '<span style="' + colorStyle + '"></span>' : '') +
+                colorSwatch +
                 '<span class="fmap-override-item-name" title="' + displayName + '">' + displayName + '</span>' +
                 (panAttrs ? '<button class="fmap-override-item-pan" title="Pan to on map" aria-label="Pan to ' + displayName + '"' + panAttrs + '>⌖</button>' : '') +
                 '<button class="fmap-override-item-edit" data-oid="' + oid + '" aria-label="Edit override for ' + displayName + '">Edit</button>' +
