@@ -5056,10 +5056,22 @@
             btn.addEventListener('click', function () {
                 var lat = parseFloat(btn.dataset.lat);
                 var lng = parseFloat(btn.dataset.lng);
-                if (!isNaN(lat) && !isNaN(lng) && map) {
-                    map.flyTo([lat, lng], Math.max(map.getZoom(), 14));
-                    _highlightHabitatOnMap(btn.dataset.hid);
+                var hid = btn.dataset.hid;
+                if (!map) return;
+                var _fitDone = false;
+                if (hid) {
+                    var _hFound = _customHabitats.filter(function (h) { return h.id === hid; })[0];
+                    if (_hFound && _hFound.leaflet && typeof _hFound.leaflet.getBounds === 'function') {
+                        try {
+                            var _hb = _hFound.leaflet.getBounds();
+                            if (_hb.isValid()) { map.fitBounds(_hb.pad(0.15), { maxZoom: 17, animate: true }); _fitDone = true; }
+                        } catch (_e) {}
+                    }
                 }
+                if (!_fitDone && !isNaN(lat) && !isNaN(lng)) {
+                    map.flyTo([lat, lng], Math.max(map.getZoom(), 14));
+                }
+                _highlightHabitatOnMap(hid);
             });
         });
 
@@ -5073,9 +5085,19 @@
                 if (panel) panel.hidden = true;
                 var listBtn = document.getElementById('fmap-admin-habitats-list-btn');
                 if (listBtn) { listBtn.classList.remove('fmap-ctrl-btn--active'); listBtn.setAttribute('aria-pressed', 'false'); }
-                // Pan the map to the habitat so it's visible while editing
-                if (map && hData.lat != null && hData.lng != null) {
-                    map.flyTo([hData.lat, hData.lng], Math.max(map.getZoom(), 14));
+                // Fit the polygon in view (or fall back to centroid flyTo)
+                if (map) {
+                    var _heFound = _customHabitats.filter(function (h) { return h.id === hid; })[0];
+                    var _heFit = false;
+                    if (_heFound && _heFound.leaflet && typeof _heFound.leaflet.getBounds === 'function') {
+                        try {
+                            var _heb = _heFound.leaflet.getBounds();
+                            if (_heb.isValid()) { map.fitBounds(_heb.pad(0.15), { maxZoom: 17, animate: true }); _heFit = true; }
+                        } catch (_e) {}
+                    }
+                    if (!_heFit && hData.lat != null && hData.lng != null) {
+                        map.flyTo([hData.lat, hData.lng], Math.max(map.getZoom(), 14));
+                    }
                     _highlightHabitatOnMap(hid);
                 }
                 _openHabitatEditModal(hData);
@@ -5278,25 +5300,35 @@
                 if (ov.geometry_json) {
                     try { geom = JSON.parse(ov.geometry_json); } catch (_e) {}
                 }
-                // Pan to the feature so it's visible while editing
+                // Fit the AI polygon bounds in view (fall back to centroid flyTo)
                 if (map) {
-                    var _panTarget = null;
                     var _lyrEdit = _aiPolyByKey[String(ov.feature_key)];
+                    var _ovFitDone = false;
                     if (_lyrEdit && typeof _lyrEdit.getBounds === 'function') {
-                        try { _panTarget = _lyrEdit.getBounds().getCenter(); } catch (_e) {}
+                        try {
+                            var _ob = _lyrEdit.getBounds();
+                            if (_ob.isValid()) { map.fitBounds(_ob.pad(0.15), { maxZoom: 17, animate: true }); _ovFitDone = true; }
+                        } catch (_e) {}
                     }
-                    if (!_panTarget && geom) {
-                        var _gc = _centroidOfGeom(geom);
-                        if (_gc) _panTarget = _gc;
+                    if (!_ovFitDone && geom) {
+                        try {
+                            var _gl = L.geoJSON(geom);
+                            var _gb = _gl.getBounds();
+                            if (_gb.isValid()) { map.fitBounds(_gb.pad(0.15), { maxZoom: 17, animate: true }); _ovFitDone = true; }
+                        } catch (_e) {}
                     }
-                    if (!_panTarget) {
-                        var _kp2 = String(ov.feature_key || '').split(',');
-                        if (_kp2.length >= 2) {
-                            var _kl = parseFloat(_kp2[0]), _kg = parseFloat(_kp2[1]);
-                            if (!isNaN(_kl) && !isNaN(_kg)) _panTarget = { lat: _kl, lng: _kg };
+                    if (!_ovFitDone) {
+                        var _panTarget = null;
+                        if (geom) { var _gc = _centroidOfGeom(geom); if (_gc) _panTarget = _gc; }
+                        if (!_panTarget) {
+                            var _kp2 = String(ov.feature_key || '').split(',');
+                            if (_kp2.length >= 2) {
+                                var _kl = parseFloat(_kp2[0]), _kg = parseFloat(_kp2[1]);
+                                if (!isNaN(_kl) && !isNaN(_kg)) _panTarget = { lat: _kl, lng: _kg };
+                            }
                         }
+                        if (_panTarget) map.flyTo([_panTarget.lat, _panTarget.lng], Math.max(map.getZoom(), 15));
                     }
-                    if (_panTarget) map.flyTo([_panTarget.lat, _panTarget.lng], Math.max(map.getZoom(), 15));
                 }
                 _openOverrideModal(
                     ov.feature_key, String(ov.id),
