@@ -81,6 +81,7 @@
     // Management panel state
     var _habitatPanelOpen      = false;
     var _habitatEditedFromPanel = false; // true when Edit was clicked from the panel (reopen on close)
+    var _overrideEditedFromPanel = false; // same for override panel
     var _habitatPanelActiveTab = 'habitats'; // 'habitats' | 'overrides' | 'suppressed'
     var _overridesPanelData    = []; // cached override list for panel edit buttons
     var _overridesPanelSearch  = ''; // live search string for overrides tab
@@ -5391,6 +5392,7 @@
                         if (_panTarget) map.flyTo([_panTarget.lat, _panTarget.lng], Math.max(map.getZoom(), 15));
                     }
                 }
+                _overrideEditedFromPanel = true;
                 _openOverrideModal(
                     ov.feature_key, String(ov.id),
                     ov.name || '', ov.description || '', ov.fill_color || '',
@@ -7045,6 +7047,17 @@
         if (statusEl) { statusEl.textContent = ''; statusEl.style.color = ''; }
         var auditEl = document.getElementById('fmap-override-audit');
         if (auditEl) auditEl.hidden = true;
+        // Reopen the panel on the overrides tab if Edit was clicked from there
+        if (_overrideEditedFromPanel) {
+            _overrideEditedFromPanel = false;
+            _habitatPanelOpen = true;
+            _habitatPanelActiveTab = 'overrides';
+            var _rPanel = document.getElementById('fmap-habitat-panel');
+            var _rBtn   = document.getElementById('fmap-admin-habitats-list-btn');
+            if (_rPanel) _rPanel.hidden = false;
+            if (_rBtn) { _rBtn.classList.add('fmap-ctrl-btn--active'); _rBtn.setAttribute('aria-pressed', 'true'); }
+            _refreshActivePanelTab();
+        }
     }
 
     // ─── SST Stations overlay (ArcGIS Live Feeds / NOAA CoRIS) ──────────────
