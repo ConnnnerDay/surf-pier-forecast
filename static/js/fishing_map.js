@@ -5821,6 +5821,13 @@
             map.on('dblclick', function (e) {
                 if (_habitatDrawMode) {
                     L.DomEvent.stop(e);
+                    // Two click events fire before dblclick — remove the last vertex
+                    // added by the second click so only intended vertices are kept.
+                    if (_habitatDrawVerts.length > 0) {
+                        _habitatDrawVerts.pop();
+                        var _dbLastM = _habitatDrawMarkers.pop();
+                        if (_dbLastM && map) map.removeLayer(_dbLastM);
+                    }
                     _finishHabitatDraw();
                 }
             });
