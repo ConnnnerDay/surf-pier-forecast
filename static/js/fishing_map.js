@@ -94,6 +94,7 @@
     var _suppressedPanelSearch = ''; // live search string for suppressed tab
     var _suppressedPanelData   = []; // cached suppressed list for search
     var _suppressedPanelSort   = 'date'; // 'date' | 'name' | 'type'
+    var _suppressedGhost       = null; // ghost circleMarker shown on map when hovering a suppressed row
     var _markersPanelSearch    = ''; // live search string for markers tab
     var _markersPanelData      = []; // cached markers list for search
     var _markersPanelSort      = 'date'; // 'date' | 'name' | 'type'
@@ -5675,6 +5676,8 @@
         var el = document.getElementById('fmap-suppressed-panel-list');
         if (!el) return;
         var savedScroll = el.scrollTop;
+        // Clean up any ghost marker left from a previous hover (avoids map layer leaks on re-render)
+        if (_suppressedGhost) { _suppressedGhost.remove(); _suppressedGhost = null; }
         _suppressedPanelData = suppressions;
         var q = _suppressedPanelSearch.toLowerCase().trim();
         var filtered = q ? suppressions.filter(function (s) {
@@ -5775,7 +5778,6 @@
         });
 
         // Hover over a suppressed row → show a ghost marker at that location
-        var _suppressedGhost = null;
         el.querySelectorAll('.fmap-override-item').forEach(function (row) {
             var panBtn = row.querySelector('.fmap-suppressed-item-pan');
             if (!panBtn) return;
