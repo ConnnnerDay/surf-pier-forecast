@@ -96,6 +96,7 @@
     var _suppressedPanelSort   = 'date'; // 'date' | 'name' | 'type'
     var _suppressedGhost       = null; // ghost circleMarker shown on map when hovering a suppressed row
     var _ovHoverActive         = null; // { fKey, origStyle } of the override currently highlighted by panel hover
+    var _markerHoverMid        = null; // id of the custom marker whose icon currently has fmap-marker-hover class
     var _markersPanelSearch    = ''; // live search string for markers tab
     var _markersPanelData      = []; // cached markers list for search
     var _markersPanelSort      = 'date'; // 'date' | 'name' | 'type'
@@ -3981,8 +3982,11 @@
             if (h.id !== hid || !h.leaflet) return;
             var lyr = h.leaflet;
             var opts = lyr.options || {};
-            var origFill  = opts.fillOpacity  != null ? opts.fillOpacity  : 0.35;
-            var origWeight = opts.weight != null ? opts.weight : 2.5;
+            // If a panel hover is active on this layer, read the true pre-hover
+            // style from _panelHoverOrig so the blink restores to the right values.
+            var baseStyle  = h._panelHoverOrig || opts;
+            var origFill   = baseStyle.fillOpacity  != null ? baseStyle.fillOpacity  : 0.35;
+            var origWeight = baseStyle.weight != null ? baseStyle.weight : 2.5;
             var count = 0;
             var blink = setInterval(function () {
                 count++;
@@ -5835,6 +5839,15 @@
         var el = document.getElementById('fmap-markers-panel-list');
         if (!el) return;
         var savedScroll = el.scrollTop;
+        // Clear hover highlight that won't receive mouseleave after re-render
+        if (_markerHoverMid) {
+            var _mhFound = _customMarkers.filter(function (cm) { return String(cm.id) === _markerHoverMid; })[0];
+            if (_mhFound && _mhFound.leaflet) {
+                var _mhEl = _mhFound.leaflet.getElement();
+                if (_mhEl) _mhEl.classList.remove('fmap-marker-hover');
+            }
+            _markerHoverMid = null;
+        }
         _markersPanelData = markers;
         var q = _markersPanelSearch.toLowerCase().trim();
         var filtered = q ? markers.filter(function (m) {
@@ -5955,9 +5968,10 @@
                 var found = _customMarkers.filter(function (cm) { return String(cm.id) === String(mid); })[0];
                 if (!found || !found.leaflet) return;
                 var iconEl = found.leaflet.getElement();
-                if (iconEl) iconEl.classList.add('fmap-marker-hover');
+                if (iconEl) { iconEl.classList.add('fmap-marker-hover'); _markerHoverMid = mid; }
             });
             row.addEventListener('mouseleave', function () {
+                if (_markerHoverMid === mid) _markerHoverMid = null;
                 var found = _customMarkers.filter(function (cm) { return String(cm.id) === String(mid); })[0];
                 if (!found || !found.leaflet) return;
                 var iconEl = found.leaflet.getElement();
@@ -6686,6 +6700,11 @@
                     _customHabitats.forEach(function (h) {
                         if (h._panelHoverOrig && h.leaflet) { h.leaflet.setStyle(h._panelHoverOrig); delete h._panelHoverOrig; }
                     });
+                    if (_markerHoverMid) {
+                        var _mhClose = _customMarkers.filter(function (cm) { return String(cm.id) === _markerHoverMid; })[0];
+                        if (_mhClose && _mhClose.leaflet) { var _mhCloseEl = _mhClose.leaflet.getElement(); if (_mhCloseEl) _mhCloseEl.classList.remove('fmap-marker-hover'); }
+                        _markerHoverMid = null;
+                    }
                 }
             });
         }
@@ -6698,6 +6717,21 @@
                 if (panel) panel.hidden = true;
                 var lb = document.getElementById('fmap-admin-habitats-list-btn');
                 if (lb) { lb.classList.remove('fmap-ctrl-btn--active'); lb.setAttribute('aria-pressed', 'false'); }
+                // Same hover cleanup as the toggle-button close path
+                if (_suppressedGhost) { _suppressedGhost.remove(); _suppressedGhost = null; }
+                if (_ovHoverActive) {
+                    var _oLyrX = _aiPolyByKey[_ovHoverActive.fKey];
+                    if (_oLyrX) _oLyrX.setStyle(_ovHoverActive.origStyle);
+                    _ovHoverActive = null;
+                }
+                _customHabitats.forEach(function (h) {
+                    if (h._panelHoverOrig && h.leaflet) { h.leaflet.setStyle(h._panelHoverOrig); delete h._panelHoverOrig; }
+                });
+                if (_markerHoverMid) {
+                    var _mhX = _customMarkers.filter(function (cm) { return String(cm.id) === _markerHoverMid; })[0];
+                    if (_mhX && _mhX.leaflet) { var _mhXEl = _mhX.leaflet.getElement(); if (_mhXEl) _mhXEl.classList.remove('fmap-marker-hover'); }
+                    _markerHoverMid = null;
+                }
             });
         }
 
