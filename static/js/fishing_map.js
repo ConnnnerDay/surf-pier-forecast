@@ -7157,7 +7157,15 @@
         var keyEl = document.getElementById('fmap-override-feature-key');
         if (keyEl) keyEl.value = featureKey || '';
         var keyDisplay = document.getElementById('fmap-override-key-display');
-        if (keyDisplay) keyDisplay.textContent = featureKey || '';
+        if (keyDisplay) {
+            var _kdParts = String(featureKey || '').split(',');
+            var _kdLat = parseFloat(_kdParts[0]), _kdLng = parseFloat(_kdParts[1]);
+            var _kdType = _kdParts.length >= 3 ? _kdParts[2].trim() : '';
+            var _kdInfo = _kdType && AI_PICK_INFO[_kdType];
+            keyDisplay.textContent = (!isNaN(_kdLat) && !isNaN(_kdLng))
+                ? _kdLat.toFixed(4) + ', ' + _kdLng.toFixed(4) + (_kdInfo ? ' · ' + _kdInfo.label : (_kdType ? ' · ' + _kdType : ''))
+                : (featureKey || '');
+        }
         var idEl = document.getElementById('fmap-override-id');
         if (idEl) idEl.value = overrideId || '';
         var delBtn = document.getElementById('fmap-override-delete');
