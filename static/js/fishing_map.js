@@ -798,7 +798,8 @@
                             rawFeature.override_fill_color || color, // pre-fill with the AI feature's actual color
                             currentGeom,
                             geomIsOverride,
-                            null, null,
+                            rawFeature.override_created_at || null,
+                            rawFeature.override_updated_at || null,
                             rawFeature.override_fill_opacity != null ? rawFeature.override_fill_opacity : lyr.options.fillOpacity,
                             rawFeature.override_stroke_weight != null ? rawFeature.override_stroke_weight : lyr.options.weight
                         );
@@ -898,7 +899,8 @@
                             rawFeature.override_description || rawFeature.description || '',
                             _ptColor,
                             null, false,
-                            null, null,
+                            rawFeature.override_created_at || null,
+                            rawFeature.override_updated_at || null,
                             rawFeature.override_fill_opacity != null ? rawFeature.override_fill_opacity : null,
                             rawFeature.override_stroke_weight != null ? rawFeature.override_stroke_weight : null
                         );
@@ -6856,6 +6858,7 @@
                 if (ovTab)  ovTab.hidden  = (tabName !== 'overrides');
                 if (supTab) supTab.hidden = (tabName !== 'suppressed');
                 if (mkrTab) mkrTab.hidden = (tabName !== 'markers');
+                if (tabName === 'habitats')   _loadHabitatPanel();
                 if (tabName === 'overrides')  _loadOverridesTab();
                 if (tabName === 'suppressed') _loadSuppressedTab();
                 if (tabName === 'markers')    _loadMarkersTab();

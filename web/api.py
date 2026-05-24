@@ -3778,6 +3778,8 @@ def map_habitats_v1() -> Any:
                 if ov.get("geometry_json"):
                     f["override_geometry_json"] = ov["geometry_json"]
                 f["override_id"] = ov["id"]
+                f["override_created_at"] = ov.get("created_at")
+                f["override_updated_at"] = ov.get("updated_at")
 
     # Merge admin-drawn custom habitats in the same bbox
     try:
