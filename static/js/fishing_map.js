@@ -5970,6 +5970,8 @@
                 _habitatPanelOpen = false;
                 var _mpPanel = document.getElementById('fmap-habitat-panel');
                 if (_mpPanel) _mpPanel.hidden = true;
+                var _mpListBtn = document.getElementById('fmap-admin-habitats-list-btn');
+                if (_mpListBtn) { _mpListBtn.classList.remove('fmap-ctrl-btn--active'); _mpListBtn.setAttribute('aria-pressed', 'false'); }
                 _openAdminEditPanel(marker);
             });
         });
