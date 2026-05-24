@@ -5627,7 +5627,7 @@
         var html = '';
         filtered.forEach(function (s) {
             var nameSafe   = esc(s.name || s.spot_key || '—');
-            var typeSafe   = esc(s.type || '');
+            var typeSafe   = s.type ? esc(spotTypeLabel(s.type) || s.type) : '';
             var sid        = esc(String(s.id));
             var lat        = parseFloat(s.lat), lng = parseFloat(s.lng);
             var hasCoords  = !isNaN(lat) && !isNaN(lng);
@@ -5747,11 +5747,12 @@
         var filtered = q ? markers.filter(function (m) {
             return (m.name || '').toLowerCase().indexOf(q) !== -1 ||
                    (m.type || '').toLowerCase().indexOf(q) !== -1 ||
+                   (spotTypeLabel(m.type) || '').toLowerCase().indexOf(q) !== -1 ||
                    (m.description || '').toLowerCase().indexOf(q) !== -1;
         }) : markers.slice();
         filtered.sort(function (a, b) {
             if (_markersPanelSort === 'name') return (a.name || '').localeCompare(b.name || '');
-            if (_markersPanelSort === 'type') return (a.type || '').localeCompare(b.type || '');
+            if (_markersPanelSort === 'type') return (spotTypeLabel(a.type) || a.type || '').localeCompare(spotTypeLabel(b.type) || b.type || '');
             return (b.created_at || '').localeCompare(a.created_at || '');
         });
         _setTabCount('markers', filtered.length, markers.length);
@@ -5765,7 +5766,7 @@
         var html = '';
         filtered.forEach(function (m) {
             var nameSafe = esc(m.name || spotTypeLabel(m.type) || '—');
-            var typeSafe = esc(m.type || '');
+            var typeSafe = m.type ? esc(spotTypeLabel(m.type) || m.type) : '';
             var mid      = esc(String(m.id));
             var lat      = parseFloat(m.lat), lng = parseFloat(m.lng);
             var hasCoords = !isNaN(lat) && !isNaN(lng);
