@@ -6571,50 +6571,24 @@
             });
         }
 
-        // ── Habitat fill-opacity and stroke-weight live preview ───────────────
-        var _hFoSlider2 = document.getElementById('fmap-habitat-fill-opacity');
-        if (_hFoSlider2) {
-            _hFoSlider2.addEventListener('input', function () {
-                var fo = parseFloat(_hFoSlider2.value);
-                if (_habitatModalPreview) _habitatModalPreview.setStyle({ fillOpacity: fo * 0.6 });
-                if (_habitatVertexEditMode && _habitatVertexPreview) _habitatVertexPreview.setStyle({ fillOpacity: fo });
-                if (_habitatEditData) {
-                    var _hfHid = _habitatEditData.id;
-                    _customHabitats.forEach(function (h) {
-                        if (h.id !== _hfHid || !h.leaflet) return;
-                        h.leaflet.setStyle({ fillOpacity: fo });
-                    });
-                }
-            });
-        }
-        var _hSwSlider2 = document.getElementById('fmap-habitat-stroke-weight');
-        if (_hSwSlider2) {
-            _hSwSlider2.addEventListener('input', function () {
-                var sw = parseFloat(_hSwSlider2.value);
-                if (_habitatModalPreview) _habitatModalPreview.setStyle({ weight: sw });
-                if (_habitatVertexEditMode && _habitatVertexPreview) _habitatVertexPreview.setStyle({ weight: sw });
-                if (_habitatEditData) {
-                    var _hswHid = _habitatEditData.id;
-                    _customHabitats.forEach(function (h) {
-                        if (h.id !== _hswHid || !h.leaflet) return;
-                        h.leaflet.setStyle({ weight: sw });
-                    });
-                }
-            });
-        }
 
         // ── Habitat fill-opacity slider ───────────────────────────────────────
         var _foSlider = document.getElementById('fmap-habitat-fill-opacity');
         if (_foSlider) {
             _foSlider.addEventListener('input', function () {
+                var _foVal = parseFloat(_foSlider.value);
                 var _foOut = document.getElementById('fmap-habitat-fill-opacity-val');
-                if (_foOut) _foOut.value = parseFloat(_foSlider.value);
+                if (_foOut) _foOut.value = _foVal;
+                // Live-update pending add-modal preview
+                if (_habitatModalPreview) _habitatModalPreview.setStyle({ fillOpacity: _foVal * 0.6 });
+                // Live-update reshape vertex preview
+                if (_habitatVertexEditMode && _habitatVertexPreview) _habitatVertexPreview.setStyle({ fillOpacity: _foVal });
                 // Live-preview: update the map layer if editing an existing habitat
                 if (_habitatEditData) {
                     var _hid = _habitatEditData.id;
                     _customHabitats.forEach(function (h) {
                         if (h.id !== _hid || !h.leaflet) return;
-                        h.leaflet.setStyle({ fillOpacity: parseFloat(_foSlider.value) });
+                        h.leaflet.setStyle({ fillOpacity: _foVal });
                     });
                 }
             });
@@ -6624,14 +6598,19 @@
         var _swSlider = document.getElementById('fmap-habitat-stroke-weight');
         if (_swSlider) {
             _swSlider.addEventListener('input', function () {
+                var _swVal = parseFloat(_swSlider.value);
                 var _swOut = document.getElementById('fmap-habitat-stroke-weight-val');
-                if (_swOut) _swOut.value = parseFloat(_swSlider.value);
+                if (_swOut) _swOut.value = _swVal;
+                // Live-update pending add-modal preview
+                if (_habitatModalPreview) _habitatModalPreview.setStyle({ weight: _swVal });
+                // Live-update reshape vertex preview
+                if (_habitatVertexEditMode && _habitatVertexPreview) _habitatVertexPreview.setStyle({ weight: _swVal });
                 // Live-preview: update the map layer if editing an existing habitat
                 if (_habitatEditData) {
                     var _hid2 = _habitatEditData.id;
                     _customHabitats.forEach(function (h) {
                         if (h.id !== _hid2 || !h.leaflet) return;
-                        h.leaflet.setStyle({ weight: parseFloat(_swSlider.value) });
+                        h.leaflet.setStyle({ weight: _swVal });
                     });
                 }
             });
