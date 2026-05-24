@@ -5115,6 +5115,9 @@
 
     function _startHabitatPointMove(habitatData) {
         if (!map || !habitatData) return;
+        if (_habitatDrawMode) _cancelHabitatDraw();
+        if (_habitatVertexEditMode) _cancelHabitatVertexEdit();
+        if (_habitatPointMoveMode) _cancelHabitatPointMove();
         _habitatPointMoveMode = true;
         // Resolve starting coordinates from GeoJSON geometry or lat/lng fallback
         var geom = habitatData.geojson_geometry || habitatData.geometry;
