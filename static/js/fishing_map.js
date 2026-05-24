@@ -95,6 +95,7 @@
     var _suppressedPanelData   = []; // cached suppressed list for search
     var _suppressedPanelSort   = 'date'; // 'date' | 'name' | 'type'
     var _suppressedGhost       = null; // ghost circleMarker shown on map when hovering a suppressed row
+    var _ovHoverActive         = null; // { fKey, origStyle } of the override currently highlighted by panel hover
     var _markersPanelSearch    = ''; // live search string for markers tab
     var _markersPanelData      = []; // cached markers list for search
     var _markersPanelSort      = 'date'; // 'date' | 'name' | 'type'
@@ -5195,6 +5196,10 @@
         var el = document.getElementById('fmap-habitat-panel-list');
         if (!el) return;
         var savedScroll = el.scrollTop;
+        // Restore any habitat highlighted by a previous row hover before replacing the list
+        _customHabitats.forEach(function (h) {
+            if (h._panelHoverOrig && h.leaflet) { h.leaflet.setStyle(h._panelHoverOrig); delete h._panelHoverOrig; }
+        });
         if (!habitats.length) {
             if (_habitatPanelSearch) {
                 el.innerHTML = '<p class="fmap-habitat-panel-empty">No habitats match your search.</p>';
@@ -5407,6 +5412,12 @@
         var el = document.getElementById('fmap-overrides-panel-list');
         if (!el) return;
         var savedScroll = el.scrollTop;
+        // Restore any polygon highlighted by a previous hover before replacing the list
+        if (_ovHoverActive) {
+            var _oRestLyr = _aiPolyByKey[_ovHoverActive.fKey];
+            if (_oRestLyr) _oRestLyr.setStyle(_ovHoverActive.origStyle);
+            _ovHoverActive = null;
+        }
         _overridesPanelData = overrides; // cache for edit buttons (always full list)
         var q = _overridesPanelSearch.toLowerCase().trim();
         var filtered = q ? overrides.filter(function (ov) {
@@ -5641,17 +5652,17 @@
                 var lyr = _aiPolyByKey[fKey];
                 if (!lyr) return;
                 var opts = lyr.options || {};
-                row._ovHoverOrig = { color: opts.color, fillColor: opts.fillColor, fillOpacity: opts.fillOpacity, weight: opts.weight };
+                _ovHoverActive = { fKey: fKey, origStyle: { color: opts.color, fillColor: opts.fillColor, fillOpacity: opts.fillOpacity, weight: opts.weight } };
                 lyr.setStyle({
                     fillOpacity: Math.min(0.8, (opts.fillOpacity || 0.25) + 0.25),
                     weight: (opts.weight || 2) + 1.5
                 });
             });
             row.addEventListener('mouseleave', function () {
+                if (!_ovHoverActive || _ovHoverActive.fKey !== fKey) return;
                 var lyr = _aiPolyByKey[fKey];
-                if (!lyr || !row._ovHoverOrig) return;
-                lyr.setStyle(row._ovHoverOrig);
-                delete row._ovHoverOrig;
+                if (lyr) lyr.setStyle(_ovHoverActive.origStyle);
+                _ovHoverActive = null;
             });
         });
     }
