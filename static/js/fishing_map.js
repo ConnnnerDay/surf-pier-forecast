@@ -3721,6 +3721,7 @@
                     spotCache = {}; _spotCacheKeys = []; _spotBoundsCache = {};
                     try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
                     scheduleFishingSpotQuery();
+                    _refreshActivePanelTab();
                     _showUndoToast('Position saved', function () {
                         fetch('/api/map/custom-markers/' + spot.id, {
                             method: 'PUT', headers: { 'Content-Type': 'application/json' },
@@ -3734,6 +3735,7 @@
                             try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
                             _showAdminToast('Position reverted');
                             scheduleFishingSpotQuery();
+                            _refreshActivePanelTab();
                         })
                         .catch(function () { _showAdminToast('Revert failed', true); });
                     });
