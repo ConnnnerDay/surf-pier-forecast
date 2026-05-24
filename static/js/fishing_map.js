@@ -6322,7 +6322,7 @@
                     } catch (_fe) {}
                 }
                 _startHabitatVertexEdit(snap.geometry);
-                _showAdminToast('Drag vertices to reshape; right-click a vertex to delete it. Click Done when finished.');
+                _showAdminToast('Drag vertices to reshape · Right-click or Shift+click to remove · Enter or Done to finish.');
             });
         }
 
@@ -6593,7 +6593,7 @@
                     } catch (_hfe) {}
                 }
                 _startHabitatVertexEdit(_geomToReshape);
-                _showAdminToast('Drag vertices to reshape; right-click a vertex to delete it. Click Done when finished.');
+                _showAdminToast('Drag vertices to reshape · Right-click or Shift+click to remove · Enter or Done to finish.');
             });
         }
 
@@ -6664,6 +6664,16 @@
                 }
             });
         }
+
+        // Enter finishes vertex edit (mirrors draw mode); Escape cancels
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' && _habitatVertexEditMode) {
+                if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'BUTTON')) return;
+                e.preventDefault();
+                if (_habitatVertexMarkers.length >= 3) _finishHabitatVertexEdit();
+                return;
+            }
+        });
 
         // Escape closes vertex-edit or point-move mode
         document.addEventListener('keydown', function (e) {
