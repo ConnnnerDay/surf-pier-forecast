@@ -14860,6 +14860,7 @@ body.dark .wq-hdx-item {
   100% { transform: scale(1);   filter: brightness(1); }
 }
 .fmap-marker-pulse { animation: fmap-marker-pulse 0.6s ease-out 2; }
+.fmap-marker-hover { transform: scale(1.35); filter: brightness(1.25) drop-shadow(0 0 4px rgba(99,102,241,.7)); transition: transform 0.15s, filter 0.15s; }
 
 /* ── Habitat panel — header redesign (tabs + actions) ── */
 .fmap-habitat-panel-hdr {

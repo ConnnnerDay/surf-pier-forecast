@@ -4699,9 +4699,11 @@
             var ll = m.getLatLng();
             return [ll.lat, ll.lng];
         });
-        var _reshapeColor = (_habitatEditData && _habitatEditData.fill_color)
-            ? _habitatEditData.fill_color
-            : ((document.getElementById('fmap-habitat-color') || {}).value || '#a855f7');
+        var _reshapeColor = (_overrideEditData && _overrideEditData.color)
+            ? _overrideEditData.color
+            : (_habitatEditData && _habitatEditData.fill_color)
+                ? _habitatEditData.fill_color
+                : ((document.getElementById('fmap-habitat-color') || {}).value || '#a855f7');
         if (!_habitatVertexPreview) {
             _habitatVertexPreview = L.polygon(coords, {
                 color: _reshapeColor, fillColor: _reshapeColor,
@@ -5482,6 +5484,25 @@
                         btn.disabled = false;
                         _showAdminToast('Delete failed', true);
                     });
+            });
+        });
+
+        // Hover over a marker panel row → highlight the marker icon on the map
+        el.querySelectorAll('.fmap-override-item').forEach(function (row) {
+            var editBtn = row.querySelector('.fmap-markers-panel-edit');
+            var mid = editBtn && editBtn.dataset.mid;
+            if (!mid) return;
+            row.addEventListener('mouseenter', function () {
+                var found = _customMarkers.filter(function (cm) { return String(cm.id) === String(mid); })[0];
+                if (!found || !found.leaflet) return;
+                var iconEl = found.leaflet.getElement();
+                if (iconEl) iconEl.classList.add('fmap-marker-hover');
+            });
+            row.addEventListener('mouseleave', function () {
+                var found = _customMarkers.filter(function (cm) { return String(cm.id) === String(mid); })[0];
+                if (!found || !found.leaflet) return;
+                var iconEl = found.leaflet.getElement();
+                if (iconEl) iconEl.classList.remove('fmap-marker-hover');
             });
         });
     }
