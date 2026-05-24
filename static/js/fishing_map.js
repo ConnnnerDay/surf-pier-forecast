@@ -6630,6 +6630,31 @@
             });
         }
 
+        // ── Habitat type → suggested fill color (Add mode only) ─────────────
+        var _HABITAT_TYPE_COLORS = {
+            surf:      '#fbbf24', grassflat: '#22c55e', estuary:  '#34d399',
+            reef:      '#f59e0b', mangrove:  '#16a34a', kelp:     '#4ade80',
+            bottom:    '#94a3b8', tidalflat: '#6ee7b7', pelagic:  '#38bdf8',
+            general:   '#a78bfa',
+        };
+        var habitatTypeSelEl = document.getElementById('fmap-habitat-type');
+        if (habitatTypeSelEl) {
+            habitatTypeSelEl.addEventListener('change', function () {
+                // Only auto-suggest in Add mode (no existing habitat being edited)
+                if (_habitatEditData) return;
+                var suggested = _HABITAT_TYPE_COLORS[habitatTypeSelEl.value];
+                if (!suggested) return;
+                // Auto-suggest color for custom types that declare a default_color
+                var ct = _customHabitatTypes.filter(function (t) { return t.slug === habitatTypeSelEl.value; })[0];
+                if (ct && ct.default_color) suggested = ct.default_color;
+                var colorEl = document.getElementById('fmap-habitat-color');
+                if (colorEl) {
+                    colorEl.value = suggested;
+                    colorEl.dispatchEvent(new Event('input')); // trigger live preview
+                }
+            });
+        }
+
         // ── Color presets (swatches in habitat and override modals) ─────────
         var presetsEl = document.getElementById('fmap-habitat-color-presets');
         if (presetsEl) {
