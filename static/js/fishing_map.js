@@ -6778,17 +6778,62 @@
             });
         }
 
-        // ── GeoJSON export ────────────────────────────────────────────────────
+        // ── GeoJSON export (context-sensitive by active tab) ─────────────────
         var exportBtn = document.getElementById('fmap-habitat-export-btn');
         if (exportBtn) {
             exportBtn.addEventListener('click', function () {
-                var a = document.createElement('a');
-                a.href = '/api/v1/admin/habitats/export.geojson';
-                a.download = 'custom_habitats.geojson';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                _showAdminToast('Downloading GeoJSON…');
+                var tab = _habitatPanelActiveTab || 'habitats';
+                if (tab === 'habitats') {
+                    var a = document.createElement('a');
+                    a.href = '/api/v1/admin/habitats/export.geojson';
+                    a.download = 'custom_habitats.geojson';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    _showAdminToast('Downloading habitats GeoJSON…');
+                    return;
+                }
+                // Client-side export for other tabs
+                var features = [];
+                var filename = 'export.geojson';
+                if (tab === 'markers') {
+                    filename = 'custom_markers.geojson';
+                    (_markersPanelData || []).forEach(function (m) {
+                        if (isNaN(parseFloat(m.lat)) || isNaN(parseFloat(m.lng))) return;
+                        features.push({ type: 'Feature', geometry: { type: 'Point', coordinates: [parseFloat(m.lng), parseFloat(m.lat)] },
+                            properties: { id: m.id, name: m.name || null, type: m.type || null, description: m.description || null, created_at: m.created_at || null } });
+                    });
+                } else if (tab === 'overrides') {
+                    filename = 'ai_overrides.geojson';
+                    (_overridesPanelData || []).forEach(function (ov) {
+                        var geom = null;
+                        try { if (ov.geometry_json) geom = JSON.parse(ov.geometry_json); } catch (_e) {}
+                        if (!geom) {
+                            var _lyrEx = _aiPolyByKey[String(ov.feature_key)];
+                            if (_lyrEx && typeof _lyrEx.toGeoJSON === 'function') geom = _lyrEx.toGeoJSON().geometry;
+                        }
+                        features.push({ type: 'Feature', geometry: geom || null,
+                            properties: { id: ov.id, feature_key: ov.feature_key, name: ov.name || null, description: ov.description || null, fill_color: ov.fill_color || null, fill_opacity: ov.fill_opacity, stroke_weight: ov.stroke_weight, created_at: ov.created_at || null } });
+                    });
+                } else if (tab === 'suppressed') {
+                    filename = 'suppressed_spots.geojson';
+                    (_suppressedPanelData || []).forEach(function (s) {
+                        if (isNaN(parseFloat(s.lat)) || isNaN(parseFloat(s.lng))) return;
+                        features.push({ type: 'Feature', geometry: { type: 'Point', coordinates: [parseFloat(s.lng), parseFloat(s.lat)] },
+                            properties: { id: s.id, spot_key: s.spot_key, name: s.name || null, type: s.type || null, created_at: s.created_at || null } });
+                    });
+                }
+                var geojsonStr = JSON.stringify({ type: 'FeatureCollection', features: features }, null, 2);
+                var blob = new Blob([geojsonStr], { type: 'application/geo+json' });
+                var url = URL.createObjectURL(blob);
+                var a2 = document.createElement('a');
+                a2.href = url;
+                a2.download = filename;
+                document.body.appendChild(a2);
+                a2.click();
+                document.body.removeChild(a2);
+                setTimeout(function () { URL.revokeObjectURL(url); }, 5000);
+                _showAdminToast('Downloading ' + features.length + ' features…');
             });
         }
 
