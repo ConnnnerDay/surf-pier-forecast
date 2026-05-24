@@ -7047,19 +7047,21 @@
                 if (tabName === 'suppressed') _loadSuppressedTab();
                 if (tabName === 'markers')    _loadMarkersTab();
             });
-            // Arrow key navigation between tabs (ARIA tablist pattern)
+            // Arrow key / Home / End navigation between tabs (ARIA tablist pattern)
             tabBtn.addEventListener('keydown', function (e) {
                 var tabs = Array.prototype.slice.call(document.querySelectorAll('.fmap-panel-tab'));
                 var idx = tabs.indexOf(tabBtn);
+                var target = null;
                 if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    var next = tabs[(idx + 1) % tabs.length];
-                    next.focus(); next.click();
+                    target = tabs[(idx + 1) % tabs.length];
                 } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    var prev = tabs[(idx - 1 + tabs.length) % tabs.length];
-                    prev.focus(); prev.click();
+                    target = tabs[(idx - 1 + tabs.length) % tabs.length];
+                } else if (e.key === 'Home') {
+                    target = tabs[0];
+                } else if (e.key === 'End') {
+                    target = tabs[tabs.length - 1];
                 }
+                if (target) { e.preventDefault(); target.focus(); target.click(); }
             });
         });
 
