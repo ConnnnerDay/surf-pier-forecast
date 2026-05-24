@@ -6579,11 +6579,15 @@
                         var d = Math.sqrt(Math.pow(mp.x - cp.x, 2) + Math.pow(mp.y - cp.y, 2));
                         if (d < minDist) { minDist = d; closest = m; }
                     });
-                    if (closest && _habitatVertexMarkers.length > 3) {
-                        map.removeLayer(closest);
-                        _habitatVertexMarkers = _habitatVertexMarkers.filter(function (m) { return m !== closest; });
-                        _updateHabitatVertexPreview();
-                        _updateMidpointMarkers();
+                    if (closest) {
+                        if (_habitatVertexMarkers.length <= 3) {
+                            _showAdminToast('Polygon must keep at least 3 vertices', true);
+                        } else {
+                            map.removeLayer(closest);
+                            _habitatVertexMarkers = _habitatVertexMarkers.filter(function (m) { return m !== closest; });
+                            _updateHabitatVertexPreview();
+                            _updateMidpointMarkers();
+                        }
                     }
                 }
             });
