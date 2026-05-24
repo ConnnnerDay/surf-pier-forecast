@@ -4680,6 +4680,8 @@
         if (vcEl) vcEl.textContent = '0 vertices · need 3 more';
         var bar = document.getElementById('fmap-habitat-reshape-bar');
         if (bar) bar.hidden = false;
+        var _doneBtn = document.getElementById('fmap-habitat-reshape-done');
+        if (_doneBtn) _doneBtn.disabled = true; // re-enabled once ≥ 3 vertices are placed
         // Wire rubber-band line (last vertex → cursor) for visual guidance
         if (!_habitatDrawRubberBandHandler) {
             _habitatDrawRubberBandHandler = function (e) {
@@ -4740,6 +4742,10 @@
         }
 
         var n = _habitatDrawVerts.length;
+        if (n === 3) {
+            var _dbDoneBtn = document.getElementById('fmap-habitat-reshape-done');
+            if (_dbDoneBtn) _dbDoneBtn.disabled = false;
+        }
         var suffix = n < 3 ? ' · need ' + (3 - n) + ' more' : ' · Enter or click Done to finish';
         var vcDrawEl = document.getElementById('fmap-reshape-vertex-count');
         if (vcDrawEl) {
@@ -4902,6 +4908,8 @@
         _updateMidpointMarkers();
         var bar = document.getElementById('fmap-habitat-reshape-bar');
         if (bar) bar.hidden = false;
+        var _vesDoneBtn = document.getElementById('fmap-habitat-reshape-done');
+        if (_vesDoneBtn) _vesDoneBtn.disabled = false; // always ≥ 3 vertices in vertex-edit mode
         map.getContainer().style.cursor = 'default';
     }
 
@@ -6227,6 +6235,8 @@
                 var nUndo = _habitatDrawVerts.length;
                 var vcUndoEl = document.getElementById('fmap-reshape-vertex-count');
                 if (vcUndoEl) vcUndoEl.textContent = nUndo + (nUndo === 1 ? ' vertex' : ' vertices') + (nUndo < 3 ? ' · need ' + (3 - nUndo) + ' more' : ' · Enter or click Done to finish');
+                var _undoDoneBtn = document.getElementById('fmap-habitat-reshape-done');
+                if (_undoDoneBtn) _undoDoneBtn.disabled = nUndo < 3;
                 _showAdminToast('Last vertex removed (' + nUndo + ' remaining)');
             }
         });
