@@ -5022,6 +5022,28 @@
                     });
             });
         });
+
+        // Hover over a panel row → softly highlight the polygon on the map
+        el.querySelectorAll('.fmap-habitat-panel-item').forEach(function (row) {
+            var hid = (row.querySelector('[data-hid]') || {}).dataset && row.querySelector('[data-hid]').dataset.hid;
+            if (!hid) return;
+            row.addEventListener('mouseenter', function () {
+                var found = _customHabitats.filter(function (h) { return h.id === hid; })[0];
+                if (!found || !found.leaflet) return;
+                var opts = found.leaflet.options || {};
+                found._panelHoverOrig = { fillOpacity: opts.fillOpacity, weight: opts.weight };
+                found.leaflet.setStyle({
+                    fillOpacity: Math.min(0.8, (opts.fillOpacity || 0.35) + 0.25),
+                    weight: (opts.weight || 2.5) + 1.5
+                });
+            });
+            row.addEventListener('mouseleave', function () {
+                var found = _customHabitats.filter(function (h) { return h.id === hid; })[0];
+                if (!found || !found.leaflet || !found._panelHoverOrig) return;
+                found.leaflet.setStyle(found._panelHoverOrig);
+                delete found._panelHoverOrig;
+            });
+        });
     }
 
     // ─── Overrides tab ────────────────────────────────────────────────────────
@@ -5197,6 +5219,32 @@
                         btn.disabled = false;
                         _showAdminToast('Delete failed', true);
                     });
+            });
+        });
+
+        // Hover over an override row → softly highlight the AI polygon on the map
+        el.querySelectorAll('.fmap-override-item').forEach(function (row) {
+            var editBtn = row.querySelector('.fmap-override-item-edit');
+            var oid = editBtn && editBtn.dataset.oid;
+            if (!oid) return;
+            var ov = _overridesPanelData.filter(function (o) { return String(o.id) === oid; })[0];
+            if (!ov || !ov.feature_key) return;
+            var fKey = String(ov.feature_key);
+            row.addEventListener('mouseenter', function () {
+                var lyr = _aiPolyByKey[fKey];
+                if (!lyr) return;
+                var opts = lyr.options || {};
+                row._ovHoverOrig = { color: opts.color, fillColor: opts.fillColor, fillOpacity: opts.fillOpacity, weight: opts.weight };
+                lyr.setStyle({
+                    fillOpacity: Math.min(0.8, (opts.fillOpacity || 0.25) + 0.25),
+                    weight: (opts.weight || 2) + 1.5
+                });
+            });
+            row.addEventListener('mouseleave', function () {
+                var lyr = _aiPolyByKey[fKey];
+                if (!lyr || !row._ovHoverOrig) return;
+                lyr.setStyle(row._ovHoverOrig);
+                delete row._ovHoverOrig;
             });
         });
     }
