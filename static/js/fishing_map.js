@@ -81,6 +81,7 @@
     var _overrideEditData      = null; // {featureKey,overrideId,name,desc,color,geometry} for AI override reshape
     var _aiPolyByKey           = {};   // featureKey → L.polygon for live override preview
     var _overridePreviewOrigStyle = null; // original layer style before override modal opens
+    var _habitatEditOrigStyle    = null; // original layer style before habitat edit modal opens
     // Management panel state
     var _habitatPanelOpen      = false;
     var _habitatEditedFromPanel = false; // true when Edit was clicked from the panel (reopen on close)
@@ -4482,6 +4483,12 @@
         if (modal)    modal.hidden    = true;
         if (backdrop) backdrop.hidden = true;
         if (_habitatModalPreview && map) { map.removeLayer(_habitatModalPreview); _habitatModalPreview = null; }
+        // Restore the map layer's original style if the admin made live-preview changes but cancelled
+        if (_habitatEditOrigStyle) {
+            var _herFound = _customHabitats.filter(function (h) { return h.id === _habitatEditOrigStyle.id; })[0];
+            if (_herFound && _herFound.leaflet) _herFound.leaflet.setStyle(_habitatEditOrigStyle);
+            _habitatEditOrigStyle = null;
+        }
         var _savedGeom = _pendingHabitatGeom;
         var _wasNewDraw = !_habitatEditData && !!_pendingHabitatGeom;
         _pendingHabitatGeom = null;
@@ -4583,6 +4590,13 @@
         // Use the resolved GeoJSON geometry for round-tripping back to the server
         _pendingHabitatGeom = _resolvedGeom;
         _habitatEditData = habitatData;
+        // Capture current map layer style so it can be restored if the user cancels
+        _habitatEditOrigStyle = null;
+        var _heoFound = _customHabitats.filter(function (h) { return h.id === habitatData.id; })[0];
+        if (_heoFound && _heoFound.leaflet) {
+            var _heoOpts = _heoFound.leaflet.options || {};
+            _habitatEditOrigStyle = { id: habitatData.id, fillColor: _heoOpts.fillColor, color: _heoOpts.color, fillOpacity: _heoOpts.fillOpacity, weight: _heoOpts.weight };
+        }
         _openHabitatModal();
     }
 
@@ -4791,6 +4805,7 @@
         })
         .then(function (saved) {
             _pendingHabitatGeom = null; // clear before close so the "discarded" toast doesn't fire
+            _habitatEditOrigStyle = null; // clear so _closeHabitatModal doesn't restore old style after save
             _closeHabitatModal();
             aiCache = {}; _aiCacheKeys = [];
             try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
