@@ -60,6 +60,7 @@
     var _aiAbort         = null;     // AbortController for the live AI habitat fetch
     var _AI_LS_KEY       = 'fmap_ai_cache_v1';  // localStorage key for AI picks
     var _AI_LS_TTL       = 21600000;             // 6 hours in ms
+    var _MARKER_TYPE_KEY = 'fmap_last_marker_type'; // localStorage key for last-used marker type
     // Admin habitat draw/edit state
     var _habitatDrawMode    = false;  // whether polygon draw mode is active
     var _habitatRedrawMode  = false;  // true when draw is replacing an existing habitat's geometry
@@ -3786,7 +3787,10 @@
         document.getElementById('fmap-admin-lat').value  = lat.toFixed(6);
         document.getElementById('fmap-admin-lng').value  = lng.toFixed(6);
         document.getElementById('fmap-admin-name').value = '';
-        document.getElementById('fmap-admin-type').value = 'fishing';
+        var _typeEl = document.getElementById('fmap-admin-type');
+        var _lastType = null;
+        try { _lastType = localStorage.getItem(_MARKER_TYPE_KEY); } catch (_e) {}
+        if (_typeEl) _typeEl.value = (_lastType && _typeEl.querySelector('option[value="' + _lastType + '"]')) ? _lastType : 'fishing';
         document.getElementById('fmap-admin-desc').value = '';
         document.getElementById('fmap-admin-delete').hidden = true;
         document.getElementById('fmap-admin-save').dataset.markerId = '';
@@ -4291,6 +4295,10 @@
                 .then(function () {
                     saveBtn.disabled    = false;
                     saveBtn.textContent = 'Save';
+                    // Remember marker type for the next Add Marker (only for new markers)
+                    if (!markerId) {
+                        try { localStorage.setItem(_MARKER_TYPE_KEY, payload.type); } catch (_e) {}
+                    }
                     _closeAdminModal();
                     spotCache = {}; _spotCacheKeys = []; _spotBoundsCache = {};
                     try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
