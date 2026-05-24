@@ -5328,6 +5328,14 @@
                   + '</span>'
                 : '';
             var oid         = esc(String(ov.id));
+            // Parse habitat type from feature_key ("lat,lng,type" format)
+            var _fkParts    = String(ov.feature_key || '').split(',');
+            var _fkType     = _fkParts.length >= 3 ? _fkParts[2].trim().toLowerCase() : '';
+            var _fkInfo     = _fkType && AI_PICK_INFO[_fkType];
+            var _fkColor    = _fkType && AI_PICK_COLORS[_fkType] ? AI_PICK_COLORS[_fkType] : '';
+            var typeBadge   = _fkInfo
+                ? '<span class="fmap-override-type-badge" style="border-color:' + esc(_fkColor) + ';color:' + esc(_fkColor) + '" title="AI feature type: ' + esc(_fkInfo.label) + '">' + esc(_fkInfo.label) + '</span>'
+                : '';
             // Compute centroid for pan-to: prefer custom geometry, then AI layer bounds, then feature_key lat,lng,type pattern
             var panAttrs = '';
             if (ov.geometry_json) {
@@ -5355,17 +5363,19 @@
                     if (!isNaN(_klat) && !isNaN(_klng)) panAttrs = ' data-lat="' + _klat + '" data-lng="' + _klng + '"';
                 }
             }
+            var fkeyAttr = ' data-fkey="' + esc(String(ov.feature_key || '')) + '"';
             var descShort = ov.description ? esc(String(ov.description).slice(0, 80)) + (ov.description.length > 80 ? '…' : '') : '';
             html +=
                 '<div class="fmap-override-item">' +
                 '<div class="fmap-override-item-row">' +
                 colorSwatch +
                 '<span class="fmap-override-item-name" title="' + displayName + '">' + displayName + '</span>' +
-                (panAttrs ? '<button class="fmap-override-item-pan" title="Pan to on map" aria-label="Pan to ' + displayName + '"' + panAttrs + '>⌖</button>' : '') +
+                (panAttrs ? '<button class="fmap-override-item-pan" title="Pan to on map" aria-label="Pan to ' + displayName + '"' + panAttrs + fkeyAttr + '>⌖</button>' : '') +
                 '<button class="fmap-override-item-edit" data-oid="' + oid + '" aria-label="Edit override for ' + displayName + '">Edit</button>' +
                 '<button class="fmap-override-item-del" data-oid="' + oid + '" aria-label="Remove override">Remove</button>' +
                 '</div>' +
                 '<div class="fmap-override-item-key">' + keyShort +
+                (typeBadge ? ' ' + typeBadge : '') +
                 (ov.geometry_json ? ' <span class="fmap-override-geom-badge" title="Custom shape stored">reshaped</span>' : '') +
                 '</div>' +
                 (descShort ? '<div class="fmap-override-item-desc">' + descShort + '</div>' : '') +
@@ -5376,8 +5386,19 @@
 
         el.querySelectorAll('.fmap-override-item-pan').forEach(function (btn) {
             btn.addEventListener('click', function () {
+                var fKey = btn.dataset.fkey;
                 var lat = parseFloat(btn.dataset.lat), lng = parseFloat(btn.dataset.lng);
-                if (!isNaN(lat) && !isNaN(lng) && map) map.flyTo([lat, lng], Math.max(map.getZoom(), 15));
+                var _fitDone = false;
+                if (fKey && map) {
+                    var _panLyr = _aiPolyByKey[fKey];
+                    if (_panLyr && typeof _panLyr.getBounds === 'function') {
+                        try {
+                            var _pb = _panLyr.getBounds();
+                            if (_pb.isValid()) { map.fitBounds(_pb.pad(0.15), { maxZoom: 17, animate: true }); _fitDone = true; }
+                        } catch (_e) {}
+                    }
+                }
+                if (!_fitDone && !isNaN(lat) && !isNaN(lng) && map) map.flyTo([lat, lng], Math.max(map.getZoom(), 15));
             });
         });
 
@@ -5687,6 +5708,13 @@
             var lat      = parseFloat(m.lat), lng = parseFloat(m.lng);
             var hasCoords = !isNaN(lat) && !isNaN(lng);
             var descShort = m.description ? esc(String(m.description).slice(0, 80)) + (m.description.length > 80 ? '…' : '') : '';
+            var coordStr = hasCoords ? lat.toFixed(5) + ', ' + lng.toFixed(5) : '';
+            var addedDate = m.created_at ? esc(String(m.created_at).slice(0, 10)) : '';
+            var metaParts = [];
+            if (typeSafe) metaParts.push(typeSafe);
+            if (coordStr) metaParts.push(coordStr);
+            if (addedDate) metaParts.push('added ' + addedDate);
+            var metaLine = metaParts.length ? '<div class="fmap-override-item-key">' + metaParts.join(' · ') + '</div>' : '';
             html +=
                 '<div class="fmap-override-item">' +
                 '<div class="fmap-override-item-row">' +
@@ -5695,7 +5723,7 @@
                 '<button class="fmap-markers-panel-edit fmap-override-item-edit" data-mid="' + mid + '" aria-label="Edit ' + nameSafe + '">Edit</button>' +
                 '<button class="fmap-markers-panel-del fmap-override-item-del" data-mid="' + mid + '" aria-label="Delete ' + nameSafe + '">Delete</button>' +
                 '</div>' +
-                (typeSafe ? '<div class="fmap-override-item-key">' + typeSafe + '</div>' : '') +
+                metaLine +
                 (descShort ? '<div class="fmap-override-item-desc">' + descShort + '</div>' : '') +
                 '</div>';
         });
@@ -7036,6 +7064,19 @@
         if (reshapeBtn) reshapeBtn.hidden = !(currentGeom && currentGeom.type === 'Polygon');
         var clearShapeBtn = document.getElementById('fmap-override-clear-shape');
         if (clearShapeBtn) clearShapeBtn.hidden = !geomIsOverride; // only when a shape is actually stored
+        // Area hint — show when a custom polygon geometry override exists
+        var _ovAreaHint = document.getElementById('fmap-override-area-hint');
+        if (_ovAreaHint) {
+            var _ovAreaLabel = (geomIsOverride && currentGeom && currentGeom.type === 'Polygon')
+                ? _polyAreaLabel(currentGeom) : null;
+            if (_ovAreaLabel) {
+                var _ovVCount = currentGeom.coordinates && currentGeom.coordinates[0] ? currentGeom.coordinates[0].length - 1 : 0;
+                _ovAreaHint.textContent = 'Custom shape · Area ≈ ' + _ovAreaLabel + (_ovVCount > 0 ? ' · ' + _ovVCount + ' vert' + (_ovVCount === 1 ? 'ex' : 'ices') : '');
+                _ovAreaHint.hidden = false;
+            } else {
+                _ovAreaHint.hidden = true;
+            }
+        }
         if (modal) modal.hidden = false;
         if (backdrop) backdrop.hidden = false;
         // Capture the AI polygon's current style for live preview / restore
@@ -7075,6 +7116,8 @@
         if (statusEl) { statusEl.textContent = ''; statusEl.style.color = ''; }
         var auditEl = document.getElementById('fmap-override-audit');
         if (auditEl) auditEl.hidden = true;
+        var _ovAreaHintEl = document.getElementById('fmap-override-area-hint');
+        if (_ovAreaHintEl) _ovAreaHintEl.hidden = true;
         // Reopen the panel on the overrides tab if Edit was clicked from there
         if (_overrideEditedFromPanel) {
             _overrideEditedFromPanel = false;

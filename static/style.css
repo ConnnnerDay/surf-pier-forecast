@@ -14829,6 +14829,13 @@ body.dark .wq-hdx-item {
   border-top: 1px solid var(--border, #334155);
 }
 .fmap-habitat-audit[hidden] { display: none !important; }
+.fmap-habitat-area-hint {
+  font-size: 0.72rem;
+  color: var(--text-muted, #6b7280);
+  margin: 4px 0 0;
+  font-variant-numeric: tabular-nums;
+}
+.fmap-habitat-area-hint[hidden] { display: none !important; }
 
 /* ── Undo-delete toast (extends the admin toast) ── */
 #fmap-undo-toast {
@@ -15043,6 +15050,18 @@ body.dark .wq-hdx-item {
   font-size: 0.67rem;
   vertical-align: middle;
   margin-left: 4px;
+}
+.fmap-override-type-badge {
+  display: inline-block;
+  background: transparent;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  padding: 0 4px;
+  font-size: 0.66rem;
+  font-family: inherit;
+  vertical-align: middle;
+  margin-left: 4px;
+  opacity: 0.8;
 }
 
 /* ── Suppressed spots panel ── */
