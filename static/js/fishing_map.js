@@ -4508,8 +4508,11 @@
         var hint = document.getElementById('fmap-habitat-draw-hint');
         if (hint) {
             var _areaLabel = (_resolvedGeom && _resolvedGeom.type === 'Polygon') ? _polyAreaLabel(_resolvedGeom) : null;
-            if (_areaLabel) { hint.hidden = false; hint.textContent = 'Area ≈ ' + _areaLabel; }
-            else { hint.hidden = true; }
+            if (_areaLabel) {
+                var _vCount = _resolvedGeom.coordinates && _resolvedGeom.coordinates[0] ? _resolvedGeom.coordinates[0].length - 1 : 0;
+                hint.hidden = false;
+                hint.textContent = 'Area ≈ ' + _areaLabel + (_vCount > 0 ? ' · ' + _vCount + ' vert' + (_vCount === 1 ? 'ex' : 'ices') : '');
+            } else { hint.hidden = true; }
         }
         // Audit info: show created/updated timestamps when available
         var auditEl = document.getElementById('fmap-habitat-audit');
@@ -4558,8 +4561,11 @@
         var hint = document.getElementById('fmap-habitat-draw-hint');
         if (hint) {
             var _addAreaLabel = (geometry && geometry.type === 'Polygon') ? _polyAreaLabel(geometry) : null;
-            if (_addAreaLabel) { hint.hidden = false; hint.textContent = 'Area ≈ ' + _addAreaLabel; }
-            else { hint.hidden = true; }
+            if (_addAreaLabel) {
+                var _addVCount = geometry.coordinates && geometry.coordinates[0] ? geometry.coordinates[0].length - 1 : 0;
+                hint.hidden = false;
+                hint.textContent = 'Area ≈ ' + _addAreaLabel + (_addVCount > 0 ? ' · ' + _addVCount + ' vert' + (_addVCount === 1 ? 'ex' : 'ices') : '');
+            } else { hint.hidden = true; }
         }
         var auditEl2 = document.getElementById('fmap-habitat-audit');
         if (auditEl2) auditEl2.hidden = true;
@@ -5072,12 +5078,14 @@
             var descShort = h.description ? esc(String(h.description).slice(0, 80)) + (h.description.length > 80 ? '…' : '') : '';
             var titleText = h.description ? nameSafe + '&#10;' + esc(String(h.description).slice(0, 200)) : nameSafe;
             var areaLabel = (h.geometry && h.geometry.type === 'Polygon') ? _polyAreaLabel(h.geometry) : null;
+            var vertexCount = (h.geometry && h.geometry.type === 'Polygon' && h.geometry.coordinates && h.geometry.coordinates[0]) ? h.geometry.coordinates[0].length - 1 : 0;
+            var areaDisplay = areaLabel ? (areaLabel + (vertexCount > 2 ? ' · ' + vertexCount + 'v' : '')) : null;
             html +=
                 '<div class="fmap-habitat-panel-item" style="border-left:3px solid ' + colorSafe + '">' +
                 '<span class="fmap-habitat-panel-color" style="background:' + colorSafe + '"></span>' +
                 '<span class="fmap-habitat-panel-name" title="' + titleText + '">' + nameSafe + '</span>' +
                 '<span class="fmap-habitat-panel-type">' + typeSafe + '</span>' +
-                (areaLabel ? '<span class="fmap-habitat-panel-area" title="Approximate polygon area">' + esc(areaLabel) + '</span>' : '') +
+                (areaDisplay ? '<span class="fmap-habitat-panel-area" title="Approximate area and vertex count">' + esc(areaDisplay) + '</span>' : '') +
                 (latStr ? '<button class="fmap-habitat-panel-view" data-hid="' + esc(h.id) + '" data-lat="' + latStr + '" data-lng="' + lngStr + '" title="Pan to on map" aria-label="Pan to ' + nameSafe + '">⌖</button>' : '') +
                 '<button class="fmap-habitat-panel-edit" data-hid="' + esc(h.id) + '">Edit</button>' +
                 '<button class="fmap-habitat-panel-del fmap-override-item-del" data-hid="' + esc(h.id) + '" aria-label="Delete ' + nameSafe + '">Delete</button>' +
