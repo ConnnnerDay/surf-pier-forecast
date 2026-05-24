@@ -4618,12 +4618,23 @@
         // Use the resolved GeoJSON geometry for round-tripping back to the server
         _pendingHabitatGeom = _resolvedGeom;
         _habitatEditData = habitatData;
-        // Capture current map layer style so it can be restored if the user cancels
+        // Capture the true original map layer style for restore-on-cancel.
+        // If a panel hover is currently active on this layer, _panelHoverOrig holds
+        // the real pre-hover values; restoring it now avoids capturing the brightened
+        // hover style as the "original" (which would leave the layer permanently bright
+        // if the user cancels).
         _habitatEditOrigStyle = null;
         var _heoFound = _customHabitats.filter(function (h) { return h.id === habitatData.id; })[0];
         if (_heoFound && _heoFound.leaflet) {
-            var _heoOpts = _heoFound.leaflet.options || {};
-            _habitatEditOrigStyle = { id: habitatData.id, fillColor: _heoOpts.fillColor, color: _heoOpts.color, fillOpacity: _heoOpts.fillOpacity, weight: _heoOpts.weight };
+            if (_heoFound._panelHoverOrig) {
+                // Restore true style from hover snapshot, then clear the hover state
+                _heoFound.leaflet.setStyle(_heoFound._panelHoverOrig);
+                _habitatEditOrigStyle = Object.assign({ id: habitatData.id }, _heoFound._panelHoverOrig);
+                delete _heoFound._panelHoverOrig;
+            } else {
+                var _heoOpts = _heoFound.leaflet.options || {};
+                _habitatEditOrigStyle = { id: habitatData.id, fillColor: _heoOpts.fillColor, color: _heoOpts.color, fillOpacity: _heoOpts.fillOpacity, weight: _heoOpts.weight };
+            }
         }
         _openHabitatModal();
     }
@@ -7353,15 +7364,23 @@
         }
         if (modal) modal.hidden = false;
         if (backdrop) backdrop.hidden = false;
-        // Capture the AI polygon's current style for live preview / restore
+        // Capture the AI polygon's true original style for live-preview restore.
+        // If an override panel hover is active on this layer, restore it first so
+        // we capture the pre-hover style rather than the temporarily-brightened one.
         var _prevLyr = _aiPolyByKey[String(featureKey)];
         if (_prevLyr && typeof _prevLyr.options === 'object') {
-            _overridePreviewOrigStyle = {
-                color:       _prevLyr.options.color,
-                fillColor:   _prevLyr.options.fillColor,
-                fillOpacity: _prevLyr.options.fillOpacity,
-                weight:      _prevLyr.options.weight
-            };
+            if (_ovHoverActive && _ovHoverActive.fKey === String(featureKey)) {
+                _prevLyr.setStyle(_ovHoverActive.origStyle);
+                _overridePreviewOrigStyle = Object.assign({}, _ovHoverActive.origStyle);
+                _ovHoverActive = null;
+            } else {
+                _overridePreviewOrigStyle = {
+                    color:       _prevLyr.options.color,
+                    fillColor:   _prevLyr.options.fillColor,
+                    fillOpacity: _prevLyr.options.fillOpacity,
+                    weight:      _prevLyr.options.weight
+                };
+            }
         } else {
             _overridePreviewOrigStyle = null;
         }
