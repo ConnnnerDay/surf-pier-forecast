@@ -6591,7 +6591,13 @@
                 if (!_pendingHabitatGeom || _pendingHabitatGeom.type !== 'Polygon') return;
                 var _geomToReshape = _pendingHabitatGeom;
                 _pendingHabitatGeom = null; // prevent discarded-toast on close (add-mode)
+                // Preserve panel-origin flag: _closeHabitatModal would consume it and reopen
+                // the panel, but for Reshape we want to stay panel-less during vertex edit
+                // and only reopen the panel when the re-opened edit modal is later dismissed.
+                var _reshapeFromPanel = _habitatEditedFromPanel;
+                _habitatEditedFromPanel = false;
                 _closeHabitatModal();
+                _habitatEditedFromPanel = _reshapeFromPanel;
                 // Fit the map to the polygon so vertices are always visible
                 if (map && _geomToReshape.coordinates && _geomToReshape.coordinates[0]) {
                     try {
@@ -6611,9 +6617,13 @@
             redrawBtn3.addEventListener('click', function () {
                 if (!_habitatEditData) return;
                 // Close the modal but keep _habitatEditData so _finishHabitatDraw
-                // knows to re-open the edit modal with the new geometry
+                // knows to re-open the edit modal with the new geometry.
+                // Preserve panel-origin flag across close so the re-opened modal can reopen the panel.
                 _pendingHabitatGeom = null; // suppress "discarded" undo toast
+                var _redrawFromPanel = _habitatEditedFromPanel;
+                _habitatEditedFromPanel = false;
                 _closeHabitatModal();
+                _habitatEditedFromPanel = _redrawFromPanel;
                 _habitatRedrawMode = true; // signal _finishHabitatDraw to re-open edit modal
                 _startHabitatDraw();
                 _showAdminToast('Draw a new polygon to replace the current shape. Double-click to finish.');
@@ -6625,7 +6635,12 @@
         if (moveBtn) {
             moveBtn.addEventListener('click', function () {
                 if (!_pendingHabitatGeom || _pendingHabitatGeom.type !== 'Point') return;
+                // Preserve panel-origin flag so point-move cancel/finish re-opens the edit modal,
+                // which then reopens the panel on final dismiss.
+                var _moveFromPanel = _habitatEditedFromPanel;
+                _habitatEditedFromPanel = false;
                 _closeHabitatModal();
+                _habitatEditedFromPanel = _moveFromPanel;
                 _startHabitatPointMove(_habitatEditData);
             });
         }
