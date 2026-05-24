@@ -4009,6 +4009,38 @@
         return null;
     }
 
+    // Approximate polygon area in m² using the Shoelace formula in geographic
+    // coordinates, scaled by the Earth's surface at the centroid latitude.
+    // Returns a human-friendly string like "3.2 ac" or "1.4 ha".
+    function _polyAreaLabel(geojsonPolygon) {
+        if (!geojsonPolygon || geojsonPolygon.type !== 'Polygon' || !geojsonPolygon.coordinates || !geojsonPolygon.coordinates[0]) return null;
+        var ring = geojsonPolygon.coordinates[0];
+        var n = ring.length;
+        if (n < 3) return null;
+        // Shoelace in radians
+        var R = 6371000; // metres
+        var DEG = Math.PI / 180;
+        var area = 0;
+        var sumLat = 0;
+        for (var i = 0; i < n; i++) {
+            var j = (i + 1) % n;
+            area += (ring[i][0] * DEG) * (ring[j][1] * DEG) - (ring[j][0] * DEG) * (ring[i][1] * DEG);
+            sumLat += ring[i][1];
+        }
+        var centLat = (sumLat / n) * DEG;
+        var areaSqM = Math.abs(area / 2) * R * R * Math.cos(centLat);
+        if (isNaN(areaSqM) || areaSqM <= 0) return null;
+        var acres = areaSqM / 4046.86;
+        var hectares = areaSqM / 10000;
+        if (acres < 0.1 && areaSqM < 10000) {
+            return Math.round(areaSqM) + ' m²';
+        }
+        if (acres < 100) {
+            return acres.toFixed(1) + ' ac · ' + hectares.toFixed(1) + ' ha';
+        }
+        return Math.round(acres) + ' ac · ' + Math.round(hectares) + ' ha';
+    }
+
     // ── Admin spot-suppression helpers ──────────────────────────────────────
 
     // Open a compact popup on an OSM/NOAA/ESRI spot offering "Hide" and
@@ -4473,7 +4505,11 @@
             moveBtn.hidden = !hasPoint;
         }
         var hint = document.getElementById('fmap-habitat-draw-hint');
-        if (hint) hint.hidden = true;
+        if (hint) {
+            var _areaLabel = (_resolvedGeom && _resolvedGeom.type === 'Polygon') ? _polyAreaLabel(_resolvedGeom) : null;
+            if (_areaLabel) { hint.hidden = false; hint.textContent = 'Area ≈ ' + _areaLabel; }
+            else { hint.hidden = true; }
+        }
         // Audit info: show created/updated timestamps when available
         var auditEl = document.getElementById('fmap-habitat-audit');
         if (auditEl) {
@@ -4519,7 +4555,11 @@
         var moveBtn2 = document.getElementById('fmap-habitat-move');
         if (moveBtn2) moveBtn2.hidden = true;
         var hint = document.getElementById('fmap-habitat-draw-hint');
-        if (hint) hint.hidden = true;
+        if (hint) {
+            var _addAreaLabel = (geometry && geometry.type === 'Polygon') ? _polyAreaLabel(geometry) : null;
+            if (_addAreaLabel) { hint.hidden = false; hint.textContent = 'Area ≈ ' + _addAreaLabel; }
+            else { hint.hidden = true; }
+        }
         var auditEl2 = document.getElementById('fmap-habitat-audit');
         if (auditEl2) auditEl2.hidden = true;
         _pendingHabitatGeom = geometry;
@@ -5197,7 +5237,7 @@
                 '<div class="fmap-override-item-row">' +
                 (colorStyle ? '<span style="' + colorStyle + '"></span>' : '') +
                 '<span class="fmap-override-item-name" title="' + displayName + '">' + displayName + '</span>' +
-                (panAttrs ? '<button class="fmap-override-item-pan" aria-label="Pan to ' + displayName + '"' + panAttrs + '>⌖</button>' : '') +
+                (panAttrs ? '<button class="fmap-override-item-pan" title="Pan to on map" aria-label="Pan to ' + displayName + '"' + panAttrs + '>⌖</button>' : '') +
                 '<button class="fmap-override-item-edit" data-oid="' + oid + '" aria-label="Edit override for ' + displayName + '">Edit</button>' +
                 '<button class="fmap-override-item-del" data-oid="' + oid + '" aria-label="Remove override">Remove</button>' +
                 '</div>' +
