@@ -66,6 +66,7 @@
     var _habitatDrawVerts   = [];     // [L.LatLng] being collected
     var _habitatDrawMarkers = [];     // temporary vertex L.marker objects
     var _habitatDrawPreview = null;   // L.polyline preview during draw
+    var _habitatModalPreview = null;  // temporary polygon shown on map while add modal is open
     var _pendingHabitatGeom = null;   // finished geometry waiting for modal save
     var _customHabitats     = [];     // [{id, leaflet, data}] — live custom habitat state
     var _showCustomHabitats = true;   // whether custom habitats are visible
@@ -4437,6 +4438,7 @@
         var backdrop = document.getElementById('fmap-habitat-backdrop');
         if (modal)    modal.hidden    = true;
         if (backdrop) backdrop.hidden = true;
+        if (_habitatModalPreview && map) { map.removeLayer(_habitatModalPreview); _habitatModalPreview = null; }
         var _savedGeom = _pendingHabitatGeom;
         var _wasNewDraw = !_habitatEditData && !!_pendingHabitatGeom;
         _pendingHabitatGeom = null;
@@ -4563,6 +4565,18 @@
         if (auditEl2) auditEl2.hidden = true;
         _pendingHabitatGeom = geometry;
         _habitatEditData = null;
+        // Show a dashed preview polygon on the map so the admin can see the drawn
+        // shape while filling in name/type/etc. in the form.
+        if (_habitatModalPreview && map) { map.removeLayer(_habitatModalPreview); _habitatModalPreview = null; }
+        if (map && geometry && geometry.type === 'Polygon') {
+            var _mpCoords = (geometry.coordinates[0] || []).map(function (c) { return [c[1], c[0]]; });
+            if (_mpCoords.length >= 3) {
+                _habitatModalPreview = L.polygon(_mpCoords, {
+                    color: _addColor, fillColor: _addColor, weight: 2, dashArray: '6,4',
+                    fillOpacity: _addFo * 0.6, interactive: false
+                }).addTo(map);
+            }
+        }
         _openHabitatModal();
     }
 
@@ -6529,7 +6543,7 @@
             });
         }
 
-        // ── Live color preview: update the map polygon as the admin picks a color ─
+        // ── Live color/opacity/weight preview while habitat modal is open ───────
         var habitatColorEl = document.getElementById('fmap-habitat-color');
         if (habitatColorEl) {
             habitatColorEl.addEventListener('input', function () {
@@ -6542,12 +6556,48 @@
                 if (_habitatVertexEditMode && _habitatVertexPreview) {
                     _habitatVertexPreview.setStyle({ color: c, fillColor: c });
                 }
+                // Live-update the add-modal pending preview polygon
+                if (_habitatModalPreview) {
+                    _habitatModalPreview.setStyle({ color: c, fillColor: c });
+                }
                 // Live-update the existing habitat polygon when editing
                 if (_habitatEditData) {
                     var hid = _habitatEditData.id;
                     _customHabitats.forEach(function (h) {
                         if (h.id !== hid || !h.leaflet) return;
                         h.leaflet.setStyle({ fillColor: c, color: c });
+                    });
+                }
+            });
+        }
+
+        // ── Habitat fill-opacity and stroke-weight live preview ───────────────
+        var _hFoSlider2 = document.getElementById('fmap-habitat-fill-opacity');
+        if (_hFoSlider2) {
+            _hFoSlider2.addEventListener('input', function () {
+                var fo = parseFloat(_hFoSlider2.value);
+                if (_habitatModalPreview) _habitatModalPreview.setStyle({ fillOpacity: fo * 0.6 });
+                if (_habitatVertexEditMode && _habitatVertexPreview) _habitatVertexPreview.setStyle({ fillOpacity: fo });
+                if (_habitatEditData) {
+                    var _hfHid = _habitatEditData.id;
+                    _customHabitats.forEach(function (h) {
+                        if (h.id !== _hfHid || !h.leaflet) return;
+                        h.leaflet.setStyle({ fillOpacity: fo });
+                    });
+                }
+            });
+        }
+        var _hSwSlider2 = document.getElementById('fmap-habitat-stroke-weight');
+        if (_hSwSlider2) {
+            _hSwSlider2.addEventListener('input', function () {
+                var sw = parseFloat(_hSwSlider2.value);
+                if (_habitatModalPreview) _habitatModalPreview.setStyle({ weight: sw });
+                if (_habitatVertexEditMode && _habitatVertexPreview) _habitatVertexPreview.setStyle({ weight: sw });
+                if (_habitatEditData) {
+                    var _hswHid = _habitatEditData.id;
+                    _customHabitats.forEach(function (h) {
+                        if (h.id !== _hswHid || !h.leaflet) return;
+                        h.leaflet.setStyle({ weight: sw });
                     });
                 }
             });
