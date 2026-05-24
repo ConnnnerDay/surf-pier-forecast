@@ -6319,7 +6319,12 @@
                     createdAt:          _overrideEditData.createdAt || null,
                     updatedAt:          _overrideEditData.updatedAt || null
                 };
+                // Preserve panel-origin flag across the intermediate close so the re-opened
+                // override modal can still reopen the panel on final dismiss.
+                var _ovReshapeFromPanel = _overrideEditedFromPanel;
+                _overrideEditedFromPanel = false;
                 _closeOverrideModal();
+                _overrideEditedFromPanel = _ovReshapeFromPanel;
                 _overrideEditData = snap; // restore after close
                 // Fit the map to the polygon so vertices are always visible
                 if (map && snap.geometry.coordinates && snap.geometry.coordinates[0]) {
