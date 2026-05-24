@@ -4801,7 +4801,17 @@
         _habitatMidpointMarkers = [];
         var n = _habitatVertexMarkers.length;
         var vcEl = document.getElementById('fmap-reshape-vertex-count');
-        if (vcEl) vcEl.textContent = n + ' vert' + (n === 1 ? 'ex' : 'ices');
+        if (vcEl) {
+            var _vcArea = '';
+            if (n >= 3) {
+                var _vcCoords = _habitatVertexMarkers.map(function (m) { var ll = m.getLatLng(); return [ll.lng, ll.lat]; });
+                _vcCoords.push(_vcCoords[0]); // close ring
+                var _vcGeom = { type: 'Polygon', coordinates: [_vcCoords] };
+                var _vcLabel = _polyAreaLabel(_vcGeom);
+                if (_vcLabel) _vcArea = ' · ' + _vcLabel;
+            }
+            vcEl.textContent = n + ' vert' + (n === 1 ? 'ex' : 'ices') + _vcArea;
+        }
         if (n < 2 || !map) return;
         for (var _mi = 0; _mi < n; _mi++) {
             var _a = _habitatVertexMarkers[_mi].getLatLng();
@@ -5845,7 +5855,7 @@
             } else if (e.key === 'Enter' && _habitatDrawMode) {
                 if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) return;
                 if (_habitatDrawVerts.length >= 3) { e.preventDefault(); _finishHabitatDraw(); }
-            } else if ((e.key === 'Backspace' || e.key === 'Delete') && _habitatDrawMode) {
+            } else if ((e.key === 'Backspace' || e.key === 'Delete' || (e.key === 'z' && (e.ctrlKey || e.metaKey) && !e.shiftKey)) && _habitatDrawMode) {
                 // Undo last vertex during polygon draw (don't interfere with text inputs)
                 if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) return;
                 if (_habitatDrawVerts.length === 0) return;
