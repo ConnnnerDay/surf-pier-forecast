@@ -4774,7 +4774,7 @@
             }
             return r.json();
         })
-        .then(function () {
+        .then(function (saved) {
             _pendingHabitatGeom = null; // clear before close so the "discarded" toast doesn't fire
             _closeHabitatModal();
             aiCache = {}; _aiCacheKeys = [];
@@ -4782,8 +4782,8 @@
             scheduleAIQuery();
             if (_habitatPanelOpen) _loadHabitatPanel();
             if (onSuccess) onSuccess();
-            // Offer undo for habitat edits (not new adds)
             if (habitatId && prevData) {
+                // Undo for edits: restore previous field values
                 _showUndoToast('Habitat updated', function () {
                     fetch('/api/v1/admin/habitats', {
                         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -4808,8 +4808,23 @@
                     })
                     .catch(function () { _showAdminToast('Revert failed', true); });
                 });
+            } else if (!habitatId && saved && saved.id) {
+                // Undo for new adds: delete the just-created habitat
+                var newId = saved.id;
+                _showUndoToast('Habitat added', function () {
+                    fetch('/api/v1/admin/habitats/' + encodeURIComponent(newId), { method: 'DELETE' })
+                        .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                        .then(function () {
+                            aiCache = {}; _aiCacheKeys = [];
+                            try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
+                            _showAdminToast('Habitat removed');
+                            scheduleAIQuery();
+                            if (_habitatPanelOpen) _loadHabitatPanel();
+                        })
+                        .catch(function () { _showAdminToast('Undo failed', true); });
+                });
             } else {
-                _showAdminToast(habitatId ? 'Habitat updated' : 'Habitat added');
+                _showAdminToast('Habitat added');
             }
         })
         .catch(function (e) {
