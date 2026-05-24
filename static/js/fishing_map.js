@@ -6180,7 +6180,9 @@
                     fill_opacity:       parseFloat((document.getElementById('fmap-override-fill-opacity') || {}).value || 0.25),
                     stroke_weight:      parseFloat((document.getElementById('fmap-override-stroke-weight') || {}).value || 2),
                     geometry:           _overrideEditData.geometry,
-                    geometryIsOverride: !!_overrideEditData.geometryIsOverride
+                    geometryIsOverride: !!_overrideEditData.geometryIsOverride,
+                    createdAt:          _overrideEditData.createdAt || null,
+                    updatedAt:          _overrideEditData.updatedAt || null
                 };
                 _closeOverrideModal();
                 _overrideEditData = snap; // restore after close
