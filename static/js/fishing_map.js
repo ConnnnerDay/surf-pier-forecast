@@ -792,8 +792,8 @@
                             currentGeom,
                             geomIsOverride,
                             null, null,
-                            rawFeature.override_fill_opacity != null ? rawFeature.override_fill_opacity : null,
-                            rawFeature.override_stroke_weight != null ? rawFeature.override_stroke_weight : null
+                            rawFeature.override_fill_opacity != null ? rawFeature.override_fill_opacity : lyr.options.fillOpacity,
+                            rawFeature.override_stroke_weight != null ? rawFeature.override_stroke_weight : lyr.options.weight
                         );
                     } else if (typeof window._fmapShowSpotDetail === 'function') {
                         _activeSpotMarker = null;
