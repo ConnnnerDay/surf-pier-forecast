@@ -4221,7 +4221,9 @@
         var _adminModalEl = document.getElementById('fmap-admin-modal');
         document.addEventListener('keydown', function (e) {
             if (!_adminModalEl || _adminModalEl.hidden) {
-                if (e.key === 'Escape') _closeAdminModal();
+                // Modal is not open: Escape only needs to dismiss a preview pin, not
+                // the full close path (which would spuriously reset _markerEditOriginal).
+                if (e.key === 'Escape') _removeAdminPreviewPin();
                 return;
             }
             if (e.key === 'Escape') { _closeAdminModal(); return; }
