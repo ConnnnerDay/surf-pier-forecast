@@ -3693,6 +3693,14 @@
                 var prevLat = spot.lat, prevLng = spot.lng;
                 spot.lat = ll.lat;
                 spot.lng = ll.lng;
+                // If the edit panel is open for this marker, keep the lat/lng inputs in sync
+                var _saveBtn = document.getElementById('fmap-admin-save');
+                if (_saveBtn && _saveBtn.dataset.markerId === String(spot.id)) {
+                    var _latEl = document.getElementById('fmap-admin-lat');
+                    var _lngEl = document.getElementById('fmap-admin-lng');
+                    if (_latEl) _latEl.value = ll.lat.toFixed(6);
+                    if (_lngEl) _lngEl.value = ll.lng.toFixed(6);
+                }
 
                 fetch('/api/map/custom-markers/' + spot.id, {
                     method:  'PUT',
