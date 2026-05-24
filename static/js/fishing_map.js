@@ -4777,7 +4777,8 @@
             var previewCoords = _habitatDrawVerts.concat([_habitatDrawVerts[0]]);
             var _pColor = (document.getElementById('fmap-habitat-color') || {}).value || '#8b5cf6';
             _habitatDrawPreview = L.polygon(previewCoords, {
-                color: _pColor, weight: 2, dashArray: '6,4', fillOpacity: 0.18, fillColor: _pColor
+                color: _pColor, weight: 2, dashArray: '6,4', fillOpacity: 0.18, fillColor: _pColor,
+                interactive: false
             }).addTo(map);
         }
 
@@ -4918,6 +4919,9 @@
 
     function _startHabitatVertexEdit(geojson) {
         if (!map || !geojson || geojson.type !== 'Polygon') return;
+        if (_habitatDrawMode) _cancelHabitatDraw();
+        if (_habitatPointMoveMode) _cancelHabitatPointMove();
+        if (_habitatVertexEditMode) _cancelHabitatVertexEdit();
         _habitatVertexEditMode = true;
         var ring = geojson.coordinates[0];
         // GeoJSON rings close by repeating the first vertex — skip the duplicate
@@ -4984,7 +4988,8 @@
         if (!_habitatVertexPreview) {
             _habitatVertexPreview = L.polygon(coords, {
                 color: _reshapeColor, fillColor: _reshapeColor,
-                weight: 2.5, dashArray: '6,4', fillOpacity: 0.18
+                weight: 2.5, dashArray: '6,4', fillOpacity: 0.18,
+                interactive: false
             });
             if (map) _habitatVertexPreview.addTo(map);
         } else {
@@ -6281,7 +6286,8 @@
                     var previewCoords = _habitatDrawVerts.concat([_habitatDrawVerts[0]]);
                     var _pColorB = (document.getElementById('fmap-habitat-color') || {}).value || '#8b5cf6';
                     _habitatDrawPreview = L.polygon(previewCoords, {
-                        color: _pColorB, weight: 2, dashArray: '6,4', fillOpacity: 0.18, fillColor: _pColorB
+                        color: _pColorB, weight: 2, dashArray: '6,4', fillOpacity: 0.18, fillColor: _pColorB,
+                        interactive: false
                     }).addTo(map);
                 }
                 var nUndo = _habitatDrawVerts.length;
@@ -6984,6 +6990,21 @@
         document.querySelectorAll('.fmap-panel-tab').forEach(function (tabBtn) {
             tabBtn.addEventListener('click', function () {
                 var tabName = tabBtn.dataset.tab;
+                // Clean up any lingering hover state from the tab we're leaving
+                if (_suppressedGhost) { _suppressedGhost.remove(); _suppressedGhost = null; }
+                if (_ovHoverActive) {
+                    var _ovLyrTab = _aiPolyByKey[_ovHoverActive.fKey];
+                    if (_ovLyrTab) _ovLyrTab.setStyle(_ovHoverActive.origStyle);
+                    _ovHoverActive = null;
+                }
+                _customHabitats.forEach(function (h) {
+                    if (h._panelHoverOrig && h.leaflet) { h.leaflet.setStyle(h._panelHoverOrig); delete h._panelHoverOrig; }
+                });
+                if (_markerHoverMid) {
+                    var _mhTab = _customMarkers.filter(function (cm) { return String(cm.id) === _markerHoverMid; })[0];
+                    if (_mhTab && _mhTab.leaflet) { var _mhTabEl = _mhTab.leaflet.getElement(); if (_mhTabEl) _mhTabEl.classList.remove('fmap-marker-hover'); }
+                    _markerHoverMid = null;
+                }
                 _habitatPanelActiveTab = tabName;
                 document.querySelectorAll('.fmap-panel-tab').forEach(function (b) {
                     b.classList.toggle('fmap-panel-tab--active', b === tabBtn);
