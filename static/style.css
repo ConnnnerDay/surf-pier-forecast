@@ -14956,6 +14956,11 @@ body.dark .wq-hdx-item {
   flex-shrink: 0;
 }
 .fmap-panel-sort-btn:hover { background: var(--border, #334155); color: var(--text, #e2e8f0); }
+.fmap-panel-draw-shortcut {
+  border-color: rgba(139,92,246,0.45);
+  color: #a78bfa;
+}
+.fmap-panel-draw-shortcut:hover { background: rgba(139,92,246,0.15); color: #c4b5fd; border-color: #a78bfa; }
 
 /* ── Overrides panel list ── */
 .fmap-override-item {

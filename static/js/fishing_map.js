@@ -5301,9 +5301,13 @@
         _overridesPanelData = overrides; // cache for edit buttons (always full list)
         var q = _overridesPanelSearch.toLowerCase().trim();
         var filtered = q ? overrides.filter(function (ov) {
+            var _fkQ = String(ov.feature_key || '').split(',');
+            var _typeQ = _fkQ.length >= 3 ? _fkQ[2].trim().toLowerCase() : '';
+            var _labelQ = _typeQ && AI_PICK_INFO[_typeQ] ? AI_PICK_INFO[_typeQ].label.toLowerCase() : '';
             return (ov.name || '').toLowerCase().indexOf(q) !== -1 ||
                    (ov.feature_key || '').toLowerCase().indexOf(q) !== -1 ||
-                   (ov.description || '').toLowerCase().indexOf(q) !== -1;
+                   (ov.description || '').toLowerCase().indexOf(q) !== -1 ||
+                   _labelQ.indexOf(q) !== -1;
         }) : overrides.slice();
         filtered.sort(function (a, b) {
             if (_overridesPanelSort === 'name') return (a.name || a.feature_key || '').localeCompare(b.name || b.feature_key || '');
@@ -5365,6 +5369,17 @@
             }
             var fkeyAttr = ' data-fkey="' + esc(String(ov.feature_key || '')) + '"';
             var descShort = ov.description ? esc(String(ov.description).slice(0, 80)) + (ov.description.length > 80 ? '…' : '') : '';
+            // Compute area for reshaped geometries
+            var _geomBadgeText = 'reshaped';
+            if (ov.geometry_json) {
+                try {
+                    var _gbGeom = typeof ov.geometry_json === 'string' ? JSON.parse(ov.geometry_json) : ov.geometry_json;
+                    if (_gbGeom && _gbGeom.type === 'Polygon') {
+                        var _gbArea = _polyAreaLabel(_gbGeom);
+                        if (_gbArea) _geomBadgeText = 'reshaped · ' + _gbArea;
+                    }
+                } catch (_e) {}
+            }
             html +=
                 '<div class="fmap-override-item">' +
                 '<div class="fmap-override-item-row">' +
@@ -5376,7 +5391,7 @@
                 '</div>' +
                 '<div class="fmap-override-item-key">' + keyShort +
                 (typeBadge ? ' ' + typeBadge : '') +
-                (ov.geometry_json ? ' <span class="fmap-override-geom-badge" title="Custom shape stored">reshaped</span>' : '') +
+                (ov.geometry_json ? ' <span class="fmap-override-geom-badge" title="Custom shape stored">' + esc(_geomBadgeText) + '</span>' : '') +
                 '</div>' +
                 (descShort ? '<div class="fmap-override-item-desc">' + descShort + '</div>' : '') +
                 '</div>';
@@ -6847,6 +6862,26 @@
                 sortBtn.textContent = sortLabels[_habitatPanelSort];
                 sortBtn.dataset.sort = _habitatPanelSort;
                 _applyHabitatPanelFilter();
+            });
+        }
+
+        // ── Habitats panel "Draw" shortcut ────────────────────────────────────
+        var panelDrawBtn = document.getElementById('fmap-habitat-panel-draw-btn');
+        if (panelDrawBtn) {
+            panelDrawBtn.addEventListener('click', function () {
+                // Close the panel, then delegate to the map toolbar draw button
+                _habitatPanelOpen = false;
+                var panelEl = document.getElementById('fmap-habitat-panel');
+                var listBtn = document.getElementById('fmap-admin-habitats-list-btn');
+                if (panelEl) panelEl.hidden = true;
+                if (listBtn) { listBtn.classList.remove('fmap-ctrl-btn--active'); listBtn.setAttribute('aria-pressed', 'false'); }
+                var drawBtn = document.getElementById('fmap-admin-habitat-btn');
+                if (drawBtn && !drawBtn.hidden) {
+                    // Only trigger if not already in draw mode
+                    if (!_habitatDrawMode) drawBtn.click();
+                } else {
+                    _startHabitatDraw();
+                }
             });
         }
 
