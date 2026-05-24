@@ -66,6 +66,8 @@
     var _habitatDrawVerts   = [];     // [L.LatLng] being collected
     var _habitatDrawMarkers = [];     // temporary vertex L.marker objects
     var _habitatDrawPreview = null;   // L.polyline preview during draw
+    var _habitatDrawRubberBand = null;        // rubber-band line from last vertex to cursor
+    var _habitatDrawRubberBandHandler = null; // cached mousemove listener
     var _habitatModalPreview = null;  // temporary polygon shown on map while add modal is open
     var _pendingHabitatGeom = null;   // finished geometry waiting for modal save
     var _customHabitats     = [];     // [{id, leaflet, data}] — live custom habitat state
@@ -4604,6 +4606,11 @@
         _habitatDrawMarkers.forEach(function (m) { if (map) map.removeLayer(m); });
         _habitatDrawMarkers = [];
         if (_habitatDrawPreview && map) { map.removeLayer(_habitatDrawPreview); _habitatDrawPreview = null; }
+        if (_habitatDrawRubberBand && map) { map.removeLayer(_habitatDrawRubberBand); _habitatDrawRubberBand = null; }
+        if (_habitatDrawRubberBandHandler && map) {
+            map.off('mousemove', _habitatDrawRubberBandHandler);
+            _habitatDrawRubberBandHandler = null;
+        }
     }
 
     function _startHabitatDraw() {
@@ -4618,6 +4625,27 @@
         if (vcEl) vcEl.textContent = '0 vertices · need 3 more';
         var bar = document.getElementById('fmap-habitat-reshape-bar');
         if (bar) bar.hidden = false;
+        // Wire rubber-band line (last vertex → cursor) for visual guidance
+        if (!_habitatDrawRubberBandHandler) {
+            _habitatDrawRubberBandHandler = function (e) {
+                if (!_habitatDrawMode || _habitatDrawVerts.length === 0) {
+                    if (_habitatDrawRubberBand && map) { map.removeLayer(_habitatDrawRubberBand); _habitatDrawRubberBand = null; }
+                    return;
+                }
+                var last = _habitatDrawVerts[_habitatDrawVerts.length - 1];
+                var cursor = [e.latlng.lat, e.latlng.lng];
+                var _rbColor = (document.getElementById('fmap-habitat-color') || {}).value || '#8b5cf6';
+                if (_habitatDrawRubberBand) {
+                    _habitatDrawRubberBand.setLatLngs([last, cursor]);
+                    _habitatDrawRubberBand.setStyle({ color: _rbColor });
+                } else {
+                    _habitatDrawRubberBand = L.polyline([last, cursor], {
+                        color: _rbColor, weight: 1.5, dashArray: '5,4', opacity: 0.65, interactive: false
+                    }).addTo(map);
+                }
+            };
+            map.on('mousemove', _habitatDrawRubberBandHandler);
+        }
         _showAdminToast('Click to place vertices · Backspace to undo · Enter or double-click to finish');
     }
 
