@@ -6782,30 +6782,6 @@
             });
         }
 
-        // ── Override fill-opacity slider ──────────────────────────────────────
-        var _ovFoSlider = document.getElementById('fmap-override-fill-opacity');
-        if (_ovFoSlider) {
-            _ovFoSlider.addEventListener('input', function () {
-                var _ovFoOut = document.getElementById('fmap-override-fill-opacity-val');
-                if (_ovFoOut) _ovFoOut.value = parseFloat(_ovFoSlider.value);
-                if (!_overrideEditData) return;
-                var lyr = _aiPolyByKey[String(_overrideEditData.featureKey)];
-                if (lyr) lyr.setStyle({ fillOpacity: parseFloat(_ovFoSlider.value) });
-            });
-        }
-
-        // ── Override stroke-weight slider ─────────────────────────────────────
-        var _ovSwSlider = document.getElementById('fmap-override-stroke-weight');
-        if (_ovSwSlider) {
-            _ovSwSlider.addEventListener('input', function () {
-                var _ovSwOut = document.getElementById('fmap-override-stroke-weight-val');
-                if (_ovSwOut) _ovSwOut.value = parseFloat(_ovSwSlider.value);
-                if (!_overrideEditData) return;
-                var lyr = _aiPolyByKey[String(_overrideEditData.featureKey)];
-                if (lyr) lyr.setStyle({ weight: parseFloat(_ovSwSlider.value) });
-            });
-        }
-
         // ── Live color/opacity/weight preview while habitat modal is open ───────
         var habitatColorEl = document.getElementById('fmap-habitat-color');
         if (habitatColorEl) {
