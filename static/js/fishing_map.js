@@ -779,7 +779,7 @@
                             rawFeature.override_id ? String(rawFeature.override_id) : '',
                             rawFeature.override_name || rawFeature.name || '',
                             rawFeature.override_description || rawFeature.description || '',
-                            rawFeature.override_fill_color || '',
+                            rawFeature.override_fill_color || color, // pre-fill with the AI feature's actual color
                             currentGeom,
                             geomIsOverride,
                             null, null,
@@ -868,18 +868,19 @@
                 '<span class="fmap-tooltip-sub">' + esc(info.tip) + '</span>',
                 { className: 'fmap-tooltip fmap-ai-tooltip', direction: 'top', offset: [0, -7] }
             );
-            (function (rawFeature, marker) {
+            (function (rawFeature, marker, ptOsmType) {
                 marker.on('click', function (e) {
                     if (adminEditMode && typeof MAP_IS_ADMIN !== 'undefined' && MAP_IS_ADMIN) {
                         L.DomEvent.stopPropagation(e);
                         var osm_type_val = rawFeature.osm_type || rawFeature.osmType || '';
                         var fid = rawFeature.id || (rawFeature.lat + ',' + rawFeature.lng + ',' + osm_type_val);
+                        var _ptColor = rawFeature.override_fill_color || AI_PICK_COLORS[ptOsmType] || AI_PICK_COLORS.general;
                         _openOverrideModal(
                             String(fid),
                             rawFeature.override_id ? String(rawFeature.override_id) : '',
                             rawFeature.override_name || rawFeature.name || '',
                             rawFeature.override_description || rawFeature.description || '',
-                            rawFeature.override_fill_color || '',
+                            _ptColor,
                             null, false,
                             null, null,
                             rawFeature.override_fill_opacity != null ? rawFeature.override_fill_opacity : null,
@@ -887,7 +888,7 @@
                         );
                     }
                 });
-            }(f, m));
+            }(f, m, osmType));
             aiPickLayer.addLayer(m);
             pointCount++;
         });
@@ -5127,7 +5128,7 @@
             var keyShort    = esc(String(ov.feature_key || '').slice(0, 40));
             var colorStyle  = ov.fill_color ? 'background:' + esc(ov.fill_color) + ';width:12px;height:12px;border-radius:3px;display:inline-block;vertical-align:middle;margin-right:4px' : '';
             var oid         = esc(String(ov.id));
-            // Compute centroid for pan-to button when a custom shape is stored
+            // Compute centroid for pan-to: prefer custom geometry, then AI layer bounds, then feature_key lat,lng,type pattern
             var panAttrs = '';
             if (ov.geometry_json) {
                 try {
@@ -5135,6 +5136,24 @@
                     var c = _centroidOfGeom(geom);
                     if (c) panAttrs = ' data-lat="' + c.lat + '" data-lng="' + c.lng + '"';
                 } catch (_e) {}
+            }
+            if (!panAttrs) {
+                // Try AI polygon layer bounds center
+                var _lyr = _aiPolyByKey[String(ov.feature_key)];
+                if (_lyr && typeof _lyr.getBounds === 'function') {
+                    try {
+                        var _bc = _lyr.getBounds().getCenter();
+                        panAttrs = ' data-lat="' + _bc.lat + '" data-lng="' + _bc.lng + '"';
+                    } catch (_e) {}
+                }
+            }
+            if (!panAttrs) {
+                // Try parsing feature_key as "lat,lng,type"
+                var _kp = String(ov.feature_key || '').split(',');
+                if (_kp.length >= 2) {
+                    var _klat = parseFloat(_kp[0]), _klng = parseFloat(_kp[1]);
+                    if (!isNaN(_klat) && !isNaN(_klng)) panAttrs = ' data-lat="' + _klat + '" data-lng="' + _klng + '"';
+                }
             }
             var descShort = ov.description ? esc(String(ov.description).slice(0, 80)) + (ov.description.length > 80 ? '…' : '') : '';
             html +=
