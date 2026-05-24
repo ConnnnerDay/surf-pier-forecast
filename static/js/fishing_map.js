@@ -5146,9 +5146,26 @@
         if (!el) return;
         var savedScroll = el.scrollTop;
         if (!habitats.length) {
-            el.innerHTML = '<p class="fmap-habitat-panel-empty">' +
-                (_habitatPanelSearch ? 'No habitats match your search.' : 'No custom habitats yet.') +
-                '</p>';
+            if (_habitatPanelSearch) {
+                el.innerHTML = '<p class="fmap-habitat-panel-empty">No habitats match your search.</p>';
+            } else {
+                el.innerHTML = '<p class="fmap-habitat-panel-empty">No custom habitats yet.' +
+                    '<br><button class="fmap-panel-draw-shortcut fmap-empty-draw-btn" id="fmap-habitat-empty-draw-btn">+ Draw a habitat</button></p>';
+                var _emptyDrawBtn = document.getElementById('fmap-habitat-empty-draw-btn');
+                if (_emptyDrawBtn) {
+                    _emptyDrawBtn.addEventListener('click', function () {
+                        _habitatPanelOpen = false;
+                        var _epEl = document.getElementById('fmap-habitat-panel');
+                        var _epListBtn = document.getElementById('fmap-admin-habitats-list-btn');
+                        if (_epEl) _epEl.hidden = true;
+                        if (_epListBtn) { _epListBtn.classList.remove('fmap-ctrl-btn--active'); _epListBtn.setAttribute('aria-pressed', 'false'); }
+                        var _epDrawBtn = document.getElementById('fmap-admin-habitat-btn');
+                        if (_epDrawBtn && !_epDrawBtn.hidden) {
+                            if (!_habitatDrawMode) _epDrawBtn.click();
+                        } else { _startHabitatDraw(); }
+                    });
+                }
+            }
             return;
         }
         var html = '';
