@@ -5073,7 +5073,7 @@
             var titleText = h.description ? nameSafe + '&#10;' + esc(String(h.description).slice(0, 200)) : nameSafe;
             var areaLabel = (h.geometry && h.geometry.type === 'Polygon') ? _polyAreaLabel(h.geometry) : null;
             html +=
-                '<div class="fmap-habitat-panel-item">' +
+                '<div class="fmap-habitat-panel-item" style="border-left:3px solid ' + colorSafe + '">' +
                 '<span class="fmap-habitat-panel-color" style="background:' + colorSafe + '"></span>' +
                 '<span class="fmap-habitat-panel-name" title="' + titleText + '">' + nameSafe + '</span>' +
                 '<span class="fmap-habitat-panel-type">' + typeSafe + '</span>' +

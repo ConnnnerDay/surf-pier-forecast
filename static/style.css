@@ -14676,9 +14676,10 @@ body.dark .wq-hdx-item {
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  padding: 7px 16px;
+  padding: 7px 10px 7px 13px;
   border-bottom: 1px solid rgba(51,65,85,0.4);
   font-size: 0.83rem;
+  border-left: 3px solid transparent; /* overridden per-item in JS */
 }
 .fmap-habitat-panel-desc {
   flex-basis: 100%;
