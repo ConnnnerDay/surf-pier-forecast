@@ -5610,11 +5610,12 @@
         var filtered = q ? suppressions.filter(function (s) {
             return (s.name || '').toLowerCase().indexOf(q) !== -1 ||
                    (s.spot_key || '').toLowerCase().indexOf(q) !== -1 ||
-                   (s.type || '').toLowerCase().indexOf(q) !== -1;
+                   (s.type || '').toLowerCase().indexOf(q) !== -1 ||
+                   (spotTypeLabel(s.type) || '').toLowerCase().indexOf(q) !== -1;
         }) : suppressions.slice();
         filtered.sort(function (a, b) {
             if (_suppressedPanelSort === 'name') return (a.name || '').localeCompare(b.name || '');
-            if (_suppressedPanelSort === 'type') return (a.type || '').localeCompare(b.type || '');
+            if (_suppressedPanelSort === 'type') return (spotTypeLabel(a.type) || a.type || '').localeCompare(spotTypeLabel(b.type) || b.type || '');
             return (b.created_at || '').localeCompare(a.created_at || '');
         });
         _setTabCount('suppressed', filtered.length, suppressions.length);
