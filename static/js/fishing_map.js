@@ -4012,16 +4012,14 @@
     // Approximate polygon area in m² using the Shoelace formula in geographic
     // coordinates, scaled by the Earth's surface at the centroid latitude.
     // Returns a human-friendly string like "3.2 ac" or "1.4 ha".
-    function _polyAreaLabel(geojsonPolygon) {
-        if (!geojsonPolygon || geojsonPolygon.type !== 'Polygon' || !geojsonPolygon.coordinates || !geojsonPolygon.coordinates[0]) return null;
+    function _polyAreaSqM(geojsonPolygon) {
+        if (!geojsonPolygon || geojsonPolygon.type !== 'Polygon' || !geojsonPolygon.coordinates || !geojsonPolygon.coordinates[0]) return 0;
         var ring = geojsonPolygon.coordinates[0];
         var n = ring.length;
-        if (n < 3) return null;
-        // Shoelace in radians
-        var R = 6371000; // metres
+        if (n < 3) return 0;
+        var R = 6371000;
         var DEG = Math.PI / 180;
-        var area = 0;
-        var sumLat = 0;
+        var area = 0, sumLat = 0;
         for (var i = 0; i < n; i++) {
             var j = (i + 1) % n;
             area += (ring[i][0] * DEG) * (ring[j][1] * DEG) - (ring[j][0] * DEG) * (ring[i][1] * DEG);
@@ -4029,15 +4027,16 @@
         }
         var centLat = (sumLat / n) * DEG;
         var areaSqM = Math.abs(area / 2) * R * R * Math.cos(centLat);
-        if (isNaN(areaSqM) || areaSqM <= 0) return null;
+        return isNaN(areaSqM) ? 0 : areaSqM;
+    }
+
+    function _polyAreaLabel(geojsonPolygon) {
+        var areaSqM = _polyAreaSqM(geojsonPolygon);
+        if (areaSqM <= 0) return null;
         var acres = areaSqM / 4046.86;
         var hectares = areaSqM / 10000;
-        if (acres < 0.1 && areaSqM < 10000) {
-            return Math.round(areaSqM) + ' m²';
-        }
-        if (acres < 100) {
-            return acres.toFixed(1) + ' ac · ' + hectares.toFixed(1) + ' ha';
-        }
+        if (acres < 0.1 && areaSqM < 10000) return Math.round(areaSqM) + ' m²';
+        if (acres < 100) return acres.toFixed(1) + ' ac · ' + hectares.toFixed(1) + ' ha';
         return Math.round(acres) + ' ac · ' + Math.round(hectares) + ' ha';
     }
 
@@ -4964,7 +4963,7 @@
     // ─── Habitat management panel ─────────────────────────────────────────────
 
     var _habitatPanelAllData  = [];     // full unfiltered list from server
-    var _habitatPanelSort     = 'date'; // 'date' | 'name' | 'type'
+    var _habitatPanelSort     = 'date'; // 'date' | 'name' | 'type' | 'area'
     var _habitatPanelSearch   = '';     // live search string
 
     function _loadHabitatPanel() {
@@ -5008,6 +5007,8 @@
                 return (a.name || '').localeCompare(b.name || '');
             } else if (_habitatPanelSort === 'type') {
                 return (a.habitat_type || '').localeCompare(b.habitat_type || '');
+            } else if (_habitatPanelSort === 'area') {
+                return _polyAreaSqM(b.geometry) - _polyAreaSqM(a.geometry); // largest first
             }
             // Default: date descending (newest first)
             return (b.created_at || '').localeCompare(a.created_at || '');
@@ -6693,9 +6694,9 @@
         }
 
         // ── Habitat sort ──────────────────────────────────────────────────────
-        var sortCycle   = ['date', 'name', 'type'];
+        var sortCycle   = ['date', 'name', 'type', 'area'];
         var sortCycle2  = ['date', 'name'];          // overrides: no "type" concept
-        var sortLabels  = { date: 'Date ↓', name: 'Name ↑', type: 'Type ↑' };
+        var sortLabels  = { date: 'Date ↓', name: 'Name ↑', type: 'Type ↑', area: 'Area ↓' };
         var sortBtn = document.getElementById('fmap-habitat-sort-btn');
         if (sortBtn) {
             sortBtn.addEventListener('click', function () {
