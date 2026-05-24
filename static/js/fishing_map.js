@@ -5196,6 +5196,26 @@
     var _habitatPanelSort     = 'date'; // 'date' | 'name' | 'type' | 'area'
     var _habitatPanelSearch   = '';     // live search string
 
+    // Clear all four types of panel hover state (suppressed ghost, override highlight,
+    // habitat highlight, marker highlight).  Called whenever the panel closes or the
+    // active tab changes so highlights don't get stranded on the map.
+    function _clearPanelHoverState() {
+        if (_suppressedGhost) { _suppressedGhost.remove(); _suppressedGhost = null; }
+        if (_ovHoverActive) {
+            var _cpLyr = _aiPolyByKey[_ovHoverActive.fKey];
+            if (_cpLyr) _cpLyr.setStyle(_ovHoverActive.origStyle);
+            _ovHoverActive = null;
+        }
+        _customHabitats.forEach(function (h) {
+            if (h._panelHoverOrig && h.leaflet) { h.leaflet.setStyle(h._panelHoverOrig); delete h._panelHoverOrig; }
+        });
+        if (_markerHoverMid) {
+            var _cpMh = _customMarkers.filter(function (cm) { return String(cm.id) === _markerHoverMid; })[0];
+            if (_cpMh && _cpMh.leaflet) { var _cpEl = _cpMh.leaflet.getElement(); if (_cpEl) _cpEl.classList.remove('fmap-marker-hover'); }
+            _markerHoverMid = null;
+        }
+    }
+
     function _loadHabitatPanel() {
         var listEl = document.getElementById('fmap-habitat-panel-list');
         if (listEl) listEl.innerHTML = '<p class="fmap-habitat-panel-empty">Loading…</p>';
@@ -6770,21 +6790,7 @@
                 if (_habitatPanelOpen) {
                     _refreshActivePanelTab();
                 } else {
-                    // Clean up any hover highlights/ghosts that won't receive mouseleave
-                    if (_suppressedGhost) { _suppressedGhost.remove(); _suppressedGhost = null; }
-                    if (_ovHoverActive) {
-                        var _oLyrClose = _aiPolyByKey[_ovHoverActive.fKey];
-                        if (_oLyrClose) _oLyrClose.setStyle(_ovHoverActive.origStyle);
-                        _ovHoverActive = null;
-                    }
-                    _customHabitats.forEach(function (h) {
-                        if (h._panelHoverOrig && h.leaflet) { h.leaflet.setStyle(h._panelHoverOrig); delete h._panelHoverOrig; }
-                    });
-                    if (_markerHoverMid) {
-                        var _mhClose = _customMarkers.filter(function (cm) { return String(cm.id) === _markerHoverMid; })[0];
-                        if (_mhClose && _mhClose.leaflet) { var _mhCloseEl = _mhClose.leaflet.getElement(); if (_mhCloseEl) _mhCloseEl.classList.remove('fmap-marker-hover'); }
-                        _markerHoverMid = null;
-                    }
+                    _clearPanelHoverState();
                 }
             });
         }
@@ -6797,21 +6803,7 @@
                 if (panel) panel.hidden = true;
                 var lb = document.getElementById('fmap-admin-habitats-list-btn');
                 if (lb) { lb.classList.remove('fmap-ctrl-btn--active'); lb.setAttribute('aria-pressed', 'false'); }
-                // Same hover cleanup as the toggle-button close path
-                if (_suppressedGhost) { _suppressedGhost.remove(); _suppressedGhost = null; }
-                if (_ovHoverActive) {
-                    var _oLyrX = _aiPolyByKey[_ovHoverActive.fKey];
-                    if (_oLyrX) _oLyrX.setStyle(_ovHoverActive.origStyle);
-                    _ovHoverActive = null;
-                }
-                _customHabitats.forEach(function (h) {
-                    if (h._panelHoverOrig && h.leaflet) { h.leaflet.setStyle(h._panelHoverOrig); delete h._panelHoverOrig; }
-                });
-                if (_markerHoverMid) {
-                    var _mhX = _customMarkers.filter(function (cm) { return String(cm.id) === _markerHoverMid; })[0];
-                    if (_mhX && _mhX.leaflet) { var _mhXEl = _mhX.leaflet.getElement(); if (_mhXEl) _mhXEl.classList.remove('fmap-marker-hover'); }
-                    _markerHoverMid = null;
-                }
+                _clearPanelHoverState();
             });
         }
 
@@ -7017,20 +7009,7 @@
             tabBtn.addEventListener('click', function () {
                 var tabName = tabBtn.dataset.tab;
                 // Clean up any lingering hover state from the tab we're leaving
-                if (_suppressedGhost) { _suppressedGhost.remove(); _suppressedGhost = null; }
-                if (_ovHoverActive) {
-                    var _ovLyrTab = _aiPolyByKey[_ovHoverActive.fKey];
-                    if (_ovLyrTab) _ovLyrTab.setStyle(_ovHoverActive.origStyle);
-                    _ovHoverActive = null;
-                }
-                _customHabitats.forEach(function (h) {
-                    if (h._panelHoverOrig && h.leaflet) { h.leaflet.setStyle(h._panelHoverOrig); delete h._panelHoverOrig; }
-                });
-                if (_markerHoverMid) {
-                    var _mhTab = _customMarkers.filter(function (cm) { return String(cm.id) === _markerHoverMid; })[0];
-                    if (_mhTab && _mhTab.leaflet) { var _mhTabEl = _mhTab.leaflet.getElement(); if (_mhTabEl) _mhTabEl.classList.remove('fmap-marker-hover'); }
-                    _markerHoverMid = null;
-                }
+                _clearPanelHoverState();
                 _habitatPanelActiveTab = tabName;
                 document.querySelectorAll('.fmap-panel-tab').forEach(function (b) {
                     b.classList.toggle('fmap-panel-tab--active', b === tabBtn);
