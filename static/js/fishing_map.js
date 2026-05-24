@@ -62,6 +62,7 @@
     var _AI_LS_TTL       = 21600000;             // 6 hours in ms
     // Admin habitat draw/edit state
     var _habitatDrawMode    = false;  // whether polygon draw mode is active
+    var _habitatRedrawMode  = false;  // true when draw is replacing an existing habitat's geometry
     var _habitatDrawVerts   = [];     // [L.LatLng] being collected
     var _habitatDrawMarkers = [];     // temporary vertex L.marker objects
     var _habitatDrawPreview = null;   // L.polyline preview during draw
@@ -4534,10 +4535,14 @@
 
     function _cancelHabitatDraw() {
         _habitatDrawMode = false;
+        var wasRedraw = _habitatRedrawMode;
+        _habitatRedrawMode = false;
         _clearHabitatDraw();
         if (map) map.getContainer().style.cursor = '';
         var btn = document.getElementById('fmap-admin-habitat-btn');
         if (btn) { btn.classList.remove('fmap-ctrl-btn--active'); btn.setAttribute('aria-pressed', 'false'); }
+        // If the user cancelled a Redraw session, restore the edit modal with original geometry
+        if (wasRedraw && _habitatEditData) _openHabitatEditModal(_habitatEditData);
     }
 
     function _onHabitatDrawClick(e) {
@@ -4578,11 +4583,13 @@
         };
         _clearHabitatDraw();
         _habitatDrawMode = false;
+        var wasRedraw = _habitatRedrawMode;
+        _habitatRedrawMode = false;
         if (map) map.getContainer().style.cursor = '';
         var btn = document.getElementById('fmap-admin-habitat-btn');
         if (btn) { btn.classList.remove('fmap-ctrl-btn--active'); btn.setAttribute('aria-pressed', 'false'); }
         // If redrawing an existing habitat's shape, re-open the edit modal with the new geometry
-        if (_habitatEditData) {
+        if (wasRedraw && _habitatEditData) {
             _habitatEditData = Object.assign({}, _habitatEditData, { geojson_geometry: geometry });
             _pendingHabitatGeom = geometry;
             _openHabitatEditModal(_habitatEditData);
@@ -6114,6 +6121,7 @@
                 // knows to re-open the edit modal with the new geometry
                 _pendingHabitatGeom = null; // suppress "discarded" undo toast
                 _closeHabitatModal();
+                _habitatRedrawMode = true; // signal _finishHabitatDraw to re-open edit modal
                 _startHabitatDraw();
                 _showAdminToast('Draw a new polygon to replace the current shape. Double-click to finish.');
             });
