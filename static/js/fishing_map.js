@@ -84,7 +84,8 @@
     var _habitatPanelOpen      = false;
     var _habitatEditedFromPanel = false; // true when Edit was clicked from the panel (reopen on close)
     var _overrideEditedFromPanel = false; // same for override panel
-    var _habitatPanelActiveTab = 'habitats'; // 'habitats' | 'overrides' | 'suppressed'
+    var _markerEditedFromPanel = false;  // same for markers panel
+    var _habitatPanelActiveTab = 'habitats'; // 'habitats' | 'overrides' | 'suppressed' | 'markers'
     var _overridesPanelData    = []; // cached override list for panel edit buttons
     var _overridesPanelSearch  = ''; // live search string for overrides tab
     var _overridesPanelSort    = 'date'; // 'date' | 'name'
@@ -3859,6 +3860,17 @@
         if (backdrop) backdrop.hidden = true;
         _removeAdminPreviewPin();
         _markerEditOriginal = null;
+        // Reopen the panel on the markers tab if Edit was clicked from there
+        if (_markerEditedFromPanel) {
+            _markerEditedFromPanel = false;
+            _habitatPanelOpen = true;
+            _habitatPanelActiveTab = 'markers';
+            var _mrPanel = document.getElementById('fmap-habitat-panel');
+            var _mrBtn   = document.getElementById('fmap-admin-habitats-list-btn');
+            if (_mrPanel) _mrPanel.hidden = false;
+            if (_mrBtn) { _mrBtn.classList.add('fmap-ctrl-btn--active'); _mrBtn.setAttribute('aria-pressed', 'true'); }
+            _refreshActivePanelTab();
+        }
     }
 
     // Brief non-blocking toast shown after drag-saves and other silent actions.
@@ -5764,6 +5776,11 @@
                     map.flyTo([parseFloat(marker.lat), parseFloat(marker.lng)], Math.max(map.getZoom(), 15));
                     _highlightCustomMarker(mid);
                 }
+                // Close the panel; set flag so it reopens when the modal is closed
+                _markerEditedFromPanel = true;
+                _habitatPanelOpen = false;
+                var _mpPanel = document.getElementById('fmap-habitat-panel');
+                if (_mpPanel) _mpPanel.hidden = true;
                 _openAdminEditPanel(marker);
             });
         });
