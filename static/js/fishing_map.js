@@ -74,6 +74,8 @@
     var _habitatVertexPreview  = null; // L.polygon showing reshaped outline
     var _habitatEditData       = null; // full feature data of habitat being edited
     var _overrideEditData      = null; // {featureKey,overrideId,name,desc,color,geometry} for AI override reshape
+    var _aiPolyByKey           = {};   // featureKey → L.polygon for live override preview
+    var _overridePreviewOrigStyle = null; // original layer style before override modal opens
     // Management panel state
     var _habitatPanelOpen      = false;
     var _habitatPanelActiveTab = 'habitats'; // 'habitats' | 'overrides' | 'suppressed'
@@ -612,7 +614,7 @@
     // When no pills are active, renders everything from the general query.
     function renderAIHabitatSpots(features) {
         if (!aiPickLayer) return;
-        aiPickLayer.clearLayers();
+        aiPickLayer.clearLayers(); _aiPolyByKey = {};
         if (customHabitatLayer) customHabitatLayer.clearLayers();
         _customHabitats = [];
 
@@ -792,6 +794,11 @@
             }({ type: osmType, lat: f.lat, lng: f.lng,
                 name: f.name || info.label, tip: info.tip }, f, poly, geom));
             aiPickLayer.addLayer(poly);
+            // Track by feature key so the override modal can live-preview style changes
+            (function(fKey, lyr) {
+                var _fid = String(fKey.id || (fKey.lat + ',' + fKey.lng + ',' + (fKey.osm_type || fKey.osmType || '')));
+                _aiPolyByKey[_fid] = lyr;
+            }(f, poly));
 
             // Centroid / midpoint markers for AI-picked habitat polygons —
             // mirrors the OSM layer by reusing the same CSS icon classes.
@@ -976,14 +983,14 @@
         if (!map || !aiPickLayer) return;
 
         if (map.getZoom() < 10) {
-            aiPickLayer.clearLayers();
+            aiPickLayer.clearLayers(); _aiPolyByKey = {};
             return;
         }
 
         var habitatTypes = _activeHabitatTypes();
         if (!habitatTypes) {
             // Only structure-type pills active — nothing for AI to show
-            aiPickLayer.clearLayers();
+            aiPickLayer.clearLayers(); _aiPolyByKey = {};
             return;
         }
 
@@ -1016,7 +1023,7 @@
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (resp) {
             if (thisAiGen !== _aiReqGen) return;
-            if (!map || map.getZoom() < 10) { aiPickLayer.clearLayers(); return; }
+            if (!map || map.getZoom() < 10) { aiPickLayer.clearLayers(); _aiPolyByKey = {}; return; }
             var raw = (resp && resp.ok && resp.data && resp.data.features) || [];
             var features = raw.map(function (f) {
                 return {
@@ -5699,12 +5706,15 @@
                 if (!_overrideEditData || !_overrideEditData.geometry) return;
                 // Snapshot everything before _closeOverrideModal nulls _overrideEditData
                 var snap = {
-                    featureKey: _overrideEditData.featureKey,
-                    overrideId: _overrideEditData.overrideId,
+                    featureKey:       _overrideEditData.featureKey,
+                    overrideId:       _overrideEditData.overrideId,
                     name:  (document.getElementById('fmap-override-name')  || {}).value || _overrideEditData.name,
                     desc:  (document.getElementById('fmap-override-desc')  || {}).value || _overrideEditData.desc,
                     color: (document.getElementById('fmap-override-color') || {}).value || _overrideEditData.color,
-                    geometry: _overrideEditData.geometry
+                    fill_opacity:       parseFloat((document.getElementById('fmap-override-fill-opacity') || {}).value || 0.25),
+                    stroke_weight:      parseFloat((document.getElementById('fmap-override-stroke-weight') || {}).value || 2),
+                    geometry:           _overrideEditData.geometry,
+                    geometryIsOverride: !!_overrideEditData.geometryIsOverride
                 };
                 _closeOverrideModal();
                 _overrideEditData = snap; // restore after close
@@ -5762,6 +5772,7 @@
                 .then(function () {
                     overrideSaveBtn.disabled = false;
                     overrideSaveBtn.textContent = 'Save Override';
+                    _overridePreviewOrigStyle = null; // keep new style; AI will re-render
                     _closeOverrideModal();
                     aiCache = {}; _aiCacheKeys = [];
                     try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
@@ -5952,6 +5963,9 @@
             _ovFoSlider.addEventListener('input', function () {
                 var _ovFoOut2 = document.getElementById('fmap-override-fill-opacity-val');
                 if (_ovFoOut2) _ovFoOut2.value = parseFloat(_ovFoSlider.value);
+                if (!_overrideEditData) return;
+                var lyr2 = _aiPolyByKey[String(_overrideEditData.featureKey)];
+                if (lyr2) lyr2.setStyle({ fillOpacity: parseFloat(_ovFoSlider.value) });
             });
         }
         var _ovSwSlider = document.getElementById('fmap-override-stroke-weight');
@@ -5959,6 +5973,9 @@
             _ovSwSlider.addEventListener('input', function () {
                 var _ovSwOut2 = document.getElementById('fmap-override-stroke-weight-val');
                 if (_ovSwOut2) _ovSwOut2.value = parseFloat(_ovSwSlider.value);
+                if (!_overrideEditData) return;
+                var lyr2 = _aiPolyByKey[String(_overrideEditData.featureKey)];
+                if (lyr2) lyr2.setStyle({ weight: parseFloat(_ovSwSlider.value) });
             });
         }
 
@@ -6171,12 +6188,25 @@
             });
         }
 
+        // ── Override color picker → live AI polygon preview ───────────────────
+        var ovColorEl = document.getElementById('fmap-override-color');
+        if (ovColorEl) {
+            ovColorEl.addEventListener('input', function () {
+                if (!_overrideEditData) return;
+                var lyr = _aiPolyByKey[String(_overrideEditData.featureKey)];
+                if (lyr) lyr.setStyle({ color: ovColorEl.value, fillColor: ovColorEl.value });
+            });
+        }
+
         // ── Override fill-opacity slider ──────────────────────────────────────
         var _ovFoSlider = document.getElementById('fmap-override-fill-opacity');
         if (_ovFoSlider) {
             _ovFoSlider.addEventListener('input', function () {
                 var _ovFoOut = document.getElementById('fmap-override-fill-opacity-val');
                 if (_ovFoOut) _ovFoOut.value = parseFloat(_ovFoSlider.value);
+                if (!_overrideEditData) return;
+                var lyr = _aiPolyByKey[String(_overrideEditData.featureKey)];
+                if (lyr) lyr.setStyle({ fillOpacity: parseFloat(_ovFoSlider.value) });
             });
         }
 
@@ -6186,6 +6216,9 @@
             _ovSwSlider.addEventListener('input', function () {
                 var _ovSwOut = document.getElementById('fmap-override-stroke-weight-val');
                 if (_ovSwOut) _ovSwOut.value = parseFloat(_ovSwSlider.value);
+                if (!_overrideEditData) return;
+                var lyr = _aiPolyByKey[String(_overrideEditData.featureKey)];
+                if (lyr) lyr.setStyle({ weight: parseFloat(_ovSwSlider.value) });
             });
         }
 
@@ -6573,6 +6606,18 @@
         if (clearShapeBtn) clearShapeBtn.hidden = !geomIsOverride; // only when a shape is actually stored
         if (modal) modal.hidden = false;
         if (backdrop) backdrop.hidden = false;
+        // Capture the AI polygon's current style for live preview / restore
+        var _prevLyr = _aiPolyByKey[String(featureKey)];
+        if (_prevLyr && typeof _prevLyr.options === 'object') {
+            _overridePreviewOrigStyle = {
+                color:       _prevLyr.options.color,
+                fillColor:   _prevLyr.options.fillColor,
+                fillOpacity: _prevLyr.options.fillOpacity,
+                weight:      _prevLyr.options.weight
+            };
+        } else {
+            _overridePreviewOrigStyle = null;
+        }
         // Focus the name field so the user can type immediately
         var _nameEl = document.getElementById('fmap-override-name');
         if (_nameEl) setTimeout(function () { _nameEl.focus(); }, 30);
@@ -6583,6 +6628,12 @@
         var backdrop = document.getElementById('fmap-override-backdrop');
         if (modal)    modal.hidden    = true;
         if (backdrop) backdrop.hidden = true;
+        // Restore AI polygon style if we were live-previewing
+        if (_overrideEditData && _overridePreviewOrigStyle) {
+            var _restLyr = _aiPolyByKey[String(_overrideEditData.featureKey)];
+            if (_restLyr) _restLyr.setStyle(_overridePreviewOrigStyle);
+        }
+        _overridePreviewOrigStyle = null;
         _overrideEditData = null;
         var delBtn = document.getElementById('fmap-override-delete');
         if (delBtn) delBtn.disabled = false;
@@ -8208,7 +8259,7 @@
                 // Render favorite pins; hide OSM structures and AI habitats
                 renderFavoriteSpots();
                 fishingSpotLayer && fishingSpotLayer.clearLayers();
-                aiPickLayer && aiPickLayer.clearLayers();
+                aiPickLayer && aiPickLayer.clearLayers(); _aiPolyByKey = {};
                 return;
             }
             // Restore OSM spots and AI habitats for non-mine categories
