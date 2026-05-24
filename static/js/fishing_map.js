@@ -569,17 +569,23 @@
     // Attach hover-highlight events to a habitat polygon or polyline layer.
     // Closed polygons brighten fill + thicken border; open polylines just thicken.
     function _bindPolyHover(layer, isClosed) {
-        var baseWeight      = isClosed ? 2 : 3;
-        var baseFillOpacity = isClosed ? (layer.options.fillOpacity || 0.30) : 0;
         layer.on('mouseover', function () {
+            // Read current options so the hover delta is relative to any style changes
+            // applied after initial render (slider preview, panel hover highlight, etc.)
+            var curWeight = (layer.options.weight || (isClosed ? 2 : 3));
+            var curFill   = isClosed ? (layer.options.fillOpacity || 0.30) : 0;
+            layer._polyHoverBase = { weight: curWeight, fillOpacity: curFill };
             layer.setStyle({
-                weight:      baseWeight + 2,
-                fillOpacity: isClosed ? Math.min(baseFillOpacity + 0.25, 0.70) : 0
+                weight:      curWeight + 2,
+                fillOpacity: isClosed ? Math.min(curFill + 0.20, 0.80) : 0
             });
             if (layer.bringToFront) layer.bringToFront();
         });
         layer.on('mouseout', function () {
-            layer.setStyle({ weight: baseWeight, fillOpacity: baseFillOpacity });
+            if (layer._polyHoverBase) {
+                layer.setStyle(layer._polyHoverBase);
+                delete layer._polyHoverBase;
+            }
         });
     }
 
