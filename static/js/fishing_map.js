@@ -5009,7 +5009,7 @@
                 var _vcLabel = _polyAreaLabel(_vcGeom);
                 if (_vcLabel) _vcArea = ' · ' + _vcLabel;
             }
-            vcEl.textContent = n + ' vert' + (n === 1 ? 'ex' : 'ices') + _vcArea;
+            vcEl.textContent = n + ' vert' + (n === 1 ? 'ex' : 'ices') + _vcArea + ' · Enter or Done to finish';
         }
         if (n < 2 || !map) return;
         for (var _mi = 0; _mi < n; _mi++) {
