@@ -4296,7 +4296,7 @@
                     }
                     return r.json();
                 })
-                .then(function () {
+                .then(function (saved) {
                     saveBtn.disabled    = false;
                     saveBtn.textContent = 'Save';
                     // Remember marker type for the next Add Marker (only for new markers)
@@ -4331,8 +4331,23 @@
                             })
                             .catch(function () { _showAdminToast('Revert failed', true); });
                         });
+                    } else if (!markerId && saved && saved.id) {
+                        // Undo for new adds: delete the just-created marker
+                        var _newMid = saved.id;
+                        _showUndoToast('Marker added', function () {
+                            fetch('/api/map/custom-markers/' + _newMid, { method: 'DELETE' })
+                                .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                                .then(function () {
+                                    _showAdminToast('Marker removed');
+                                    spotCache = {}; _spotCacheKeys = []; _spotBoundsCache = {};
+                                    try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
+                                    scheduleFishingSpotQuery();
+                                    _refreshActivePanelTab();
+                                })
+                                .catch(function () { _showAdminToast('Undo failed', true); });
+                        });
                     } else {
-                        _showAdminToast(markerId ? 'Marker updated' : 'Marker added');
+                        _showAdminToast('Marker added');
                     }
                 })
                 .catch(function (e) {
