@@ -21,11 +21,3 @@ python-dotenv>=1.0,<2.0
 
 # Brotli compression — optional, falls back to gzip if not installed
 brotli>=1.0,<2.0
-
-# ── Geospatial / GIS (spatial clip + coastline overlays) ──────────────────────
-# Requires system libraries before pip install:
-#   Debian/Ubuntu: sudo apt-get install libgdal-dev libgeos-dev libproj-dev
-#   macOS:         brew install gdal geos proj
-# install.sh handles system deps automatically on Debian/Ubuntu.
-geopandas>=0.14,<2.0
-pandas>=2.0,<3.0

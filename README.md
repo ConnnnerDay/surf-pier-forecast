@@ -45,9 +45,7 @@ Python packages (`requirements.txt`):
 git clone https://github.com/ConnnnerDay/surf-pier-forecast.git
 cd surf-pier-forecast
 
-# System deps — Python venv + GIS libraries (required for map overlays)
-sudo apt-get update && sudo apt-get install -y \
-    python3-venv libgdal-dev libgeos-dev libproj-dev
+sudo apt-get update && sudo apt-get install -y python3-venv
 
 python3 -m venv .venv
 source .venv/bin/activate
@@ -61,9 +59,6 @@ python app.py
 git clone https://github.com/ConnnnerDay/surf-pier-forecast.git
 cd surf-pier-forecast
 
-# System deps — GIS libraries (required for map overlays)
-brew install gdal geos proj
-
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
@@ -75,8 +70,6 @@ Open: **http://localhost:5757**
 
 The SQLite database (`data/app.db`) and `data/` directory are created automatically on first startup. `.env` values are loaded automatically via `python-dotenv`.
 
-> **AI Fishing Map note**: The first time you load a new map viewport, structure markers (piers, reefs, wrecks, etc.) take 5–15 seconds to appear — they're fetched live from the public Overpass/OpenStreetMap API. Subsequent pans and filter changes are served from a 30-minute local cache and load instantly.
-
 ---
 
 ## One-click install (systemd)
@@ -86,8 +79,8 @@ The SQLite database (`data/app.db`) and `data/` directory are created automatica
 ```
 
 What it does:
-1. Installs system packages (`python3-venv`, `python3-pip`, GIS libraries)
-2. Creates `.venv` and installs all dependencies including geopandas
+1. Installs system packages (`python3-venv`, `python3-pip`)
+2. Creates `.venv` and installs all dependencies
 3. Initializes the SQLite database (`migrate_sqlite.py`)
 4. Installs and starts `surf-forecast.service`
 5. Enables auto-start on boot
@@ -309,25 +302,3 @@ The app degrades gracefully when any upstream service is unavailable.
 | `GET /api/map/stat-cards?lat=&lng=` | Buoy, METAR, wildfire, stream gauge, tropical |
 | `GET /api/weather/combined-forecast?lat=&lng=` | Wind + precipitation + temperature forecast |
 
-Available overlay layers (controlled by the **Satellite & Map Layers** panel):
-- **Sea Surface Temperature** (GHRSST MUR, 1 km, daily) — `GHRSST_L4_MUR_Sea_Surface_Temperature`
-- **Chlorophyll-A** (MODIS Terra, 4 km, 8-day) — `MODIS_Terra_Chlorophyll_A`
-- **True Color / VIIRS** (375 m, daily) — `VIIRS_SNPP_TrueColor_375m`
-
-Attribution required by NASA usage policy is injected automatically into the
-Leaflet attribution control.
-
-### Frontend map (geo_layers.js)
-
-`static/js/geo_layers.js` initialises a Leaflet 1.9 map inside the collapsible
-**Satellite & Map Layers** panel on the forecast dashboard. The map is only
-created when the panel is first opened, so it has zero impact on initial page
-load time.
-
-Controls provided:
-- **Base map** radio: OpenStreetMap Standard / OSM Humanitarian / Esri World Imagery
-- **Overlay** checkboxes: SST, Chlorophyll-A, True Color, Natural Earth coastlines
-- **Feature layers**: Piers & Marinas, Monitored Beaches, Coastal Parks, OAM aerial
-
-No third-party JavaScript frameworks are required. Leaflet is loaded dynamically
-from the jsdelivr CDN (with a cdnjs fallback) only when the panel is opened.
