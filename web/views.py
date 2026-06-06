@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json as _json
 import logging
-import math as _math
 import os
 import re
 import threading
@@ -43,7 +42,6 @@ from domain.forecast import (
     recompute_current_uv,
     build_trip_setup,
 )
-from services.fish_structures import get_cached_structures as _get_cached_structures
 from services.forecast_refresh import enqueue_forecast_refresh, is_refreshing as _is_refreshing
 from services.nws import _KT_TO_MPH
 from storage.cache import (
@@ -526,42 +524,6 @@ def _render_forecast(
     loc_lat = location.get("lat", 0)
     loc_lng = location.get("lng", 0)
 
-    # Pre-compute the home-corridor structure bbox so the template can emit a
-    # <link rel="preload"> for /api/map/structures before any JS runs.
-    # Must match the rounding in prefetchHomeCorridorStructures() (±1° corridor,
-    # snapped to 0.5° grid).  Uses :g format so 33.0 → "33" not "33.0",
-    # matching JavaScript's default float→string conversion.
-    _struct_preload_url = ""
-    _score_preload_url = ""
-    _inline_structures: dict | None = None
-    if loc_lat and loc_lng:
-        _R = 1.0
-        _s = _math.floor((loc_lat - _R) * 2) / 2
-        _w = _math.floor((loc_lng - _R) * 2) / 2
-        _n = _math.ceil((loc_lat + _R) * 2) / 2
-        _e = _math.ceil((loc_lng + _R) * 2) / 2
-        _struct_preload_url = (
-            f"/api/map/structures?south={_s:g}&west={_w:g}&north={_n:g}&east={_e:g}"
-        )
-        _score_preload_url = (
-            f"/api/v1/map/score?lat={loc_lat:g}&lng={loc_lng:g}"
-        )
-        # Inline the home-corridor structures into the page when the server's
-        # in-memory cache is warm.  The client stores them in spotCache before
-        # any XHR fires, so the first queryStructures() call is a synchronous
-        # cache hit.  The JS key must exactly match prefetchHomeCorridorStructures()
-        # so _cachedSupersetOf() also finds smaller viewport bbox queries.
-        # Falls back to the normal XHR path when the cache is cold.
-        _cached = _get_cached_structures(_s, _w, _n, _e)
-        # Cap at 400 spots to avoid bloating the HTML on dense urban coastlines
-        # (South Florida, SF Bay etc. can have 500+ structures per corridor).
-        # Above the cap the client falls back to the normal XHR path.
-        if _cached is not None and len(_cached) <= 400:
-            _inline_structures = {
-                "key": f"{_s:g},{_w:g},{_n:g},{_e:g}",
-                "data": _cached,
-            }
-
     return render_template(
         "index.html",
         forecast=forecast,
@@ -573,9 +535,6 @@ def _render_forecast(
         caught_species=caught_species,
         location_lat=loc_lat,
         location_lng=loc_lng,
-        struct_preload_url=_struct_preload_url,
-        score_preload_url=_score_preload_url,
-        inline_structures=_inline_structures,
         profile_incomplete=profile_incomplete,
     )
 

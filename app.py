@@ -65,14 +65,8 @@ import werkzeug
 from storage.sqlite import init_db, get_user
 from storage.cache import prune_old_forecasts as _prune_old_forecasts
 from web.auth import bp as auth_bp
-from web.api import (
-    bp as api_bp,
-    _get_loc_species_all,
-    _get_species_lower_index,
-    _get_all_species_names,
-)
+from web.api import bp as api_bp
 from web.views import bp as views_bp
-from web.geo_api import bp as geo_api_bp
 
 # Flask<3 test client expects werkzeug.__version__; Werkzeug 3 removed it.
 if not hasattr(werkzeug, "__version__"):
@@ -600,38 +594,6 @@ def create_app() -> Flask:
     app.register_blueprint(auth_bp)
     app.register_blueprint(api_bp)
     app.register_blueprint(views_bp)
-    app.register_blueprint(geo_api_bp)  # geospatial data: OSM, GIBS, NE, Esri, HDX/FAO
-
-    # Pre-warm the fishing-map response cache so the first real user after a
-    # server restart gets a cache hit instead of waiting for the full scoring
-    # loop.  Uses the test client (provides a proper request/g context) and
-    # runs in a daemon thread so startup is not delayed.
-    def _prewarm_fishing_map_cache() -> None:
-        _time.sleep(0.5)  # brief yield so the main thread finishes returning the app
-        try:
-            # Build all lazy indices before the first real request so none of
-            # the O(n) setup work happens inside a user-facing request:
-            #   _get_loc_species_all     → 101-location × 895-species presence map
-            #   _get_species_lower_index → pre-lowercased names + category frozensets
-            #   _get_all_species_names   → sorted name list for autocomplete
-            _get_loc_species_all()
-            _get_species_lower_index()
-            _get_all_species_names()
-            # Warm the four most common filter combinations (all + each coast).
-            # After a restart the first real user for each coast variant would
-            # otherwise pay the full scoring loop latency before getting a cache hit.
-            with app.test_client() as _c:
-                _c.get("/api/fishing-map")               # unfiltered (all coasts)
-                _c.get("/api/fishing-map?coast=east")
-                _c.get("/api/fishing-map?coast=west")
-                _c.get("/api/fishing-map?coast=hawaii")
-            logging.getLogger(__name__).info("fishing-map cache pre-warmed (4 variants)")
-        except Exception as _exc:
-            logging.getLogger(__name__).debug(
-                "fishing-map pre-warm failed (non-fatal): %s", _exc
-            )
-
-    _threading.Thread(target=_prewarm_fishing_map_cache, daemon=True).start()
 
     def _prune_cache() -> None:
         try:

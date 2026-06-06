@@ -551,43 +551,6 @@ if ('serviceWorker' in navigator) {
     });
 })();
 
-// Lazy-load Leaflet + the fishing map when the map section enters the viewport.
-// Both are preloaded in <head> (in browser cache) but NOT executed until needed.
-// This saves ~41KB (Leaflet) + ~34KB (fishing_map) of parse+execute on every load
-// for users who never scroll to the map — the common case on mobile.
-(function() {
-    var mapRoot = document.getElementById('fmap-root');
-    if (!mapRoot) return;
-    var loaded = false;
-    function loadScript(src, onload) {
-        var s = document.createElement('script');
-        s.src = src;
-        if (onload) s.onload = onload;
-        document.head.appendChild(s);
-    }
-    function load() {
-        if (loaded) return;
-        loaded = true;
-        if (window.L) {
-            // Leaflet already present (e.g. setup page shares it); load map directly
-            loadScript(FMAP_JS_URL);
-        } else {
-            // Load Leaflet first, then fishing_map when Leaflet is ready
-            loadScript(LEAFLET_JS_URL, function() { loadScript(FMAP_JS_URL); });
-        }
-    }
-    if ('IntersectionObserver' in window) {
-        var io = new IntersectionObserver(function(entries) {
-            if (entries[0].isIntersecting) {
-                io.disconnect();
-                load();
-            }
-        }, { rootMargin: '400px' });
-        io.observe(mapRoot);
-    } else {
-        load();
-    }
-})();
 
 // Render favorites bar now that DOM is ready
 renderFavorites();

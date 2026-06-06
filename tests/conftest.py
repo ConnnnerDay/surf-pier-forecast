@@ -11,7 +11,6 @@ from storage.sqlite import init_db
 import storage.sqlite as _sqlite
 import storage.cache as _cache
 import domain.forecast as _forecast
-import web.api as _api
 
 
 @pytest.fixture(autouse=True)
@@ -42,7 +41,6 @@ def _clear_in_process_caches():
     _sqlite._SUPPRESSED_SPOTS_TS = 0.0
     _sqlite._CUSTOM_HABITAT_TYPES_CACHE = None
     _sqlite._CUSTOM_HABITAT_TYPES_TS = 0.0
-    _api._HABITATS_CACHE.clear()
     yield
     # Also clear after in case a test leaves behind entries that bleed forward.
     _sqlite._PREFS_CACHE.clear()
@@ -60,7 +58,6 @@ def _clear_in_process_caches():
     _sqlite._SUPPRESSED_SPOTS_TS = 0.0
     _sqlite._CUSTOM_HABITAT_TYPES_CACHE = None
     _sqlite._CUSTOM_HABITAT_TYPES_TS = 0.0
-    _api._HABITATS_CACHE.clear()
 
 
 @pytest.fixture
