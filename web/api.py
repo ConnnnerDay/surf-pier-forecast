@@ -42,6 +42,19 @@ from storage.cache import (
     load_cached_forecast,
     save_forecast,
 )
+from services.datagov import get_water_quality_summary, fetch_beach_closures
+from services.arcgis_live_feeds import (
+    fetch_air_quality,
+    fetch_drought,
+    fetch_metar_stations,
+    fetch_ndbc_buoys,
+    fetch_precip_forecast,
+    fetch_stream_gauges,
+    fetch_temp_forecast,
+    fetch_tropical_outlook,
+    fetch_wildfire_incidents,
+    fetch_wind_forecast,
+)
 from storage.sqlite import (
     add_log_entry,
     attach_photos_to_entry,
@@ -949,3 +962,163 @@ def share_text() -> Any:
     text = build_share_text(forecast_data)
     return jsonify({"text": text, "location_id": loc_id})
 
+
+@bp.route("/api/weather/env-context", methods=["GET"])
+def weather_env_context() -> Any:
+    """Return air-quality + drought data for a location in one round trip."""
+    try:
+        lat = float(request.args["lat"])
+        lng = float(request.args["lng"])
+    except (KeyError, TypeError, ValueError):
+        return jsonify(
+            error_envelope("invalid_params", "lat and lng are required floats")
+        ), 400
+
+    with _cf.ThreadPoolExecutor(max_workers=2) as pool:
+        fut_aqi = pool.submit(fetch_air_quality, lat, lng)
+        fut_drought = pool.submit(fetch_drought, lat, lng)
+        try:
+            aqi_result = fut_aqi.result(timeout=20)
+        except Exception:
+            aqi_result = None
+        try:
+            drought_result = fut_drought.result(timeout=20)
+        except Exception:
+            drought_result = None
+
+    resp = jsonify({"aqi": aqi_result, "drought": drought_result})
+    resp.headers["Cache-Control"] = "public, max-age=900, stale-while-revalidate=60"
+    return resp
+
+
+@bp.route("/api/map/stat-cards", methods=["GET"])
+def map_stat_cards() -> Any:
+    """Return all live stat-card data for a location in one round trip."""
+    try:
+        lat = float(request.args["lat"])
+        lng = float(request.args["lng"])
+    except (KeyError, TypeError, ValueError):
+        return jsonify(
+            error_envelope("invalid_params", "lat and lng are required floats")
+        ), 400
+
+    def _bbox(pad: float) -> tuple[float, float, float, float]:
+        return lat - pad, lng - pad, lat + pad, lng + pad
+
+    b_s, b_w, b_n, b_e = _bbox(3.0)
+    m_s, m_w, m_n, m_e = _bbox(1.5)
+    f_s, f_w, f_n, f_e = _bbox(2.5)
+    g_s, g_w, g_n, g_e = _bbox(1.5)
+
+    with _cf.ThreadPoolExecutor(max_workers=5) as pool:
+        fut_buoys = pool.submit(fetch_ndbc_buoys, b_s, b_w, b_n, b_e)
+        fut_metar = pool.submit(fetch_metar_stations, m_s, m_w, m_n, m_e)
+        fut_fires = pool.submit(fetch_wildfire_incidents, f_s, f_w, f_n, f_e)
+        fut_gauges = pool.submit(fetch_stream_gauges, g_s, g_w, g_n, g_e)
+        fut_tropical = pool.submit(fetch_tropical_outlook)
+        try:
+            buoys = fut_buoys.result(timeout=20)
+        except Exception:
+            buoys = []
+        try:
+            stations = fut_metar.result(timeout=20)
+        except Exception:
+            stations = []
+        try:
+            fires = fut_fires.result(timeout=20)
+        except Exception:
+            fires = []
+        try:
+            gauges = fut_gauges.result(timeout=20)
+        except Exception:
+            gauges = []
+        try:
+            areas = fut_tropical.result(timeout=20)
+        except Exception:
+            areas = []
+
+    resp = jsonify({
+        "buoys": {"buoys": buoys, "count": len(buoys)},
+        "metar": {"stations": stations, "count": len(stations)},
+        "fires": {"fires": fires, "count": len(fires)},
+        "gauges": {"gauges": gauges, "count": len(gauges)},
+        "tropical": {"areas": areas, "count": len(areas)},
+    })
+    resp.headers["Cache-Control"] = "public, max-age=900, stale-while-revalidate=120"
+    return resp
+
+
+@bp.route("/api/weather/combined-forecast", methods=["GET"])
+def weather_combined_forecast() -> Any:
+    """Fetch wind, precipitation, and temperature forecasts in a single request."""
+    try:
+        lat = float(request.args["lat"])
+        lng = float(request.args["lng"])
+    except (KeyError, TypeError, ValueError):
+        return jsonify(
+            error_envelope("invalid_params", "lat and lng are required floats")
+        ), 400
+
+    with _cf.ThreadPoolExecutor(max_workers=3) as pool:
+        fut_wind = pool.submit(fetch_wind_forecast, lat, lng)
+        fut_precip = pool.submit(fetch_precip_forecast, lat, lng)
+        fut_temp = pool.submit(fetch_temp_forecast, lat, lng)
+
+        try:
+            wind_periods = fut_wind.result(timeout=20)
+        except Exception:
+            wind_periods = None
+        try:
+            precip_periods = fut_precip.result(timeout=20)
+        except Exception:
+            precip_periods = None
+        try:
+            temp_days = fut_temp.result(timeout=20)
+        except Exception:
+            temp_days = None
+
+    payload: dict[str, Any] = {
+        "wind": {"periods": wind_periods, "count": len(wind_periods)}
+        if wind_periods is not None
+        else None,
+        "precip": {"periods": precip_periods, "count": len(precip_periods)}
+        if precip_periods is not None
+        else None,
+        "temp": {"days": temp_days} if temp_days is not None else None,
+    }
+    resp = jsonify(payload)
+    resp.headers["Cache-Control"] = "public, max-age=1800, stale-while-revalidate=120"
+    return resp
+
+
+@bp.route("/api/v1/geo/environmental")
+def geo_environmental() -> Any:
+    """Return water quality data for the water-conditions dashboard widget."""
+    try:
+        lat = float(request.args["lat"])
+        lng = float(request.args["lng"])
+    except (KeyError, ValueError, TypeError):
+        return jsonify(error_envelope("invalid_params", "lat and lng are required")), 400
+
+    if not (-90 <= lat <= 90 and -180 <= lng <= 180):
+        return jsonify(error_envelope("invalid_params", "lat/lng out of range")), 400
+
+    state = request.args.get("state", "").upper().strip()
+    wq_summary = get_water_quality_summary(lat, lng)
+    beach_closures: list[Any] = []
+    if state and len(state) == 2:
+        try:
+            beach_closures = fetch_beach_closures(state)[:10]
+        except Exception:
+            beach_closures = []
+
+    resp = jsonify({
+        "ok": True,
+        "data": {
+            "water_quality": wq_summary,
+            "beach_closures": beach_closures,
+            "location": {"lat": lat, "lng": lng},
+        },
+    })
+    resp.headers["Cache-Control"] = "public, max-age=1800, stale-while-revalidate=60"
+    return resp

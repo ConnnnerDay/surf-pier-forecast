@@ -2,7 +2,7 @@
 // Reads globals set inline by the server-rendered script block:
 //   LOGGED_IN, FAV_KEY, CURRENT_LOC_ID, CURRENT_LOC_STATE, CURRENT_LOC_NAME,
 //   CURRENT_LOC_LAT, CURRENT_LOC_LNG, IS_REFRESHING, MAP_IS_ADMIN,
-//   LEAFLET_JS_URL, SERVER_PROFILE, SHARE_ID, SHARE_TEXT_URL
+//   SERVER_PROFILE, SHARE_ID, SHARE_TEXT_URL
 
 /* ---- HTML escape helper ---- */
 function esc(s) {
