@@ -28,17 +28,13 @@ def _clear_in_process_caches():
     _sqlite._LOG_STATS_CACHE.clear()
     _cache._MEM_CACHE.clear()
     _forecast._PERSONALIZE_CACHE.clear()
-    # Custom marker / habitat caches — module-level singletons that must be
-    # reset when each test gets a fresh isolated SQLite DB so cached data
-    # from a previous test's DB doesn't bleed into the next test.
-    _sqlite._CUSTOM_MARKERS_CACHE = None
-    _sqlite._CUSTOM_MARKERS_TS = 0.0
+    # Custom habitat caches — module-level singletons that must be reset when
+    # each test gets a fresh isolated SQLite DB so cached data from a previous
+    # test's DB doesn't bleed into the next test.
     _sqlite._CUSTOM_HABITATS_CACHE = None
     _sqlite._CUSTOM_HABITATS_TS = 0.0
     _sqlite._HABITAT_OVERRIDES_CACHE = None
     _sqlite._HABITAT_OVERRIDES_TS = 0.0
-    _sqlite._SUPPRESSED_SPOTS_CACHE = None
-    _sqlite._SUPPRESSED_SPOTS_TS = 0.0
     _sqlite._CUSTOM_HABITAT_TYPES_CACHE = None
     _sqlite._CUSTOM_HABITAT_TYPES_TS = 0.0
     yield
@@ -48,14 +44,10 @@ def _clear_in_process_caches():
     _sqlite._LOG_STATS_CACHE.clear()
     _cache._MEM_CACHE.clear()
     _forecast._PERSONALIZE_CACHE.clear()
-    _sqlite._CUSTOM_MARKERS_CACHE = None
-    _sqlite._CUSTOM_MARKERS_TS = 0.0
     _sqlite._CUSTOM_HABITATS_CACHE = None
     _sqlite._CUSTOM_HABITATS_TS = 0.0
     _sqlite._HABITAT_OVERRIDES_CACHE = None
     _sqlite._HABITAT_OVERRIDES_TS = 0.0
-    _sqlite._SUPPRESSED_SPOTS_CACHE = None
-    _sqlite._SUPPRESSED_SPOTS_TS = 0.0
     _sqlite._CUSTOM_HABITAT_TYPES_CACHE = None
     _sqlite._CUSTOM_HABITAT_TYPES_TS = 0.0
 

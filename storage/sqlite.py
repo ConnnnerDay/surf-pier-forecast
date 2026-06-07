@@ -138,49 +138,6 @@ CREATE TABLE IF NOT EXISTS reg_scrape_cache (
     PRIMARY KEY (species_key, state)
 );
 
-CREATE TABLE IF NOT EXISTS map_catches (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    lat         REAL NOT NULL,
-    lng         REAL NOT NULL,
-    species     TEXT NOT NULL,
-    title       TEXT,
-    bait        TEXT,
-    weight_lb   REAL,
-    length_in   REAL,
-    notes       TEXT,
-    image_url   TEXT,
-    caught_at   TEXT NOT NULL DEFAULT (datetime('now')),
-    is_public   INTEGER NOT NULL DEFAULT 1,
-    likes_count INTEGER NOT NULL DEFAULT 0
-);
-CREATE INDEX IF NOT EXISTS idx_map_catches_user
-ON map_catches(user_id, caught_at DESC);
-CREATE INDEX IF NOT EXISTS idx_map_catches_public_time
-ON map_catches(is_public, caught_at DESC);
-CREATE INDEX IF NOT EXISTS idx_map_catches_bbox
-ON map_catches(lat, lng);
-CREATE INDEX IF NOT EXISTS idx_map_catches_bbox_time
-ON map_catches(lat, lng, caught_at DESC);
-CREATE INDEX IF NOT EXISTS idx_map_catches_public_time_geo
-ON map_catches(is_public, caught_at DESC, lat, lng);
-
-CREATE TABLE IF NOT EXISTS map_catch_comments (
-    id        INTEGER PRIMARY KEY AUTOINCREMENT,
-    catch_id  INTEGER NOT NULL REFERENCES map_catches(id) ON DELETE CASCADE,
-    user_id   INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    body      TEXT NOT NULL,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
-CREATE INDEX IF NOT EXISTS idx_map_catch_comments_catch
-ON map_catch_comments(catch_id, created_at ASC);
-
-CREATE TABLE IF NOT EXISTS map_catch_likes (
-    catch_id INTEGER NOT NULL REFERENCES map_catches(id) ON DELETE CASCADE,
-    user_id  INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    PRIMARY KEY (catch_id, user_id)
-);
-
 CREATE TABLE IF NOT EXISTS webauthn_credentials (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id       INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -204,32 +161,6 @@ CREATE TABLE IF NOT EXISTS social_accounts (
 );
 CREATE INDEX IF NOT EXISTS idx_social_accounts_user
 ON social_accounts(user_id);
-
-CREATE TABLE IF NOT EXISTS custom_map_markers (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    lat         REAL    NOT NULL,
-    lng         REAL    NOT NULL,
-    name        TEXT    NOT NULL DEFAULT '',
-    type        TEXT    NOT NULL DEFAULT 'fishing',
-    description TEXT    NOT NULL DEFAULT '',
-    created_by  INTEGER REFERENCES users(id) ON DELETE SET NULL,
-    is_deleted  INTEGER NOT NULL DEFAULT 0,
-    created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
-    updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
-);
-
-CREATE TABLE IF NOT EXISTS suppressed_map_spots (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    spot_key    TEXT    NOT NULL UNIQUE,
-    lat         REAL    NOT NULL,
-    lng         REAL    NOT NULL,
-    type        TEXT    NOT NULL DEFAULT '',
-    name        TEXT    NOT NULL DEFAULT '',
-    suppressed_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
-    created_at  TEXT    NOT NULL DEFAULT (datetime('now'))
-);
-CREATE INDEX IF NOT EXISTS idx_suppressed_spots_bbox
-ON suppressed_map_spots(lat, lng);
 
 CREATE TABLE IF NOT EXISTS custom_habitats (
     id            TEXT    PRIMARY KEY,
@@ -317,11 +248,6 @@ _KNOWN_TABLES = frozenset(
         "reg_scrape_cache",
         "webauthn_credentials",
         "social_accounts",
-        "map_catches",
-        "map_catch_comments",
-        "map_catch_likes",
-        "custom_map_markers",
-        "suppressed_map_spots",
         "custom_habitats",
         "habitat_overrides",
         "custom_habitat_types",
@@ -434,36 +360,6 @@ def _run_migrations(conn: sqlite3.Connection) -> None:
     conn.execute(
         "UPDATE users SET is_admin = 0 WHERE id != ?",
         (_admin_id,),
-    )
-
-    # Create custom_map_markers if it didn't exist before the SCHEMA ran it.
-    conn.executescript(
-        """
-        CREATE TABLE IF NOT EXISTS custom_map_markers (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            lat         REAL    NOT NULL,
-            lng         REAL    NOT NULL,
-            name        TEXT    NOT NULL DEFAULT '',
-            type        TEXT    NOT NULL DEFAULT 'fishing',
-            description TEXT    NOT NULL DEFAULT '',
-            created_by  INTEGER REFERENCES users(id) ON DELETE SET NULL,
-            is_deleted  INTEGER NOT NULL DEFAULT 0,
-            created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
-            updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
-        );
-        CREATE TABLE IF NOT EXISTS suppressed_map_spots (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            spot_key    TEXT    NOT NULL UNIQUE,
-            lat         REAL    NOT NULL,
-            lng         REAL    NOT NULL,
-            type        TEXT    NOT NULL DEFAULT '',
-            name        TEXT    NOT NULL DEFAULT '',
-            suppressed_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
-            created_at  TEXT    NOT NULL DEFAULT (datetime('now'))
-        );
-        CREATE INDEX IF NOT EXISTS idx_suppressed_spots_bbox
-        ON suppressed_map_spots(lat, lng);
-        """
     )
 
     profile_cols = set(_column_names(conn, "profiles"))
@@ -579,65 +475,6 @@ def _run_migrations(conn: sqlite3.Connection) -> None:
             ON social_accounts(user_id);
             """
         )
-
-    # map_catches + social tables (community catch logging on the map)
-    if not _table_exists(conn, "map_catches"):
-        conn.executescript(
-            """
-            CREATE TABLE IF NOT EXISTS map_catches (
-                id          INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-                lat         REAL NOT NULL,
-                lng         REAL NOT NULL,
-                species     TEXT NOT NULL,
-                title       TEXT,
-                bait        TEXT,
-                weight_lb   REAL,
-                length_in   REAL,
-                notes       TEXT,
-                image_url   TEXT,
-                caught_at   TEXT NOT NULL DEFAULT (datetime('now')),
-                is_public   INTEGER NOT NULL DEFAULT 1,
-                likes_count INTEGER NOT NULL DEFAULT 0
-            );
-            CREATE INDEX IF NOT EXISTS idx_map_catches_user
-            ON map_catches(user_id, caught_at DESC);
-            CREATE INDEX IF NOT EXISTS idx_map_catches_public_time
-            ON map_catches(is_public, caught_at DESC);
-            CREATE INDEX IF NOT EXISTS idx_map_catches_bbox
-            ON map_catches(lat, lng);
-            CREATE INDEX IF NOT EXISTS idx_map_catches_bbox_time
-            ON map_catches(lat, lng, caught_at DESC);
-
-            CREATE TABLE IF NOT EXISTS map_catch_comments (
-                id         INTEGER PRIMARY KEY AUTOINCREMENT,
-                catch_id   INTEGER NOT NULL REFERENCES map_catches(id) ON DELETE CASCADE,
-                user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-                body       TEXT NOT NULL,
-                created_at TEXT NOT NULL DEFAULT (datetime('now'))
-            );
-            CREATE INDEX IF NOT EXISTS idx_map_catch_comments_catch
-            ON map_catch_comments(catch_id, created_at ASC);
-
-            CREATE TABLE IF NOT EXISTS map_catch_likes (
-                catch_id INTEGER NOT NULL REFERENCES map_catches(id) ON DELETE CASCADE,
-                user_id  INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-                PRIMARY KEY (catch_id, user_id)
-            );
-            """
-        )
-    else:
-        # map_catches already existed — add new columns if they were introduced
-        # after the initial schema migration (idempotent: ignore if already present).
-        existing_cols = {
-            row[1] for row in conn.execute("PRAGMA table_info(map_catches)").fetchall()
-        }
-        if "title" not in existing_cols:
-            conn.execute("ALTER TABLE map_catches ADD COLUMN title TEXT")
-        if "image_url" not in existing_cols:
-            conn.execute("ALTER TABLE map_catches ADD COLUMN image_url TEXT")
-        conn.commit()
-
 
 def _prune_old_forecasts(conn: sqlite3.Connection) -> None:
     """Keep only the most-recent row per location in the forecasts history table.
