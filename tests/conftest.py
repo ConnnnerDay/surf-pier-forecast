@@ -11,7 +11,6 @@ from storage.sqlite import init_db
 import storage.sqlite as _sqlite
 import storage.cache as _cache
 import domain.forecast as _forecast
-import web.api as _api
 
 
 @pytest.fixture(autouse=True)
@@ -29,20 +28,15 @@ def _clear_in_process_caches():
     _sqlite._LOG_STATS_CACHE.clear()
     _cache._MEM_CACHE.clear()
     _forecast._PERSONALIZE_CACHE.clear()
-    # Custom marker / habitat caches — module-level singletons that must be
-    # reset when each test gets a fresh isolated SQLite DB so cached data
-    # from a previous test's DB doesn't bleed into the next test.
-    _sqlite._CUSTOM_MARKERS_CACHE = None
-    _sqlite._CUSTOM_MARKERS_TS = 0.0
+    # Custom habitat caches — module-level singletons that must be reset when
+    # each test gets a fresh isolated SQLite DB so cached data from a previous
+    # test's DB doesn't bleed into the next test.
     _sqlite._CUSTOM_HABITATS_CACHE = None
     _sqlite._CUSTOM_HABITATS_TS = 0.0
     _sqlite._HABITAT_OVERRIDES_CACHE = None
     _sqlite._HABITAT_OVERRIDES_TS = 0.0
-    _sqlite._SUPPRESSED_SPOTS_CACHE = None
-    _sqlite._SUPPRESSED_SPOTS_TS = 0.0
     _sqlite._CUSTOM_HABITAT_TYPES_CACHE = None
     _sqlite._CUSTOM_HABITAT_TYPES_TS = 0.0
-    _api._HABITATS_CACHE.clear()
     yield
     # Also clear after in case a test leaves behind entries that bleed forward.
     _sqlite._PREFS_CACHE.clear()
@@ -50,17 +44,12 @@ def _clear_in_process_caches():
     _sqlite._LOG_STATS_CACHE.clear()
     _cache._MEM_CACHE.clear()
     _forecast._PERSONALIZE_CACHE.clear()
-    _sqlite._CUSTOM_MARKERS_CACHE = None
-    _sqlite._CUSTOM_MARKERS_TS = 0.0
     _sqlite._CUSTOM_HABITATS_CACHE = None
     _sqlite._CUSTOM_HABITATS_TS = 0.0
     _sqlite._HABITAT_OVERRIDES_CACHE = None
     _sqlite._HABITAT_OVERRIDES_TS = 0.0
-    _sqlite._SUPPRESSED_SPOTS_CACHE = None
-    _sqlite._SUPPRESSED_SPOTS_TS = 0.0
     _sqlite._CUSTOM_HABITAT_TYPES_CACHE = None
     _sqlite._CUSTOM_HABITAT_TYPES_TS = 0.0
-    _api._HABITATS_CACHE.clear()
 
 
 @pytest.fixture

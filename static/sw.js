@@ -113,12 +113,9 @@ self.addEventListener('fetch', function(event) {
   // On repeat visits these are served from cache immediately; the background
   // fetch keeps the SW entry fresh so the next load gets updated data.
   var _swrApis = [
-    '/api/map/structures',
-    '/api/v1/map/score',
     '/api/weather/env-context',
     '/api/weather/combined-forecast',
     '/api/map/stat-cards',
-    '/api/v1/geo/environmental',
   ];
   if (event.request.method === 'GET' &&
       _swrApis.some(function(p) { return event.request.url.includes(p); })) {

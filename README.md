@@ -45,9 +45,7 @@ Python packages (`requirements.txt`):
 git clone https://github.com/ConnnnerDay/surf-pier-forecast.git
 cd surf-pier-forecast
 
-# System deps — Python venv + GIS libraries (required for map overlays)
-sudo apt-get update && sudo apt-get install -y \
-    python3-venv libgdal-dev libgeos-dev libproj-dev
+sudo apt-get update && sudo apt-get install -y python3-venv
 
 python3 -m venv .venv
 source .venv/bin/activate
@@ -61,9 +59,6 @@ python app.py
 git clone https://github.com/ConnnnerDay/surf-pier-forecast.git
 cd surf-pier-forecast
 
-# System deps — GIS libraries (required for map overlays)
-brew install gdal geos proj
-
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
@@ -75,8 +70,6 @@ Open: **http://localhost:5757**
 
 The SQLite database (`data/app.db`) and `data/` directory are created automatically on first startup. `.env` values are loaded automatically via `python-dotenv`.
 
-> **AI Fishing Map note**: The first time you load a new map viewport, structure markers (piers, reefs, wrecks, etc.) take 5–15 seconds to appear — they're fetched live from the public Overpass/OpenStreetMap API. Subsequent pans and filter changes are served from a 30-minute local cache and load instantly.
-
 ---
 
 ## One-click install (systemd)
@@ -86,8 +79,8 @@ The SQLite database (`data/app.db`) and `data/` directory are created automatica
 ```
 
 What it does:
-1. Installs system packages (`python3-venv`, `python3-pip`, GIS libraries)
-2. Creates `.venv` and installs all dependencies including geopandas
+1. Installs system packages (`python3-venv`, `python3-pip`)
+2. Creates `.venv` and installs all dependencies
 3. Initializes the SQLite database (`migrate_sqlite.py`)
 4. Installs and starts `surf-forecast.service`
 5. Enables auto-start on boot
@@ -287,85 +280,25 @@ rm -rf "$PROJECT_DIR"
 
 ## Geospatial & Satellite Data Sources
 
-The application integrates eight additional free, key-free data sources that
-appear as new sections on the forecast dashboard.
+The application integrates additional free, key-free data sources.
 
 ### Included services
 
 | Service | Module | What it provides |
 |---|---|---|
-| **OpenStreetMap** | `services/osm_tiles.py` | Base map tiles (Standard, Humanitarian) and Overpass API marine amenities (marinas, boat ramps) |
-| **Natural Earth** | `services/natural_earth.py` | Public-domain coastline and boundary GeoJSON served as a `/api/v1/geo/coastlines` overlay |
 | **Data.gov / EPA WQP** | `services/datagov.py` | Water quality metrics (DO, pH, salinity, turbidity, enterococcus) from the EPA Water Quality Portal |
-| **Esri Open Data Hub** | `services/esri_open_data.py` | Pier/marina locations (NOAA), EPA beach sites, NPS coastal park boundaries |
-| **NASA Worldview / GIBS** | `services/nasa_worldview.py` | Near-real-time satellite imagery tiles: Sea Surface Temperature, Chlorophyll-A, True Color (VIIRS/MODIS) |
-| **OpenAerialMap** | `services/aerial_imagery.py` | Open drone/aerial imagery catalog search for coastal areas |
 | **HDX** | `services/hdx_fao.py` | Humanitarian Data Exchange fisheries dataset search via CKAN API |
 | **FAO GeoNetwork** | `services/hdx_fao.py` | FAO fishing zone identification (Major Areas) and ASFIS species scientific names |
 
 All services are **read-only**, **unauthenticated**, and **require no API key**.
 The app degrades gracefully when any upstream service is unavailable.
 
-### New API endpoints
+### Dashboard API endpoints
 
 | Endpoint | Description |
 |---|---|
-| `GET /api/v1/geo/layers` | All map layer configs (OSM, GIBS, Esri, NE) |
-| `GET /api/v1/geo/environmental?lat=&lng=` | Water quality summary + SST tile config |
-| `GET /api/v1/geo/coastlines` | Natural Earth GeoJSON (optional `?south=&west=&north=&east=` bbox clip) |
-| `GET /api/v1/geo/osm/amenities?lat=&lng=` | Nearby OSM marine amenities |
-| `GET /api/v1/geo/esri/piers?south=&west=&north=&east=` | Pier/marina features |
-| `GET /api/v1/geo/esri/beaches?south=…` | EPA-monitored beach locations |
-| `GET /api/v1/geo/esri/parks?south=…` | NPS coastal park boundaries |
-| `GET /api/v1/geo/aerial/oam?south=…` | OpenAerialMap imagery catalog |
-| `GET /api/v1/geo/hdx-fao?lat=&lng=` | FAO zone + HDX dataset links |
+| `GET /api/v1/geo/environmental?lat=&lng=` | Water quality summary (EPA WQP) |
+| `GET /api/weather/env-context?lat=&lng=` | AQI + drought index |
+| `GET /api/map/stat-cards?lat=&lng=` | Buoy, METAR, wildfire, stream gauge, tropical |
+| `GET /api/weather/combined-forecast?lat=&lng=` | Wind + precipitation + temperature forecast |
 
-### GIS dependencies
-
-`geopandas` and `pandas` are included in `requirements.txt` and installed by default. They require native system libraries that must be installed first:
-
-- **Debian/Ubuntu**: `sudo apt-get install -y libgdal-dev libgeos-dev libproj-dev` (handled automatically by `install.sh`)
-- **macOS**: `brew install gdal geos proj`
-
-Without these packages `pip install -r requirements.txt` will fail on the geopandas wheel. If you're on a platform where building GDAL from source is not practical, comment out the `geopandas` and `pandas` lines in `requirements.txt` — the app will fall back to a pure-Python bbox filter for coastline clipping and still work correctly.
-
-### Natural Earth data caching
-
-On first use, `services/natural_earth.py` downloads the chosen resolution
-GeoJSON from the Natural Earth GitHub CDN and caches it in `data/natural_earth/`.
-Subsequent requests are served from disk; the cache is refreshed automatically
-every 30 days in the background.
-
-Resolution options (set via `?res=` query parameter):
-- `110m` (default) — ~300 KB, suitable for country/coast overview maps
-- `10m` — ~1.5 MB, finer coastline detail for zoomed-in views
-
-### NASA GIBS imagery
-
-NASA GIBS (Global Imagery Browse Services) tiles are fetched client-side by
-the browser — the server never proxies image data. The tile URL for each
-layer is constructed by `services/nasa_worldview.py` using yesterday's date
-to account for the NRT processing latency (3–48 hours depending on the sensor).
-
-Available overlay layers (controlled by the **Satellite & Map Layers** panel):
-- **Sea Surface Temperature** (GHRSST MUR, 1 km, daily) — `GHRSST_L4_MUR_Sea_Surface_Temperature`
-- **Chlorophyll-A** (MODIS Terra, 4 km, 8-day) — `MODIS_Terra_Chlorophyll_A`
-- **True Color / VIIRS** (375 m, daily) — `VIIRS_SNPP_TrueColor_375m`
-
-Attribution required by NASA usage policy is injected automatically into the
-Leaflet attribution control.
-
-### Frontend map (geo_layers.js)
-
-`static/js/geo_layers.js` initialises a Leaflet 1.9 map inside the collapsible
-**Satellite & Map Layers** panel on the forecast dashboard. The map is only
-created when the panel is first opened, so it has zero impact on initial page
-load time.
-
-Controls provided:
-- **Base map** radio: OpenStreetMap Standard / OSM Humanitarian / Esri World Imagery
-- **Overlay** checkboxes: SST, Chlorophyll-A, True Color, Natural Earth coastlines
-- **Feature layers**: Piers & Marinas, Monitored Beaches, Coastal Parks, OAM aerial
-
-No third-party JavaScript frameworks are required. Leaflet is loaded dynamically
-from the jsdelivr CDN (with a cdnjs fallback) only when the panel is opened.

@@ -24,9 +24,6 @@ ruff check .
 ruff format .
 mypy .
 
-# Rebuild minified JS (run after editing static/js/fishing_map.js)
-# Requires: npm install -g terser
-terser static/js/fishing_map.js --compress --mangle --output static/js/fishing_map.min.js
 ```
 
 ## Architecture
@@ -44,7 +41,6 @@ This is a self-hosted Flask fishing forecast app. It fetches live marine data fr
    - Astronomy service (sunrise/sunset, moon phase, solunar)
 4. Species scoring in `domain/species.py` ranks the 851-species DB by water temp, season, solunar, wind/wave conditions, then filters by user profile (offshore vs inshore) and regulations
 5. Result is cached to `forecast_cache` SQLite table; a daemon thread handles async background refresh for stale entries
-6. `web/geo_api.py` serves additional geospatial overlays (satellite imagery, coastlines, amenities) as separate JSON endpoints loaded client-side
 
 ### Key files to reach for first
 
@@ -56,7 +52,6 @@ This is a self-hosted Flask fishing forecast app. It fetches live marine data fr
 | `storage/sqlite.py` | Full DB schema + all CRUD (users, profiles, forecasts, catch log, WebAuthn) |
 | `web/api.py` | JSON API v1 blueprint |
 | `web/auth.py` | Login, register, email verification, passkeys (WebAuthn), Google/Apple OAuth |
-| `web/geo_api.py` | Geospatial/satellite overlay endpoints |
 | `services/` | One file per external API (nws, noaa, ndbc, astro, etc.) |
 
 ### Blueprints
@@ -64,7 +59,6 @@ This is a self-hosted Flask fishing forecast app. It fetches live marine data fr
 - `auth` — `/login`, `/register`, `/verify-email`, `/passkey/*`, `/oauth/*`
 - `views` — HTML pages (dashboard, setup wizard, profile, shared forecast)
 - `api` — `/api/v1/*` JSON endpoints
-- `geo_api` — `/api/geo/*` geospatial endpoints
 
 ### Environment variables
 
@@ -92,8 +86,7 @@ Optional — dev:
 
 - `data/app.db` — SQLite (users, profiles, forecast cache, catch log, WebAuthn credentials, regulations cache)
 - `data/uploads/` — catch-log photos, served only via auth-gated route (not from `static/`)
-- `data/natural_earth/` — coastline GeoJSON (optional; downloaded on first use if geopandas is available)
 
 ### Tests
 
-Tests use pytest with isolated temporary SQLite DBs per test (fixtures in `conftest.py`). 23 test files cover API endpoints, auth flows, forecast generation, species scoring, caching, and geospatial services. `pytest.ini` sets `testpaths = tests` and default flags `-v --tb=short`.
+Tests use pytest with isolated temporary SQLite DBs per test (fixtures in `conftest.py`). `pytest.ini` sets `testpaths = tests` and default flags `-v --tb=short`.
