@@ -9,13 +9,6 @@ beautifulsoup4>=4.12,<5.0
 # Production WSGI server (recommended outside development)
 gunicorn>=21.2,<26.0
 
-# WebAuthn / passkey support (Face ID, Touch ID, Windows Hello)
-webauthn>=2.7,<3.0
-
-# Cryptography — used for Apple Sign In JWT client_secret generation (ES256).
-# Also a transitive dependency of webauthn; pinned here explicitly.
-cryptography>=41.0,<45.0
-
 # .env file support — loads environment variables from .env in dev automatically
 python-dotenv>=1.0,<2.0
 

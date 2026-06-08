@@ -11,7 +11,6 @@ from werkzeug.security import check_password_hash
 
 from flask import (
     Blueprint,
-    current_app,
     g,
     redirect,
     render_template,
@@ -21,24 +20,22 @@ from flask import (
 )
 
 import logging
-import os
 
 from locations import get_location
 from storage.sqlite import (
     authenticate_user,
     bump_session_version,
     change_password,
+    confirm_email,
     create_user,
     delete_user,
-    get_all_user_photo_paths,
     get_preferences,
     get_recent_logs,
-    get_user,
     get_user_by_email,
     get_user_password_hash,
     save_preferences,
 )
-from web.helpers import get_account_credentials_cached, get_prefs_cached
+from web.helpers import get_prefs_cached
 from web.rate_limit import (
     client_ip as _client_ip,
     is_rate_limited as _is_rate_limited,
@@ -391,7 +388,6 @@ def register() -> Any:
             email=email,
         )
     # Email is auto-confirmed — no email verification required.
-    from storage.sqlite import confirm_email
     confirm_email(user_id)
     # Regenerate session to prevent session fixation.
     loc_id = session.get("location_id")
@@ -559,29 +555,6 @@ def delete_account_route() -> Any:
         return _del_error("Incorrect password. Account not deleted.")
 
     user_id = g.user["id"]
-
-    # Remove all uploaded photo files from disk before deleting the DB rows.
-    upload_root = current_app.config.get("UPLOAD_FOLDER", "")
-    if upload_root:
-        upload_root_real = os.path.realpath(upload_root)
-        for rel_path in get_all_user_photo_paths(user_id):
-            if not rel_path:
-                continue
-            sub = (
-                rel_path[len("uploads/") :]
-                if rel_path.startswith("uploads/")
-                else rel_path
-            )
-            abs_path = os.path.realpath(os.path.join(upload_root, sub))
-            if abs_path.startswith(upload_root_real + os.sep):
-                try:
-                    os.remove(abs_path)
-                except OSError:
-                    logger.warning(
-                        "Could not remove photo file during account deletion: %s",
-                        rel_path,
-                    )
-
     delete_user(user_id)
     session.clear()
     return redirect(url_for("auth.landing"))

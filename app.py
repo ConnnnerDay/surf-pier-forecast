@@ -34,7 +34,6 @@ import os
 import pathlib as _pathlib
 import secrets
 import threading as _threading
-import time as _time
 from datetime import timedelta
 from typing import Any
 from urllib.parse import urlparse as _urlparse
@@ -133,19 +132,6 @@ def create_app() -> Flask:
     if os.environ.get("SESSION_COOKIE_SECURE"):
         app.config["SESSION_COOKIE_SECURE"] = True
 
-    # Store uploads in data/uploads/ (outside static/) so Flask's static file
-    # handler never serves them directly.  Access is gated by the auth-checked
-    # /uploads/<user_id>/<filename> route defined in web/views.py.
-    _upload_folder = os.path.join(os.path.dirname(__file__), "data", "uploads")
-    os.makedirs(_upload_folder, exist_ok=True)
-    # Restrict uploads directory to the owning process so that other users on
-    # a shared host cannot browse uploaded photos.
-    try:
-        os.chmod(_upload_folder, 0o700)
-    except OSError:
-        pass
-    app.config["UPLOAD_FOLDER"] = _upload_folder
-
     # Warn operators when the app is deployed behind a reverse proxy but the
     # TRUSTED_PROXY flag has not been set.  Without it, rate limiting keys on
     # the proxy's IP (127.0.0.1) rather than the real client IP, making it
@@ -236,26 +222,11 @@ def create_app() -> Flask:
             "auth.login",
             "auth.register",
             "auth.logout",
-            "auth.verify_email",
-            "auth.resend_verification",
-            "auth.verify_pending",
-            # Account management (users must be able to see/manage their account
-            # and change their password even before verifying).
+            # Account management
             "auth.account",
             "auth.account_settings",
             "auth.change_password_route",
             "auth.delete_account_route",
-            # WebAuthn / passkey flows (biometric login, passkey registration)
-            "auth.webauthn_register_begin",
-            "auth.webauthn_register_complete",
-            "auth.webauthn_authenticate_begin",
-            "auth.webauthn_authenticate_complete",
-            "auth.webauthn_delete_credential",
-            # Social login OAuth flows (Google, Apple)
-            "auth.google_login",
-            "auth.google_callback",
-            "auth.apple_login",
-            "auth.apple_callback",
             # Location + profile setup wizard (users need to complete onboarding).
             "views.setup",
             "views.setup_search",
@@ -333,12 +304,6 @@ def create_app() -> Flask:
 
         if request.blueprint not in {"auth", "views", "api"}:
             return
-        # OAuth provider callbacks arrive as cross-origin POSTs from the
-        # provider's servers and therefore cannot carry our CSRF token.
-        # CSRF for these flows is handled by the OAuth "state" parameter
-        # that each callback handler validates against the session value.
-        if request.endpoint in {"auth.apple_callback"}:
-            return
         sent = request.form.get("csrf_token", "")
         expected = session.get("csrf_token", "")
         if not sent or not expected or not hmac.compare_digest(sent, expected):
@@ -379,12 +344,10 @@ def create_app() -> Flask:
 
     @app.context_processor
     def _inject_user() -> dict[str, Any]:
-        """Make ``user``, CSRF token, and social-login flags available in every template."""
+        """Make ``user``, CSRF token available in every template."""
         return {
             "user": getattr(g, "user", None),
             "csrf_token": _get_csrf_token(),
-            "google_login_enabled": bool(os.environ.get("GOOGLE_CLIENT_ID")),
-            "apple_login_enabled": bool(os.environ.get("APPLE_CLIENT_ID")),
             "surl": _surl,
         }
 

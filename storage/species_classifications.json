@@ -1,0 +1,3452 @@
+{
+  "fishing_type": {
+    "offshore_only": [
+      "Acadian redfish (ocean perch)",
+      "Albacore tuna",
+      "Almaco jack",
+      "Almaco jack (large adult)",
+      "Atlantic bluefin tuna",
+      "Atlantic halibut",
+      "Barrelfish",
+      "Bigeye tuna",
+      "Black marlin",
+      "Blackbelly rosefish",
+      "Blackfin tuna",
+      "Blue marlin",
+      "Blueline tilefish",
+      "Common thresher shark",
+      "Cusk",
+      "Frigate mackerel",
+      "Golden tilefish",
+      "Greater amberjack",
+      "Greenstriped rockfish",
+      "Hapu'upu'u (Hawaiian grouper)",
+      "Lehi (amberjack / silvermouth jack)",
+      "Lesser amberjack",
+      "Longspine thornyhead",
+      "Mahi-mahi (dolphinfish)",
+      "Misty grouper",
+      "Ocean sunfish (mola mola)",
+      "Oceanic whitetip shark",
+      "Onaga (long-tail red snapper)",
+      "Opah (moonfish)",
+      "Opakapaka (pink snapper)",
+      "Pacific halibut",
+      "Pacific ocean perch",
+      "Queen snapper",
+      "Rainbow runner",
+      "Rougheye rockfish",
+      "Sablefish (black cod)",
+      "Sailfish",
+      "Shortbill spearfish",
+      "Shortfin mako shark",
+      "Shortspine thornyhead",
+      "Silk snapper",
+      "Silky shark",
+      "Sixgill shark",
+      "Skipjack tuna",
+      "Snowy grouper",
+      "Splitnose rockfish",
+      "Striped marlin",
+      "Swordfish",
+      "Thresher shark",
+      "Tiger shark",
+      "Tilefish (blueline juvenile/grey)",
+      "Tilefish (golden juvenile)",
+      "Wahoo",
+      "White marlin",
+      "Wreckfish",
+      "Yellowedge grouper",
+      "Yelloweye rockfish",
+      "Yellowfin tuna"
+    ],
+    "pier": [
+      "Aholehole (Hawaiian flagtail)",
+      "Akule (bigeye scad)",
+      "Atlantic silverside",
+      "Bandtail puffer",
+      "Bermuda chub (sea chub)",
+      "Black sea bass",
+      "Black-and-yellow rockfish",
+      "Blue tang (surgeonfish)",
+      "Brown rockfish",
+      "California sheephead",
+      "Checkered puffer",
+      "Cunner (bergall)",
+      "Doctorfish (tang)",
+      "English sole",
+      "Feather blenny",
+      "Gray angelfish",
+      "Gray triggerfish",
+      "Gulf toadfish",
+      "Halfmoon (Catalina perch)",
+      "Hogfish",
+      "Honeycomb cowfish",
+      "Kala (unicornfish)",
+      "Kelp bass (calico bass)",
+      "Kelp greenling",
+      "Kumu (whitesaddle goatfish)",
+      "Lookdown",
+      "Mangrove snapper (gray snapper)",
+      "Manini (convict tang)",
+      "Menpachi (soldierfish)",
+      "Moano (goatfish)",
+      "Nenue (Hawaiian chub)",
+      "Northern puffer (blowfish)",
+      "Ocean triggerfish",
+      "Opaleye",
+      "Opelu (mackerel scad)",
+      "Orange filefish",
+      "Pacific sanddab",
+      "Pile perch",
+      "Planehead filefish",
+      "Porkfish",
+      "Puddingwife (wrasse)",
+      "Pygmy rockfish",
+      "Queen triggerfish",
+      "Rainbow seaperch",
+      "Rock greenling",
+      "Rosy rockfish",
+      "Sand bass (barred sand bass)",
+      "Sand drum",
+      "Scrawled cowfish",
+      "Scrawled filefish",
+      "Sergeant major (damselfish)",
+      "Sheepshead",
+      "Shiner perch",
+      "Slippery dick (wrasse)",
+      "Smooth trunkfish",
+      "Southern puffer",
+      "Spadefish (Atlantic)",
+      "Spotfin butterflyfish",
+      "Spotted sand bass",
+      "Squarespot rockfish",
+      "Squirrelfish",
+      "Striped blenny",
+      "Striped burrfish (spiny boxfish)",
+      "Surf smelt (Pacific)",
+      "Taape (bluestripe snapper)",
+      "Tautog (blackfish)",
+      "Triggerfish (gray)",
+      "Uhu (parrotfish)",
+      "Uku (gray snapper / jobfish)"
+    ],
+    "surf": [
+      "Barred surfperch",
+      "Bonefish (oio)",
+      "Calico surfperch",
+      "Chum salmon (dog salmon)",
+      "Corbina",
+      "Gulf kingfish (gulf whiting)",
+      "Leopard shark",
+      "Moi (Pacific threadfin)",
+      "Monkeyface prickleback",
+      "Northern kingfish",
+      "Painted greenling",
+      "Pink salmon (humpy)",
+      "Pink seaperch",
+      "Pompano",
+      "Red drum (puppy drum)",
+      "Redtail surfperch",
+      "Rubberlip seaperch",
+      "Sand drum",
+      "Shovelnose guitarfish",
+      "Southern kingfish (ground mullet)",
+      "Spotfin croaker",
+      "Striped seaperch",
+      "Walleye surfperch",
+      "Whiting (sea mullet, kingfish)",
+      "Yellowfin croaker"
+    ],
+    "jetty": [
+      "Black sea bass",
+      "Cabezon",
+      "California sheephead",
+      "Cobia",
+      "Cunner (bergall)",
+      "Hogfish",
+      "Jack crevalle",
+      "Kelp bass (calico bass)",
+      "Kelp greenling",
+      "Lingcod",
+      "Lookdown",
+      "Mangrove snapper (gray snapper)",
+      "Red drum (puppy drum)",
+      "Rock greenling",
+      "Sand bass (barred sand bass)",
+      "Sheepshead",
+      "Snook",
+      "Spadefish (Atlantic)",
+      "Striped bass (rockfish)",
+      "Tarpon",
+      "Tautog (blackfish)",
+      "Triggerfish (gray)"
+    ],
+    "bridge": [
+      "Black drum",
+      "Black sea bass",
+      "Blue runner (hardtail)",
+      "Bluefish",
+      "Cobia",
+      "Flounder (summer flounder)",
+      "Jack crevalle",
+      "Lookdown",
+      "Mangrove snapper (gray snapper)",
+      "Permit",
+      "Red drum (puppy drum)",
+      "Sheepshead",
+      "Snook",
+      "Southern flounder",
+      "Spadefish (Atlantic)",
+      "Spanish mackerel",
+      "Striped bass (rockfish)",
+      "Tarpon",
+      "Tautog (blackfish)"
+    ],
+    "wade": [
+      "Barred surfperch",
+      "Black drum",
+      "Bonefish (oio)",
+      "Corbina",
+      "Flounder (summer flounder)",
+      "Gray trout (weakfish)",
+      "Gulf flounder",
+      "Ladyfish",
+      "Permit",
+      "Red drum (puppy drum)",
+      "Redtail surfperch",
+      "Sand seatrout (white trout)",
+      "Silver seatrout",
+      "Snook",
+      "Southern flounder",
+      "Speckled trout (spotted seatrout)",
+      "Spotfin croaker",
+      "Striped bass (rockfish)",
+      "Walleye surfperch",
+      "White perch",
+      "Yellowfin croaker"
+    ],
+    "kayak": [
+      "Black drum",
+      "Black sea bass",
+      "Bluefish",
+      "Cabezon",
+      "Cobia",
+      "False albacore (little tunny)",
+      "Flounder (summer flounder)",
+      "Gag grouper",
+      "Gulf flounder",
+      "Jack crevalle",
+      "Kelp bass (calico bass)",
+      "King mackerel (kingfish)",
+      "Ladyfish",
+      "Lingcod",
+      "Mangrove snapper (gray snapper)",
+      "Permit",
+      "Red drum (puppy drum)",
+      "Red grouper",
+      "Red snapper",
+      "Sand seatrout (white trout)",
+      "Sheepshead",
+      "Snook",
+      "Southern flounder",
+      "Spanish mackerel",
+      "Speckled trout (spotted seatrout)",
+      "Striped bass (rockfish)",
+      "Tarpon",
+      "Tripletail",
+      "White seabass",
+      "Yellowtail (California yellowtail)"
+    ],
+    "charter": [
+      "Acadian redfish (ocean perch)",
+      "Albacore tuna",
+      "Almaco jack",
+      "Atlantic bluefin tuna",
+      "Atlantic cod",
+      "Bigeye tuna",
+      "Black grouper",
+      "Black marlin",
+      "Black rockfish",
+      "Black-and-yellow rockfish",
+      "Blackfin tuna",
+      "Blue marlin",
+      "Blue rockfish",
+      "Blueline tilefish",
+      "Bocaccio",
+      "Brown rockfish",
+      "Cabezon",
+      "Canary rockfish",
+      "Chilipepper rockfish",
+      "China rockfish",
+      "Chinook salmon (king salmon)",
+      "Chum salmon (dog salmon)",
+      "Cobia",
+      "Coho salmon (silver salmon)",
+      "Common thresher shark",
+      "Copper rockfish",
+      "Cusk",
+      "Dover sole",
+      "False albacore (little tunny)",
+      "Gag grouper",
+      "Golden tilefish",
+      "Gopher rockfish",
+      "Greater amberjack",
+      "Haddock",
+      "Hapu'upu'u (Hawaiian grouper)",
+      "Hogfish",
+      "Kelp rockfish",
+      "King mackerel (kingfish)",
+      "Lane snapper",
+      "Lehi (amberjack / silvermouth jack)",
+      "Lingcod",
+      "Longspine thornyhead",
+      "Mahi-mahi (dolphinfish)",
+      "Mangrove snapper (gray snapper)",
+      "Mutton snapper",
+      "Olive rockfish",
+      "Onaga (long-tail red snapper)",
+      "Opah (moonfish)",
+      "Opakapaka (pink snapper)",
+      "Pacific bonito",
+      "Pacific cod",
+      "Pacific halibut",
+      "Pacific ocean perch",
+      "Pacific spiny dogfish",
+      "Petrale sole",
+      "Pink salmon (humpy)",
+      "Quillback rockfish",
+      "Red grouper",
+      "Red porgy",
+      "Red snapper",
+      "Rex sole",
+      "Rosy rockfish",
+      "Rougheye rockfish",
+      "Sailfish",
+      "Scamp grouper",
+      "Scup (porgy)",
+      "Sevengill shark",
+      "Shortbill spearfish",
+      "Shortspine thornyhead",
+      "Sixgill shark",
+      "Skipjack tuna",
+      "Snowy grouper",
+      "Sockeye salmon (red salmon)",
+      "Spanish mackerel",
+      "Starry rockfish",
+      "Steelhead trout (sea-run rainbow)",
+      "Striped marlin",
+      "Swordfish",
+      "Tiger rockfish",
+      "Tope shark (soupfin)",
+      "Treefish",
+      "Vermilion rockfish",
+      "Vermilion snapper (beeliner)",
+      "Wahoo",
+      "White grunt",
+      "White marlin",
+      "White seabass",
+      "Widow rockfish",
+      "Yelloweye rockfish",
+      "Yellowfin tuna",
+      "Yellowtail (California yellowtail)",
+      "Yellowtail snapper"
+    ],
+    "fly": [
+      "Atlantic bluefin tuna",
+      "Atlantic bonito",
+      "Atlantic salmon",
+      "Great barracuda",
+      "Barred surfperch",
+      "Bluefin trevally (omilu)",
+      "Bluefish",
+      "Bonefish (oio)",
+      "Chinook salmon (king salmon)",
+      "Chum salmon (dog salmon)",
+      "Cobia",
+      "Coho salmon (silver salmon)",
+      "Corbina",
+      "False albacore (little tunny)",
+      "Giant trevally (ulua)",
+      "Jack crevalle",
+      "Kelp bass (calico bass)",
+      "King mackerel (kingfish)",
+      "Kumu (whitesaddle goatfish)",
+      "Ladyfish",
+      "Mahi-mahi (dolphinfish)",
+      "Pacific bonito",
+      "Papio (juvenile jack)",
+      "Permit",
+      "Pink salmon (humpy)",
+      "Pompano",
+      "Red drum (puppy drum)",
+      "Sevengill shark",
+      "Snook",
+      "Sockeye salmon (red salmon)",
+      "Spanish mackerel",
+      "Speckled trout (spotted seatrout)",
+      "Steelhead trout (sea-run rainbow)",
+      "Striped bass (rockfish)",
+      "Striped marlin",
+      "Tarpon",
+      "Tope shark (soupfin)",
+      "Tripletail",
+      "Uku (gray snapper / jobfish)",
+      "White seabass",
+      "Yellowtail (California yellowtail)"
+    ],
+    "inshore": [
+      "American eel",
+      "American shad",
+      "Black drum",
+      "Blue catfish",
+      "Bluefin trevally (omilu)",
+      "Bluegill",
+      "Channel catfish",
+      "Flathead catfish",
+      "Flounder (summer flounder)",
+      "Giant trevally (ulua)",
+      "Gray trout (weakfish)",
+      "Gulf flounder",
+      "Hickory shad",
+      "Jack crevalle",
+      "Ladyfish",
+      "Largemouth bass",
+      "Papio (juvenile jack)",
+      "Permit",
+      "Red drum (puppy drum)",
+      "Redear sunfish (shellcracker)",
+      "Sand seatrout (white trout)",
+      "Silver seatrout",
+      "Snook",
+      "Southern flounder",
+      "Speckled trout (spotted seatrout)",
+      "Striped bass (hybrid)",
+      "Striped bass (rockfish)",
+      "Tarpon",
+      "Tripletail",
+      "Warmouth",
+      "White perch",
+      "Yellow perch"
+    ]
+  },
+  "target_categories": {
+    "bottom": [
+      "Atlantic cod",
+      "Atlantic croaker",
+      "Atlantic halibut",
+      "Barred surfperch",
+      "Black drum",
+      "Black drum (large bull)",
+      "Bonefish (oio)",
+      "Calico surfperch",
+      "California halibut",
+      "Corbina",
+      "Flounder (summer flounder)",
+      "Fringed flounder",
+      "Gafftopsail catfish",
+      "Gulf flounder",
+      "Gulf kingfish (gulf whiting)",
+      "Haddock",
+      "Hardhead catfish (sea catfish)",
+      "Hogchoker",
+      "Moi (Pacific threadfin)",
+      "Northern kingfish",
+      "Pacific halibut",
+      "Pompano",
+      "Red drum (puppy drum)",
+      "Redtail surfperch",
+      "Rubberlip seaperch",
+      "Southern flounder",
+      "Southern kingfish (ground mullet)",
+      "Spot",
+      "Spotfin croaker",
+      "Starry flounder",
+      "Walleye surfperch",
+      "White croaker (tomcod)",
+      "Whiting (sea mullet, kingfish)",
+      "Windowpane flounder",
+      "Yellowfin croaker"
+    ],
+    "pelagic": [
+      "Akule (bigeye scad)",
+      "Albacore tuna",
+      "Atlantic bluefin tuna",
+      "Atlantic bonito",
+      "Atlantic mackerel",
+      "Atlantic salmon",
+      "Atlantic silverside",
+      "Bigeye tuna",
+      "Black marlin",
+      "Blackfin tuna",
+      "Blue marlin",
+      "Blue runner (hardtail)",
+      "Bluefin trevally (omilu)",
+      "Bluefish",
+      "Chinook salmon (king salmon)",
+      "Chum salmon (dog salmon)",
+      "Cobia",
+      "Coho salmon (silver salmon)",
+      "Common thresher shark",
+      "False albacore (little tunny)",
+      "Giant trevally (ulua)",
+      "Great barracuda",
+      "Greater amberjack",
+      "Jack crevalle",
+      "Jack mackerel (Spanish jack)",
+      "King mackerel (kingfish)",
+      "Ladyfish",
+      "Mahi-mahi (dolphinfish)",
+      "Oceanic whitetip shark",
+      "Opah (moonfish)",
+      "Opelu (mackerel scad)",
+      "Pacific bonito",
+      "Pacific mackerel (chub mackerel)",
+      "Papio (juvenile jack)",
+      "Pink salmon (humpy)",
+      "Sailfish",
+      "Scaled sardine (pilchard)",
+      "Shortbill spearfish",
+      "Silky shark",
+      "Skipjack tuna",
+      "Sockeye salmon (red salmon)",
+      "Spanish mackerel",
+      "Striped bass (rockfish)",
+      "Striped marlin",
+      "Swordfish",
+      "Tarpon",
+      "Tripletail",
+      "Wahoo",
+      "White marlin",
+      "White seabass",
+      "Yellowfin tuna",
+      "Yellowtail (California yellowtail)"
+    ],
+    "structure": [
+      "Acadian redfish (ocean perch)",
+      "Atlantic cod",
+      "Black grouper",
+      "Black rockfish",
+      "Black sea bass",
+      "Black-and-yellow rockfish",
+      "Blue rockfish",
+      "Blue-striped grunt",
+      "Bocaccio",
+      "Brown rockfish",
+      "Cabezon",
+      "California sheephead",
+      "Canary rockfish",
+      "China rockfish",
+      "Copper rockfish",
+      "Cubera snapper",
+      "Cusk",
+      "Gag grouper",
+      "Gopher rockfish",
+      "Grass rockfish",
+      "Gray triggerfish",
+      "Greater amberjack",
+      "Haddock",
+      "Hapu'upu'u (Hawaiian grouper)",
+      "Hogfish",
+      "Kelp bass (calico bass)",
+      "Kelp rockfish",
+      "Lane snapper",
+      "Lehi (amberjack / silvermouth jack)",
+      "Lingcod",
+      "Longspine thornyhead",
+      "Mangrove snapper (gray snapper)",
+      "Menpachi (soldierfish)",
+      "Mu (bigeye emperor)",
+      "Mutton snapper",
+      "Olive rockfish",
+      "Onaga (long-tail red snapper)",
+      "Opakapaka (pink snapper)",
+      "Opaleye",
+      "Pacific cod",
+      "Pacific ocean perch",
+      "Petrale sole",
+      "Quillback rockfish",
+      "Red grouper",
+      "Red porgy",
+      "Red snapper",
+      "Rosy rockfish",
+      "Rougheye rockfish",
+      "Sablefish (black cod)",
+      "Sand bass (barred sand bass)",
+      "Scamp grouper",
+      "Schoolmaster snapper",
+      "Scup (porgy)",
+      "Sheepshead",
+      "Shortspine thornyhead",
+      "Spadefish (Atlantic)",
+      "Starry rockfish",
+      "Tautog (blackfish)",
+      "Tiger rockfish",
+      "Tomtate grunt",
+      "Treefish",
+      "Triggerfish (gray)",
+      "Uku (gray snapper / jobfish)",
+      "Vermilion rockfish",
+      "Vermilion snapper (beeliner)",
+      "White grunt",
+      "Widow rockfish",
+      "Yelloweye rockfish",
+      "Yellowtail snapper"
+    ],
+    "gamefish": [
+      "Atlantic sharpnose shark",
+      "Blackfin tuna",
+      "Blacktip shark",
+      "Blue marlin",
+      "Bonnethead shark",
+      "Bull shark",
+      "Cobia",
+      "Dusky shark",
+      "Finetooth shark",
+      "Giant trevally (ulua)",
+      "Greater amberjack",
+      "Jack crevalle",
+      "Kaku (barracuda)",
+      "King mackerel (kingfish)",
+      "Lemon shark",
+      "Leopard shark",
+      "Mahi-mahi (dolphinfish)",
+      "Nurse shark",
+      "Permit",
+      "Sailfish",
+      "Sandbar shark",
+      "Scalloped hammerhead shark",
+      "Shovelnose guitarfish",
+      "Snook",
+      "Spinner shark",
+      "Tarpon",
+      "Wahoo",
+      "White marlin",
+      "Yellowfin tuna"
+    ],
+    "inshore_slam": [
+      "Flounder (summer flounder)",
+      "Gray trout (weakfish)",
+      "Gulf flounder",
+      "Jack crevalle",
+      "Ladyfish",
+      "Red drum (puppy drum)",
+      "Redfish (Gulf red drum)",
+      "Sand seatrout (white trout)",
+      "Silver seatrout",
+      "Snook",
+      "Southern flounder",
+      "Speckled trout (spotted seatrout)",
+      "Tarpon",
+      "Tripletail"
+    ]
+  },
+  "nuisance": [
+    "Gafftopsail catfish",
+    "Hardhead catfish (sea catfish)",
+    "Hogchoker",
+    "Lizardfish",
+    "Pigfish",
+    "Pinfish",
+    "Ribbonfish (Atlantic cutlassfish)",
+    "Spottail pinfish"
+  ],
+  "species_categories": {
+    "Red drum (puppy drum)": [
+      "game_fish"
+    ],
+    "Speckled trout (spotted seatrout)": [
+      "game_fish"
+    ],
+    "Black drum": [
+      "game_fish"
+    ],
+    "Black drum (large bull)": [
+      "game_fish"
+    ],
+    "Sheepshead": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Tautog (blackfish)": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Black sea bass": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Bluefish": [
+      "game_fish",
+      "pelagic",
+      "migratory"
+    ],
+    "Striped bass (rockfish)": [
+      "game_fish",
+      "migratory"
+    ],
+    "Striped bass (hybrid)": [
+      "game_fish"
+    ],
+    "Flounder (summer flounder)": [
+      "game_fish"
+    ],
+    "Southern flounder": [
+      "game_fish"
+    ],
+    "Gulf flounder": [
+      "game_fish"
+    ],
+    "Fringed flounder": [
+      "other"
+    ],
+    "Spanish mackerel": [
+      "game_fish",
+      "pelagic",
+      "migratory"
+    ],
+    "Cero mackerel": [
+      "game_fish",
+      "pelagic"
+    ],
+    "Pompano": [
+      "game_fish"
+    ],
+    "African pompano": [
+      "game_fish",
+      "pelagic"
+    ],
+    "Palometa": [
+      "panfish",
+      "pelagic"
+    ],
+    "Cobia": [
+      "game_fish",
+      "pelagic"
+    ],
+    "King mackerel (kingfish)": [
+      "game_fish",
+      "pelagic"
+    ],
+    "False albacore (little tunny)": [
+      "game_fish",
+      "pelagic"
+    ],
+    "Atlantic bonito": [
+      "game_fish",
+      "pelagic"
+    ],
+    "Tarpon": [
+      "game_fish",
+      "migratory"
+    ],
+    "Snook": [
+      "game_fish"
+    ],
+    "Jack crevalle": [
+      "game_fish",
+      "pelagic"
+    ],
+    "Blue runner (hardtail)": [
+      "bait_fish",
+      "pelagic"
+    ],
+    "Bar jack": [
+      "game_fish",
+      "pelagic"
+    ],
+    "Yellow jack": [
+      "game_fish",
+      "pelagic"
+    ],
+    "Horse-eye jack": [
+      "game_fish",
+      "pelagic"
+    ],
+    "Greater amberjack": [
+      "game_fish",
+      "pelagic"
+    ],
+    "Almaco jack": [
+      "game_fish",
+      "pelagic"
+    ],
+    "Almaco jack (large adult)": [
+      "game_fish",
+      "pelagic"
+    ],
+    "Lesser amberjack": [
+      "game_fish",
+      "pelagic"
+    ],
+    "Amberjack (juvenile, banded)": [
+      "game_fish"
+    ],
+    "Rainbow runner": [
+      "game_fish",
+      "pelagic"
+    ],
+    "Permit": [
+      "game_fish"
+    ],
+    "Tripletail": [
+      "game_fish"
+    ],
+    "Ladyfish": [
+      "game_fish",
+      "pelagic"
+    ],
+    "Great barracuda": [
+      "game_fish",
+      "pelagic"
+    ],
+    "Gray trout (weakfish)": [
+      "game_fish"
+    ],
+    "Sand seatrout (white trout)": [
+      "panfish"
+    ],
+    "Silver seatrout": [
+      "panfish"
+    ],
+    "Mahi-mahi (dolphinfish)": [
+      "game_fish",
+      "pelagic"
+    ],
+    "Wahoo": [
+      "game_fish",
+      "pelagic"
+    ],
+    "Blackfin tuna": [
+      "game_fish",
+      "pelagic"
+    ],
+    "Yellowfin tuna": [
+      "game_fish",
+      "pelagic"
+    ],
+    "Bigeye tuna": [
+      "game_fish",
+      "pelagic"
+    ],
+    "Albacore tuna": [
+      "game_fish",
+      "pelagic"
+    ],
+    "Frigate mackerel": [
+      "pelagic",
+      "bait_fish"
+    ],
+    "Sailfish": [
+      "game_fish",
+      "pelagic"
+    ],
+    "White marlin": [
+      "game_fish",
+      "pelagic"
+    ],
+    "Triggerfish (gray)": [
+      "reef_fish"
+    ],
+    "Ocean triggerfish": [
+      "reef_fish"
+    ],
+    "Queen triggerfish": [
+      "reef_fish"
+    ],
+    "Planehead filefish": [
+      "reef_fish"
+    ],
+    "Scrawled filefish": [
+      "reef_fish"
+    ],
+    "Orange filefish": [
+      "reef_fish"
+    ],
+    "Spadefish (Atlantic)": [
+      "reef_fish"
+    ],
+    "Red snapper": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Vermilion snapper (beeliner)": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Mangrove snapper (gray snapper)": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Lane snapper": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Yellowtail snapper": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Schoolmaster snapper": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Silk snapper": [
+      "reef_fish"
+    ],
+    "Queen snapper": [
+      "reef_fish"
+    ],
+    "Gray snapper (juvenile)": [
+      "reef_fish"
+    ],
+    "Gag grouper": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Red grouper": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Scamp grouper": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Black grouper": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Snowy grouper": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Wreckfish": [
+      "reef_fish"
+    ],
+    "Yellowedge grouper": [
+      "reef_fish"
+    ],
+    "Misty grouper": [
+      "reef_fish"
+    ],
+    "Goliath grouper (jewfish)": [
+      "reef_fish"
+    ],
+    "Coney": [
+      "reef_fish"
+    ],
+    "Rock hind": [
+      "reef_fish"
+    ],
+    "Red hind": [
+      "reef_fish"
+    ],
+    "Speckled hind": [
+      "reef_fish"
+    ],
+    "Warsaw grouper": [
+      "reef_fish"
+    ],
+    "Kitty Mitchell (yellowfin grouper)": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Greater soapfish": [
+      "reef_fish"
+    ],
+    "Hogfish": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Scup (porgy)": [
+      "panfish"
+    ],
+    "Grass porgy": [
+      "panfish",
+      "reef_fish"
+    ],
+    "White grunt": [
+      "panfish",
+      "reef_fish"
+    ],
+    "Blue-striped grunt": [
+      "panfish",
+      "reef_fish"
+    ],
+    "Tomtate grunt": [
+      "panfish",
+      "reef_fish"
+    ],
+    "Sailor's choice grunt": [
+      "panfish",
+      "reef_fish"
+    ],
+    "Margate": [
+      "panfish",
+      "reef_fish"
+    ],
+    "Porkfish": [
+      "panfish",
+      "reef_fish"
+    ],
+    "Sand perch": [
+      "panfish",
+      "reef_fish"
+    ],
+    "Sand tilefish": [
+      "reef_fish"
+    ],
+    "Blueline tilefish": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Golden tilefish": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Tilefish (blueline juvenile/grey)": [
+      "reef_fish"
+    ],
+    "Tilefish (golden juvenile)": [
+      "reef_fish"
+    ],
+    "Tilefish (golden)": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Barrelfish": [
+      "reef_fish"
+    ],
+    "Blackbelly rosefish": [
+      "reef_fish"
+    ],
+    "Blue tang (surgeonfish)": [
+      "reef_fish"
+    ],
+    "Gray angelfish": [
+      "reef_fish"
+    ],
+    "Spotfin butterflyfish": [
+      "reef_fish"
+    ],
+    "Doctorfish (tang)": [
+      "reef_fish"
+    ],
+    "Squirrelfish": [
+      "reef_fish"
+    ],
+    "Bermuda chub (sea chub)": [
+      "reef_fish"
+    ],
+    "Sergeant major (damselfish)": [
+      "reef_fish"
+    ],
+    "Yellowtail damselfish": [
+      "reef_fish"
+    ],
+    "Slippery dick (wrasse)": [
+      "reef_fish"
+    ],
+    "Puddingwife (wrasse)": [
+      "reef_fish"
+    ],
+    "Bluehead wrasse": [
+      "reef_fish"
+    ],
+    "Creole wrasse": [
+      "reef_fish"
+    ],
+    "Cunner (bergall)": [
+      "reef_fish"
+    ],
+    "Striped blenny": [
+      "reef_fish"
+    ],
+    "Feather blenny": [
+      "reef_fish"
+    ],
+    "Naked goby": [
+      "reef_fish"
+    ],
+    "Smooth trunkfish": [
+      "reef_fish"
+    ],
+    "Honeycomb cowfish": [
+      "reef_fish"
+    ],
+    "Scrawled cowfish": [
+      "reef_fish"
+    ],
+    "Striped burrfish (spiny boxfish)": [
+      "reef_fish"
+    ],
+    "Bandtail puffer": [
+      "reef_fish"
+    ],
+    "Checkered puffer": [
+      "reef_fish"
+    ],
+    "Northern puffer (blowfish)": [
+      "panfish",
+      "reef_fish"
+    ],
+    "Bigeye (Priacanthus arenatus)": [
+      "reef_fish"
+    ],
+    "Short bigeye": [
+      "reef_fish"
+    ],
+    "Red lionfish (invasive)": [
+      "reef_fish"
+    ],
+    "Spotted scorpionfish": [
+      "reef_fish"
+    ],
+    "Barbfish (scorpionfish)": [
+      "reef_fish"
+    ],
+    "Plumed scorpionfish": [
+      "reef_fish"
+    ],
+    "Spotted moray eel": [
+      "reef_fish"
+    ],
+    "Green moray eel": [
+      "reef_fish"
+    ],
+    "Spot": [
+      "panfish"
+    ],
+    "Atlantic croaker": [
+      "panfish"
+    ],
+    "Whiting (sea mullet, kingfish)": [
+      "panfish"
+    ],
+    "Southern kingfish (ground mullet)": [
+      "panfish"
+    ],
+    "Gulf kingfish (gulf whiting)": [
+      "panfish"
+    ],
+    "Northern kingfish": [
+      "panfish"
+    ],
+    "Star drum": [
+      "panfish"
+    ],
+    "Banded drum": [
+      "panfish"
+    ],
+    "Silver perch": [
+      "panfish"
+    ],
+    "White perch": [
+      "panfish"
+    ],
+    "Yellow perch": [
+      "panfish"
+    ],
+    "Bluegill": [
+      "panfish"
+    ],
+    "Redear sunfish (shellcracker)": [
+      "panfish"
+    ],
+    "Warmouth": [
+      "panfish"
+    ],
+    "Hickory shad": [
+      "game_fish",
+      "migratory"
+    ],
+    "American shad": [
+      "game_fish",
+      "migratory"
+    ],
+    "Atlantic menhaden (bunker)": [
+      "bait_fish",
+      "migratory"
+    ],
+    "Ballyhoo (balao)": [
+      "bait_fish"
+    ],
+    "Round scad (cigar minnow)": [
+      "bait_fish"
+    ],
+    "Spanish sardine": [
+      "bait_fish"
+    ],
+    "Atlantic thread herring (greenback)": [
+      "bait_fish"
+    ],
+    "Atlantic herring": [
+      "bait_fish",
+      "migratory"
+    ],
+    "Blueback herring": [
+      "bait_fish",
+      "migratory"
+    ],
+    "Alewife": [
+      "bait_fish",
+      "migratory"
+    ],
+    "Butterfish": [
+      "bait_fish"
+    ],
+    "Harvestfish": [
+      "bait_fish"
+    ],
+    "Sheepshead minnow (killifish)": [
+      "bait_fish"
+    ],
+    "Atlantic bumper": [
+      "bait_fish"
+    ],
+    "Striped mullet": [
+      "bait_fish",
+      "migratory"
+    ],
+    "Southern sennet": [
+      "bait_fish"
+    ],
+    "Blacktip shark": [
+      "shark",
+      "game_fish"
+    ],
+    "Atlantic sharpnose shark": [
+      "shark"
+    ],
+    "Bull shark": [
+      "shark",
+      "game_fish"
+    ],
+    "Bonnethead shark": [
+      "shark"
+    ],
+    "Smooth dogfish": [
+      "shark"
+    ],
+    "Spiny dogfish": [
+      "shark"
+    ],
+    "Tiger shark": [
+      "shark",
+      "game_fish"
+    ],
+    "Scalloped hammerhead shark": [
+      "shark"
+    ],
+    "Shortfin mako shark": [
+      "shark",
+      "game_fish",
+      "pelagic"
+    ],
+    "Thresher shark": [
+      "shark",
+      "game_fish"
+    ],
+    "Finetooth shark": [
+      "shark"
+    ],
+    "Atlantic angel shark": [
+      "shark"
+    ],
+    "Southern stingray": [
+      "ray"
+    ],
+    "Clearnose skate": [
+      "ray"
+    ],
+    "Atlantic stingray": [
+      "ray"
+    ],
+    "Bluntnose stingray": [
+      "ray"
+    ],
+    "Butterfly ray": [
+      "ray"
+    ],
+    "Eagle ray (spotted)": [
+      "ray"
+    ],
+    "Winter skate": [
+      "ray"
+    ],
+    "Little skate": [
+      "ray"
+    ],
+    "Sea robin": [
+      "other"
+    ],
+    "Striped sea robin": [
+      "other"
+    ],
+    "Northern sea robin": [
+      "other"
+    ],
+    "Oyster toadfish": [
+      "other"
+    ],
+    "Leopard toadfish": [
+      "other"
+    ],
+    "Lizardfish": [
+      "other"
+    ],
+    "Conger eel": [
+      "other"
+    ],
+    "Remora (sharksucker)": [
+      "other"
+    ],
+    "Sharksucker (whitefin)": [
+      "other"
+    ],
+    "Goosefish (monkfish)": [
+      "other"
+    ],
+    "Atlantic sturgeon": [
+      "other"
+    ],
+    "Shortnose sturgeon": [
+      "other"
+    ],
+    "Sargassumfish": [
+      "other"
+    ],
+    "Lined seahorse": [
+      "other"
+    ],
+    "Dusky pipefish": [
+      "other"
+    ],
+    "Shortnose batfish": [
+      "other"
+    ],
+    "Flying gurnard": [
+      "other"
+    ],
+    "Ocean sunfish (mola mola)": [
+      "other"
+    ],
+    "Longnose gar": [
+      "other"
+    ],
+    "Kemp's ridley sea turtle": [
+      "other"
+    ],
+    "Hardhead catfish (sea catfish)": [
+      "other"
+    ],
+    "Gafftopsail catfish": [
+      "other"
+    ],
+    "Pigfish": [
+      "other"
+    ],
+    "Pinfish": [
+      "other"
+    ],
+    "Spottail pinfish": [
+      "other"
+    ],
+    "Ribbonfish (Atlantic cutlassfish)": [
+      "other"
+    ],
+    "Hogchoker": [
+      "other"
+    ],
+    "Spotted hake": [
+      "other"
+    ],
+    "Red hake (ling)": [
+      "other"
+    ],
+    "Pollock": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Atlantic cod": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Winter flounder": [
+      "game_fish"
+    ],
+    "Fluke (summer flounder)": [
+      "game_fish"
+    ],
+    "Weakfish": [
+      "game_fish"
+    ],
+    "Mojarra (yellowfin mojarra)": [
+      "other"
+    ],
+    "Largemouth bass": [
+      "game_fish"
+    ],
+    "Channel catfish": [
+      "panfish"
+    ],
+    "Blue catfish": [
+      "panfish"
+    ],
+    "Flathead catfish": [
+      "game_fish"
+    ],
+    "Redfish (Gulf red drum)": [
+      "game_fish"
+    ],
+    "Haddock": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Atlantic halibut": [
+      "game_fish"
+    ],
+    "Swordfish": [
+      "game_fish",
+      "pelagic"
+    ],
+    "Black marlin": [
+      "game_fish",
+      "pelagic"
+    ],
+    "Pacific halibut": [
+      "game_fish"
+    ],
+    "Chinook salmon (king salmon)": [
+      "game_fish",
+      "pelagic"
+    ],
+    "Coho salmon (silver salmon)": [
+      "game_fish",
+      "pelagic"
+    ],
+    "Chum salmon (dog salmon)": [
+      "game_fish",
+      "pelagic"
+    ],
+    "Pink salmon (humpy)": [
+      "game_fish",
+      "pelagic"
+    ],
+    "Sablefish (black cod)": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Barred surfperch": [
+      "panfish"
+    ],
+    "Redtail surfperch": [
+      "panfish"
+    ],
+    "Calico surfperch": [
+      "panfish"
+    ],
+    "Walleye surfperch": [
+      "panfish"
+    ],
+    "Rubberlip seaperch": [
+      "panfish"
+    ],
+    "Halfmoon (Catalina perch)": [
+      "panfish"
+    ],
+    "Opaleye": [
+      "panfish"
+    ],
+    "California halibut": [
+      "game_fish"
+    ],
+    "Starry flounder": [
+      "game_fish"
+    ],
+    "Lingcod": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Vermilion rockfish": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Blue rockfish": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Copper rockfish": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Grass rockfish": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Cabezon": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Kelp bass (calico bass)": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Sand bass (barred sand bass)": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "California sheephead": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "White seabass": [
+      "game_fish",
+      "pelagic"
+    ],
+    "Yellowtail (California yellowtail)": [
+      "game_fish",
+      "pelagic"
+    ],
+    "Pacific bonito": [
+      "game_fish",
+      "pelagic"
+    ],
+    "Pacific mackerel (chub mackerel)": [
+      "panfish",
+      "pelagic"
+    ],
+    "Jack mackerel (Spanish jack)": [
+      "bait_fish",
+      "pelagic"
+    ],
+    "Corbina": [
+      "panfish"
+    ],
+    "Spotfin croaker": [
+      "panfish"
+    ],
+    "Yellowfin croaker": [
+      "panfish"
+    ],
+    "White croaker (tomcod)": [
+      "panfish"
+    ],
+    "Leopard shark": [
+      "shark"
+    ],
+    "Shovelnose guitarfish": [
+      "ray",
+      "game_fish"
+    ],
+    "Bat ray": [
+      "ray"
+    ],
+    "Thornback ray": [
+      "ray"
+    ],
+    "Kelp greenling": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Rock greenling": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Pacific staghorn sculpin": [
+      "other"
+    ],
+    "Pacific herring": [
+      "bait_fish"
+    ],
+    "Pacific sardine": [
+      "bait_fish"
+    ],
+    "Northern anchovy": [
+      "bait_fish"
+    ],
+    "Jacksmelt": [
+      "bait_fish",
+      "panfish"
+    ],
+    "Giant trevally (ulua)": [
+      "game_fish",
+      "pelagic"
+    ],
+    "Bluefin trevally (omilu)": [
+      "game_fish",
+      "pelagic"
+    ],
+    "Papio (juvenile jack)": [
+      "game_fish",
+      "pelagic"
+    ],
+    "Bonefish (oio)": [
+      "game_fish"
+    ],
+    "Moi (Pacific threadfin)": [
+      "game_fish"
+    ],
+    "Mu (bigeye emperor)": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Kaku (barracuda)": [
+      "game_fish",
+      "pelagic"
+    ],
+    "Aholehole (Hawaiian flagtail)": [
+      "reef_fish"
+    ],
+    "Atlantic bluefin tuna": [
+      "game_fish",
+      "pelagic"
+    ],
+    "Atlantic mackerel": [
+      "game_fish",
+      "pelagic",
+      "bait_fish"
+    ],
+    "Steelhead trout (sea-run rainbow)": [
+      "game_fish"
+    ],
+    "Pacific cod": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Black rockfish": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Yelloweye rockfish": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Quillback rockfish": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Olive rockfish": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "China rockfish": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Black-and-yellow rockfish": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Opakapaka (pink snapper)": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Onaga (long-tail red snapper)": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Uku (gray snapper / jobfish)": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Hapu'upu'u (Hawaiian grouper)": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Opah (moonfish)": [
+      "game_fish",
+      "pelagic"
+    ],
+    "Porbeagle shark": [
+      "shark"
+    ],
+    "Acadian redfish (ocean perch)": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Petrale sole": [
+      "game_fish"
+    ],
+    "Pacific sanddab": [
+      "panfish"
+    ],
+    "English sole": [
+      "panfish"
+    ],
+    "Arrowtooth flounder": [
+      "game_fish"
+    ],
+    "Cusk": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Surf smelt (Pacific)": [
+      "bait_fish"
+    ],
+    "Gray triggerfish": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Lehi (amberjack / silvermouth jack)": [
+      "game_fish",
+      "pelagic"
+    ],
+    "Atlantic salmon": [
+      "game_fish"
+    ],
+    "Sockeye salmon (red salmon)": [
+      "game_fish",
+      "pelagic"
+    ],
+    "Rock sole": [
+      "panfish"
+    ],
+    "Bocaccio": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Widow rockfish": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Tiger rockfish": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Treefish": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Gopher rockfish": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Kelp rockfish": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Brown rockfish": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Rosy rockfish": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Canary rockfish": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Starry rockfish": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Pacific spiny dogfish": [
+      "shark"
+    ],
+    "Sixgill shark": [
+      "shark"
+    ],
+    "Sevengill shark": [
+      "shark"
+    ],
+    "Tope shark (soupfin)": [
+      "shark"
+    ],
+    "Kumu (whitesaddle goatfish)": [
+      "reef_fish"
+    ],
+    "Nenue (Hawaiian chub)": [
+      "reef_fish"
+    ],
+    "Pacific ocean perch": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Rougheye rockfish": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Longspine thornyhead": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Shortspine thornyhead": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Dover sole": [
+      "game_fish"
+    ],
+    "Rex sole": [
+      "panfish"
+    ],
+    "Kala (unicornfish)": [
+      "reef_fish"
+    ],
+    "Manini (convict tang)": [
+      "reef_fish"
+    ],
+    "Akule (bigeye scad)": [
+      "bait_fish",
+      "panfish"
+    ],
+    "Opelu (mackerel scad)": [
+      "bait_fish",
+      "panfish"
+    ],
+    "Uhu (parrotfish)": [
+      "reef_fish"
+    ],
+    "Taape (bluestripe snapper)": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Moano (goatfish)": [
+      "reef_fish",
+      "panfish"
+    ],
+    "Pile perch": [
+      "panfish"
+    ],
+    "Shiner perch": [
+      "panfish",
+      "bait_fish"
+    ],
+    "Rainbow seaperch": [
+      "panfish"
+    ],
+    "Striped seaperch": [
+      "panfish"
+    ],
+    "Pink seaperch": [
+      "panfish"
+    ],
+    "Painted greenling": [
+      "panfish"
+    ],
+    "Monkeyface prickleback": [
+      "panfish"
+    ],
+    "Spotted sand bass": [
+      "game_fish"
+    ],
+    "Squarespot rockfish": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Greenstriped rockfish": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Splitnose rockfish": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Shortbelly rockfish": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Chilipepper rockfish": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Pygmy rockfish": [
+      "panfish",
+      "reef_fish"
+    ],
+    "Sand drum": [
+      "game_fish"
+    ],
+    "Southern puffer": [
+      "panfish"
+    ],
+    "Gulf toadfish": [
+      "panfish"
+    ],
+    "Scaled sardine (pilchard)": [
+      "bait_fish"
+    ],
+    "Atlantic silverside": [
+      "bait_fish",
+      "panfish"
+    ],
+    "Sea raven": [
+      "panfish"
+    ],
+    "Lumpfish": [
+      "panfish"
+    ],
+    "Atlantic wolffish": [
+      "game_fish"
+    ],
+    "Oceanic whitetip shark": [
+      "game_fish",
+      "catch_and_release"
+    ],
+    "Silky shark": [
+      "game_fish",
+      "catch_and_release"
+    ],
+    "Common thresher shark": [
+      "game_fish"
+    ],
+    "Shortbill spearfish": [
+      "game_fish",
+      "billfish"
+    ],
+    "Weakfish (seatrout)": [
+      "game_fish"
+    ],
+    "Spotted seatrout": [
+      "game_fish"
+    ],
+    "Fourspot flounder": [
+      "game_fish",
+      "panfish"
+    ],
+    "Spotfin mojarra": [
+      "panfish",
+      "bait_fish"
+    ],
+    "Striped mojarra": [
+      "panfish",
+      "bait_fish"
+    ],
+    "Papio (young ulua)": [
+      "game_fish"
+    ],
+    "Atlantic blue marlin": [
+      "game_fish",
+      "billfish"
+    ],
+    "Longbill spearfish": [
+      "game_fish",
+      "billfish"
+    ],
+    "Bay anchovy": [
+      "bait_fish"
+    ],
+    "Mummichog": [
+      "bait_fish",
+      "panfish"
+    ],
+    "Striped killifish": [
+      "bait_fish",
+      "panfish"
+    ],
+    "Florida gar": [
+      "game_fish"
+    ],
+    "Chain pickerel": [
+      "game_fish"
+    ],
+    "Awa (milkfish)": [
+      "game_fish"
+    ],
+    "Halfbanded rockfish": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Honeycomb rockfish": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Speckled rockfish": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Swordspine rockfish": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Stripetail rockfish": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Buffalo sculpin": [
+      "panfish"
+    ],
+    "Freshwater drum": [
+      "game_fish"
+    ],
+    "Kaku (barracuda, Hawaii)": [
+      "game_fish"
+    ],
+    "Vermilion snapper (beeliners)": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Dusky rockfish": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Yellowmouth grouper": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Rock hind grouper": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Little tunny (false albacore)": [
+      "game_fish",
+      "pelagic"
+    ],
+    "Skipjack tuna": [
+      "game_fish",
+      "pelagic",
+      "bait_fish"
+    ],
+    "Walleye (coastal)": [
+      "game_fish"
+    ],
+    "Olive flounder": [
+      "game_fish"
+    ],
+    "Windowpane flounder": [
+      "game_fish",
+      "panfish"
+    ],
+    "Ocean pout": [
+      "panfish"
+    ],
+    "Cunner": [
+      "panfish"
+    ],
+    "Longhorn sculpin": [
+      "panfish"
+    ],
+    "Atlantic needlefish": [
+      "panfish"
+    ],
+    "Palometa (longfin pompano)": [
+      "game_fish"
+    ],
+    "Florida pompano": [
+      "game_fish"
+    ],
+    "Permit (nearshore)": [
+      "game_fish"
+    ],
+    "Lookdown": [
+      "panfish"
+    ],
+    "Gulf pipefish": [
+      "panfish"
+    ],
+    "Inshore lizardfish": [
+      "panfish"
+    ],
+    "Northern stargazer": [
+      "panfish"
+    ],
+    "Bowfin": [
+      "game_fish"
+    ],
+    "Pacific sand dab": [
+      "panfish"
+    ],
+    "Speckled sand dab": [
+      "panfish"
+    ],
+    "Butter sole": [
+      "panfish"
+    ],
+    "Sand sole": [
+      "panfish"
+    ],
+    "White croaker (tomcod, kingfish)": [
+      "panfish"
+    ],
+    "Pacific mackerel": [
+      "game_fish",
+      "bait_fish"
+    ],
+    "Jack mackerel (Pacific)": [
+      "game_fish",
+      "bait_fish"
+    ],
+    "Surf smelt": [
+      "panfish",
+      "bait_fish"
+    ],
+    "Night smelt": [
+      "panfish",
+      "bait_fish"
+    ],
+    "Barred sand bass": [
+      "game_fish"
+    ],
+    "Cownose ray": [
+      "ray",
+      "migratory",
+      "game_fish"
+    ],
+    "Atlantic guitarfish": [
+      "panfish"
+    ],
+    "Barndoor skate": [
+      "catch_and_release"
+    ],
+    "Bigeye scad (Atlantic)": [
+      "bait_fish",
+      "panfish"
+    ],
+    "Round scad": [
+      "bait_fish",
+      "panfish"
+    ],
+    "French grunt": [
+      "panfish"
+    ],
+    "Cottonwick grunt": [
+      "panfish"
+    ],
+    "Caesar grunt": [
+      "panfish"
+    ],
+    "Oio (bonefish, Hawaii)": [
+      "game_fish",
+      "catch_and_release"
+    ],
+    "Omilu (bluefin trevally)": [
+      "game_fish"
+    ],
+    "Kole (surgeonfish)": [
+      "reef_fish"
+    ],
+    "Menpachi (soldierfish)": [
+      "reef_fish",
+      "panfish"
+    ],
+    "Roi (peacock grouper)": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Toau (blacktail snapper)": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Atlantic menhaden": [
+      "bait_fish"
+    ],
+    "Gizzard shad": [
+      "bait_fish"
+    ],
+    "Striped burrfish": [
+      "panfish"
+    ],
+    "Balloonfish": [
+      "panfish"
+    ],
+    "Sharpnose puffer": [
+      "panfish"
+    ],
+    "Fringed filefish": [
+      "panfish"
+    ],
+    "Leatherjacket (Atlantic)": [
+      "panfish"
+    ],
+    "Leopard shark (Pacific)": [
+      "game_fish"
+    ],
+    "Soupfin shark": [
+      "game_fish"
+    ],
+    "Gray smoothhound": [
+      "game_fish"
+    ],
+    "Brown smoothhound": [
+      "game_fish"
+    ],
+    "Pacific electric ray": [
+      "catch_and_release"
+    ],
+    "Pacific tomcod": [
+      "panfish"
+    ],
+    "Eulachon (smelt)": [
+      "panfish",
+      "bait_fish"
+    ],
+    "Black croaker (xieb)": [
+      "panfish"
+    ],
+    "Silver hake (whiting)": [
+      "game_fish"
+    ],
+    "Offshore hake": [
+      "game_fish"
+    ],
+    "Atlantic tripletail": [
+      "game_fish"
+    ],
+    "Goldface tilefish": [
+      "game_fish"
+    ],
+    "Blackline tilefish": [
+      "game_fish"
+    ],
+    "Pilotfish": [
+      "game_fish"
+    ],
+    "Atlantic Spanish mackerel": [
+      "game_fish"
+    ],
+    "Longtail tuna": [
+      "game_fish"
+    ],
+    "Banded rudderfish": [
+      "game_fish",
+      "pelagic",
+      "bait_fish"
+    ],
+    "Blue tang (Atlantic)": [
+      "reef_fish"
+    ],
+    "Ocean surgeon": [
+      "reef_fish"
+    ],
+    "Doctorfish": [
+      "reef_fish"
+    ],
+    "Foureye butterflyfish": [
+      "reef_fish"
+    ],
+    "Rock beauty": [
+      "reef_fish"
+    ],
+    "French angelfish": [
+      "reef_fish"
+    ],
+    "Queen angelfish": [
+      "reef_fish"
+    ],
+    "Hogfish (Atlantic)": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Spanish hogfish": [
+      "reef_fish",
+      "panfish"
+    ],
+    "Clown wrasse": [
+      "reef_fish",
+      "panfish"
+    ],
+    "Yellowhead wrasse": [
+      "reef_fish",
+      "panfish"
+    ],
+    "White seaperch": [
+      "panfish"
+    ],
+    "Weke ula (goatfish)": [
+      "reef_fish",
+      "panfish"
+    ],
+    "Nenue (chub)": [
+      "panfish"
+    ],
+    "Amaama (striped mullet, Hawaii)": [
+      "panfish",
+      "bait_fish"
+    ],
+    "Kumu (squirrelfish, Hawaii)": [
+      "reef_fish",
+      "panfish"
+    ],
+    "Pacific whiting (hake)": [
+      "game_fish"
+    ],
+    "Blacksmith (Pacific)": [
+      "panfish"
+    ],
+    "Garibaldi (California state fish)": [
+      "catch_and_release"
+    ],
+    "Plainfin midshipman": [
+      "panfish"
+    ],
+    "Pollock (Atlantic)": [
+      "game_fish"
+    ],
+    "Witch flounder": [
+      "game_fish"
+    ],
+    "American plaice": [
+      "game_fish"
+    ],
+    "Greenland halibut (turbot)": [
+      "game_fish"
+    ],
+    "Three-line grunt": [
+      "panfish"
+    ],
+    "Belted sandfish": [
+      "panfish"
+    ],
+    "Vermilion snapper": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Yelloweye snapper": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Wenchman snapper": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Longspine porgy": [
+      "game_fish"
+    ],
+    "Permit (offshore)": [
+      "game_fish"
+    ],
+    "Cubera snapper": [
+      "game_fish"
+    ],
+    "Nassau grouper": [
+      "catch_and_release"
+    ],
+    "Goliath grouper": [
+      "catch_and_release"
+    ],
+    "Gulf kingfish (sea mullet)": [
+      "panfish"
+    ],
+    "Northern kingfish (sea mullet)": [
+      "panfish"
+    ],
+    "Southern kingfish (sea mullet)": [
+      "panfish"
+    ],
+    "Atlantic threadfin": [
+      "bait_fish"
+    ],
+    "Tripletail (Gulf)": [
+      "game_fish"
+    ],
+    "Yellowtail rockfish": [
+      "game_fish"
+    ],
+    "Cowcod": [
+      "catch_and_release"
+    ],
+    "Greenspotted rockfish": [
+      "game_fish"
+    ],
+    "Sharpchin rockfish": [
+      "game_fish"
+    ],
+    "Redbanded rockfish": [
+      "game_fish"
+    ],
+    "Puddingwife wrasse": [
+      "reef_fish",
+      "panfish"
+    ],
+    "California moray": [
+      "catch_and_release"
+    ],
+    "Silver perch (Atlantic)": [
+      "panfish",
+      "bait_fish"
+    ],
+    "Coho salmon (Pacific)": [
+      "game_fish"
+    ],
+    "Chum salmon": [
+      "game_fish"
+    ],
+    "Pink salmon": [
+      "game_fish"
+    ],
+    "Sockeye salmon": [
+      "game_fish"
+    ],
+    "Dolly Varden": [
+      "game_fish"
+    ],
+    "Wahoo (Pacific)": [
+      "game_fish"
+    ],
+    "Mahi-mahi (Pacific)": [
+      "game_fish"
+    ],
+    "Yellowfin tuna (Pacific)": [
+      "game_fish"
+    ],
+    "Pacific bluefin tuna": [
+      "game_fish"
+    ],
+    "Striped marlin": [
+      "game_fish",
+      "pelagic",
+      "catch_and_release"
+    ],
+    "Pacific sailfish": [
+      "game_fish",
+      "catch_and_release"
+    ],
+    "Wahoo (Atlantic)": [
+      "game_fish"
+    ],
+    "Blue marlin": [
+      "game_fish",
+      "pelagic",
+      "catch_and_release"
+    ],
+    "Green moray": [
+      "catch_and_release"
+    ],
+    "Spotted moray": [
+      "catch_and_release"
+    ],
+    "Chain moray": [
+      "catch_and_release"
+    ],
+    "Uku (green jobfish)": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Kahala (amberjack, Hawaii)": [
+      "game_fish"
+    ],
+    "Mu (bigscale soldierfish)": [
+      "reef_fish",
+      "panfish"
+    ],
+    "Ehu (squirrelfish snapper)": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Onaga (longtail snapper)": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Lehi (silver jaw snapper)": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Nairagi (striped marlin, Hawaii)": [
+      "game_fish",
+      "catch_and_release"
+    ],
+    "Darkblotched rockfish": [
+      "game_fish"
+    ],
+    "Pacific grenadier": [
+      "game_fish"
+    ],
+    "Spiny dogfish (Pacific)": [
+      "game_fish"
+    ],
+    "Pacific angel shark": [
+      "catch_and_release"
+    ],
+    "Bat ray (Pacific)": [
+      "game_fish"
+    ],
+    "Banded guitarfish": [
+      "panfish"
+    ],
+    "Kelp bass": [
+      "game_fish"
+    ],
+    "Rock wrasse": [
+      "panfish"
+    ],
+    "Se\u00f1orita wrasse": [
+      "panfish"
+    ],
+    "Walleye pollock": [
+      "game_fish"
+    ],
+    "Sablefish (Pacific)": [
+      "game_fish"
+    ],
+    "Black sea bass (Pacific)": [
+      "catch_and_release"
+    ],
+    "California corbina": [
+      "game_fish"
+    ],
+    "Black sea bass (Atlantic)": [
+      "game_fish"
+    ],
+    "Bank sea bass": [
+      "game_fish"
+    ],
+    "Rock sea bass": [
+      "game_fish"
+    ],
+    "Spot (Atlantic)": [
+      "panfish"
+    ],
+    "Sheepshead (Atlantic)": [
+      "game_fish"
+    ],
+    "Blue catfish (tidal)": [
+      "game_fish"
+    ],
+    "Channel catfish (tidal)": [
+      "game_fish"
+    ],
+    "Skilletfish": [
+      "panfish"
+    ],
+    "Striped cusk-eel": [
+      "panfish"
+    ],
+    "Northern puffer": [
+      "panfish"
+    ],
+    "Dog snapper": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Mahogany snapper": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Glasseye snapper": [
+      "reef_fish",
+      "panfish"
+    ],
+    "Graysby": [
+      "reef_fish",
+      "panfish"
+    ],
+    "Coney grouper": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Mutton snapper": [
+      "game_fish"
+    ],
+    "Gray tilefish": [
+      "game_fish"
+    ],
+    "Skipjack tuna (Atlantic)": [
+      "game_fish"
+    ],
+    "Cobia (juvenile)": [
+      "game_fish"
+    ],
+    "Atlantic blacktip shark": [
+      "game_fish"
+    ],
+    "Caribbean reef shark": [
+      "catch_and_release"
+    ],
+    "Sand tiger shark": [
+      "shark",
+      "catch_and_release"
+    ],
+    "Dusky shark": [
+      "shark",
+      "catch_and_release"
+    ],
+    "Lemon shark": [
+      "shark",
+      "catch_and_release"
+    ],
+    "Nurse shark": [
+      "shark",
+      "catch_and_release"
+    ],
+    "Redfish (red drum) juvenile": [
+      "game_fish"
+    ],
+    "Tarpon (juvenile)": [
+      "game_fish",
+      "catch_and_release"
+    ],
+    "Pacific spadefish": [
+      "panfish"
+    ],
+    "Pacific jack mackerel": [
+      "panfish"
+    ],
+    "Pacific barracuda": [
+      "game_fish"
+    ],
+    "Halfmoon perch": [
+      "panfish"
+    ],
+    "Pacific bluefin tuna (juvenile)": [
+      "game_fish"
+    ],
+    "Dorado (Pacific mahi)": [
+      "game_fish"
+    ],
+    "Pacific yellowtail (amberjack)": [
+      "game_fish"
+    ],
+    "Pink salmon (Pacific)": [
+      "game_fish"
+    ],
+    "Sockeye salmon (Pacific)": [
+      "game_fish"
+    ],
+    "Chum salmon (Pacific)": [
+      "game_fish"
+    ],
+    "Steelhead (tidal)": [
+      "game_fish"
+    ],
+    "Dolly Varden (tidal)": [
+      "game_fish"
+    ],
+    "Atlantic pollock": [
+      "game_fish"
+    ],
+    "Tautog (Mid-Atlantic)": [
+      "game_fish"
+    ],
+    "Brown shark (sandbar)": [
+      "catch_and_release"
+    ],
+    "Sandbar shark": [
+      "shark",
+      "catch_and_release"
+    ],
+    "Kingfish (Northern/Southern)": [
+      "panfish"
+    ],
+    "Bluefish (small)": [
+      "game_fish"
+    ],
+    "Flounder (winter)": [
+      "game_fish"
+    ],
+    "Red snapper (Gulf)": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Blacknose shark": [
+      "catch_and_release"
+    ],
+    "Yellowfin grouper": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Wahoo (East)": [
+      "game_fish"
+    ],
+    "Sailfish (Atlantic)": [
+      "game_fish",
+      "catch_and_release"
+    ],
+    "Dolphinfish (mahi) school": [
+      "game_fish"
+    ],
+    "Longfin albacore": [
+      "game_fish"
+    ],
+    "Spotted seatrout (Gulf)": [
+      "game_fish"
+    ],
+    "Speckled trout (Gulf)": [
+      "game_fish"
+    ],
+    "Redfish (slot size)": [
+      "game_fish"
+    ],
+    "Snook (inshore)": [
+      "game_fish"
+    ],
+    "Permit (flats)": [
+      "game_fish",
+      "catch_and_release"
+    ],
+    "Bonefish (flats)": [
+      "catch_and_release"
+    ],
+    "Tarpon (adult)": [
+      "game_fish",
+      "catch_and_release"
+    ],
+    "Crevalle jack (small)": [
+      "game_fish"
+    ],
+    "Sheepshead (Gulf)": [
+      "game_fish"
+    ],
+    "Longnose gar (tidal)": [
+      "game_fish"
+    ],
+    "Bowfin (tidal)": [
+      "game_fish"
+    ],
+    "Treefish rockfish": [
+      "panfish"
+    ],
+    "Pacific halibut (small)": [
+      "game_fish"
+    ],
+    "Topsmelt": [
+      "panfish"
+    ],
+    "Sharpnose surfperch": [
+      "panfish"
+    ],
+    "Silver surfperch": [
+      "panfish"
+    ],
+    "Lingcod (small)": [
+      "game_fish"
+    ],
+    "Spiny lobster (Pacific)": [
+      "game_fish"
+    ],
+    "Pacific sierra mackerel": [
+      "game_fish"
+    ],
+    "Queenfish": [
+      "panfish"
+    ],
+    "Sargo": [
+      "panfish"
+    ],
+    "Salema": [
+      "panfish"
+    ],
+    "Red drum (adult)": [
+      "game_fish",
+      "catch_and_release"
+    ],
+    "Striped bass (small)": [
+      "game_fish"
+    ],
+    "Summer flounder (fluke)": [
+      "game_fish"
+    ],
+    "Cobia (adult)": [
+      "game_fish"
+    ],
+    "Ballyhoo": [
+      "panfish"
+    ],
+    "American eel": [
+      "game_fish"
+    ],
+    "Southern kingfish": [
+      "panfish"
+    ],
+    "Atlantic spadefish": [
+      "game_fish"
+    ],
+    "Gray snapper": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Tiger grouper": [
+      "game_fish",
+      "reef_fish"
+    ],
+    "Bluestriped grunt": [
+      "panfish",
+      "reef_fish"
+    ],
+    "Gulf kingfish": [
+      "panfish"
+    ],
+    "Cardinal soldierfish": [
+      "reef_fish",
+      "panfish"
+    ],
+    "Hardhead catfish": [
+      "panfish"
+    ],
+    "Atlantic torpedo ray": [
+      "catch_and_release"
+    ],
+    "Blue tang": [
+      "reef_fish",
+      "catch_and_release"
+    ],
+    "Ocean surgeonfish": [
+      "reef_fish",
+      "catch_and_release"
+    ],
+    "Remora": [
+      "panfish"
+    ],
+    "Leatherjacket (filefish)": [
+      "panfish"
+    ],
+    "Burfish (spiny boxfish)": [
+      "panfish"
+    ],
+    "Mutton hamlet": [
+      "reef_fish",
+      "panfish"
+    ],
+    "Spotted eagle ray": [
+      "catch_and_release"
+    ],
+    "Cabezon (large)": [
+      "game_fish"
+    ],
+    "Wolf eel": [
+      "game_fish"
+    ],
+    "Pacific hake": [
+      "game_fish"
+    ],
+    "C-O sole": [
+      "panfish"
+    ],
+    "Longfin sanddab": [
+      "panfish"
+    ],
+    "Speckled sanddab": [
+      "panfish"
+    ],
+    "Horn shark": [
+      "catch_and_release"
+    ],
+    "Swellshark": [
+      "catch_and_release"
+    ],
+    "Smoothhound shark": [
+      "game_fish"
+    ],
+    "Big skate": [
+      "game_fish"
+    ],
+    "Longnose skate": [
+      "panfish"
+    ],
+    "California skate": [
+      "panfish"
+    ],
+    "Albacore (Pacific)": [
+      "game_fish"
+    ],
+    "Skipjack (Pacific)": [
+      "game_fish"
+    ],
+    "Oceanic bonito": [
+      "game_fish"
+    ],
+    "Pacific saury": [
+      "panfish"
+    ],
+    "California flying fish": [
+      "panfish"
+    ],
+    "Striped bass (adult)": [
+      "game_fish"
+    ],
+    "Hybrid striped bass": [
+      "game_fish"
+    ],
+    "Alligator gar": [
+      "game_fish"
+    ],
+    "Spotted gar": [
+      "game_fish"
+    ],
+    "Shortnose gar": [
+      "game_fish"
+    ],
+    "Yellow perch (tidal)": [
+      "panfish"
+    ],
+    "Atlantic sturgeon (catch-release)": [
+      "catch_and_release"
+    ],
+    "Swordfish (Atlantic)": [
+      "game_fish"
+    ],
+    "Opah (Atlantic)": [
+      "game_fish"
+    ],
+    "Wahoo (Gulf)": [
+      "game_fish"
+    ],
+    "Slippery dick": [
+      "reef_fish",
+      "panfish"
+    ],
+    "Spotted drum": [
+      "reef_fish",
+      "panfish"
+    ],
+    "Jackknife fish": [
+      "reef_fish",
+      "panfish"
+    ],
+    "Highhat": [
+      "reef_fish",
+      "panfish"
+    ],
+    "Cubbyu": [
+      "reef_fish",
+      "panfish"
+    ],
+    "Reef squirrelfish": [
+      "reef_fish",
+      "panfish"
+    ],
+    "Longspine squirrelfish": [
+      "reef_fish",
+      "panfish"
+    ],
+    "Tilefish (blueline)": [
+      "game_fish"
+    ],
+    "Crevalle jack (adult)": [
+      "game_fish"
+    ],
+    "Blue runner": [
+      "game_fish"
+    ],
+    "Bigeye scad": [
+      "panfish"
+    ],
+    "Red porgy": [
+      "game_fish"
+    ],
+    "Jolthead porgy": [
+      "game_fish"
+    ],
+    "Whitebone porgy": [
+      "panfish"
+    ],
+    "Knobbed porgy": [
+      "panfish"
+    ],
+    "Saucereye porgy": [
+      "panfish"
+    ],
+    "Banded butterflyfish": [
+      "reef_fish",
+      "panfish"
+    ],
+    "Reef butterflyfish": [
+      "reef_fish",
+      "panfish"
+    ],
+    "Neon goby": [
+      "reef_fish",
+      "panfish"
+    ],
+    "Cleaning goby": [
+      "reef_fish",
+      "panfish"
+    ],
+    "Sharknose goby": [
+      "reef_fish",
+      "panfish"
+    ],
+    "Spotted goatfish": [
+      "reef_fish",
+      "panfish"
+    ],
+    "Yellow goatfish": [
+      "reef_fish",
+      "panfish"
+    ],
+    "Red goatfish": [
+      "reef_fish",
+      "panfish"
+    ],
+    "Bigeye (reef)": [
+      "reef_fish",
+      "panfish"
+    ],
+    "Sailors choice": [
+      "reef_fish",
+      "panfish"
+    ],
+    "Latin grunt": [
+      "reef_fish",
+      "panfish"
+    ],
+    "Porcupinefish": [
+      "reef_fish"
+    ],
+    "Orangespotted filefish": [
+      "reef_fish",
+      "panfish"
+    ],
+    "Great hammerhead": [
+      "catch_and_release"
+    ],
+    "Spanish mackerel (Atlantic)": [
+      "game_fish"
+    ],
+    "King mackerel (small)": [
+      "game_fish"
+    ],
+    "Little tunny (small)": [
+      "game_fish"
+    ],
+    "Bonito (Atlantic)": [
+      "game_fish"
+    ],
+    "Florida pompano (juvenile)": [
+      "game_fish"
+    ],
+    "Permit (small)": [
+      "game_fish"
+    ],
+    "Permit (large)": [
+      "game_fish",
+      "catch_and_release"
+    ],
+    "White croaker": [
+      "panfish"
+    ],
+    "Rubberlip perch": [
+      "panfish"
+    ],
+    "Black perch": [
+      "panfish"
+    ],
+    "Pacific chub": [
+      "panfish"
+    ],
+    "Red hake": [
+      "game_fish"
+    ],
+    "White hake": [
+      "game_fish"
+    ],
+    "Yellowfin sole": [
+      "panfish"
+    ],
+    "Flathead sole": [
+      "panfish"
+    ],
+    "Sailor grunt": [
+      "reef_fish",
+      "panfish"
+    ],
+    "Inshore shark": [
+      "game_fish"
+    ],
+    "Nurse shark (juvenile)": [
+      "catch_and_release"
+    ],
+    "Atlantic sharpnose shark (juvenile)": [
+      "game_fish"
+    ],
+    "American plaice (small)": [
+      "panfish"
+    ],
+    "Alaska pollock": [
+      "panfish"
+    ],
+    "Rough scad": [
+      "panfish"
+    ],
+    "Mackerel scad": [
+      "panfish"
+    ],
+    "Sea robin (Northern)": [
+      "panfish"
+    ],
+    "Leatherjacket": [
+      "game_fish"
+    ],
+    "Bonefish (Gulf)": [
+      "catch_and_release"
+    ],
+    "Snook (common)": [
+      "game_fish"
+    ],
+    "Fat snook": [
+      "game_fish"
+    ],
+    "Swordspine snook": [
+      "game_fish"
+    ],
+    "Crevalle jack (pier)": [
+      "game_fish"
+    ],
+    "Amberjack (lesser)": [
+      "game_fish"
+    ],
+    "Moonfish (Atlantic)": [
+      "panfish"
+    ],
+    "Puget Sound king salmon": [
+      "game_fish"
+    ],
+    "Puget Sound coho": [
+      "game_fish"
+    ],
+    "Olympic Peninsula steelhead": [
+      "game_fish",
+      "catch_and_release"
+    ],
+    "Skeena steelhead": [
+      "game_fish",
+      "catch_and_release"
+    ],
+    "Columbia River spring chinook": [
+      "game_fish"
+    ],
+    "Sacramento River fall chinook": [
+      "game_fish"
+    ],
+    "Klamath River fall chinook": [
+      "game_fish"
+    ],
+    "Dungeness crab (shore)": [
+      "panfish"
+    ],
+    "Blue crab (Atlantic)": [
+      "panfish"
+    ],
+    "Stone crab": [
+      "panfish"
+    ],
+    "Rock crab (Pacific)": [
+      "panfish"
+    ],
+    "Spiny lobster (Caribbean)": [
+      "panfish"
+    ],
+    "American lobster (recreational)": [
+      "panfish"
+    ],
+    "Gizzard shad (tidal)": [
+      "panfish"
+    ],
+    "Menhaden (Atlantic)": [
+      "panfish"
+    ],
+    "Gulf menhaden": [
+      "panfish"
+    ],
+    "Pacific anchovy": [
+      "panfish"
+    ],
+    "Walleye pollock (shore)": [
+      "panfish"
+    ],
+    "Garibaldi (protected)": [
+      "catch_and_release"
+    ],
+    "Halfmoon": [
+      "panfish"
+    ],
+    "Pollock (Atlantic surf)": [
+      "game_fish"
+    ],
+    "Tomcod (Atlantic)": [
+      "panfish"
+    ],
+    "Tautog (tog)": [
+      "game_fish"
+    ],
+    "Black sea bass (NE pier)": [
+      "game_fish"
+    ],
+    "Bergall": [
+      "panfish"
+    ],
+    "California halibut (juvenile)": [
+      "game_fish"
+    ],
+    "Pacific halibut (juvenile)": [
+      "game_fish"
+    ],
+    "Flounder (Gulf)": [
+      "game_fish"
+    ],
+    "Cobia (near-pier)": [
+      "game_fish"
+    ],
+    "Cobia (offshore)": [
+      "game_fish"
+    ],
+    "Sea bream (pinfish)": [
+      "panfish"
+    ],
+    "Sheepshead porgy": [
+      "panfish"
+    ],
+    "Atlantic spadefish (pier)": [
+      "panfish"
+    ],
+    "Mud snapper": [
+      "panfish"
+    ],
+    "Dwarf sand perch": [
+      "panfish"
+    ],
+    "Butter hamlet": [
+      "reef_fish",
+      "panfish"
+    ],
+    "Tilefish (sand)": [
+      "panfish"
+    ],
+    "Atlantic croaker (large)": [
+      "panfish"
+    ],
+    "Yellowfin mojarra": [
+      "panfish"
+    ],
+    "Skipjack tuna (shore)": [
+      "game_fish"
+    ],
+    "Yellowtail amberjack (SoCal)": [
+      "game_fish"
+    ],
+    "Spinner shark": [
+      "shark",
+      "game_fish"
+    ],
+    "Bull shark (inshore)": [
+      "game_fish",
+      "catch_and_release"
+    ],
+    "Dolly Varden (sea-run)": [
+      "game_fish"
+    ],
+    "Arctic char (sea-run)": [
+      "game_fish"
+    ],
+    "Pink salmon (humpback)": [
+      "game_fish"
+    ],
+    "Sockeye salmon (shore)": [
+      "game_fish"
+    ],
+    "Coho salmon (Oregon coast)": [
+      "game_fish"
+    ],
+    "Steelhead (summer run)": [
+      "game_fish",
+      "catch_and_release"
+    ],
+    "Halibut (Alaska charter)": [
+      "game_fish"
+    ],
+    "Lingcod (Alaska)": [
+      "game_fish"
+    ],
+    "Sablefish (Alaska)": [
+      "game_fish"
+    ],
+    "Yelloweye rockfish (Alaska)": [
+      "game_fish",
+      "catch_and_release"
+    ],
+    "Lingcod (California)": [
+      "game_fish"
+    ],
+    "Pacific halibut (large)": [
+      "game_fish"
+    ],
+    "Tarpon (Gulf Mexico)": [
+      "game_fish",
+      "catch_and_release"
+    ],
+    "Snook (Gulf)": [
+      "game_fish"
+    ],
+    "Redfish (red drum)": [
+      "game_fish"
+    ],
+    "Redfish (surf)": [
+      "game_fish"
+    ],
+    "Redfish (flats)": [
+      "game_fish",
+      "catch_and_release"
+    ],
+    "Speckled trout (sea trout)": [
+      "game_fish"
+    ],
+    "Speckled trout (winter)": [
+      "game_fish"
+    ],
+    "Flounder (summer)": [
+      "game_fish"
+    ],
+    "Atlantic sturgeon (catch-and-release)": [
+      "catch_and_release"
+    ],
+    "Common snook (Atlantic FL)": [
+      "game_fish"
+    ],
+    "Goliath grouper (encounter)": [
+      "catch_and_release"
+    ],
+    "Manta ray (encounter)": [
+      "catch_and_release"
+    ],
+    "Whale shark (encounter)": [
+      "catch_and_release"
+    ],
+    "Sawfish (encounter)": [
+      "catch_and_release"
+    ],
+    "Midnight parrotfish": [
+      "reef_fish",
+      "catch_and_release"
+    ],
+    "Stoplight parrotfish": [
+      "reef_fish",
+      "catch_and_release"
+    ],
+    "Graysby grouper": [
+      "reef_fish",
+      "game_fish"
+    ],
+    "Cobia (Atlantic)": [
+      "game_fish"
+    ],
+    "Bluefish (large)": [
+      "game_fish"
+    ],
+    "Bluefish (snapper blues)": [
+      "panfish"
+    ],
+    "Weakfish (sea trout)": [
+      "game_fish"
+    ],
+    "Red snapper (Gulf large)": [
+      "game_fish"
+    ],
+    "Striped bass (Chesapeake)": [
+      "game_fish"
+    ],
+    "Striped bass (Hudson River)": [
+      "game_fish"
+    ],
+    "Delaware Bay weakfish": [
+      "game_fish"
+    ],
+    "Pufferfish (northern)": [
+      "panfish"
+    ],
+    "Northern pipefish": [
+      "panfish"
+    ],
+    "Atlantic halfbeak": [
+      "panfish"
+    ],
+    "Permit (Atlantic)": [
+      "game_fish",
+      "catch_and_release"
+    ],
+    "Southern flounder (gigging)": [
+      "game_fish"
+    ],
+    "Crab (stone) harvest": [
+      "panfish"
+    ],
+    "Cobia (early season)": [
+      "game_fish"
+    ],
+    "Pacific lamprey": [
+      "panfish"
+    ],
+    "Green sturgeon": [
+      "catch_and_release"
+    ],
+    "White sturgeon (sport)": [
+      "game_fish"
+    ],
+    "Striped bass (Sacramento)": [
+      "game_fish"
+    ],
+    "Largemouth bass (tidal)": [
+      "game_fish"
+    ],
+    "Blue catfish (invasive tidal)": [
+      "game_fish"
+    ],
+    "Pompano (Atlantic)": [
+      "game_fish"
+    ],
+    "Pacific white shark (encounter)": [
+      "catch_and_release"
+    ],
+    "Swordfish (daytime deep-drop)": [
+      "game_fish"
+    ],
+    "Blue marlin (Gulf)": [
+      "game_fish",
+      "catch_and_release"
+    ],
+    "Dolphinfish (mahi-mahi)": [
+      "game_fish"
+    ],
+    "Mako shark (shortfin)": [
+      "game_fish",
+      "catch_and_release"
+    ],
+    "Atlantic mackerel (shore)": [
+      "game_fish"
+    ],
+    "Chub mackerel": [
+      "panfish"
+    ],
+    "Boston mackerel": [
+      "panfish"
+    ],
+    "Longfin squid": [
+      "panfish"
+    ],
+    "Market squid (Pacific)": [
+      "panfish"
+    ],
+    "Humboldt squid": [
+      "game_fish"
+    ],
+    "Northern sea cucumber": [
+      "panfish"
+    ],
+    "Blood worm (tidal)": [
+      "panfish"
+    ],
+    "Amberjack (Pacific)": [
+      "game_fish"
+    ],
+    "Roosterfish": [
+      "game_fish",
+      "catch_and_release"
+    ],
+    "Dorado (Pacific)": [
+      "game_fish"
+    ],
+    "Pacific crevalle jack": [
+      "game_fish"
+    ],
+    "Rockfish (black/blue)": [
+      "game_fish"
+    ],
+    "Rockfish (vermilion/canary)": [
+      "game_fish"
+    ],
+    "Rockfish (copper/quillback)": [
+      "game_fish"
+    ],
+    "Rockfish (olive/yellowtail)": [
+      "game_fish"
+    ],
+    "Pileperch": [
+      "panfish"
+    ],
+    "Dwarf perch": [
+      "panfish"
+    ],
+    "Surfperch (shiner)": [
+      "panfish"
+    ]
+  }
+}

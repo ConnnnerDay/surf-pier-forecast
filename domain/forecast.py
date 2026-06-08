@@ -52,7 +52,6 @@ from services.nws import (
 from services.datagov import get_water_quality_summary as _get_wq
 from services.hdx_fao import get_hdx_fao_enrichment as _get_fao
 from domain.species import (
-    SPECIES_DB,
     _OFFSHORE_DIRS_EAST,
     _OFFSHORE_DIRS_WEST,
     _ONSHORE_DIRS_EAST,
@@ -62,7 +61,6 @@ from domain.species import (
     _build_profile_filter,
     _get_technique_tip,
     _score_species,
-    _species_matches_profile,
     build_bait_ranking,
     build_lure_recommendations,
     build_natural_bait_chart,

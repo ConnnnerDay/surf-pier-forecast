@@ -119,34 +119,3 @@ def test_send_email_strips_header_injection_from_subject(monkeypatch):
     # value, NOT emitted as a standalone header line.  A standalone injected
     # header would appear as "\nX-Injected:" in the raw message.
     assert "\nX-Injected:" not in raw
-
-
-# ---------------------------------------------------------------------------
-# HTML escaping in verification email body
-# ---------------------------------------------------------------------------
-
-
-def test_verification_email_html_escapes_username(monkeypatch):
-    """Username must be HTML-escaped in the verification email body."""
-    from services import email as email_module
-
-    sent: dict = {}
-
-    def _fake_send(to, subject, body_text, body_html=""):
-        sent["body_html"] = body_html
-        return True
-
-    monkeypatch.setattr(email_module, "send_email", _fake_send)
-
-    email_module.send_verification_email(
-        "user@example.com",
-        "<script>alert(1)</script>",
-        "token123",
-        "https://example.com/",
-    )
-
-    assert sent.get("body_html") is not None
-    # The raw script tag must NOT appear in the HTML body
-    assert "<script>" not in sent["body_html"]
-    # The escaped form should be present
-    assert "&lt;script&gt;" in sent["body_html"]

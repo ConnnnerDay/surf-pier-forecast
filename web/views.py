@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json as _json
 import logging
-import os
 import re
 import threading
 import time
@@ -18,13 +17,10 @@ _CAM_CHECK_TIMEOUT: tuple[float, float] = (2.5, 7.0)
 
 from flask import (
     Blueprint,
-    abort,
-    current_app,
     g,
     redirect,
     render_template,
     request,
-    send_from_directory,
     session,
     url_for,
 )
@@ -751,24 +747,3 @@ def shared_forecast(location_id: str) -> Any:
 
     session["location_id"] = location_id
     return _render_forecast(location)
-
-
-@bp.route("/uploads/<int:user_id>/<path:filename>")
-def serve_upload(user_id: int, filename: str) -> Any:
-    """Serve a user-uploaded photo after verifying the requester owns it.
-
-    Photos are stored in ``data/uploads/`` (outside Flask's static folder) so
-    they cannot be fetched directly.  This route enforces that:
-    - The request comes from an authenticated user.
-    - The authenticated user is the owner of the file (user_id match).
-
-    Path-traversal is prevented by ``send_from_directory``, which raises 404
-    for any path that escapes the base directory.
-    """
-    if g.user is None:
-        abort(401)
-    if g.user["id"] != user_id:
-        abort(403)
-    upload_root = current_app.config["UPLOAD_FOLDER"]
-    user_dir = os.path.join(upload_root, str(user_id))
-    return send_from_directory(user_dir, filename)
