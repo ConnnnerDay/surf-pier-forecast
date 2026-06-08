@@ -2,90 +2,48 @@
 
 from __future__ import annotations
 
-import json
-import os
 import re
 import secrets
 import threading
 import time
-import base64
-import urllib.request
-from datetime import datetime, timezone
-from typing import Any, Optional, cast
-from urllib.parse import urlencode
-
-import logging
+from typing import Any
+from werkzeug.security import check_password_hash
 
 from flask import (
     Blueprint,
     current_app,
     g,
-    jsonify,
     redirect,
     render_template,
     request,
     session,
     url_for,
 )
-import requests as _requests
-from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurvePrivateKey
-from cryptography.hazmat.primitives.asymmetric.padding import PKCS1v15
-from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicNumbers
-from cryptography.hazmat.primitives.asymmetric.utils import decode_dss_signature
-from cryptography.hazmat.primitives.hashes import SHA256
-from werkzeug.security import check_password_hash
+
+import logging
+import os
 
 from locations import get_location
 from storage.sqlite import (
     authenticate_user,
     bump_session_version,
     change_password,
-    confirm_email,
     create_user,
-    create_social_user,
     delete_user,
     get_all_user_photo_paths,
-    get_email_verification_sent_at,
     get_preferences,
     get_recent_logs,
-    get_social_account,
     get_user,
     get_user_by_email,
-    get_user_by_verification_token,
     get_user_password_hash,
-    link_social_account,
     save_preferences,
-    set_email_verification_token,
-    update_user_social_profile,
-    save_webauthn_credential,
-    get_webauthn_credentials,
-    get_webauthn_credential_by_id,
-    update_webauthn_sign_count,
-    delete_webauthn_credential,
 )
-from services.email import send_verification_email, smtp_is_configured
 from web.helpers import get_account_credentials_cached, get_prefs_cached
 from web.rate_limit import (
     client_ip as _client_ip,
     is_rate_limited as _is_rate_limited,
     record_attempt as _record_attempt,
     clear_attempts as _clear_attempts,
-)
-from webauthn import (
-    generate_authentication_options,
-    generate_registration_options,
-    options_to_json,
-    verify_authentication_response,
-    verify_registration_response,
-)
-from webauthn.helpers import base64url_to_bytes, bytes_to_base64url
-from webauthn.helpers.structs import (
-    AuthenticatorSelectionCriteria,
-    PublicKeyCredentialDescriptor,
-    ResidentKeyRequirement,
-    UserVerificationRequirement,
 )
 
 logger = logging.getLogger(__name__)
@@ -104,15 +62,8 @@ _REFRESH_RATE_LIMIT_MAX_ATTEMPTS = 4
 _REFRESH_RATE_LIMIT_WINDOW_S = 5 * 60
 
 # Sensitive account-action rate limiting (password change, account delete).
-#
-# Even an authenticated attacker (via XSS, session hijack, or a shared
-# computer) should not be able to rapidly brute-force the "current password"
-# field on these forms.  Each IP is limited to 5 attempts per 15 minutes.
 _ACCOUNT_ACTION_RATE_LIMIT_MAX_ATTEMPTS = 5
 _ACCOUNT_ACTION_RATE_LIMIT_WINDOW_S = 15 * 60
-
-_HTTP_TIMEOUT_JWKS_S = 8    # Apple JWKS public key fetch
-_HTTP_TIMEOUT_OAUTH_S = 10  # Google/Apple token and userinfo exchanges
 
 _account_action_rate_limit_store: dict[str, tuple[float, int]] = {}
 _account_action_rate_limit_lock = threading.Lock()
@@ -140,32 +91,9 @@ def _clear_account_action_failures() -> None:
 
 
 # Per-username account lockout.
-#
-# IP-based rate limiting alone does not stop a distributed brute-force attack
-# where many different IPs target the same account.  Tracking failures per
-# username (case-folded) provides a second, independent layer: after
-# _ACCOUNT_LOCKOUT_MAX_FAILURES consecutive wrong passwords for a given
-# username the account is locked for _ACCOUNT_LOCKOUT_WINDOW_S seconds,
-# regardless of how many source IPs are involved.
-#
-# On successful login the counter for that username is cleared.
 _ACCOUNT_LOCKOUT_MAX_FAILURES = 10
 _ACCOUNT_LOCKOUT_WINDOW_S = 30 * 60  # 30 minutes
 
-# ---------------------------------------------------------------------------
-# Server-side IP-keyed rate limiting for the login and registration endpoints.
-#
-# Keying on the client IP prevents circumvention by clearing cookies or making
-# requests without a session.
-#
-# X-Forwarded-For is only trusted when TRUSTED_PROXY=1 is set in the
-# environment (i.e. the app is explicitly deployed behind a reverse proxy).
-# Without that flag, request.remote_addr is used directly, preventing an
-# attacker from spoofing arbitrary IPs to bypass rate limits.
-#
-# Data structure: {ip: (window_start_ts, attempt_count)}
-# A single lock guards all reads and writes.
-# ---------------------------------------------------------------------------
 _rate_limit_store: dict[str, tuple[float, int]] = {}
 _rate_limit_lock = threading.Lock()
 
@@ -174,17 +102,6 @@ _register_rate_limit_lock = threading.Lock()
 
 _refresh_rate_limit_store: dict[str, tuple[float, int]] = {}
 _refresh_rate_limit_lock = threading.Lock()
-
-# Resend-verification: 3 attempts per 30 minutes per IP.
-_RESEND_RATE_LIMIT_MAX_ATTEMPTS = 3
-_RESEND_RATE_LIMIT_WINDOW_S = 30 * 60
-
-_resend_rate_limit_store: dict[str, tuple[float, int]] = {}
-_resend_rate_limit_lock = threading.Lock()
-
-# Minimum seconds that must elapse between two verification emails for the
-# same account (DB-level per-user throttle, independent of IP).
-_RESEND_MIN_INTERVAL_S = 120  # 2 minutes
 
 # Keyed by lowercase username rather than IP.
 _account_lockout_store: dict[str, tuple[float, int]] = {}
@@ -390,431 +307,6 @@ def login() -> Any:
 
 _EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
-# Allowlist of widely-distributed consumer email domains.
-# Only these domains are accepted at registration to reduce spam, disposable
-# address abuse, and accounts with unreachable mailboxes.
-_ALLOWED_EMAIL_DOMAINS: frozenset[str] = frozenset(
-    {
-        # ── Google ────────────────────────────────────────────────────────────────
-        "gmail.com",
-        "googlemail.com",
-        # ── Microsoft (Outlook / Hotmail / Live / MSN) ────────────────────────────
-        # Global + regional Outlook
-        "outlook.com",
-        "outlook.co.uk",
-        "outlook.com.au",
-        "outlook.fr",
-        "outlook.de",
-        "outlook.es",
-        "outlook.it",
-        "outlook.co.in",
-        "outlook.com.br",
-        "outlook.com.ar",
-        "outlook.com.mx",
-        "outlook.cl",
-        "outlook.pt",
-        "outlook.be",
-        "outlook.nl",
-        "outlook.at",
-        "outlook.dk",
-        "outlook.fi",
-        "outlook.se",
-        "outlook.no",
-        "outlook.ie",
-        "outlook.sg",
-        "outlook.jp",
-        "outlook.kr",
-        "outlook.ph",
-        "outlook.my",
-        "outlook.co.nz",
-        "outlook.co.za",
-        "outlook.co.th",
-        "outlook.com.vn",
-        "outlook.com.ng",
-        "outlook.com.pk",
-        "outlook.com.co",
-        "outlook.com.pe",
-        "outlook.com.tr",
-        "outlook.hr",
-        "outlook.rs",
-        "outlook.hu",
-        "outlook.ro",
-        "outlook.cz",
-        "outlook.sk",
-        "outlook.bg",
-        "outlook.gr",
-        "outlook.lv",
-        "outlook.lt",
-        "outlook.ee",
-        "outlook.sa",
-        "outlook.ae",
-        "outlook.co.il",
-        # Hotmail regional
-        "hotmail.com",
-        "hotmail.co.uk",
-        "hotmail.fr",
-        "hotmail.de",
-        "hotmail.es",
-        "hotmail.it",
-        "hotmail.com.au",
-        "hotmail.co.in",
-        "hotmail.com.br",
-        "hotmail.com.ar",
-        "hotmail.com.mx",
-        "hotmail.cl",
-        "hotmail.pt",
-        "hotmail.be",
-        "hotmail.nl",
-        "hotmail.gr",
-        "hotmail.dk",
-        "hotmail.fi",
-        "hotmail.se",
-        "hotmail.no",
-        "hotmail.co.jp",
-        "hotmail.rs",
-        "hotmail.hr",
-        "hotmail.co.nz",
-        "hotmail.co.za",
-        "hotmail.com.tr",
-        "hotmail.com.vn",
-        "hotmail.com.co",
-        "hotmail.com.pe",
-        "hotmail.hu",
-        "hotmail.ro",
-        "hotmail.cz",
-        "hotmail.sk",
-        "hotmail.bg",
-        "hotmail.lv",
-        "hotmail.lt",
-        "hotmail.ee",
-        # Live regional
-        "live.com",
-        "live.co.uk",
-        "live.fr",
-        "live.de",
-        "live.com.au",
-        "live.co.in",
-        "live.it",
-        "live.ca",
-        "live.be",
-        "live.nl",
-        "live.at",
-        "live.dk",
-        "live.fi",
-        "live.se",
-        "live.no",
-        "live.ie",
-        "live.sg",
-        "live.jp",
-        "live.in",
-        "live.cl",
-        "live.com.ar",
-        "live.com.mx",
-        "live.com.pt",
-        "live.co.nz",
-        "live.co.za",
-        "live.co.th",
-        "live.com.vn",
-        "live.com.tr",
-        "live.ph",
-        "live.my",
-        "live.kr",
-        "live.hu",
-        "live.ro",
-        "live.cz",
-        "live.sk",
-        "live.bg",
-        "live.lv",
-        "live.lt",
-        "live.ee",
-        "live.sa",
-        "live.ae",
-        "msn.com",
-        # ── Yahoo / Oath ──────────────────────────────────────────────────────────
-        "yahoo.com",
-        "yahoo.co.uk",
-        "yahoo.ca",
-        "yahoo.com.au",
-        "yahoo.fr",
-        "yahoo.de",
-        "yahoo.es",
-        "yahoo.it",
-        "yahoo.co.jp",
-        "yahoo.co.in",
-        "yahoo.com.br",
-        "yahoo.com.ar",
-        "yahoo.com.mx",
-        "yahoo.com.hk",
-        "yahoo.com.sg",
-        "yahoo.com.ph",
-        "yahoo.com.tw",
-        "yahoo.com.my",
-        "yahoo.com.vn",
-        "yahoo.com.pe",
-        "yahoo.com.co",
-        "yahoo.com.pk",
-        "yahoo.co.id",
-        "yahoo.co.nz",
-        "yahoo.co.za",
-        "yahoo.co.th",
-        "yahoo.gr",
-        "yahoo.ro",
-        "yahoo.hu",
-        "yahoo.dk",
-        "yahoo.se",
-        "yahoo.no",
-        "yahoo.fi",
-        "yahoo.be",
-        "yahoo.at",
-        "yahoo.pt",
-        "yahoo.nl",
-        "yahoo.ie",
-        "yahoo.in",
-        "yahoo.pl",
-        "yahoo.cz",
-        "yahoo.sk",
-        "yahoo.hr",
-        "yahoo.rs",
-        "yahoo.bg",
-        "yahoo.lv",
-        "yahoo.lt",
-        "ymail.com",
-        # ── Apple — standard + Hide My Email (Private Relay) ─────────────────────
-        "icloud.com",
-        "me.com",
-        "mac.com",
-        # Hide My Email / Private Relay (format: random@privaterelay.appleid.com)
-        "privaterelay.appleid.com",
-        # ── AOL / Verizon Media ───────────────────────────────────────────────────
-        "aol.com",
-        "aol.co.uk",
-        # ── US ISP / cable email ──────────────────────────────────────────────────
-        "comcast.net",
-        "xfinity.com",
-        "att.net",
-        "sbcglobal.net",
-        "bellsouth.net",
-        "pacbell.net",
-        "verizon.net",
-        "cox.net",
-        "charter.net",
-        "spectrum.net",
-        "earthlink.net",
-        "windstream.net",
-        "centurylink.net",
-        "lumen.com",
-        "mindspring.com",  # legacy EarthLink brand
-        # ── Proton ────────────────────────────────────────────────────────────────
-        "proton.me",
-        "protonmail.com",
-        "pm.me",
-        # ── Tuta (formerly Tutanota) ──────────────────────────────────────────────
-        "tuta.com",
-        "tutanota.com",
-        "tutanota.de",
-        "tutamail.com",
-        "tuta.io",
-        # ── Zoho ──────────────────────────────────────────────────────────────────
-        "zoho.com",
-        # ── GMX / Web.de / Mail.com (United Internet) ────────────────────────────
-        "gmx.com",
-        "gmx.net",
-        "gmx.de",
-        "gmx.at",
-        "gmx.ch",
-        "web.de",
-        "mail.com",
-        # ── Fastmail ──────────────────────────────────────────────────────────────
-        "fastmail.com",
-        "fastmail.fm",
-        # ── Yandex (Russia / CIS) ────────────────────────────────────────────────
-        "yandex.com",
-        "yandex.ru",
-        "yandex.ua",
-        "yandex.by",
-        "yandex.kz",
-        "yandex.com.tr",
-        "ya.ru",
-        # ── Mail.ru / VK (Russia) ─────────────────────────────────────────────────
-        "mail.ru",
-        "list.ru",
-        "inbox.ru",
-        "bk.ru",
-        "internet.ru",
-        # ── Rambler (Russia) ──────────────────────────────────────────────────────
-        "rambler.ru",
-        "lenta.ru",
-        "ro.ru",
-        # ── UKR.net (Ukraine) ────────────────────────────────────────────────────
-        "ukr.net",
-        # ── NetEase / 163 (China) ─────────────────────────────────────────────────
-        "163.com",
-        "126.com",
-        "yeah.net",
-        # ── QQ / Tencent (China) ──────────────────────────────────────────────────
-        "qq.com",
-        "foxmail.com",
-        # ── Sina (China) ──────────────────────────────────────────────────────────
-        "sina.com",
-        "sina.cn",
-        # ── Sohu (China) ──────────────────────────────────────────────────────────
-        "sohu.com",
-        # ── 21CN (China) ──────────────────────────────────────────────────────────
-        "21cn.com",
-        # ── Naver / Daum / Kakao / Nate (South Korea) ────────────────────────────
-        "naver.com",
-        "hanmail.net",
-        "daum.net",
-        "kakao.com",
-        "nate.com",
-        # ── Japanese carrier / ISP email ─────────────────────────────────────────
-        "docomo.ne.jp",
-        "softbank.ne.jp",
-        "i.softbank.jp",
-        "ezweb.ne.jp",
-        "au.com",
-        "biglobe.ne.jp",
-        "nifty.com",
-        # ── Rediffmail (India) ───────────────────────────────────────────────────
-        "rediffmail.com",
-        "indiatimes.com",
-        # ── UK ISPs ──────────────────────────────────────────────────────────────
-        "btinternet.com",
-        "bt.com",
-        "btopenworld.com",
-        "sky.com",
-        "skymail.com",
-        "virginmedia.com",
-        "virgin.net",
-        "talktalk.net",
-        "talktalk.co.uk",
-        "ntlworld.com",
-        "plusnet.com",
-        "tiscali.co.uk",
-        # ── German ISPs ──────────────────────────────────────────────────────────
-        "t-online.de",
-        "freenet.de",
-        "arcor.de",
-        "vodafone.de",
-        "kabelbw.de",
-        # ── French ISPs / portals ────────────────────────────────────────────────
-        "orange.fr",
-        "sfr.fr",
-        "neuf.fr",
-        "laposte.net",
-        "free.fr",
-        "wanadoo.fr",
-        "bbox.fr",
-        "bouyguestelecom.fr",
-        "club-internet.fr",
-        # ── Italian ISP / portals ────────────────────────────────────────────────
-        "libero.it",
-        "virgilio.it",
-        "alice.it",
-        "tiscali.it",
-        "tim.it",
-        "vodafone.it",
-        # ── Dutch ISPs ───────────────────────────────────────────────────────────
-        "ziggo.nl",
-        "kpn.nl",
-        "hetnet.nl",
-        "planet.nl",
-        "xs4all.nl",
-        "casema.nl",
-        # ── Belgian ISPs ────────────────────────────────────────────────────────
-        "skynet.be",
-        "telenet.be",
-        "proximus.be",
-        # ── Swedish / Norwegian / Danish / Finnish ISPs ───────────────────────────
-        "telia.com",
-        "swipnet.se",
-        "tele2.se",
-        "online.no",
-        "telenor.no",
-        "tdc.dk",
-        "telenor.dk",
-        "kolumbus.fi",
-        # ── Polish portals (dominant in Poland) ──────────────────────────────────
-        "wp.pl",
-        "onet.pl",
-        "interia.pl",
-        "o2.pl",
-        "gazeta.pl",
-        # ── Czech portals ────────────────────────────────────────────────────────
-        "seznam.cz",
-        "centrum.cz",
-        "email.cz",
-        "volny.cz",
-        # ── Hungarian portals ────────────────────────────────────────────────────
-        "freemail.hu",
-        "citromail.hu",
-        # ── Australian ISPs ──────────────────────────────────────────────────────
-        "bigpond.com",
-        "bigpond.net.au",
-        "optusnet.com.au",
-        "iinet.net.au",
-        "westnet.com.au",
-        "internode.on.net",
-        # ── New Zealand ISPs ─────────────────────────────────────────────────────
-        "xtra.co.nz",
-        "slingshot.co.nz",
-        # ── South African ISPs ───────────────────────────────────────────────────
-        "mweb.co.za",
-        "webmail.co.za",
-        "vodamail.co.za",
-        # ── Canadian ISPs ────────────────────────────────────────────────────────
-        "rogers.com",
-        "shaw.ca",
-        "bell.net",
-        "sympatico.ca",
-        "telus.net",
-        "videotron.ca",
-        "eastlink.ca",
-        # ── Brazilian portals ────────────────────────────────────────────────────
-        "uol.com.br",
-        "bol.com.br",
-        "terra.com.br",
-        "ig.com.br",
-        "r7.com",
-        "msn.com.br",
-        # ── Other Latin American portals ─────────────────────────────────────────
-        "fibertel.com.ar",  # Argentina ISP
-        "speedy.com.ar",  # Argentina ISP
-        "telmex.net.mx",  # Mexico ISP
-        # ── Email relay / alias services (like Apple Hide My Email) ──────────────
-        "duck.com",  # DuckDuckGo Email Protection
-        "mozmail.com",  # Firefox Relay
-        "simplelogin.io",
-        "simplelogin.co",
-        "slmail.me",  # SimpleLogin
-        "anonaddy.com",
-        "anonaddy.me",  # AnonAddy / addy.io
-        # ── Other privacy-focused / reputable independent providers ──────────────
-        "mailbox.org",  # Germany, privacy-first
-        "posteo.de",
-        "posteo.net",  # Germany, privacy-first
-        "mailfence.com",  # Belgium, encrypted
-        "runbox.com",  # Norway, privacy-first
-        "startmail.com",  # Netherlands, privacy-first
-        "disroot.org",  # Netherlands, open-source community
-        "riseup.net",  # Privacy/activism
-        "kolabnow.com",  # Switzerland, privacy
-        "countermail.com",  # Sweden, encrypted
-        "hushmail.com",  # Canada, encrypted
-        "lavabit.com",  # Privacy-focused (relaunched)
-        "cock.li",  # Reputable independent provider
-        "teknik.io",  # Privacy-focused
-    }
-)
-
-
-def _email_domain_allowed(email: str) -> bool:
-    """Return True if the email's domain is in the accepted-provider list."""
-    parts = email.rsplit("@", 1)
-    if len(parts) != 2:
-        return False
-    return parts[1].lower() in _ALLOWED_EMAIL_DOMAINS
-
 
 @bp.route("/register", methods=["GET", "POST"])
 def register() -> Any:
@@ -860,16 +352,6 @@ def register() -> Any:
             username=username,
             email=email,
         )
-    # Only enforce the consumer-email allowlist when SMTP is configured.
-    # On a local install without email setup the check serves no purpose and
-    # would block developers using corporate or custom domain addresses.
-    if smtp_is_configured() and not _email_domain_allowed(email):
-        return render_template(
-            "register.html",
-            error="Please use an email from a major email provider (Gmail, Outlook, Yahoo, iCloud, etc.).",
-            username=username,
-            email=email,
-        )
     if len(email) > 254:
         return render_template(
             "register.html",
@@ -908,123 +390,21 @@ def register() -> Any:
             username=username,
             email=email,
         )
-    # Send verification email (best-effort; account is created regardless).
-    token = secrets.token_urlsafe(32)
-    set_email_verification_token(user_id, token)
-    base_url = request.host_url
-    send_verification_email(email, username, token, base_url)
-    # When SMTP is not configured there is no way for the user to receive a
-    # verification link, so auto-confirm the email immediately.  This ensures
-    # a fresh local install ("quick start") works without any email setup.
-    if not smtp_is_configured():
-        confirm_email(user_id)
+    # Email is auto-confirmed — no email verification required.
+    from storage.sqlite import confirm_email
+    confirm_email(user_id)
     # Regenerate session to prevent session fixation.
     loc_id = session.get("location_id")
     session.clear()
     session["user_id"] = user_id
     session["session_version"] = 0  # New user; session_version starts at 0
     session.permanent = True
+    session["csrf_token"] = secrets.token_urlsafe(24)
     # Carry over current location if one is set
     if loc_id:
         session["location_id"] = loc_id
         save_preferences(user_id, location_id=loc_id, default_location_id=loc_id)
-    if not smtp_is_configured():
-        return redirect(url_for("views.setup"))
-    return redirect(url_for("auth.verify_pending"))
-
-
-@bp.route("/verify-email/<token>")
-def verify_email(token: str) -> Any:
-    """Confirm a user's email address via the one-time token link."""
-    user = get_user_by_verification_token(token)
-    if user is None:
-        return render_template(
-            "verify_email.html",
-            success=False,
-            message="This verification link is invalid or has expired.",
-        )
-    if user["email_confirmed"]:
-        return render_template(
-            "verify_email.html",
-            success=True,
-            message="Your email is already verified.",
-        )
-    confirm_email(user["id"])
-    # If the user is currently logged in, refresh g.user so templates reflect
-    # the confirmed state immediately.
-    if g.user and g.user["id"] == user["id"]:
-        g.user["email_confirmed"] = True
-    return render_template(
-        "verify_email.html",
-        success=True,
-        message="Your email has been verified. Welcome to Surf & Pier!",
-    )
-
-
-@bp.route("/resend-verification", methods=["POST"])
-def resend_verification() -> Any:
-    """Resend the email verification link to the logged-in user.
-
-    Protected by two independent throttles:
-    - IP-based: 3 resends per 30 minutes per source IP.
-    - Per-account: at most one resend every 2 minutes (checked via DB timestamp).
-    """
-    if g.user is None:
-        return redirect(url_for("auth.login"))
-    if g.user.get("email_confirmed"):
-        return redirect(url_for("auth.account"))
-    email = g.user.get("email")
-    if not email:
-        return redirect(url_for("auth.account"))
-
-    # IP-based rate limit.
-    if _is_rate_limited(
-        _resend_rate_limit_store,
-        _resend_rate_limit_lock,
-        _RESEND_RATE_LIMIT_MAX_ATTEMPTS,
-        _RESEND_RATE_LIMIT_WINDOW_S,
-    ):
-        return render_template(
-            "verify_pending.html",
-            error="Too many resend attempts. Please wait 30 minutes before trying again.",
-        )
-
-    # Per-account DB throttle: don't resend if a recent email was just sent.
-    sent_at_raw = get_email_verification_sent_at(g.user["id"])
-    if sent_at_raw:
-        try:
-            sent_at = datetime.fromisoformat(sent_at_raw).replace(tzinfo=timezone.utc)
-            elapsed = (datetime.now(tz=timezone.utc) - sent_at).total_seconds()
-            if elapsed < _RESEND_MIN_INTERVAL_S:
-                wait = int(_RESEND_MIN_INTERVAL_S - elapsed)
-                return render_template(
-                    "verify_pending.html",
-                    error=f"A verification email was just sent. Please wait {wait} seconds before requesting another.",
-                )
-        except Exception:
-            pass
-
-    _record_attempt(
-        _resend_rate_limit_store, _resend_rate_limit_lock, _RESEND_RATE_LIMIT_WINDOW_S
-    )
-    token = secrets.token_urlsafe(32)
-    set_email_verification_token(g.user["id"], token)
-    base_url = request.host_url
-    send_verification_email(email, g.user["username"], token, base_url)
-    return redirect(url_for("auth.verify_pending", sent="1"))
-
-
-@bp.route("/verify-pending")
-def verify_pending() -> Any:
-    """Holding page shown to logged-in users who have not yet verified their email."""
-    if g.user is None:
-        return redirect(url_for("auth.login"))
-    if g.user.get("email_confirmed"):
-        return redirect(url_for("views.index"))
-    return render_template(
-        "verify_pending.html",
-        sent=request.args.get("sent") == "1",
-    )
+    return redirect(url_for("views.setup"))
 
 
 @bp.route("/logout", methods=["POST"])
@@ -1048,7 +428,6 @@ def account() -> Any:
     favorites = [get_location(loc_id) for loc_id in prefs.get("favorites", [])]
     favorites = [loc_obj for loc_obj in favorites if loc_obj]
     recent_logs = get_recent_logs(uid, limit=5)
-    creds = get_account_credentials_cached(uid)
     has_password = bool(get_user_password_hash(uid))
     return render_template(
         "account.html",
@@ -1056,8 +435,6 @@ def account() -> Any:
         saved_location=loc,
         recent_logs=recent_logs,
         favorite_locations=favorites,
-        passkeys=creds["passkeys"],
-        social_accounts=creds["social_accounts"],
         has_password=has_password,
     )
 
@@ -1109,15 +486,12 @@ def change_password_route() -> Any:
         uid = g.user["id"]
         prefs = get_prefs_cached(uid)
         prefs.setdefault("notification_prefs", {})
-        creds = get_account_credentials_cached(uid)
         return render_template(
             "account.html",
             prefs=prefs,
             saved_location=None,
             recent_logs=[],
             favorite_locations=[],
-            passkeys=creds["passkeys"],
-            social_accounts=creds["social_accounts"],
             has_password=True,
             pw_error=msg,
             pw_section_open=True,
@@ -1162,15 +536,12 @@ def delete_account_route() -> Any:
         uid = g.user["id"]
         prefs = get_prefs_cached(uid)
         prefs.setdefault("notification_prefs", {})
-        creds = get_account_credentials_cached(uid)
         return render_template(
             "account.html",
             prefs=prefs,
             saved_location=None,
             recent_logs=[],
             favorite_locations=[],
-            passkeys=creds["passkeys"],
-            social_accounts=creds["social_accounts"],
             has_password=bool(get_user_password_hash(uid)),
             delete_error=msg,
             danger_section_open=True,
@@ -1214,675 +585,3 @@ def delete_account_route() -> Any:
     delete_user(user_id)
     session.clear()
     return redirect(url_for("auth.landing"))
-
-
-# ── WebAuthn / passkey (biometric) endpoints ──────────────────────────────────
-
-
-def _webauthn_rp_id() -> str:
-    return request.host.split(":")[0]
-
-
-def _webauthn_origin() -> str:
-    return request.scheme + "://" + request.host
-
-
-@bp.route("/webauthn/register/begin")
-def webauthn_register_begin() -> Any:
-    """Return WebAuthn registration options for the logged-in user."""
-    if not g.user:
-        return jsonify({"error": "Not logged in"}), 401
-
-    existing = get_webauthn_credentials(g.user["id"])
-    options = generate_registration_options(
-        rp_id=_webauthn_rp_id(),
-        rp_name="Surf & Pier Fishing Forecast",
-        user_id=str(g.user["id"]).encode(),
-        user_name=g.user["username"],
-        user_display_name=g.user["username"],
-        authenticator_selection=AuthenticatorSelectionCriteria(
-            resident_key=ResidentKeyRequirement.PREFERRED,
-            user_verification=UserVerificationRequirement.PREFERRED,
-        ),
-        exclude_credentials=[
-            PublicKeyCredentialDescriptor(id=base64url_to_bytes(c["credential_id"]))
-            for c in existing
-        ],
-    )
-    session["webauthn_reg_challenge"] = bytes_to_base64url(options.challenge)
-    session["webauthn_reg_origin"] = _webauthn_origin()
-    return options_to_json(options), 200, {"Content-Type": "application/json"}
-
-
-@bp.route("/webauthn/register/complete", methods=["POST"])
-def webauthn_register_complete() -> Any:
-    """Verify the registration response and store the new credential."""
-    if not g.user:
-        return jsonify({"error": "Not logged in"}), 401
-
-    challenge_b64 = session.pop("webauthn_reg_challenge", None)
-    origin = session.pop("webauthn_reg_origin", None)
-    if not challenge_b64 or not origin:
-        return jsonify({"error": "No challenge in session"}), 400
-
-    try:
-        verified = verify_registration_response(
-            credential=request.json,
-            expected_challenge=base64url_to_bytes(challenge_b64),
-            expected_rp_id=_webauthn_rp_id(),
-            expected_origin=origin,
-        )
-    except Exception as exc:
-        logger.warning("webauthn.register_failed user_id=%s: %s", g.user["id"], exc)
-        return jsonify({"error": "Registration failed"}), 400
-
-    save_webauthn_credential(
-        user_id=g.user["id"],
-        credential_id=bytes_to_base64url(verified.credential_id),
-        public_key=bytes_to_base64url(verified.credential_public_key),
-        sign_count=verified.sign_count,
-    )
-    logger.info(
-        "webauthn.register_complete user_id=%s ip=%s", g.user["id"], _client_ip()
-    )
-    return jsonify({"ok": True})
-
-
-@bp.route("/webauthn/authenticate/begin", methods=["POST"])
-def webauthn_authenticate_begin() -> Any:
-    """Return WebAuthn authentication options (discoverable credentials)."""
-
-    options = generate_authentication_options(
-        rp_id=_webauthn_rp_id(),
-        user_verification=UserVerificationRequirement.PREFERRED,
-    )
-    session["webauthn_auth_challenge"] = bytes_to_base64url(options.challenge)
-    session["webauthn_auth_origin"] = _webauthn_origin()
-    return options_to_json(options), 200, {"Content-Type": "application/json"}
-
-
-@bp.route("/webauthn/authenticate/complete", methods=["POST"])
-def webauthn_authenticate_complete() -> Any:
-    """Verify the authentication response and log the user in."""
-    challenge_b64 = session.pop("webauthn_auth_challenge", None)
-    origin = session.pop("webauthn_auth_origin", None)
-    if not challenge_b64 or not origin:
-        return jsonify({"error": "No challenge in session"}), 400
-
-    data = request.json or {}
-    credential_id = data.get("id", "")
-    stored = get_webauthn_credential_by_id(credential_id)
-    if not stored:
-        return jsonify({"error": "Unknown credential"}), 400
-
-    try:
-        verified = verify_authentication_response(
-            credential=data,
-            expected_challenge=base64url_to_bytes(challenge_b64),
-            expected_rp_id=_webauthn_rp_id(),
-            expected_origin=origin,
-            credential_public_key=base64url_to_bytes(stored["public_key"]),
-            credential_current_sign_count=stored["sign_count"],
-        )
-    except Exception as exc:
-        logger.warning("webauthn.auth_failed credential_id=%s: %s", credential_id, exc)
-        return jsonify({"error": "Authentication failed"}), 400
-
-    update_webauthn_sign_count(credential_id, verified.new_sign_count)
-
-    user = get_user(stored["user_id"])
-    if not user:
-        return jsonify({"error": "User not found"}), 400
-
-    prior_location_id = session.get("location_id")
-    session.clear()
-    new_version = bump_session_version(user["id"])
-    session["user_id"] = user["id"]
-    session["session_version"] = new_version
-    session.permanent = True
-    session["csrf_token"] = secrets.token_urlsafe(24)
-    prefs = get_preferences(user["id"])
-    if prefs.get("location_id"):
-        session["location_id"] = prefs["location_id"]
-    elif user.get("default_location_id"):
-        session["location_id"] = user["default_location_id"]
-    elif prior_location_id:
-        session["location_id"] = prior_location_id
-
-    logger.info("webauthn.auth_complete user_id=%s ip=%s", user["id"], _client_ip())
-    return jsonify({"ok": True, "redirect": url_for("views.index")})
-
-
-@bp.route("/webauthn/credential/<credential_id>/delete", methods=["POST"])
-def webauthn_delete_credential(credential_id: str) -> Any:
-    """Remove a registered passkey from the logged-in user's account."""
-    if not g.user:
-        return jsonify({"error": "Not logged in"}), 401
-    deleted = delete_webauthn_credential(credential_id, g.user["id"])
-    return jsonify({"ok": deleted})
-
-
-# ---------------------------------------------------------------------------
-# Social login — shared helpers
-# ---------------------------------------------------------------------------
-
-
-def _establish_session(user_id: int) -> None:
-    """Clear the current session and establish a fresh authenticated one.
-
-    Mirrors the session-setup block used in the password login handler so
-    that social logins get the same security guarantees (session fixation
-    prevention, CSRF token rotation, session version bump).
-    """
-    prior_location_id = session.get("location_id")
-    session.clear()
-    new_version = bump_session_version(user_id)
-    session["user_id"] = user_id
-    session["session_version"] = new_version
-    session.permanent = True
-    session["csrf_token"] = secrets.token_urlsafe(24)
-    prefs = get_preferences(user_id)
-    user = get_user(user_id)
-    if prefs.get("location_id"):
-        session["location_id"] = prefs["location_id"]
-    elif user and user.get("default_location_id"):
-        session["location_id"] = user["default_location_id"]
-    elif prior_location_id:
-        session["location_id"] = prior_location_id
-
-
-def _generate_social_username(display_name: Optional[str], email: Optional[str]) -> str:
-    """Derive a readable username from a social profile.
-
-    Tries to build a clean name from the display name or email prefix, then
-    appends a short random hex suffix to ensure uniqueness without a DB lookup.
-    e.g. "John Smith" + "jsmith_3a7f"  or  "jsmith_3a7f" from "jsmith@…"
-    """
-    base = ""
-    if display_name:
-        parts = display_name.strip().split()
-        if len(parts) >= 2:
-            # FirstnameLastinitial  e.g. "jsmith"
-            base = re.sub(r"[^a-zA-Z0-9]", "", parts[0].lower())[:12]
-            base += re.sub(r"[^a-zA-Z0-9]", "", parts[-1].lower())[:1]
-        elif parts:
-            base = re.sub(r"[^a-zA-Z0-9_]", "", parts[0].lower())[:15]
-    if not base and email:
-        base = re.sub(r"[^a-zA-Z0-9_]", "", email.split("@")[0].lower())[:15]
-    if not base:
-        base = "angler"
-    return f"{base}_{secrets.token_hex(3)}"[:30]
-
-
-def _social_login_or_create(
-    provider: str,
-    provider_uid: str,
-    email: Optional[str],
-    display_name: Optional[str],
-    avatar_url: Optional[str] = None,
-) -> tuple[Optional[int], bool]:
-    """Return (user_id, is_new_account) for a social login.
-
-    Resolution order:
-    1. Existing social_accounts row  →  return its user_id, update profile if needed
-    2. Matching email in users table →  link the social account, return user_id
-    3. New user                      →  create account + social_accounts row
-    """
-    existing = get_social_account(provider, provider_uid)
-    if existing:
-        user_id = existing["user_id"]
-        # Fill in display_name / avatar if the user doesn't have them yet
-        update_user_social_profile(user_id, display_name, avatar_url)
-        return user_id, False
-
-    if email:
-        user_by_email = get_user_by_email(email)
-        if user_by_email:
-            link_social_account(user_by_email["id"], provider, provider_uid, email)
-            update_user_social_profile(user_by_email["id"], display_name, avatar_url)
-            return user_by_email["id"], False
-
-    username = _generate_social_username(display_name, email)
-    user_id = create_social_user(
-        username, email, provider, provider_uid, display_name, avatar_url
-    )
-    return user_id, True
-
-
-# ---------------------------------------------------------------------------
-# Apple id_token verification
-# ---------------------------------------------------------------------------
-
-# JWKS cache: (keys_list, fetched_at_epoch)
-_apple_jwks_cache: tuple[list, float] = ([], 0.0)
-_apple_jwks_lock = threading.Lock()
-_APPLE_JWKS_URL = "https://appleid.apple.com/auth/keys"
-_APPLE_JWKS_TTL_S = 3600  # re-fetch at most once per hour
-_APPLE_ISSUER = "https://appleid.apple.com"
-
-
-def _get_apple_jwks() -> list:
-    """Return Apple's current JWKS keys, using a 1-hour in-memory cache."""
-    global _apple_jwks_cache
-    with _apple_jwks_lock:
-        keys, fetched_at = _apple_jwks_cache
-        if keys and (time.time() - fetched_at) < _APPLE_JWKS_TTL_S:
-            return keys
-
-    try:
-        with urllib.request.urlopen(_APPLE_JWKS_URL, timeout=_HTTP_TIMEOUT_JWKS_S) as resp:
-            data = json.loads(resp.read())
-        keys = data.get("keys", [])
-    except Exception as exc:
-        logger.error("apple_jwks.fetch_failed: %s", exc)
-        keys = []
-
-    with _apple_jwks_lock:
-        _apple_jwks_cache = (keys, time.time())
-    return keys
-
-
-def _jwk_to_rsa_public_key(jwk: dict[str, Any]) -> Any:
-    """Convert an RSA JWK dict to a cryptography RSAPublicKey object, or None."""
-    try:
-        def _b64_to_int(s: str) -> int:
-            padding = "=" * (-len(s) % 4)
-            return int.from_bytes(base64.urlsafe_b64decode(s + padding), "big")
-
-        n = _b64_to_int(jwk["n"])
-        e = _b64_to_int(jwk["e"])
-        return RSAPublicNumbers(e, n).public_key()
-    except Exception:
-        return None
-
-
-def _verify_apple_id_token(token: str, client_id: str) -> Optional[dict[str, Any]]:
-    """Verify an Apple id_token JWT and return its payload, or None on failure.
-
-    Steps:
-    1. Decode the JWT header to find the key ID (kid) and algorithm.
-    2. Fetch Apple's JWKS and select the matching key.
-    3. Reconstruct the RSA public key and verify the RS256 signature.
-    4. Validate iss, aud, and exp claims.
-    """
-    parts = token.split(".")
-    if len(parts) != 3:
-        logger.warning("apple_jwt.invalid_format")
-        return None
-
-    def _b64decode(s: str) -> bytes:
-        return base64.urlsafe_b64decode(s + "=" * (-len(s) % 4))
-
-    try:
-        header = json.loads(_b64decode(parts[0]))
-        payload = json.loads(_b64decode(parts[1]))
-    except Exception:
-        logger.warning("apple_jwt.decode_failed")
-        return None
-
-    if header.get("alg") != "RS256":
-        logger.warning("apple_jwt.unexpected_alg: %s", header.get("alg"))
-        return None
-
-    kid = header.get("kid", "")
-    jwks = _get_apple_jwks()
-    matching_jwk = next((k for k in jwks if k.get("kid") == kid), None)
-    if matching_jwk is None:
-        # kid may have changed — evict cache and retry once
-        with _apple_jwks_lock:
-            global _apple_jwks_cache
-            _apple_jwks_cache = ([], 0.0)
-        jwks = _get_apple_jwks()
-        matching_jwk = next((k for k in jwks if k.get("kid") == kid), None)
-    if matching_jwk is None:
-        logger.warning("apple_jwt.unknown_kid: %s", kid)
-        return None
-
-    public_key = _jwk_to_rsa_public_key(matching_jwk)
-    if public_key is None:
-        logger.error("apple_jwt.key_construction_failed kid=%s", kid)
-        return None
-
-    # Verify the signature: RS256 = RSASSA-PKCS1-v1_5 + SHA-256
-    signing_input = f"{parts[0]}.{parts[1]}".encode("ascii")
-    try:
-        signature = _b64decode(parts[2])
-        public_key.verify(signature, signing_input, PKCS1v15(), SHA256())
-    except Exception:
-        logger.warning("apple_jwt.signature_invalid ip=%s", _client_ip())
-        return None
-
-    # Validate standard claims
-    now = int(time.time())
-    if payload.get("iss") != _APPLE_ISSUER:
-        logger.warning("apple_jwt.bad_iss: %r", payload.get("iss"))
-        return None
-    if payload.get("aud") != client_id:
-        logger.warning("apple_jwt.bad_aud: %r", payload.get("aud"))
-        return None
-    if payload.get("exp", 0) < now:
-        logger.warning("apple_jwt.token_expired exp=%s now=%s", payload.get("exp"), now)
-        return None
-
-    return payload
-
-
-# ---------------------------------------------------------------------------
-# OAuth shared helpers
-# ---------------------------------------------------------------------------
-
-
-def _oauth_done(popup: bool, *, redirect_to: str = "", error: str = "") -> Any:
-    """Return the appropriate response for OAuth success or failure.
-
-    In popup mode the browser window was opened by JS so we render a tiny
-    page that postMessages the result back to the opener and closes itself.
-    In redirect mode we do a normal HTTP redirect or re-render the login page.
-    """
-    if error:
-        if popup:
-            return render_template("oauth_popup_done.html", ok=False, error=error)
-        return render_template("login.html", error=error)
-    if popup:
-        return render_template("oauth_popup_done.html", ok=True, redirect=redirect_to)
-    return redirect(redirect_to)
-
-
-# ---------------------------------------------------------------------------
-# Google OAuth 2.0
-# ---------------------------------------------------------------------------
-
-_GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
-_GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
-_GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo"
-
-
-@bp.route("/auth/google")
-def google_login() -> Any:
-    """Start the Google OAuth 2.0 authorisation flow."""
-    if g.user is not None:
-        return redirect(url_for("views.index"))
-    client_id = os.environ.get("GOOGLE_CLIENT_ID", "")
-    if not client_id:
-        return render_template(
-            "login.html", error="Google login is not configured on this server."
-        )
-    state = secrets.token_urlsafe(24)
-    session["oauth_state"] = state
-    session["oauth_provider"] = "google"
-    session["oauth_popup"] = request.args.get("mode") == "popup"
-    params = {
-        "client_id": client_id,
-        "redirect_uri": url_for("auth.google_callback", _external=True),
-        "response_type": "code",
-        "scope": "openid email profile",
-        "state": state,
-        "access_type": "online",
-        "prompt": "select_account",
-    }
-    return redirect(f"{_GOOGLE_AUTH_URL}?{urlencode(params)}")
-
-
-@bp.route("/auth/google/callback")
-def google_callback() -> Any:
-    """Handle the redirect back from Google and complete sign-in."""
-    if g.user is not None:
-        return redirect(url_for("views.index"))
-
-    popup = session.pop("oauth_popup", False)
-
-    if request.args.get("error"):
-        session.pop("oauth_state", None)
-        session.pop("oauth_provider", None)
-        return _oauth_done(popup, error="Google sign-in was cancelled.")
-
-    state = request.args.get("state", "")
-    stored_state = session.pop("oauth_state", None)
-    stored_provider = session.pop("oauth_provider", None)
-    if not state or state != stored_state or stored_provider != "google":
-        return _oauth_done(popup, error="Login session expired. Please try again.")
-
-    code = request.args.get("code", "")
-    if not code:
-        return _oauth_done(popup, error="Google sign-in failed. Please try again.")
-
-    client_id = os.environ.get("GOOGLE_CLIENT_ID", "")
-    client_secret = os.environ.get("GOOGLE_CLIENT_SECRET", "")
-
-    try:
-        token_resp = _requests.post(
-            _GOOGLE_TOKEN_URL,
-            data={
-                "code": code,
-                "client_id": client_id,
-                "client_secret": client_secret,
-                "redirect_uri": url_for("auth.google_callback", _external=True),
-                "grant_type": "authorization_code",
-            },
-            timeout=_HTTP_TIMEOUT_OAUTH_S,
-        )
-        token_data = token_resp.json()
-    except Exception as exc:
-        logger.error("google_oauth.token_exchange_failed: %s", exc)
-        return _oauth_done(
-            popup, error="Could not complete Google sign-in. Please try again."
-        )
-
-    if "error" in token_data or "access_token" not in token_data:
-        logger.warning("google_oauth.token_error: %s", token_data.get("error"))
-        return _oauth_done(popup, error="Google sign-in failed. Please try again.")
-
-    try:
-        userinfo_resp = _requests.get(
-            _GOOGLE_USERINFO_URL,
-            headers={"Authorization": f"Bearer {token_data['access_token']}"},
-            timeout=_HTTP_TIMEOUT_OAUTH_S,
-        )
-        userinfo = userinfo_resp.json()
-    except Exception as exc:
-        logger.error("google_oauth.userinfo_failed: %s", exc)
-        return _oauth_done(
-            popup, error="Could not retrieve Google profile. Please try again."
-        )
-
-    provider_uid = userinfo.get("sub", "")
-    email = userinfo.get("email") or None
-    # Prefer given_name for display (friendlier); fall back to full name
-    display_name = userinfo.get("given_name") or userinfo.get("name") or None
-    avatar_url = userinfo.get("picture") or None
-
-    if not provider_uid:
-        return _oauth_done(popup, error="Google sign-in failed: missing user ID.")
-
-    user_id, is_new = _social_login_or_create(
-        "google", provider_uid, email, display_name, avatar_url
-    )
-    if user_id is None:
-        return _oauth_done(popup, error="Could not create account. Please try again.")
-
-    logger.info(
-        "security.social_login provider=google user_id=%s new=%s ip=%s",
-        user_id,
-        is_new,
-        _client_ip(),
-    )
-    _establish_session(user_id)
-    # New accounts go to location setup first; after picking a location the
-    # before_request hook will redirect them to the profile wizard automatically.
-    dest = url_for("views.setup") if is_new else url_for("views.index")
-    return _oauth_done(popup, redirect_to=dest)
-
-
-# ---------------------------------------------------------------------------
-# Apple Sign In
-# ---------------------------------------------------------------------------
-
-_APPLE_AUTH_URL = "https://appleid.apple.com/auth/authorize"
-_APPLE_TOKEN_URL = "https://appleid.apple.com/auth/token"
-
-
-def _generate_apple_client_secret() -> str:
-    """Generate a short-lived JWT client_secret for Apple's token endpoint.
-
-    Apple requires the client_secret to be a JWT signed with ES256 using the
-    private key downloaded from the Apple Developer portal.
-
-    Required environment variables:
-      APPLE_TEAM_ID     — 10-character Apple Developer team ID
-      APPLE_KEY_ID      — Key ID of the Sign in with Apple private key
-      APPLE_CLIENT_ID   — Service ID (e.g. com.example.app.service)
-      APPLE_PRIVATE_KEY — PEM content of the .p8 private key (newlines as \\n)
-    """
-    team_id = os.environ.get("APPLE_TEAM_ID", "")
-    key_id = os.environ.get("APPLE_KEY_ID", "")
-    client_id = os.environ.get("APPLE_CLIENT_ID", "")
-    private_key_pem = os.environ.get("APPLE_PRIVATE_KEY", "").replace("\\n", "\n")
-
-    if not all([team_id, key_id, client_id, private_key_pem]):
-        raise ValueError(
-            "Apple Sign In requires APPLE_TEAM_ID, APPLE_KEY_ID, "
-            "APPLE_CLIENT_ID, and APPLE_PRIVATE_KEY to be set."
-        )
-
-    def _b64url(data: bytes) -> str:
-        return base64.urlsafe_b64encode(data).rstrip(b"=").decode()
-
-    now = int(time.time())
-    header = _b64url(
-        json.dumps({"alg": "ES256", "kid": key_id}, separators=(",", ":")).encode()
-    )
-    payload = _b64url(
-        json.dumps(
-            {
-                "iss": team_id,
-                "iat": now,
-                "exp": now + 86400,
-                "aud": "https://appleid.apple.com",
-                "sub": client_id,
-            },
-            separators=(",", ":"),
-        ).encode()
-    )
-    message = f"{header}.{payload}".encode()
-    private_key = cast(
-        EllipticCurvePrivateKey,
-        serialization.load_pem_private_key(private_key_pem.encode(), password=None),
-    )
-    der_sig = private_key.sign(message, ec.ECDSA(hashes.SHA256()))
-    r, s = decode_dss_signature(der_sig)
-    raw_sig = _b64url(r.to_bytes(32, "big") + s.to_bytes(32, "big"))
-    return f"{header}.{payload}.{raw_sig}"
-
-
-@bp.route("/auth/apple")
-def apple_login() -> Any:
-    """Start the Apple Sign In authorisation flow."""
-    if g.user is not None:
-        return redirect(url_for("views.index"))
-    client_id = os.environ.get("APPLE_CLIENT_ID", "")
-    if not client_id:
-        return render_template(
-            "login.html", error="Apple Sign In is not configured on this server."
-        )
-    state = secrets.token_urlsafe(24)
-    session["oauth_state"] = state
-    session["oauth_provider"] = "apple"
-    session["oauth_popup"] = request.args.get("mode") == "popup"
-    params = {
-        "client_id": client_id,
-        "redirect_uri": url_for("auth.apple_callback", _external=True),
-        "response_type": "code",
-        "scope": "name email",
-        "state": state,
-    }
-    return redirect(f"{_APPLE_AUTH_URL}?{urlencode(params)}")
-
-
-@bp.route("/auth/apple/callback", methods=["GET", "POST"])
-def apple_callback() -> Any:
-    """Handle the redirect back from Apple and complete sign-in.
-
-    Apple sends the callback as a POST with form-encoded parameters (not a
-    GET redirect like Google).  ``request.values`` reads from both the URL
-    query string and the POST body, so the handler works for either method.
-    """
-    if g.user is not None:
-        return redirect(url_for("views.index"))
-
-    popup = session.pop("oauth_popup", False)
-
-    if request.values.get("error"):
-        session.pop("oauth_state", None)
-        session.pop("oauth_provider", None)
-        return _oauth_done(popup, error="Apple Sign In was cancelled.")
-
-    state = request.values.get("state", "")
-    stored_state = session.pop("oauth_state", None)
-    stored_provider = session.pop("oauth_provider", None)
-    if not state or state != stored_state or stored_provider != "apple":
-        return _oauth_done(popup, error="Login session expired. Please try again.")
-
-    code = request.values.get("code", "")
-    if not code:
-        return _oauth_done(popup, error="Apple Sign In failed. Please try again.")
-
-    client_id = os.environ.get("APPLE_CLIENT_ID", "")
-    try:
-        client_secret = _generate_apple_client_secret()
-    except Exception as exc:
-        logger.error("apple_oauth.client_secret_failed: %s", exc)
-        return _oauth_done(
-            popup, error="Apple Sign In is misconfigured. Please contact support."
-        )
-
-    try:
-        token_resp = _requests.post(
-            _APPLE_TOKEN_URL,
-            data={
-                "client_id": client_id,
-                "client_secret": client_secret,
-                "code": code,
-                "grant_type": "authorization_code",
-                "redirect_uri": url_for("auth.apple_callback", _external=True),
-            },
-            headers={"Content-Type": "application/x-www-form-urlencoded"},
-            timeout=_HTTP_TIMEOUT_OAUTH_S,
-        )
-        token_data = token_resp.json()
-    except Exception as exc:
-        logger.error("apple_oauth.token_exchange_failed: %s", exc)
-        return _oauth_done(
-            popup, error="Could not complete Apple Sign In. Please try again."
-        )
-
-    if "error" in token_data or "id_token" not in token_data:
-        logger.warning("apple_oauth.token_error: %s", token_data.get("error"))
-        return _oauth_done(popup, error="Apple Sign In failed. Please try again.")
-
-    payload = _verify_apple_id_token(token_data["id_token"], client_id)
-    if not payload:
-        return _oauth_done(
-            popup, error="Apple Sign In failed: could not read token."
-        )
-
-    provider_uid = payload.get("sub", "")
-    email = payload.get("email") or None
-
-    if not provider_uid:
-        return _oauth_done(popup, error="Apple Sign In failed: missing user ID.")
-
-    user_id, is_new = _social_login_or_create("apple", provider_uid, email, None, None)
-    if user_id is None:
-        return _oauth_done(popup, error="Could not create account. Please try again.")
-
-    logger.info(
-        "security.social_login provider=apple user_id=%s new=%s ip=%s",
-        user_id,
-        is_new,
-        _client_ip(),
-    )
-    _establish_session(user_id)
-    # New accounts go to location setup first; after picking a location the
-    # before_request hook will redirect them to the profile wizard automatically.
-    dest = url_for("views.setup") if is_new else url_for("views.index")
-    return _oauth_done(popup, redirect_to=dest)
