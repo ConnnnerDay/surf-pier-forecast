@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 import logging
 import os
 import sqlite3
 import threading as _threading
 import time as _time
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any, Optional
 
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -64,9 +63,7 @@ CREATE TABLE IF NOT EXISTS users (
     username      TEXT UNIQUE COLLATE NOCASE,
     password_hash TEXT,
     email         TEXT UNIQUE COLLATE NOCASE,
-    email_confirmed INTEGER NOT NULL DEFAULT 0,
-    email_verification_token TEXT,
-    email_verification_sent_at TEXT,
+    email_confirmed INTEGER NOT NULL DEFAULT 1,
     password_reset_token TEXT,
     password_reset_sent_at TEXT,
     default_location_id TEXT,
@@ -137,30 +134,6 @@ CREATE TABLE IF NOT EXISTS reg_scrape_cache (
     scraped_at  TEXT NOT NULL DEFAULT (datetime('now')),
     PRIMARY KEY (species_key, state)
 );
-
-CREATE TABLE IF NOT EXISTS webauthn_credentials (
-    id            INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id       INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    credential_id TEXT NOT NULL UNIQUE,
-    public_key    TEXT NOT NULL,
-    sign_count    INTEGER NOT NULL DEFAULT 0,
-    name          TEXT NOT NULL DEFAULT 'Passkey',
-    created_at    TEXT NOT NULL DEFAULT (datetime('now'))
-);
-CREATE INDEX IF NOT EXISTS idx_webauthn_user
-ON webauthn_credentials(user_id);
-
-CREATE TABLE IF NOT EXISTS social_accounts (
-    id            INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id       INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    provider      TEXT NOT NULL,
-    provider_uid  TEXT NOT NULL,
-    email         TEXT,
-    created_at    TEXT NOT NULL DEFAULT (datetime('now')),
-    UNIQUE(provider, provider_uid)
-);
-CREATE INDEX IF NOT EXISTS idx_social_accounts_user
-ON social_accounts(user_id);
 
 CREATE TABLE IF NOT EXISTS custom_habitats (
     id            TEXT    PRIMARY KEY,
@@ -246,8 +219,6 @@ _KNOWN_TABLES = frozenset(
         "forecast_cache",
         "catch_log",
         "reg_scrape_cache",
-        "webauthn_credentials",
-        "social_accounts",
         "custom_habitats",
         "habitat_overrides",
         "custom_habitat_types",
@@ -290,10 +261,6 @@ def _run_migrations(conn: sqlite3.Connection) -> None:
         )
     if "email" not in user_cols:
         conn.execute("ALTER TABLE users ADD COLUMN email TEXT UNIQUE COLLATE NOCASE")
-    if "email_verification_token" not in user_cols:
-        conn.execute("ALTER TABLE users ADD COLUMN email_verification_token TEXT")
-    if "email_verification_sent_at" not in user_cols:
-        conn.execute("ALTER TABLE users ADD COLUMN email_verification_sent_at TEXT")
     if "display_name" not in user_cols:
         conn.execute("ALTER TABLE users ADD COLUMN display_name TEXT")
     if "avatar_url" not in user_cols:
@@ -378,12 +345,6 @@ def _run_migrations(conn: sqlite3.Connection) -> None:
     if "page_layout" not in profile_cols:
         conn.execute("ALTER TABLE profiles ADD COLUMN page_layout TEXT")
 
-    catch_log_cols = set(_column_names(conn, "catch_log"))
-    if "photo1_path" not in catch_log_cols:
-        conn.execute("ALTER TABLE catch_log ADD COLUMN photo1_path TEXT")
-    if "photo2_path" not in catch_log_cols:
-        conn.execute("ALTER TABLE catch_log ADD COLUMN photo2_path TEXT")
-
     override_cols = set(_column_names(conn, "habitat_overrides"))
     if "geometry_json" not in override_cols:
         conn.execute("ALTER TABLE habitat_overrides ADD COLUMN geometry_json TEXT")
@@ -437,42 +398,6 @@ def _run_migrations(conn: sqlite3.Connection) -> None:
             INSERT INTO forecasts (location_id, forecast_json, generated_at, created_at)
             SELECT location_id, data, generated_at, COALESCE(updated_at, datetime('now'))
             FROM forecasts_legacy
-            """
-        )
-
-    # webauthn_credentials table (added for passkey / biometric login support)
-    if not _table_exists(conn, "webauthn_credentials"):
-        conn.executescript(
-            """
-            CREATE TABLE IF NOT EXISTS webauthn_credentials (
-                id            INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id       INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-                credential_id TEXT NOT NULL UNIQUE,
-                public_key    TEXT NOT NULL,
-                sign_count    INTEGER NOT NULL DEFAULT 0,
-                name          TEXT NOT NULL DEFAULT 'Passkey',
-                created_at    TEXT NOT NULL DEFAULT (datetime('now'))
-            );
-            CREATE INDEX IF NOT EXISTS idx_webauthn_user
-            ON webauthn_credentials(user_id);
-            """
-        )
-
-    # social_accounts table (added for Google / Apple social login support)
-    if not _table_exists(conn, "social_accounts"):
-        conn.executescript(
-            """
-            CREATE TABLE IF NOT EXISTS social_accounts (
-                id            INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id       INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-                provider      TEXT NOT NULL,
-                provider_uid  TEXT NOT NULL,
-                email         TEXT,
-                created_at    TEXT NOT NULL DEFAULT (datetime('now')),
-                UNIQUE(provider, provider_uid)
-            );
-            CREATE INDEX IF NOT EXISTS idx_social_accounts_user
-            ON social_accounts(user_id);
             """
         )
 
@@ -601,80 +526,12 @@ def get_user_by_email(email: str) -> Optional[dict[str, Any]]:
     return {"id": row["id"]} if row else None
 
 
-def _hash_verification_token(token: str) -> str:
-    """Return the SHA-256 hex digest of a verification token.
-
-    Tokens are stored hashed so that a database read alone cannot produce a
-    working verification URL.  The raw token travels only in the email link.
-    """
-    return hashlib.sha256(token.encode()).hexdigest()
-
-
-def set_email_verification_token(user_id: int, token: str) -> None:
-    """Hash *token* and store it along with the current timestamp."""
-    token_hash = _hash_verification_token(token)
-    conn = get_db()
-    try:
-        conn.execute(
-            "UPDATE users SET email_verification_token = ?, "
-            "email_verification_sent_at = datetime('now') WHERE id = ?",
-            (token_hash, user_id),
-        )
-        conn.commit()
-    finally:
-        conn.close()
-
-
-def get_email_verification_sent_at(user_id: int) -> Optional[str]:
-    """Return the ISO timestamp of the last verification email, or None."""
-    conn = get_db()
-    try:
-        row = conn.execute(
-            "SELECT email_verification_sent_at FROM users WHERE id = ?",
-            (user_id,),
-        ).fetchone()
-    finally:
-        conn.close()
-    return row["email_verification_sent_at"] if row else None
-
-
-def get_user_by_verification_token(token: str) -> Optional[dict[str, Any]]:
-    """Return the user matching *token* if the token was sent within 2 hours.
-
-    The token is hashed before querying so the raw value never touches the DB.
-    """
-    token_hash = _hash_verification_token(token)
-    conn = get_db()
-    try:
-        row = conn.execute(
-            "SELECT id, email_confirmed, email_verification_sent_at "
-            "FROM users WHERE email_verification_token = ? AND is_anonymous = 0",
-            (token_hash,),
-        ).fetchone()
-    finally:
-        conn.close()
-    if not row:
-        return None
-    # Expire tokens after 2 hours to limit the window if a link is leaked.
-    sent_at_raw = row["email_verification_sent_at"]
-    if sent_at_raw:
-        try:
-            sent_at = datetime.fromisoformat(sent_at_raw).replace(tzinfo=timezone.utc)
-            now = datetime.now(tz=timezone.utc)
-            if (now - sent_at).total_seconds() > 7200:
-                return None
-        except Exception:
-            pass
-    return {"id": row["id"], "email_confirmed": bool(row["email_confirmed"])}
-
-
 def confirm_email(user_id: int) -> None:
-    """Mark the user's email as confirmed and clear the verification token."""
+    """Mark the user's email as confirmed."""
     conn = get_db()
     try:
         conn.execute(
-            "UPDATE users SET email_confirmed = 1, email_verification_token = NULL, "
-            "email_verification_sent_at = NULL WHERE id = ?",
+            "UPDATE users SET email_confirmed = 1 WHERE id = ?",
             (user_id,),
         )
         conn.commit()
@@ -716,12 +573,8 @@ def change_password(user_id: int, new_password: str) -> int:
     pw_hash = generate_password_hash(new_password, method="scrypt")
     conn = get_db()
     try:
-        # Also clear any pending email-verification token: it was issued under
-        # the old credentials, so it should not remain valid after a password
-        # change (the user can request a new verification email afterwards).
         conn.execute(
-            "UPDATE users SET password_hash = ?, session_version = session_version + 1, "
-            "email_verification_token = NULL, email_verification_sent_at = NULL "
+            "UPDATE users SET password_hash = ?, session_version = session_version + 1 "
             "WHERE id = ?",
             (pw_hash, user_id),
         )
@@ -745,25 +598,6 @@ def get_user_password_hash(user_id: int) -> Optional[str]:
         return row["password_hash"] if row else None
     finally:
         conn.close()
-
-
-def get_all_user_photo_paths(user_id: int) -> list[str]:
-    """Return every stored photo path for *user_id* across all catch-log entries."""
-    conn = get_db()
-    try:
-        rows = conn.execute(
-            "SELECT photo1_path, photo2_path FROM catch_log WHERE user_id = ?",
-            (user_id,),
-        ).fetchall()
-    finally:
-        conn.close()
-    paths: list[str] = []
-    for row in rows:
-        if row["photo1_path"]:
-            paths.append(row["photo1_path"])
-        if row["photo2_path"]:
-            paths.append(row["photo2_path"])
-    return paths
 
 
 def delete_user(user_id: int) -> None:
@@ -951,7 +785,7 @@ def get_log_entries(
     conn = get_db()
     try:
         rows = conn.execute(
-            "SELECT id, species, size, notes, caught_at, photo1_path, photo2_path FROM catch_log "
+            "SELECT id, species, size, notes, caught_at FROM catch_log "
             "WHERE user_id = ? AND location_id = ? ORDER BY caught_at DESC, id DESC LIMIT ?",
             (user_id, location_id, limit),
         ).fetchall()
@@ -964,8 +798,6 @@ def get_log_entries(
             "size": r["size"],
             "notes": r["notes"],
             "date": r["caught_at"],
-            "photo1_path": r["photo1_path"],
-            "photo2_path": r["photo2_path"],
         }
         for r in rows
     ]
@@ -1010,61 +842,6 @@ def delete_log_entry(user_id: int, entry_id: int) -> bool:
         conn.close()
     for k in [k for k in _LOG_STATS_CACHE if k[0] == user_id]:
         _LOG_STATS_CACHE.pop(k, None)
-    return ok
-
-
-def get_entry_photo_paths(
-    user_id: int, entry_id: int
-) -> Optional[tuple[Optional[str], Optional[str]]]:
-    """Return (photo1_path, photo2_path) for the entry, or None if entry not found."""
-    conn = get_db()
-    try:
-        row = conn.execute(
-            "SELECT photo1_path, photo2_path FROM catch_log WHERE id = ? AND user_id = ?",
-            (entry_id, user_id),
-        ).fetchone()
-    finally:
-        conn.close()
-    if row is None:
-        return None
-    return (row["photo1_path"], row["photo2_path"])
-
-
-def attach_photos_to_entry(
-    user_id: int,
-    entry_id: int,
-    *,
-    photo1_path: Optional[str] = None,
-    photo2_path: Optional[str] = None,
-) -> bool:
-    """Update photo slots for an entry.  Only slots explicitly provided are updated.
-
-    Returns True if the entry exists and was updated, False otherwise.
-    """
-    if photo1_path is None and photo2_path is None:
-        return False
-
-    conn = get_db()
-    try:
-        if photo1_path is not None and photo2_path is not None:
-            cur = conn.execute(
-                "UPDATE catch_log SET photo1_path = ?, photo2_path = ? WHERE id = ? AND user_id = ?",
-                (photo1_path, photo2_path, entry_id, user_id),
-            )
-        elif photo1_path is not None:
-            cur = conn.execute(
-                "UPDATE catch_log SET photo1_path = ? WHERE id = ? AND user_id = ?",
-                (photo1_path, entry_id, user_id),
-            )
-        else:
-            cur = conn.execute(
-                "UPDATE catch_log SET photo2_path = ? WHERE id = ? AND user_id = ?",
-                (photo2_path, entry_id, user_id),
-            )
-        conn.commit()
-        ok = cur.rowcount > 0
-    finally:
-        conn.close()
     return ok
 
 
@@ -1133,7 +910,7 @@ def get_recent_logs(user_id: int, limit: int = 5) -> list[dict[str, Any]]:
     conn = get_db()
     try:
         rows = conn.execute(
-            "SELECT id, location_id, species, size, notes, caught_at, photo1_path, photo2_path FROM catch_log "
+            "SELECT id, location_id, species, size, notes, caught_at FROM catch_log "
             "WHERE user_id = ? ORDER BY caught_at DESC, id DESC LIMIT ?",
             (user_id, limit),
         ).fetchall()
@@ -1147,8 +924,6 @@ def get_recent_logs(user_id: int, limit: int = 5) -> list[dict[str, Any]]:
             "size": r["size"],
             "notes": r["notes"],
             "date": r["caught_at"],
-            "photo1_path": r["photo1_path"],
-            "photo2_path": r["photo2_path"],
         }
         for r in rows
     ]
@@ -1336,225 +1111,6 @@ def delete_forecast(location_id: str) -> bool:
     finally:
         conn.close()
     return deleted
-
-
-# ── WebAuthn / passkey credential storage ─────────────────────────────────────
-
-
-def save_webauthn_credential(
-    user_id: int,
-    credential_id: str,
-    public_key: str,
-    sign_count: int,
-    name: str = "Passkey",
-) -> None:
-    conn = get_db()
-    try:
-        conn.execute(
-            """
-        INSERT INTO webauthn_credentials (user_id, credential_id, public_key, sign_count, name)
-        VALUES (?, ?, ?, ?, ?)
-        """,
-            (user_id, credential_id, public_key, sign_count, name),
-        )
-        conn.commit()
-    finally:
-        conn.close()
-
-
-def get_webauthn_credentials(user_id: int) -> list[dict[str, Any]]:
-    conn = get_db()
-    try:
-        rows = conn.execute(
-            "SELECT * FROM webauthn_credentials WHERE user_id = ? ORDER BY created_at",
-            (user_id,),
-        ).fetchall()
-    finally:
-        conn.close()
-    return [dict(r) for r in rows]
-
-
-def get_account_credentials(user_id: int) -> dict[str, Any]:
-    """Return passkeys and linked social accounts in one DB round-trip.
-
-    Both tables are owned by the same user and rarely written to, so fetching
-    them together halves the number of connections opened on the account page.
-    """
-    conn = get_db()
-    try:
-        passkey_rows = conn.execute(
-            "SELECT * FROM webauthn_credentials WHERE user_id = ? ORDER BY created_at",
-            (user_id,),
-        ).fetchall()
-        social_rows = conn.execute(
-            "SELECT provider, email, created_at FROM social_accounts WHERE user_id = ?",
-            (user_id,),
-        ).fetchall()
-    finally:
-        conn.close()
-    return {
-        "passkeys": [dict(r) for r in passkey_rows],
-        "social_accounts": [
-            {
-                "provider": r["provider"],
-                "email": r["email"],
-                "created_at": r["created_at"],
-            }
-            for r in social_rows
-        ],
-    }
-
-
-def get_webauthn_credential_by_id(credential_id: str) -> Optional[dict[str, Any]]:
-    conn = get_db()
-    try:
-        row = conn.execute(
-            "SELECT * FROM webauthn_credentials WHERE credential_id = ?",
-            (credential_id,),
-        ).fetchone()
-    finally:
-        conn.close()
-    return dict(row) if row else None
-
-
-def update_webauthn_sign_count(credential_id: str, sign_count: int) -> None:
-    conn = get_db()
-    try:
-        conn.execute(
-            "UPDATE webauthn_credentials SET sign_count = ? WHERE credential_id = ?",
-            (sign_count, credential_id),
-        )
-        conn.commit()
-    finally:
-        conn.close()
-
-
-def delete_webauthn_credential(credential_id: str, user_id: int) -> bool:
-    conn = get_db()
-    try:
-        cur = conn.execute(
-            "DELETE FROM webauthn_credentials WHERE credential_id = ? AND user_id = ?",
-            (credential_id, user_id),
-        )
-        conn.commit()
-        deleted = cur.rowcount > 0
-    finally:
-        conn.close()
-    return deleted
-
-
-# Social login (Google / Apple OAuth) --------------------------------------
-
-
-def get_social_account(provider: str, provider_uid: str) -> Optional[dict[str, Any]]:
-    """Return the user_id linked to a social provider account, or None."""
-    conn = get_db()
-    try:
-        row = conn.execute(
-            "SELECT user_id FROM social_accounts WHERE provider = ? AND provider_uid = ?",
-            (provider, provider_uid),
-        ).fetchone()
-    finally:
-        conn.close()
-    return {"user_id": row["user_id"]} if row else None
-
-
-def link_social_account(
-    user_id: int, provider: str, provider_uid: str, email: Optional[str] = None
-) -> None:
-    """Link an existing user account to a social provider."""
-    conn = get_db()
-    try:
-        conn.execute(
-            "INSERT OR IGNORE INTO social_accounts (user_id, provider, provider_uid, email) "
-            "VALUES (?, ?, ?, ?)",
-            (user_id, provider, provider_uid, email),
-        )
-        conn.commit()
-    finally:
-        conn.close()
-
-
-def create_social_user(
-    username: str,
-    email: Optional[str],
-    provider: str,
-    provider_uid: str,
-    display_name: Optional[str] = None,
-    avatar_url: Optional[str] = None,
-) -> Optional[int]:
-    """Create a new user for social login (no password) and link the social account.
-
-    The user is created with email_confirmed=1 because the identity provider has
-    already verified the email address.
-    """
-    email_val = email.strip().lower() if email else None
-    conn = get_db()
-    try:
-        cur = conn.execute(
-            "INSERT INTO users "
-            "(username, password_hash, email, email_confirmed, is_anonymous, display_name, avatar_url) "
-            "VALUES (?, NULL, ?, 1, 0, ?, ?)",
-            (username.strip(), email_val, display_name, avatar_url),
-        )
-        user_id = cur.lastrowid
-        conn.execute("INSERT OR IGNORE INTO profiles (user_id) VALUES (?)", (user_id,))
-        conn.execute("INSERT OR IGNORE INTO locations (user_id) VALUES (?)", (user_id,))
-        conn.execute(
-            "INSERT INTO social_accounts (user_id, provider, provider_uid, email) "
-            "VALUES (?, ?, ?, ?)",
-            (user_id, provider, provider_uid, email_val),
-        )
-        conn.commit()
-        return user_id
-    except sqlite3.IntegrityError:
-        return None
-    finally:
-        conn.close()
-
-
-def update_user_social_profile(
-    user_id: int,
-    display_name: Optional[str] = None,
-    avatar_url: Optional[str] = None,
-) -> None:
-    """Update display_name and/or avatar_url for an existing social login user.
-
-    Only overwrites fields that are currently NULL — preserves any display name
-    the user may have set themselves.
-    """
-    conn = get_db()
-    try:
-        if display_name:
-            conn.execute(
-                "UPDATE users SET display_name = ? WHERE id = ? AND display_name IS NULL",
-                (display_name, user_id),
-            )
-        if avatar_url:
-            conn.execute(
-                "UPDATE users SET avatar_url = ? WHERE id = ? AND avatar_url IS NULL",
-                (avatar_url, user_id),
-            )
-        conn.commit()
-    finally:
-        conn.close()
-
-
-def get_social_accounts_for_user(user_id: int) -> list[dict[str, Any]]:
-    """Return all social accounts linked to a user."""
-    conn = get_db()
-    try:
-        rows = conn.execute(
-            "SELECT provider, email, created_at FROM social_accounts WHERE user_id = ?",
-            (user_id,),
-        ).fetchall()
-    finally:
-        conn.close()
-    return [
-        {"provider": r["provider"], "email": r["email"], "created_at": r["created_at"]}
-        for r in rows
-    ]
-
 
 
 # Custom habitats (admin-drawn habitat polygons/points) -----------------------

@@ -12,7 +12,6 @@ Configure via environment variables:
 
 from __future__ import annotations
 
-import html as _html
 import logging
 import os
 import smtplib
@@ -32,11 +31,6 @@ _SMTP_USE_TLS = os.environ.get("SMTP_USE_TLS", "1").strip().lower()
 
 def _is_configured() -> bool:
     return bool(_SMTP_HOST and _SMTP_FROM)
-
-
-def smtp_is_configured() -> bool:
-    """Return True if SMTP env vars are set and verification emails can be sent."""
-    return _is_configured()
 
 
 def _sanitize_header(value: str) -> str:
@@ -107,46 +101,3 @@ def send_email(to: str, subject: str, body_text: str, body_html: str = "") -> bo
         return False
 
 
-def send_verification_email(
-    to_email: str, username: str, token: str, base_url: str
-) -> bool:
-    """Send an account verification email with a one-time link."""
-    verify_url = f"{base_url.rstrip('/')}/verify-email/{token}"
-    subject = "Verify your Surf & Pier account"
-    # HTML-escape username before embedding in the HTML body so that any
-    # unexpected characters (e.g. '<', '>') cannot break the HTML structure.
-    username_html = _html.escape(username)
-    body_text = (
-        f"Hi {username},\n\n"
-        "Thanks for signing up for Surf & Pier Fishing Forecast!\n\n"
-        "Please verify your email address by visiting the link below.\n"
-        "This link expires in 2 hours.\n\n"
-        f"  {verify_url}\n\n"
-        "If you didn't create an account, you can safely ignore this email.\n\n"
-        "— Surf & Pier"
-    )
-    body_html = f"""\
-<!DOCTYPE html>
-<html>
-<body style="font-family:sans-serif;max-width:480px;margin:auto;padding:2rem;color:#222;">
-  <h2 style="color:#0e5f78;">Surf &amp; Pier Fishing Forecast</h2>
-  <p>Hi <strong>{username_html}</strong>,</p>
-  <p>Thanks for signing up! Please verify your email address to activate your account.</p>
-  <p style="margin:1.5rem 0;">
-    <a href="{verify_url}"
-       style="background:#0e5f78;color:#fff;padding:0.7rem 1.4rem;border-radius:6px;
-              text-decoration:none;font-weight:600;">
-      Verify Email Address
-    </a>
-  </p>
-  <p style="font-size:0.85rem;color:#666;">
-    Or copy this link into your browser:<br>
-    <a href="{verify_url}" style="color:#0e5f78;">{verify_url}</a>
-  </p>
-  <p style="font-size:0.85rem;color:#666;">This link expires in 2 hours.</p>
-  <p style="font-size:0.85rem;color:#999;">
-    If you didn't create an account, you can safely ignore this email.
-  </p>
-</body>
-</html>"""
-    return send_email(to_email, subject, body_text, body_html)

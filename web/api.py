@@ -3,22 +3,14 @@
 from __future__ import annotations
 
 import concurrent.futures as _cf
-import datetime
-import json as _json_mod
 import logging
-import os
-import re as _re
 import threading
-import time
-import uuid
 from zoneinfo import available_timezones
 from typing import Any, Optional
 
-import requests as _requests
 
 from flask import (
     Blueprint,
-    current_app,
     g,
     jsonify,
     redirect,
@@ -32,9 +24,8 @@ from domain.forecast import (
     generate_forecast,
 )
 from services.forecast_refresh import enqueue_forecast_refresh, is_refreshing
-from locations import COASTAL_LOCATIONS, get_location, get_water_temp
+from locations import get_location
 from storage.reg_scraper import invalidate_cache as _reg_invalidate_cache
-from storage.species_loader import SPECIES_DB
 from regulations import lookup_regulation
 from storage.cache import (
     CACHE_MAX_AGE_HOURS,
@@ -57,9 +48,7 @@ from services.arcgis_live_feeds import (
 )
 from storage.sqlite import (
     add_log_entry,
-    attach_photos_to_entry,
     delete_log_entry,
-    get_entry_photo_paths,
     get_log_entries,
     get_log_stats,
     get_page_layout,
@@ -187,30 +176,6 @@ def _forecast_sub_record_attempt() -> None:
         _forecast_sub_rate_store,
         _forecast_sub_rate_lock,
         _FORECAST_SUB_RATE_LIMIT_WINDOW_S,
-    )
-
-
-# ── Rate limiting for photo uploads ───────────────────────────────────────────
-# Each upload writes up to 8 MB to disk.  Limit authenticated users to 20
-# uploads per 10 minutes per IP to prevent disk-filling abuse.
-_UPLOAD_RATE_LIMIT_MAX = 20
-_UPLOAD_RATE_LIMIT_WINDOW_S = 10 * 60
-_upload_rate_store: dict[str, tuple[float, int]] = {}
-_upload_rate_lock = threading.Lock()
-
-
-def _upload_is_rate_limited() -> bool:
-    return _is_rate_limited_ip(
-        _upload_rate_store,
-        _upload_rate_lock,
-        _UPLOAD_RATE_LIMIT_MAX,
-        _UPLOAD_RATE_LIMIT_WINDOW_S,
-    )
-
-
-def _upload_record_attempt() -> None:
-    _record_ip_attempt(
-        _upload_rate_store, _upload_rate_lock, _UPLOAD_RATE_LIMIT_WINDOW_S
     )
 
 
@@ -505,15 +470,9 @@ def log_delete_v1(entry_id: int) -> Any:
     if g.user is None:
         return jsonify(error_envelope("unauthorized", "Not logged in")), 401
     uid = g.user["id"]
-    photo_paths = get_entry_photo_paths(uid, entry_id)
-    if photo_paths is None:
-        # Entry doesn't exist (get_entry_photo_paths returns None for missing rows)
+    deleted = delete_log_entry(uid, entry_id)
+    if not deleted:
         return jsonify(error_envelope("not_found", "Log entry not found")), 404
-    # Delete files before the DB row so a crash between the two doesn't leave
-    # orphaned files on disk with no DB record to clean them up later.
-    _delete_upload_file(photo_paths[0])
-    _delete_upload_file(photo_paths[1])
-    delete_log_entry(uid, entry_id)
     return jsonify(success_envelope({"deleted": True, "entry_id": entry_id}))
 
 
@@ -783,171 +742,6 @@ def regulations_v1() -> Any:
             }
         )
     )
-
-
-_ALLOWED_MIME = {"image/jpeg", "image/png", "image/webp"}
-_ALLOWED_EXT = {".jpg", ".jpeg", ".png", ".webp"}
-_MAX_PHOTO_BYTES = 8 * 1024 * 1024  # 8 MB per photo
-
-# Magic byte signatures for each allowed image format.
-# Validated against the raw file content to prevent MIME-type spoofing — a
-# client-controlled header that cannot be trusted on its own.
-_JPEG_MAGIC = b"\xff\xd8\xff"
-_PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
-_WEBP_RIFF = b"RIFF"
-_WEBP_TAG = b"WEBP"
-
-
-def _check_magic_bytes(data: bytes, claimed_mime: str) -> bool:
-    """Return True if ``data`` starts with the magic bytes for ``claimed_mime``."""
-    if claimed_mime == "image/jpeg":
-        return data[:3] == _JPEG_MAGIC
-    if claimed_mime == "image/png":
-        return data[:8] == _PNG_MAGIC
-    if claimed_mime == "image/webp":
-        # WebP container: bytes 0-3 = "RIFF", bytes 8-11 = "WEBP"
-        return len(data) >= 12 and data[:4] == _WEBP_RIFF and data[8:12] == _WEBP_TAG
-    return False
-
-
-def _save_upload(file_storage, user_id: int) -> tuple[str, str]:
-    """Validate + write an uploaded photo.
-
-    Returns ``(relative_path, absolute_path)`` where relative_path is suitable
-    for storing in the DB and serving via ``/static/...``.
-
-    Raises ApiError on validation failure.
-    """
-    mime = file_storage.mimetype or ""
-    if mime not in _ALLOWED_MIME:
-        raise ApiError(
-            "invalid_file_type",
-            "Unsupported file type. Use JPEG, PNG, or WebP.",
-            status=400,
-        )
-
-    ext = os.path.splitext(file_storage.filename or "")[1].lower()
-    if ext not in _ALLOWED_EXT:
-        raise ApiError(
-            "invalid_file_type",
-            "Unsupported extension. Use .jpg, .png, or .webp.",
-            status=400,
-        )
-
-    data = file_storage.read()
-    if len(data) > _MAX_PHOTO_BYTES:
-        raise ApiError("file_too_large", "Photo must be 8 MB or smaller.", status=413)
-
-    # Validate actual file content against known magic bytes so that a client
-    # cannot bypass the MIME / extension checks by spoofing headers.
-    if not _check_magic_bytes(data, mime):
-        raise ApiError(
-            "invalid_file_type",
-            "File content does not match the declared type.",
-            status=400,
-        )
-
-    upload_root = current_app.config["UPLOAD_FOLDER"]
-    user_dir = os.path.join(upload_root, str(user_id))
-    os.makedirs(user_dir, exist_ok=True)
-    try:
-        os.chmod(user_dir, 0o700)
-    except OSError as _e:
-        logger.warning("upload: chmod 700 failed for dir %s: %s", user_dir, _e)
-
-    filename = f"{uuid.uuid4()}{ext}"
-    abs_path = os.path.join(user_dir, filename)
-    with open(abs_path, "wb") as fh:
-        fh.write(data)
-    try:
-        os.chmod(abs_path, 0o600)
-    except OSError as _e:
-        logger.warning("upload: chmod 600 failed for file %s: %s", abs_path, _e)
-
-    rel_path = f"uploads/{user_id}/{filename}"
-    return rel_path, abs_path
-
-
-def _delete_upload_file(rel_path: Optional[str]) -> None:
-    """Silently remove a stored photo file; no-op when path is None or missing."""
-    if not rel_path:
-        return
-    upload_root = current_app.config.get("UPLOAD_FOLDER", "")
-    if not upload_root:
-        return
-    # rel_path is "uploads/<user_id>/<filename>"; strip the leading "uploads/" part
-    sub = rel_path[len("uploads/") :] if rel_path.startswith("uploads/") else rel_path
-    # Resolve symlinks and normalise to prevent path traversal (e.g. "../../etc")
-    # before constructing the absolute path.
-    upload_root_real = os.path.realpath(upload_root)
-    abs_path = os.path.realpath(os.path.join(upload_root, sub))
-    # Only delete files that are actually inside the upload root.
-    if not abs_path.startswith(upload_root_real + os.sep):
-        logger.warning(
-            "Blocked attempt to delete file outside upload root: %s", rel_path
-        )
-        return
-    try:
-        os.remove(abs_path)
-    except OSError:
-        pass
-
-
-@bp.route("/api/v1/log/<int:entry_id>/photos", methods=["POST"])
-def log_photos_v1(entry_id: int) -> Any:
-    """Attach up to two photos to an existing catch-log entry.
-
-    Expects ``multipart/form-data`` with optional fields ``photo1`` and/or
-    ``photo2`` (each a file upload).  At least one field must be present.
-    """
-    if g.user is None:
-        return jsonify(error_envelope("unauthorized", "Not logged in")), 401
-
-    if _upload_is_rate_limited():
-        logger.warning(
-            "security.upload_rate_limit user_id=%s ip=%s", g.user["id"], _client_ip()
-        )
-        return _json_error(
-            ApiError("rate_limited", "Too many uploads. Please slow down.", status=429)
-        )
-    _upload_record_attempt()
-
-    uid = g.user["id"]
-    paths = get_entry_photo_paths(uid, entry_id)
-    if paths is None:
-        return jsonify(error_envelope("not_found", "Log entry not found")), 404
-
-    photo1_file = request.files.get("photo1")
-    photo2_file = request.files.get("photo2")
-
-    if not photo1_file and not photo2_file:
-        return _json_error(
-            ApiError(
-                "missing_param", "Provide at least one of: photo1, photo2", status=400
-            )
-        )
-
-    saved: dict[str, str] = {}
-    try:
-        if photo1_file and photo1_file.filename:
-            rel, _ = _save_upload(photo1_file, uid)
-            saved["photo1_path"] = rel
-        if photo2_file and photo2_file.filename:
-            rel, _ = _save_upload(photo2_file, uid)
-            saved["photo2_path"] = rel
-    except ApiError as err:
-        # Clean up any files already written this request
-        for p in saved.values():
-            _delete_upload_file(p)
-        return _json_error(err)
-
-    attach_photos_to_entry(uid, entry_id, **saved)
-    # Delete old photo files that were just replaced so they don't become orphans.
-    if "photo1_path" in saved:
-        _delete_upload_file(paths[0])
-    if "photo2_path" in saved:
-        _delete_upload_file(paths[1])
-    return jsonify(success_envelope({"entry_id": entry_id, **saved})), 201
 
 
 @bp.route("/api/share-text")

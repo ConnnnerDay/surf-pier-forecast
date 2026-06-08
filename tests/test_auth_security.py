@@ -6,13 +6,11 @@ import pytest
 
 from app import create_app
 from storage.sqlite import (
-    confirm_email,
     create_user,
     get_preferences,
     get_user,
     init_db,
     save_preferences,
-    set_email_verification_token,
 )
 
 
@@ -62,7 +60,6 @@ def test_register_requires_complex_password(client):
 def test_login_rate_limit_message(client, monkeypatch):
     from web import auth as auth_module
 
-    # Isolate this test from any state left by other tests.
     monkeypatch.setattr(auth_module, "_rate_limit_store", {})
 
     create_user("rate_user", "Aa123456")
@@ -70,7 +67,6 @@ def test_login_rate_limit_message(client, monkeypatch):
     page = client.get("/login")
     token = _csrf_from_html(page.data)
 
-    # Exhaust the IP-based rate limit with bad passwords.
     for _ in range(auth_module._LOGIN_RATE_LIMIT_MAX_ATTEMPTS):
         client.post(
             "/login",
@@ -81,7 +77,6 @@ def test_login_rate_limit_message(client, monkeypatch):
             },
         )
 
-    # Next attempt (even with the correct password) must be blocked.
     resp = client.post(
         "/login",
         data={"csrf_token": token, "username": "rate_user", "password": "Aa123456"},
@@ -254,13 +249,7 @@ def test_setup_favorite_rejects_external_next_redirect(client):
     assert resp.headers["Location"].endswith("/setup")
 
 
-# ---------------------------------------------------------------------------
-# Email verification tests
-# ---------------------------------------------------------------------------
-
-
 def test_register_requires_email(client):
-    """Registration without an email address is rejected."""
     page = client.get("/register")
     token = _csrf_from_html(page.data)
     resp = client.post(
@@ -277,7 +266,6 @@ def test_register_requires_email(client):
 
 
 def test_register_rejects_invalid_email(client):
-    """Registration with a malformed email is rejected."""
     page = client.get("/register")
     token = _csrf_from_html(page.data)
     resp = client.post(
@@ -294,55 +282,7 @@ def test_register_rejects_invalid_email(client):
     assert b"valid email" in resp.data
 
 
-def test_register_rejects_unknown_email_domain(client, monkeypatch):
-    """Domain allowlist is enforced when SMTP is configured."""
-    # Simulate SMTP being active so the domain check runs.
-    monkeypatch.setattr("web.auth.smtp_is_configured", lambda: True)
-    page = client.get("/register")
-    token = _csrf_from_html(page.data)
-    resp = client.post(
-        "/register",
-        data={
-            "csrf_token": token,
-            "username": "unknown_domain_user",
-            "email": "user@randomdomain.xyz",
-            "password": "Aa123456",
-            "confirm": "Aa123456",
-        },
-    )
-    assert resp.status_code == 200
-    assert b"major email provider" in resp.data
-
-
-def test_register_accepts_allowed_email_domains(client, monkeypatch):
-    """Spot-check that key domains — including Apple Private Relay — are listed."""
-    from web.auth import _ALLOWED_EMAIL_DOMAINS
-
-    sample_domains = [
-        # Big consumer providers
-        "gmail.com",
-        "outlook.com",
-        "yahoo.com",
-        "icloud.com",
-        # Privacy-focused
-        "proton.me",
-        "tuta.com",
-        "mailbox.org",
-        "posteo.de",
-        # Apple Hide My Email / Private Relay
-        "privaterelay.appleid.com",
-        # Regional / ISP
-        "comcast.net",
-        "qq.com",
-        "naver.com",
-        "mail.ru",
-    ]
-    for domain in sample_domains:
-        assert domain in _ALLOWED_EMAIL_DOMAINS, f"{domain} should be in the allowlist"
-
-
 def test_register_rejects_duplicate_email(client):
-    """Two accounts cannot share the same email address."""
     uid = create_user("first_email_user", "Aa123456", "shared@gmail.com")
     assert uid is not None
 
@@ -362,32 +302,9 @@ def test_register_rejects_duplicate_email(client):
     assert b"Registration could not be completed" in resp.data
 
 
-def test_unverified_user_blocked_from_dashboard(client):
-    """A logged-in user with an unconfirmed email cannot reach the dashboard."""
-    uid = create_user("unverified_dash_user", "Aa123456", "unverified@example.com")
+def test_user_can_access_dashboard_after_registration(client):
+    uid = create_user("dashboard_user", "Aa123456", "dashboard@example.com")
     assert uid is not None
-    save_preferences(
-        uid,
-        location_id="wrightsville-beach-nc",
-        default_location_id="wrightsville-beach-nc",
-        fishing_profile={"fishing_types": ["surf"], "targets": ["anything"]},
-    )
-
-    with client.session_transaction() as sess:
-        sess["user_id"] = uid
-        sess["session_version"] = 0
-        sess["location_id"] = "wrightsville-beach-nc"
-
-    resp = client.get("/", follow_redirects=False)
-    assert resp.status_code == 302
-    assert "/verify-pending" in resp.headers["Location"]
-
-
-def test_verified_user_can_access_dashboard(client):
-    """A user whose email is confirmed can reach the dashboard normally."""
-    uid = create_user("verified_dash_user", "Aa123456", "verified@example.com")
-    assert uid is not None
-    confirm_email(uid)
     save_preferences(
         uid,
         location_id="wrightsville-beach-nc",
@@ -404,9 +321,8 @@ def test_verified_user_can_access_dashboard(client):
     assert resp.status_code == 200
 
 
-def test_unverified_user_can_access_account_page(client):
-    """Unverified users must still be able to reach /account to resend the link."""
-    uid = create_user("unverified_acct_user", "Aa123456", "unverified_acct@example.com")
+def test_user_can_access_account_page(client):
+    uid = create_user("acct_user", "Aa123456", "acct@example.com")
     assert uid is not None
 
     with client.session_transaction() as sess:
@@ -415,30 +331,6 @@ def test_unverified_user_can_access_account_page(client):
 
     resp = client.get("/account", follow_redirects=False)
     assert resp.status_code == 200
-
-
-def test_verify_email_token_confirms_account(client):
-    """Clicking a valid verification link sets email_confirmed = True."""
-    uid = create_user("token_verify_user", "Aa123456", "tokenverify@example.com")
-    assert uid is not None
-
-    token = "validtoken123"
-    set_email_verification_token(uid, token)
-
-    resp = client.get(f"/verify-email/{token}", follow_redirects=False)
-    assert resp.status_code == 200
-    assert b"verified" in resp.data.lower()
-
-    user = get_user(uid)
-    assert user is not None
-    assert user["email_confirmed"] is True
-
-
-def test_verify_email_invalid_token_rejected(client):
-    """An unknown verification token returns the error page."""
-    resp = client.get("/verify-email/totallybogustoken", follow_redirects=False)
-    assert resp.status_code == 200
-    assert b"invalid or has expired" in resp.data
 
 
 def test_csrf_comparison_uses_constant_time(app):
@@ -450,38 +342,3 @@ def test_csrf_comparison_uses_constant_time(app):
     assert "hmac.compare_digest" in source, (
         "CSRF token comparison must use hmac.compare_digest() to prevent timing attacks"
     )
-
-
-def test_resend_verification_rate_limited_per_account(client, monkeypatch):
-    """A second resend within the throttle window is rejected."""
-
-    uid = create_user("resend_throttle_user", "Aa123456", "resend_throttle@example.com")
-    assert uid is not None
-
-    # Plant a recent sent_at timestamp so the per-account throttle fires.
-    monkeypatch.setattr(
-        "storage.sqlite.DB_PATH",
-        monkeypatch._patches[-1].temp_path
-        if hasattr(monkeypatch, "_patches")
-        else None,
-    ) if False else None
-
-    # Set a very recent sent_at by doing a legitimate first resend.
-    set_email_verification_token(uid, "firsttoken")
-
-    with client.session_transaction() as sess:
-        sess["user_id"] = uid
-        sess["session_version"] = 0
-
-    page = client.get("/verify-pending")
-    token = _csrf_from_html(page.data)
-
-    # Immediate second resend should be throttled.
-    resp = client.post(
-        "/resend-verification",
-        data={"csrf_token": token},
-        follow_redirects=False,
-    )
-    # Throttled → rendered page (200) with an error, not a redirect.
-    assert resp.status_code == 200
-    assert b"just sent" in resp.data or b"wait" in resp.data.lower()

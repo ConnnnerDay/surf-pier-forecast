@@ -77,27 +77,6 @@
                 Settings saved successfully.
             </div>
             {% endif %}
-            {% if request.args.get('verify_sent') == '1' %}
-            <div class="account-save-toast" role="status" aria-live="polite">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
-                Verification email sent! Check your inbox.
-            </div>
-            {% endif %}
-            {% if not user.email_confirmed %}
-            <div class="account-unverified" role="alert">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#e6a817" stroke-width="2" stroke-linecap="round" class="account-unverified-icon" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                <div>
-                    <strong>Email not verified.</strong>
-                    {% if user.email %}
-                    Check your inbox at <strong>{{ user.email }}</strong> for a verification link.
-                    {% endif %}
-                    <form method="post" action="{{ url_for('auth.resend_verification') }}" class="account-resend-form">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                        <button type="submit" class="account-resend-btn">Resend verification email</button>
-                    </form>
-                </div>
-            </div>
-            {% endif %}
             <div class="account-heading">
                 <p class="account-subtitle">Manage your location preferences, account settings, and fishing activity.</p>
             </div>
@@ -141,7 +120,6 @@
                             </span>
                         </div>
                         <div class="account-row"><span class="account-label">Saved Location</span><span class="account-value">{{ saved_location.name if saved_location else 'None' }}</span></div>
-                        <div class="account-row"><span class="account-label">Email Confirmed</span><span class="account-value">{{ 'Yes' if user.email_confirmed else 'No' }}</span></div>
                     </div>
                 </div>
                 <div class="summary-card">
@@ -304,27 +282,6 @@
                         {% for entry in recent_logs %}
                         <li class="log-entry-row" data-entry-id="{{ entry.id }}">
                             <span class="log-entry-text">{{ entry.date[:10] }} &mdash; {{ entry.species }}{% if entry.size %} ({{ entry.size }}){% endif %}</span>
-                            <div class="log-entry-photos">
-                                {% if entry.photo1_path %}
-                                <img src="/{{ entry.photo1_path }}" alt="{{ entry.species }} catch photo 1" class="catch-thumb" loading="lazy">
-                                {% endif %}
-                                {% if entry.photo2_path %}
-                                <img src="/{{ entry.photo2_path }}" alt="{{ entry.species }} catch photo 2" class="catch-thumb" loading="lazy">
-                                {% endif %}
-                            </div>
-                            <form class="photo-upload-form" data-entry-id="{{ entry.id }}">
-                                <label class="photo-upload-label">
-                                    {% if not entry.photo1_path %}Add photo{% else %}Replace photo{% endif %}
-                                    <input type="file" name="photo1" accept="image/jpeg,image/png,image/webp" class="photo-file-input" hidden>
-                                </label>
-                                {% if entry.photo1_path and not entry.photo2_path %}
-                                <label class="photo-upload-label">
-                                    Add 2nd photo
-                                    <input type="file" name="photo2" accept="image/jpeg,image/png,image/webp" class="photo-file-input" hidden>
-                                </label>
-                                {% endif %}
-                            </form>
-                            <span class="log-upload-status" aria-live="polite"></span>
                         </li>
                         {% endfor %}
                     </ul>
@@ -344,39 +301,6 @@
                     {% else %}
                     <p class="section-sub">No pinned locations yet. <a href="{{ url_for('views.setup') }}">Add locations from the setup page.</a></p>
                     {% endif %}
-                </div>
-            </details>
-
-            <!-- Passkey / biometric login management -->
-            <details id="passkey-section" class="account-stats-details">
-                <summary>
-                    <span class="account-summary-inner">
-                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 1a4 4 0 0 1 4 4c0 2.21-1.79 4-4 4S8 7.21 8 5a4 4 0 0 1 4-4z"/><path d="M12 14c-5 0-8 2-8 3v1h16v-1c0-1-3-3-8-3z"/><path d="M18 9l2 2 4-4"/></svg>
-                        Face ID / Touch ID (Passkeys)
-                    </span>
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-                </summary>
-                <div class="account-stats-body">
-                    <p class="passkey-intro">Set up Face ID or Touch ID to sign back in instantly — no password needed.</p>
-                    {% if passkeys %}
-                    <div class="passkey-list">
-                        {% for pk in passkeys %}
-                        <div class="passkey-item">
-                            <span class="passkey-item-name">
-                                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" class="passkey-item-icon" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                                {{ pk.name }} <span class="passkey-item-date">&mdash; added {{ pk.created_at[:10] }}</span>
-                            </span>
-                            <button type="button" class="delete-passkey-btn passkey-remove-btn" data-id="{{ pk.credential_id }}">Remove</button>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    {% else %}
-                    <p id="passkey-none-msg" class="passkey-none-msg">No passkeys registered yet.</p>
-                    {% endif %}
-                    <button type="button" id="register-passkey-btn" class="auth-btn auth-btn--teal" disabled>
-                        Set Up Face ID / Touch ID
-                    </button>
-                    <div id="passkey-msg" class="passkey-status-msg" hidden></div>
                 </div>
             </details>
 
@@ -403,42 +327,6 @@
                     <div id="alerts-msg" class="notif-msg" hidden></div>
                 </div>
             </details>
-
-            {% if social_accounts %}
-            <!-- Connected social accounts -->
-            <details class="account-stats-details">
-                <summary>
-                    <span class="account-summary-inner">
-                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                        Connected Accounts
-                    </span>
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-                </summary>
-                <div class="account-stats-body">
-                    {% for acct in social_accounts %}
-                    <div class="social-account-row">
-                        {% if acct.provider == 'google' %}
-                        <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true" class="social-account-icon">
-                            <path fill="#4285F4" d="M45.12 24.5c0-1.56-.14-3.06-.4-4.5H24v8.51h11.84c-.51 2.75-2.06 5.08-4.39 6.64v5.52h7.11c4.16-3.83 6.56-9.47 6.56-16.17z"/>
-                            <path fill="#34A853" d="M24 46c5.94 0 10.92-1.97 14.56-5.33l-7.11-5.52c-1.97 1.32-4.49 2.1-7.45 2.1-5.73 0-10.58-3.87-12.31-9.07H4.34v5.7C7.96 41.07 15.4 46 24 46z"/>
-                            <path fill="#FBBC05" d="M11.69 28.18C11.25 26.86 11 25.45 11 24s.25-2.86.69-4.18v-5.7H4.34C2.85 17.09 2 20.45 2 24c0 3.55.85 6.91 2.34 9.88l7.35-5.7z"/>
-                            <path fill="#EA4335" d="M24 10.75c3.23 0 6.13 1.11 8.41 3.29l6.31-6.31C34.91 4.18 29.93 2 24 2 15.4 2 7.96 6.93 4.34 14.12l7.35 5.7c1.73-5.2 6.58-9.07 12.31-9.07z"/>
-                        </svg>
-                        <span class="social-account-name"><strong>Google</strong>{% if acct.email %} &mdash; {{ acct.email }}{% endif %}</span>
-                        {% elif acct.provider == 'apple' %}
-                        <svg width="18" height="18" viewBox="0 0 814 1000" aria-hidden="true" fill="currentColor" class="social-account-icon">
-                            <path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-57.8-155.5-127.4C46 790.7 0 663 0 541.8c0-207.5 135.4-317.3 269-317.3 71 0 130.5 46.4 175 46.4 42.8 0 109.6-49 192.7-49 31.1 0 108.2 2.6 168.7 75.3zm-174.6-144.5c7.7-37.7 35.7-69 65.5-88.3 30.5-19.9 71.5-33.3 104.2-33.3-3.8 50.3-21.8 97.8-52.3 130.5-31.1 33.3-70.9 54.5-114.2 54.5-2.6 0-5.1-.1-7.7-.3 1.4-21.4 4.5-42.6 4.5-63.1z"/>
-                        </svg>
-                        <span class="social-account-name"><strong>Apple</strong>{% if acct.email %} &mdash; {{ acct.email }}{% endif %}</span>
-                        {% else %}
-                        <span class="social-account-name"><strong>{{ acct.provider|capitalize }}</strong>{% if acct.email %} &mdash; {{ acct.email }}{% endif %}</span>
-                        {% endif %}
-                        <span class="social-account-since">since {{ acct.created_at[:10] }}</span>
-                    </div>
-                    {% endfor %}
-                </div>
-            </details>
-            {% endif %}
 
             {% if has_password %}
             <!-- Password Change -->
@@ -506,7 +394,7 @@
                 </summary>
                 <div class="account-stats-body">
                     <p class="delete-intro">
-                        Permanently delete your account and all associated data — catches, photos, preferences, and settings. <strong>This cannot be undone.</strong>
+                        Permanently delete your account and all associated data — catches, preferences, and settings. <strong>This cannot be undone.</strong>
                     </p>
                     {% if delete_error %}
                     <div class="setup-error setup-error--mb" role="alert">{{ delete_error }}</div>
@@ -514,20 +402,11 @@
                     <form method="post" action="{{ url_for('auth.delete_account_route') }}" id="delete-account-form"
                           onsubmit="return confirmDelete(event)">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                        {% if has_password %}
                         <div class="auth-field">
                             <label for="delete_password">Confirm your password to delete</label>
                             <input type="password" id="delete_password" name="password" class="auth-input"
                                    autocomplete="current-password" required placeholder="Your password">
                         </div>
-                        {% else %}
-                        <p class="delete-social-hint">You sign in via {{ social_accounts[0].provider|capitalize if social_accounts else 'social login' }}. Type <strong>DELETE</strong> to confirm.</p>
-                        <div class="auth-field">
-                            <input type="text" name="confirm_text" class="auth-input" placeholder="Type DELETE to confirm"
-                                   autocomplete="off" pattern="DELETE" required>
-                        </div>
-                        <input type="hidden" name="password" value="">
-                        {% endif %}
                         <button type="submit" class="auth-btn auth-btn--danger">Delete My Account</button>
                     </form>
                 </div>
@@ -543,141 +422,6 @@
     </main>
 
     <footer><p>Surf &amp; Pier Fishing Outlook</p></footer>
-    <script>
-    // ── Passkey / WebAuthn management ──────────────────────────────────────────
-    (function () {
-        if (!window.PublicKeyCredential) return;
-        PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().then(function (available) {
-            if (!available) return;
-            var btn = document.getElementById('register-passkey-btn');
-            btn.disabled = false;
-
-            function b64urlToBuffer(b64url) {
-                var base64 = b64url.replace(/-/g, '+').replace(/_/g, '/');
-                var bin = atob(base64);
-                var buf = new Uint8Array(bin.length);
-                for (var i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
-                return buf.buffer;
-            }
-
-            function bufferToB64url(buf) {
-                var bytes = new Uint8Array(buf);
-                var str = '';
-                for (var i = 0; i < bytes.length; i++) str += String.fromCharCode(bytes[i]);
-                return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-            }
-
-            function showMsg(text, isError) {
-                var el = document.getElementById('passkey-msg');
-                el.textContent = text;
-                el.style.color = isError ? '#c0392b' : '#2a7d6e';
-                el.hidden = !text;
-            }
-
-            // Wire up remove buttons rendered server-side
-            document.querySelectorAll('.delete-passkey-btn').forEach(function (b) {
-                b.addEventListener('click', function () {
-                    if (!confirm('Remove this passkey?')) return;
-                    var credId = b.dataset.id;
-                    fetch('/auth/webauthn/credential/' + encodeURIComponent(credId) + '/delete', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: '{}'
-                    }).then(function () { location.reload(); });
-                });
-            });
-
-            btn.addEventListener('click', function () {
-                btn.disabled = true;
-                btn.textContent = 'Waiting for Face ID\u2026';
-                showMsg('', false);
-
-                fetch('{{ url_for("auth.webauthn_register_begin") }}')
-                    .then(function (r) { return r.json(); })
-                    .then(function (opts) {
-                        opts.challenge = b64urlToBuffer(opts.challenge);
-                        opts.user.id = b64urlToBuffer(opts.user.id);
-                        if (opts.excludeCredentials) {
-                            opts.excludeCredentials = opts.excludeCredentials.map(function (c) {
-                                return Object.assign({}, c, { id: b64urlToBuffer(c.id) });
-                            });
-                        }
-                        return navigator.credentials.create({ publicKey: opts });
-                    })
-                    .then(function (cred) {
-                        var payload = {
-                            id: cred.id,
-                            rawId: bufferToB64url(cred.rawId),
-                            type: cred.type,
-                            response: {
-                                clientDataJSON: bufferToB64url(cred.response.clientDataJSON),
-                                attestationObject: bufferToB64url(cred.response.attestationObject)
-                            }
-                        };
-                        return fetch('{{ url_for("auth.webauthn_register_complete") }}', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload)
-                        }).then(function (r) { return r.json(); });
-                    })
-                    .then(function (result) {
-                        if (result.ok) {
-                            location.reload();
-                        } else {
-                            throw new Error(result.error || 'Registration failed');
-                        }
-                    })
-                    .catch(function (err) {
-                        if (err && err.name === 'NotAllowedError') {
-                            showMsg('Biometric prompt cancelled.', true);
-                        } else {
-                            showMsg((err && err.message) || 'Could not set up passkey.', true);
-                        }
-                        btn.disabled = false;
-                        btn.textContent = 'Set Up Face ID / Touch ID';
-                    });
-            });
-        }).catch(function () {});
-    })();
-    </script>
-    <script>
-    document.querySelectorAll('.photo-upload-form').forEach(function(form) {
-        var entryId = form.dataset.entryId;
-        form.querySelectorAll('.photo-file-input').forEach(function(input) {
-            input.addEventListener('change', function() {
-                if (!input.files || !input.files[0]) return;
-                var statusEl = form.closest('.log-entry-row').querySelector('.log-upload-status');
-                if (input.files[0].size > 8 * 1024 * 1024) {
-                    statusEl.textContent = 'Photo must be 8 MB or smaller.';
-                    statusEl.className = 'log-upload-status error';
-                    input.value = '';
-                    return;
-                }
-                statusEl.textContent = 'Uploading\u2026';
-                statusEl.className = 'log-upload-status';
-                var fd = new FormData();
-                fd.append(input.name, input.files[0]);
-                var csrfToken = (document.querySelector('input[name="csrf_token"]') || {}).value || '';
-                fd.append('csrf_token', csrfToken);
-                fetch('/api/v1/log/' + entryId + '/photos', { method: 'POST', body: fd })
-                    .then(function(r) { return r.json(); })
-                    .then(function(data) {
-                        if (data.ok) {
-                            statusEl.textContent = 'Saved!';
-                            setTimeout(function() { location.reload(); }, 800);
-                        } else {
-                            statusEl.textContent = (data.error && data.error.message) || 'Upload failed';
-                            statusEl.className = 'log-upload-status error';
-                        }
-                    })
-                    .catch(function() {
-                        statusEl.textContent = 'Upload failed';
-                        statusEl.className = 'log-upload-status error';
-                    });
-            });
-        });
-    });
-    </script>
     <script>
     // ── Fishing condition alerts (notification permission management) ──────────
     (function () {
