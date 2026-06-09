@@ -75,9 +75,42 @@
                 <h4 class="pb-title">Personal Bests</h4>
                 <div class="pb-list" id="pb-list"></div>
             </div>
+
+            <div class="catch-patterns" id="catch-patterns" hidden>
+                <h4 class="cp-title">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg>
+                    Your Patterns
+                </h4>
+                <p class="cp-sub">Learned from the conditions recorded when you logged catches.</p>
+                <ul class="cp-list" id="cp-list"></ul>
+            </div>
         </section>
     </main>
 
     <script src="{{ surl('js/fishing_log.min.js') }}" defer></script>
+    <script>
+    // Catch-pattern insights — fetched from the API and rendered when present.
+    (function () {
+        var sec = document.getElementById('fish-log');
+        if (!sec || sec.getAttribute('data-logged-in') !== '1') return;
+        var panel = document.getElementById('catch-patterns');
+        var list = document.getElementById('cp-list');
+        if (!panel || !list) return;
+        var locId = sec.getAttribute('data-location-id') || '';
+        var url = '/api/v1/log/patterns' + (locId ? ('?location_id=' + encodeURIComponent(locId)) : '');
+        fetch(url).then(function (r) { return r.ok ? r.json() : null; }).then(function (body) {
+            if (!body || !body.data) return;
+            var insights = body.data.insights || [];
+            if (!insights.length) return;
+            insights.forEach(function (text) {
+                var li = document.createElement('li');
+                li.className = 'cp-item';
+                li.textContent = text;
+                list.appendChild(li);
+            });
+            panel.hidden = false;
+        }).catch(function () {});
+    })();
+    </script>
 </body>
 </html>

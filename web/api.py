@@ -51,6 +51,7 @@ from storage.sqlite import (
     add_push_subscription,
     delete_log_entry,
     delete_push_subscription,
+    get_catch_conditions,
     get_log_entries,
     get_log_stats,
     get_page_layout,
@@ -58,6 +59,7 @@ from storage.sqlite import (
     save_page_layout,
     save_preferences,
 )
+from domain.catch_insights import analyze_catch_patterns
 from web.auth import record_refresh_attempt, refresh_is_rate_limited
 from web.helpers import get_session_location
 from web.openapi import build_openapi_spec
@@ -462,11 +464,44 @@ def log() -> Any:
         payload.species,
         size=payload.size,
         notes=payload.notes,
+        conditions=_catch_conditions_snapshot(payload.location_id),
     )
     resp = jsonify({"ok": True, "id": entry_id})
     resp.headers["Deprecation"] = _DEPRECATION_HEADER
     resp.headers["Link"] = '</api/v1/log>; rel="successor-version"'
     return resp, 201
+
+
+def _catch_conditions_snapshot(location_id: str) -> dict[str, Any]:
+    """Pull the current forecast conditions for a location to stamp on a catch.
+
+    Best-effort: returns an empty dict if there's no cached forecast yet so a
+    catch is still logged (just without a condition snapshot).
+    """
+    if not location_id:
+        return {}
+    forecast = load_cached_forecast(location_id, user_id=None, include_stale=True)
+    if not forecast:
+        return {}
+    conditions = forecast.get("conditions", {}) or {}
+    solunar = forecast.get("solunar", {}) or {}
+    return {
+        "tide_state": forecast.get("tide_state", ""),
+        "wind_dir": conditions.get("wind_dir", ""),
+        "water_temp_f": conditions.get("water_temp_f"),
+        "moon_phase": solunar.get("moon_phase", ""),
+    }
+
+
+@bp.route("/api/v1/log/patterns", methods=["GET"])
+def log_patterns_v1() -> Any:
+    """Return learned catch patterns for the logged-in user."""
+    if g.user is None:
+        return jsonify(error_envelope("unauthorized", "Not logged in")), 401
+    uid = g.user["id"]
+    loc_id = (request.args.get("location_id") or request.args.get("location") or "").strip()
+    catches = get_catch_conditions(uid, loc_id)
+    return jsonify(success_envelope(analyze_catch_patterns(catches)))
 
 
 @bp.route("/api/v1/log", methods=["GET", "POST"])
@@ -503,6 +538,7 @@ def log_v1() -> Any:
         payload.species,
         size=payload.size,
         notes=payload.notes,
+        conditions=_catch_conditions_snapshot(payload.location_id),
     )
     created = {
         "id": entry_id,

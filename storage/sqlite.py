@@ -122,6 +122,10 @@ CREATE TABLE IF NOT EXISTS catch_log (
     species     TEXT NOT NULL,
     size        TEXT,
     notes       TEXT,
+    tide_state    TEXT,
+    wind_dir      TEXT,
+    water_temp_f  REAL,
+    moon_phase    TEXT,
     caught_at   TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_catch_log_user_loc_time
@@ -292,6 +296,18 @@ def _run_migrations(conn: sqlite3.Connection) -> None:
         )
     if "is_admin" not in user_cols:
         conn.execute("ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0")
+
+    # Catch-log condition snapshot columns (added for catch-pattern learning).
+    if _table_exists(conn, "catch_log"):
+        catch_cols = set(_column_names(conn, "catch_log"))
+        for col, decl in (
+            ("tide_state", "TEXT"),
+            ("wind_dir", "TEXT"),
+            ("water_temp_f", "REAL"),
+            ("moon_phase", "TEXT"),
+        ):
+            if col not in catch_cols:
+                conn.execute(f"ALTER TABLE catch_log ADD COLUMN {col} {decl}")
 
     # Seed the built-in admin account (dev / local use).
     _ADMIN_USERNAME = "admin"
@@ -966,23 +982,90 @@ def get_log_entries(
     ]
 
 
+def get_catch_conditions(
+    user_id: int, location_id: str = "", limit: int = 500
+) -> list[dict[str, Any]]:
+    """Return catch-log rows with their captured condition snapshot.
+
+    When *location_id* is empty, returns catches across all of the user's
+    locations (for cross-location pattern analysis).
+    """
+    conn = get_db()
+    try:
+        if location_id:
+            rows = conn.execute(
+                "SELECT species, tide_state, wind_dir, water_temp_f, moon_phase, "
+                "caught_at FROM catch_log WHERE user_id = ? AND location_id = ? "
+                "ORDER BY caught_at DESC, id DESC LIMIT ?",
+                (user_id, location_id, limit),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT species, tide_state, wind_dir, water_temp_f, moon_phase, "
+                "caught_at FROM catch_log WHERE user_id = ? "
+                "ORDER BY caught_at DESC, id DESC LIMIT ?",
+                (user_id, limit),
+            ).fetchall()
+    finally:
+        conn.close()
+    return [
+        {
+            "species": r["species"],
+            "tide_state": r["tide_state"],
+            "wind_dir": r["wind_dir"],
+            "water_temp_f": r["water_temp_f"],
+            "moon_phase": r["moon_phase"],
+            "date": r["caught_at"],
+        }
+        for r in rows
+    ]
+
+
 _CATCH_LOG_SIZE_MAX = 50  # e.g. "24 inches"
 _CATCH_LOG_NOTES_MAX = 1000  # free-text field
 
 
 def add_log_entry(
-    user_id: int, location_id: str, species: str, size: str = "", notes: str = ""
+    user_id: int,
+    location_id: str,
+    species: str,
+    size: str = "",
+    notes: str = "",
+    conditions: Optional[dict[str, Any]] = None,
 ) -> int:
+    """Insert a catch-log entry, optionally snapshotting the conditions.
+
+    *conditions* (when supplied) captures the forecast at catch time so the
+    pattern-analysis can later correlate catches with tide/wind/temp/moon.
+    Recognized keys: tide_state, wind_dir, water_temp_f, moon_phase.
+    """
+    c = conditions or {}
+    tide_state = (str(c.get("tide_state") or "")[:20]) or None
+    wind_dir = (str(c.get("wind_dir") or "")[:8]) or None
+    moon_phase = (str(c.get("moon_phase") or "")[:32]) or None
+    try:
+        water_temp_f = (
+            float(c["water_temp_f"]) if c.get("water_temp_f") is not None else None
+        )
+    except (TypeError, ValueError):
+        water_temp_f = None
+
     conn = get_db()
     try:
         cur = conn.execute(
-            "INSERT INTO catch_log (user_id, location_id, species, size, notes) VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO catch_log "
+            "(user_id, location_id, species, size, notes, tide_state, wind_dir, "
+            "water_temp_f, moon_phase) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 user_id,
                 location_id,
                 species.strip()[:100],
                 size.strip()[:_CATCH_LOG_SIZE_MAX],
                 notes.strip()[:_CATCH_LOG_NOTES_MAX],
+                tide_state,
+                wind_dir,
+                water_temp_f,
+                moon_phase,
             ),
         )
         conn.commit()

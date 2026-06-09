@@ -159,6 +159,45 @@ def test_v1_profile_rejects_bad_notification_prefs(client):
     assert resp.status_code == 400
 
 
+def test_v1_log_captures_conditions_and_patterns(client, monkeypatch):
+    from storage.sqlite import create_user, get_catch_conditions
+
+    # Stub the cached forecast so logging snapshots conditions.
+    sample = {
+        "tide_state": "Rising",
+        "conditions": {"wind_dir": "NE", "water_temp_f": 64.0},
+        "solunar": {"moon_phase": "Full Moon"},
+    }
+    monkeypatch.setattr(
+        "web.api.load_cached_forecast",
+        lambda loc_id, user_id=None, include_stale=False: sample,
+    )
+    uid = create_user("apiv1_patterns", "pass1234")
+    _login_session(client, uid)
+
+    for _ in range(5):
+        resp = client.post(
+            "/api/v1/log",
+            json={"species": "Red drum", "location_id": "wrightsville-beach-nc"},
+        )
+        assert resp.status_code == 201
+
+    rows = get_catch_conditions(uid, "wrightsville-beach-nc")
+    assert rows and rows[0]["tide_state"] == "Rising"
+    assert rows[0]["moon_phase"] == "Full Moon"
+
+    pat = client.get("/api/v1/log/patterns?location_id=wrightsville-beach-nc")
+    assert pat.status_code == 200
+    data = pat.get_json()["data"]
+    assert data["total"] == 5
+    assert any("rising tide" in i.lower() for i in data["insights"])
+
+
+def test_v1_log_patterns_requires_login(client):
+    resp = client.get("/api/v1/log/patterns")
+    assert resp.status_code == 401
+
+
 def test_v1_log_crud(client):
     uid = create_user("apiv1_log", "pass1234")
     assert uid is not None
