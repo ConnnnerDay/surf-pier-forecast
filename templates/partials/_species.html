@@ -66,6 +66,37 @@
                             </div>
                             {% endif %}
                         </div>
+                        {# At-a-glance regulation summary — size / bag / season / slot #}
+                        {% if sp.regulation and (sp.regulation.min_size or sp.regulation.bag_limit or sp.regulation.season) %}
+                        {% set _season_lc = (sp.regulation.season or '')|lower %}
+                        {% set _season_warn = 'clos' in _season_lc %}
+                        <div class="species-reg" aria-label="Regulations for {{ sp.name }}">
+                            {% if sp.regulation.min_size %}
+                            <span class="reg-chip" title="Minimum size">
+                                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 12h18"/><path d="M6 9v6M18 9v6"/></svg>
+                                Min {{ sp.regulation.min_size }}
+                            </span>
+                            {% endif %}
+                            {% if sp.regulation.bag_limit %}
+                            <span class="reg-chip" title="Daily bag limit">
+                                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2l1.5 3h9L18 2"/><path d="M5 7h14l-1 13a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 7z"/></svg>
+                                Bag {{ sp.regulation.bag_limit }}
+                            </span>
+                            {% endif %}
+                            {% if sp.regulation.season %}
+                            <span class="reg-chip{% if _season_warn %} reg-chip--warn{% endif %}" title="Season">
+                                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                {{ sp.regulation.season }}
+                            </span>
+                            {% endif %}
+                            {% if sp.regulation.notes and 'slot' in sp.regulation.notes|lower %}
+                            <span class="reg-chip reg-chip--slot" title="{{ sp.regulation.notes }}">
+                                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+                                Slot limit
+                            </span>
+                            {% endif %}
+                        </div>
+                        {% endif %}
                         {# Unified regulation warning — one message per species, prioritising staleness #}
                         {% if sp.regulation and sp.regulation.data_status != 'live' %}
                             {% if sp.regulation.is_stale %}

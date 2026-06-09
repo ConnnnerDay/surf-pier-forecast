@@ -6469,6 +6469,39 @@ footer p {
   color: var(--text);
 }
 
+/* At-a-glance regulation chips on species cards */
+.species-reg {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.55rem;
+}
+.reg-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  padding: 0.18rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(14, 95, 120, 0.08);
+  border: 1px solid rgba(14, 95, 120, 0.18);
+  color: var(--text);
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+.reg-chip svg { flex: 0 0 auto; opacity: 0.8; }
+.reg-chip--warn {
+  background: rgba(217, 119, 6, 0.12);
+  border-color: rgba(217, 119, 6, 0.35);
+  color: #9a6200;
+}
+[data-theme="dark"] .reg-chip--warn { color: #e6a52b; }
+.reg-chip--slot {
+  background: rgba(124, 58, 237, 0.10);
+  border-color: rgba(124, 58, 237, 0.28);
+}
+
 /* Inline stale-data warning on species / spawning cards */
 .reg-inline-stale {
   display: flex;
