@@ -991,6 +991,42 @@ h2::before {
   font-weight: 700;
 }
 
+/* Day-timeline overlays: feeding bands + sun/tide event markers */
+.timeline-bar-col--feed-major::before,
+.timeline-bar-col--feed-minor::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 14px;
+  left: 0;
+  right: 0;
+  border-radius: 3px;
+  z-index: 0;
+}
+.timeline-bar-col--feed-major::before { background: rgba(220, 38, 38, 0.12); }
+.timeline-bar-col--feed-minor::before { background: rgba(217, 119, 6, 0.10); }
+.timeline-bar,
+.timeline-events,
+.timeline-hour { position: relative; z-index: 1; }
+
+.timeline-events {
+  display: flex;
+  gap: 1px;
+  align-items: center;
+  justify-content: center;
+  height: 12px;
+  margin-top: 2px;
+  line-height: 1;
+}
+.tl-evt {
+  font-size: 0.6rem;
+  line-height: 1;
+}
+.tl-evt--sun { color: var(--amber, #D97706); display: inline-flex; }
+.tl-evt--tide-high { color: var(--ocean, #0077B6); }
+.tl-evt--tide-low { color: #64748b; }
+.tl-key--feed { background: rgba(220, 38, 38, 0.35); }
+
 /* Peak bar subtle shimmer */
 .timeline-bar--peak {
   filter: brightness(1.15);
@@ -6799,7 +6835,7 @@ footer p {
 }
 
 .hourly-timeline-section .timeline-bars {
-  height: 70px;
+  height: 84px;
 }
 
 /* ---------- Bite Windows Section ---------- */

@@ -16,6 +16,7 @@ from domain.forecast import (
     _wind_chill_f,
     classify_conditions,
     score_conditions,
+    build_activity_timeline,
     recompute_current_uv,
     MONTHLY_AVG_WIND,
     MONTHLY_AVG_WAVES,
@@ -143,6 +144,53 @@ class TestScoreConditions:
             max_wind_kt=20, max_wave_ft=5,
         )
         assert ok["exceeds"] == []
+
+
+class TestActivityTimelineOverlays:
+    def _forecast(self):
+        return {
+            "conditions": {"sunrise_sunset": "6:00 AM / 8:00 PM", "wind": "NW 6-10 kt"},
+            "solunar": {
+                "major_periods": [{"start": "7:00 AM", "end": "9:00 AM"}],
+                "minor_periods": [{"start": "2:00 PM", "end": "3:00 PM"}],
+            },
+            "tides": [
+                {"hour": 4.0, "type": "Low", "time": "4:00 AM"},
+                {"hour": 10.0, "type": "High", "time": "10:00 AM"},
+            ],
+        }
+
+    def test_timeline_has_24_hours_with_overlay_keys(self):
+        tl = build_activity_timeline(self._forecast(), now_hour=12)
+        assert len(tl) == 24
+        for entry in tl:
+            assert {"sun", "tide", "tide_time", "feeding"} <= set(entry)
+
+    def test_sun_events_mapped_to_hours(self):
+        tl = build_activity_timeline(self._forecast(), now_hour=12)
+        assert tl[6]["sun"] == "sunrise"
+        assert tl[20]["sun"] == "sunset"
+
+    def test_tide_events_mapped_to_hours(self):
+        tl = build_activity_timeline(self._forecast(), now_hour=12)
+        assert tl[4]["tide"] == "low"
+        assert tl[10]["tide"] == "high"
+        assert tl[10]["tide_time"] == "10:00 AM"
+
+    def test_feeding_bands_tagged(self):
+        tl = build_activity_timeline(self._forecast(), now_hour=12)
+        # Major band covers 7-9 AM; minor band covers 2 PM.
+        assert tl[8]["feeding"] == "major"
+        assert tl[14]["feeding"] == "minor"
+        # A quiet hour with no period is untagged.
+        assert tl[0]["feeding"] == ""
+
+    def test_major_band_not_downgraded_by_minor(self):
+        fc = self._forecast()
+        # Overlap a minor period onto the major band; major must win.
+        fc["solunar"]["minor_periods"].append({"start": "8:00 AM", "end": "8:30 AM"})
+        tl = build_activity_timeline(fc, now_hour=12)
+        assert tl[8]["feeding"] == "major"
 
 
 class TestMonthlyData:

@@ -3622,6 +3622,10 @@ def build_activity_timeline(
     """
     activity = [15.0] * 24
     reason_parts: list[list[str]] = [[] for _ in range(24)]
+    # Overlay rails aligned to the same 24 hourly columns as the bars.
+    feeding_tag = [""] * 24  # "major" / "minor" — solunar feeding bands
+    sun_events: dict[int, str] = {}  # hour -> "sunrise" / "sunset"
+    tide_events: dict[int, dict[str, str]] = {}  # hour -> {type, time}
 
     # Dawn/dusk boost
     sun_str = forecast.get("conditions", {}).get("sunrise_sunset", "")
@@ -3629,6 +3633,8 @@ def build_activity_timeline(
         parts = sun_str.split("/")
         sr_h = _parse_time_str(parts[0].strip())
         ss_h = _parse_time_str(parts[1].strip())
+        sun_events[int(round(sr_h)) % 24] = "sunrise"
+        sun_events[int(round(ss_h)) % 24] = "sunset"
 
         for h in range(24):
             dist = abs(h - sr_h)
@@ -3653,6 +3659,7 @@ def build_activity_timeline(
             if s_h <= h <= e_h:
                 activity[h] += 35
                 reason_parts[h].append("Major solunar")
+                feeding_tag[h] = "major"
             elif abs(h - s_h) < 1 or abs(h - e_h) < 1:
                 activity[h] += 15
 
@@ -3663,6 +3670,9 @@ def build_activity_timeline(
             if s_h <= h <= e_h:
                 activity[h] += 20
                 reason_parts[h].append("Minor solunar")
+                # Don't downgrade an hour already inside a major band.
+                if feeding_tag[h] != "major":
+                    feeding_tag[h] = "minor"
             elif abs(h - s_h) < 1 or abs(h - e_h) < 1:
                 activity[h] += 8
 
@@ -3671,6 +3681,11 @@ def build_activity_timeline(
     for t in tides:
         t_h = t.get("hour", _parse_time_str(t.get("time", "12:00 PM")))
         t_type = t.get("type", "")
+        if t_type in ("High", "Low"):
+            tide_events[int(round(float(t_h))) % 24] = {
+                "type": t_type,
+                "time": t.get("time", ""),
+            }
         for h in range(24):
             dist = abs(h - t_h)
             if dist < 2:
@@ -3782,6 +3797,7 @@ def build_activity_timeline(
                 deduped.append(p)
         reason = " · ".join(deduped)
 
+        tide_evt = tide_events.get(h)
         timeline.append(
             {
                 "hour": h,
@@ -3792,6 +3808,11 @@ def build_activity_timeline(
                 "is_now": h == now_hour,
                 "peak": level == peak_level and level >= 50,
                 "reason": reason,
+                # Overlay rail metadata (aligned to the same hourly columns).
+                "sun": sun_events.get(h, ""),
+                "tide": (tide_evt or {}).get("type", "").lower(),
+                "tide_time": (tide_evt or {}).get("time", ""),
+                "feeding": feeding_tag[h],
             }
         )
 
