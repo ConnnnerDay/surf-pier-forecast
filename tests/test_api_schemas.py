@@ -194,6 +194,15 @@ def test_notification_prefs_accepted_and_normalized():
     assert "notification_prefs" in p.as_updates()
 
 
+def test_notification_prefs_preserves_weekly_email():
+    # weekly_email is owned by the display-settings form; the API must keep it
+    # so saving alert settings doesn't wipe it.
+    p = ProfilePayload.from_json(
+        {"notification_prefs": {"enabled": True, "weekly_email": True}}
+    )
+    assert p.notification_prefs["weekly_email"] is True
+
+
 def test_profile_payload_rejects_out_of_range_max_wind():
     _raises(
         {"fishing_profile": {"max_wind_kt": 999}},

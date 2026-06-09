@@ -531,6 +531,10 @@
                 min_rating: (ratingEl && ratingEl.value === 'Excellent') ? 'Excellent' : 'Good',
                 lead_hours: lead,
             };
+            // Preserve the separate weekly-digest toggle (owned by the display
+            // settings form) so saving alert settings doesn't wipe it.
+            var weeklyEmail = {{ (np.weekly_email or false) | tojson }};
+            if (weeklyEmail) prefs.weekly_email = true;
             return fetch('{{ url_for("api.profile_v1") }}', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
