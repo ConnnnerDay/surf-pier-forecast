@@ -9,6 +9,7 @@ A self-hosted Flask web app that combines NOAA/NWS/NDBC marine data with species
 - **Location-aware forecast engine** — wind, waves, tide windows, sunrise/sunset, solunar, pressure, weather
 - **851-species database** with ranked targets, natural bait picks, rig recommendations, knots, and spot tips
 - **Fishing styles & profiles** — customize tactics by style (surf, pier, kayak, etc.) and personal preferences
+- **Opt-in alerts** — email and/or browser web-push when a saved location hits your chosen rating, with per-user thresholds and once-a-day-per-location dedupe
 - **Regulations coverage** — 2,700+ regulation entries across U.S. states and coasts
 - **User accounts** — register, log in with a password, catch logging, favorites, profile setup
 - **Shareable forecast links** via `/f/<location_id>`
@@ -87,6 +88,22 @@ sudo journalctl -u surf-forecast -f
 | `SESSION_COOKIE_SECURE` | _(unset)_ | Set to `1` to mark session cookies `Secure` (HTTPS only). Required in production. |
 | `DEFAULT_LAT` / `DEFAULT_LNG` | Wrightsville Beach NC | Fallback coordinates when no location is set. |
 | `ADMIN_USERS` | _(unset)_ | Comma-separated usernames granted admin access. |
+
+### Notifications (opt-in)
+
+Users can opt in (Account → Fishing Condition Alerts) to be alerted when a
+saved location's forecast meets their chosen rating. A background poller
+checks at most once per day per location and delivers over the channels each
+user enables. Everything is a safe no-op until a user opts in **and** the
+channel below is configured.
+
+| Variable | Default | Description |
+|---|---|---|
+| `NOTIFICATIONS_ENABLED` | `1` | Set to `0` to disable the background notification poller entirely. |
+| `NOTIFICATION_POLL_INTERVAL` | `900` | Poll interval in seconds (set `0` to disable). |
+| `SITE_URL` | _(unset)_ | Absolute base URL used to build links in push/email alerts. |
+| `SMTP_*` | _(unset)_ | Email channel — see the SMTP variables above; alerts email only when SMTP is configured. |
+| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT` | _(unset)_ | Web Push (VAPID) credentials. Generate with `python -m py_vapid --gen`; push is disabled until all three are set. Requires the optional `pywebpush` dependency. |
 
 ---
 
