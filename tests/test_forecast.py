@@ -192,6 +192,32 @@ class TestActivityTimelineOverlays:
         tl = build_activity_timeline(fc, now_hour=12)
         assert tl[8]["feeding"] == "major"
 
+    def test_falling_pressure_beats_rising(self):
+        falling = self._forecast()
+        falling["pressure"] = {"trend": "Falling", "pressure_mb": 1005}
+        rising = self._forecast()
+        rising["pressure"] = {"trend": "Rising", "pressure_mb": 1025}
+        peak_falling = max(e["level"] for e in build_activity_timeline(falling, 12))
+        peak_rising = max(e["level"] for e in build_activity_timeline(rising, 12))
+        assert peak_falling > peak_rising
+
+    def test_pressure_missing_is_safe(self):
+        fc = self._forecast()
+        # No pressure key, and a malformed one, must not raise.
+        assert build_activity_timeline(fc, 12)
+        fc["pressure"] = {"trend": "falling", "pressure_mb": "n/a"}
+        assert build_activity_timeline(fc, 12)
+
+    def test_bright_moon_boosts_night_hours(self):
+        dark = self._forecast()
+        dark["solunar"]["illumination_pct"] = 5
+        bright = self._forecast()
+        bright["solunar"]["illumination_pct"] = 95
+        # Compare the raw (pre-normalization shape) night activity via levels at 1 AM.
+        dark_tl = build_activity_timeline(dark, 12)
+        bright_tl = build_activity_timeline(bright, 12)
+        assert bright_tl[1]["level"] >= dark_tl[1]["level"]
+
 
 class TestMonthlyData:
     def test_wind_data_complete(self):

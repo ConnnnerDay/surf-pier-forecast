@@ -3700,6 +3700,13 @@ def build_activity_timeline(
     for h in [23, 0, 1, 2, 3, 4]:
         activity[h] *= 0.7
 
+    # Bright-moon nocturnal feeding: a near-full moon keeps fish active after
+    # dark, partially offsetting the night penalty.
+    illum = (solunar or {}).get("illumination_pct")
+    if isinstance(illum, (int, float)) and illum >= 70:
+        for h in [21, 22, 23, 0, 1, 2, 3]:
+            activity[h] *= 1.25
+
     # Normalize relative to today's peak
     max_val = max(activity) if max(activity) > 0 else 1
     normalized = [min(100, int(activity[h] / max_val * 100)) for h in range(24)]
@@ -3721,7 +3728,26 @@ def build_activity_timeline(
     else:
         condition_mult = 1.0
 
-    levels = [int(v * condition_mult) for v in normalized]
+    # Barometric-pressure trend multiplier: a falling glass (especially a low,
+    # pre-front reading) triggers aggressive feeding; a high post-front rise
+    # or a too-stable bluebird high slows the bite.  Applied day-wide since we
+    # only have a current reading, not an hourly pressure forecast.
+    pressure_mult = 1.0
+    pressure = forecast.get("pressure")
+    if pressure:
+        p_trend = str(pressure.get("trend", "")).lower()
+        try:
+            p_mb = float(pressure.get("pressure_mb") or 0) or None
+        except (TypeError, ValueError):
+            p_mb = None
+        if "falling" in p_trend:
+            pressure_mult = 1.10 if (p_mb is not None and p_mb < 1010) else 1.05
+        elif "rising" in p_trend:
+            pressure_mult = 0.90 if (p_mb is not None and p_mb > 1020) else 0.95
+        elif p_mb is not None and p_mb > 1025:
+            pressure_mult = 0.95  # stagnant high — bluebird slowdown
+
+    levels = [min(100, int(v * condition_mult * pressure_mult)) for v in normalized]
     peak_level = max(levels) if levels else 0
 
     labels_12h = [
