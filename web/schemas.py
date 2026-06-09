@@ -76,6 +76,60 @@ _VALID_TIDE_PREFERENCE = frozenset({"incoming", "outgoing", "high", "low", "any"
 _VALID_SESSION_FREQUENCY = frozenset({"weekly", "monthly", "occasional"})
 _VALID_CATCH_RELEASE = frozenset({"always", "sometimes", "keep"})
 
+# Notification preferences: the minimum forecast rating that triggers an alert,
+# and how many hours of lead time the daily check looks ahead.
+_VALID_MIN_RATING = frozenset({"Good", "Excellent"})
+_NOTIFY_LEAD_HOURS_MAX = 24
+
+
+def _validate_notification_prefs(value: Any) -> dict[str, Any]:
+    """Validate and normalize the notification_prefs object.
+
+    Shape: {enabled: bool, email: bool, push: bool,
+            min_rating: "Good"|"Excellent", lead_hours: int 0..24}
+    Unknown keys are dropped so the stored object stays small and predictable.
+    """
+    if not isinstance(value, dict):
+        raise ApiError(
+            "invalid_notification_prefs",
+            "notification_prefs must be an object",
+            status=400,
+        )
+    out: dict[str, Any] = {}
+    for flag in ("enabled", "email", "push"):
+        fv = value.get(flag)
+        if fv is not None:
+            if not isinstance(fv, bool):
+                raise ApiError(
+                    f"invalid_notification_{flag}",
+                    f"notification_prefs.{flag} must be a boolean",
+                    status=400,
+                )
+            out[flag] = fv
+    min_rating = value.get("min_rating")
+    if min_rating is not None:
+        if min_rating not in _VALID_MIN_RATING:
+            raise ApiError(
+                "invalid_min_rating",
+                f"min_rating must be one of: {sorted(_VALID_MIN_RATING)}",
+                status=400,
+            )
+        out["min_rating"] = min_rating
+    lead_hours = value.get("lead_hours")
+    if lead_hours is not None:
+        if (
+            isinstance(lead_hours, bool)
+            or not isinstance(lead_hours, int)
+            or not (0 <= lead_hours <= _NOTIFY_LEAD_HOURS_MAX)
+        ):
+            raise ApiError(
+                "invalid_lead_hours",
+                f"lead_hours must be an integer between 0 and {_NOTIFY_LEAD_HOURS_MAX}",
+                status=400,
+            )
+        out["lead_hours"] = lead_hours
+    return out
+
 
 def _validate_enum_list(field: str, value: Any, valid: frozenset) -> None:
     if not isinstance(value, list) or not all(isinstance(x, str) and x in valid for x in value):
@@ -118,6 +172,7 @@ class ProfilePayload:
     units: Optional[str] = None
     fishing_profile: Optional[dict[str, Any]] = None
     favorites: Optional[list[str]] = None
+    notification_prefs: Optional[dict[str, Any]] = None
 
     @classmethod
     def from_json(cls, data: dict[str, Any]) -> "ProfilePayload":
@@ -255,6 +310,10 @@ class ProfilePayload:
                         status=400,
                     )
 
+        notification_prefs = data.get("notification_prefs")
+        if notification_prefs is not None:
+            notification_prefs = _validate_notification_prefs(notification_prefs)
+
         location_id = data.get("location_id")
         if location_id is not None:
             if not isinstance(location_id, str):
@@ -274,11 +333,19 @@ class ProfilePayload:
             units=units,
             fishing_profile=fishing_profile,
             favorites=favorites,
+            notification_prefs=notification_prefs,
         )
 
     def as_updates(self) -> dict[str, Any]:
         updates: dict[str, Any] = {}
-        for k in ("location_id", "theme", "units", "fishing_profile", "favorites"):
+        for k in (
+            "location_id",
+            "theme",
+            "units",
+            "fishing_profile",
+            "favorites",
+            "notification_prefs",
+        ):
             v = getattr(self, k)
             if v is not None:
                 updates[k] = v

@@ -177,6 +177,27 @@ CREATE TABLE IF NOT EXISTS custom_habitat_types (
     is_deleted    INTEGER NOT NULL DEFAULT 0,
     created_at    TEXT    NOT NULL DEFAULT (datetime('now'))
 );
+
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    endpoint    TEXT    NOT NULL UNIQUE,
+    p256dh      TEXT    NOT NULL,
+    auth        TEXT    NOT NULL,
+    created_at  TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user
+ON push_subscriptions(user_id);
+
+CREATE TABLE IF NOT EXISTS notification_log (
+    user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    location_id TEXT    NOT NULL,
+    sent_date   TEXT    NOT NULL,
+    window_label TEXT,
+    channel     TEXT,
+    created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (user_id, location_id, sent_date)
+);
 """
 
 
@@ -739,6 +760,148 @@ def save_preferences(user_id: int, **kwargs: Any) -> None:
                 f"UPDATE profiles SET {', '.join(profile_sets)} WHERE user_id = ?", vals
             )
 
+        conn.commit()
+    finally:
+        conn.close()
+
+
+# Notifications --------------------------------------------------------------
+
+
+def iter_notification_candidates() -> list[dict[str, Any]]:
+    """Return verified users who have a non-empty notification_prefs object.
+
+    Each row: {user_id, email, notification_prefs, fishing_profile, favorites,
+    default_location_id, timezone}.  Callers still decide whether each user is
+    actually opted in (prefs['enabled']) and how to reach them; this only does
+    the cheap SQL-side filtering (confirmed email present, prefs not empty).
+    """
+    conn = get_db()
+    try:
+        rows = conn.execute(
+            """
+            SELECT u.id AS user_id, u.email AS email,
+                   u.default_location_id AS default_location_id,
+                   p.notification_prefs AS notification_prefs,
+                   p.fishing_profile AS fishing_profile,
+                   p.favorites AS favorites,
+                   p.timezone AS timezone
+            FROM users u
+            JOIN profiles p ON p.user_id = u.id
+            WHERE u.email IS NOT NULL
+              AND u.email_confirmed = 1
+              AND p.notification_prefs IS NOT NULL
+              AND p.notification_prefs NOT IN ('', '{}')
+            """
+        ).fetchall()
+    finally:
+        conn.close()
+
+    def _loads(raw: Any, default: Any) -> Any:
+        if not raw:
+            return default
+        try:
+            return json.loads(raw)
+        except Exception:
+            return default
+
+    out: list[dict[str, Any]] = []
+    for row in rows:
+        out.append(
+            {
+                "user_id": row["user_id"],
+                "email": row["email"],
+                "default_location_id": row["default_location_id"],
+                "notification_prefs": _loads(row["notification_prefs"], {}),
+                "fishing_profile": _loads(row["fishing_profile"], {}) or {},
+                "favorites": _loads(row["favorites"], []) or [],
+                "timezone": row["timezone"] or "",
+            }
+        )
+    return out
+
+
+def was_notified(user_id: int, location_id: str, sent_date: str) -> bool:
+    """True if this user/location was already notified on *sent_date* (YYYY-MM-DD)."""
+    conn = get_db()
+    try:
+        row = conn.execute(
+            "SELECT 1 FROM notification_log WHERE user_id = ? AND location_id = ? AND sent_date = ?",
+            (user_id, location_id, sent_date),
+        ).fetchone()
+        return row is not None
+    finally:
+        conn.close()
+
+
+def record_notification(
+    user_id: int,
+    location_id: str,
+    sent_date: str,
+    window_label: str = "",
+    channel: str = "",
+) -> None:
+    """Record that a notification fired (idempotent per user/location/day)."""
+    conn = get_db()
+    try:
+        conn.execute(
+            """
+            INSERT OR IGNORE INTO notification_log
+                (user_id, location_id, sent_date, window_label, channel)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (user_id, location_id, sent_date, window_label, channel),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def add_push_subscription(
+    user_id: int, endpoint: str, p256dh: str, auth: str
+) -> None:
+    """Store (or refresh) a Web Push subscription for a user."""
+    conn = get_db()
+    try:
+        conn.execute(
+            """
+            INSERT INTO push_subscriptions (user_id, endpoint, p256dh, auth)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(endpoint) DO UPDATE SET
+                user_id = excluded.user_id,
+                p256dh = excluded.p256dh,
+                auth = excluded.auth
+            """,
+            (user_id, endpoint, p256dh, auth),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def get_push_subscriptions(user_id: int) -> list[dict[str, str]]:
+    """Return all stored Web Push subscriptions for a user."""
+    conn = get_db()
+    try:
+        rows = conn.execute(
+            "SELECT endpoint, p256dh, auth FROM push_subscriptions WHERE user_id = ?",
+            (user_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+    return [
+        {"endpoint": r["endpoint"], "p256dh": r["p256dh"], "auth": r["auth"]}
+        for r in rows
+    ]
+
+
+def delete_push_subscription(endpoint: str) -> None:
+    """Remove a single push subscription by endpoint (e.g. after a 410 Gone)."""
+    conn = get_db()
+    try:
+        conn.execute(
+            "DELETE FROM push_subscriptions WHERE endpoint = ?", (endpoint,)
+        )
         conn.commit()
     finally:
         conn.close()
