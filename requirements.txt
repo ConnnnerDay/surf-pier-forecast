@@ -14,3 +14,7 @@ python-dotenv>=1.0,<2.0
 
 # Brotli compression — optional, falls back to gzip if not installed
 brotli>=1.0,<2.0
+
+# Web Push (VAPID) — optional; web-push notifications are disabled unless
+# VAPID keys are configured. Imported lazily so the app runs without it.
+pywebpush>=1.14,<3.0

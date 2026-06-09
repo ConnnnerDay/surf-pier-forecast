@@ -48,7 +48,9 @@ from services.arcgis_live_feeds import (
 )
 from storage.sqlite import (
     add_log_entry,
+    add_push_subscription,
     delete_log_entry,
+    delete_push_subscription,
     get_log_entries,
     get_log_stats,
     get_page_layout,
@@ -374,6 +376,64 @@ def page_layout_v1() -> Any:
                 )
             )
     save_page_layout(uid, layout)
+    return jsonify(success_envelope({"ok": True}))
+
+
+@bp.route("/api/v1/push/public-key", methods=["GET"])
+def push_public_key_v1() -> Any:
+    """Return the VAPID public key (and whether push is configured)."""
+    from services.push import get_public_key, is_push_configured
+
+    return jsonify(
+        success_envelope(
+            {"publicKey": get_public_key(), "configured": is_push_configured()}
+        )
+    )
+
+
+@bp.route("/api/v1/push/subscribe", methods=["POST"])
+def push_subscribe_v1() -> Any:
+    """Store a browser Web Push subscription for the logged-in user."""
+    if g.user is None:
+        return jsonify(error_envelope("unauthorized", "Not logged in")), 401
+
+    data = request.get_json(silent=True) or {}
+    sub = data.get("subscription") if isinstance(data.get("subscription"), dict) else data
+    endpoint = sub.get("endpoint") if isinstance(sub, dict) else None
+    keys = sub.get("keys") if isinstance(sub, dict) else None
+    if (
+        not isinstance(endpoint, str)
+        or not endpoint
+        or len(endpoint) > 1024
+        or not isinstance(keys, dict)
+    ):
+        return _json_error(
+            ApiError("invalid_subscription", "Malformed push subscription", status=400)
+        )
+    p256dh = keys.get("p256dh")
+    auth = keys.get("auth")
+    if not isinstance(p256dh, str) or not isinstance(auth, str) or not p256dh or not auth:
+        return _json_error(
+            ApiError("invalid_subscription", "Subscription missing keys", status=400)
+        )
+
+    add_push_subscription(g.user["id"], endpoint, p256dh, auth)
+    return jsonify(success_envelope({"ok": True}))
+
+
+@bp.route("/api/v1/push/unsubscribe", methods=["POST"])
+def push_unsubscribe_v1() -> Any:
+    """Remove a browser Web Push subscription by endpoint."""
+    if g.user is None:
+        return jsonify(error_envelope("unauthorized", "Not logged in")), 401
+
+    data = request.get_json(silent=True) or {}
+    endpoint = data.get("endpoint")
+    if not isinstance(endpoint, str) or not endpoint:
+        return _json_error(
+            ApiError("invalid_param", "endpoint is required", status=400)
+        )
+    delete_push_subscription(endpoint)
     return jsonify(success_envelope({"ok": True}))
 
 

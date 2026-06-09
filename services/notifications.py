@@ -220,16 +220,12 @@ def _default_forecast_loader(
     return forecast
 
 
-def _noop_push(_sub: dict[str, str], _t: str, _b: str, _u: str) -> bool:
-    return False
-
-
 def run_notification_check(
     now: Optional[datetime] = None,
     *,
     forecast_loader: ForecastLoader = _default_forecast_loader,
     email_sender: Optional[EmailSender] = None,
-    push_sender: PushSender = _noop_push,
+    push_sender: Optional[PushSender] = None,
     site_url: str = "",
 ) -> dict[str, int]:
     """Scan opted-in users and send any due notifications.
@@ -244,6 +240,14 @@ def run_notification_check(
         send_email_fn = send_email
     else:
         send_email_fn = email_sender
+
+    push_fn: PushSender
+    if push_sender is None:
+        from services.push import send_push
+
+        push_fn = send_push
+    else:
+        push_fn = push_sender
 
     candidates = iter_notification_candidates()
     considered = 0
@@ -298,7 +302,7 @@ def run_notification_check(
                 pushed_any = False
                 for sub in get_push_subscriptions(uid):
                     try:
-                        if push_sender(sub, title, body, url):
+                        if push_fn(sub, title, body, url):
                             pushed_any = True
                     except Exception:
                         logger.debug(
