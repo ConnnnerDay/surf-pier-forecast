@@ -5,15 +5,65 @@ from domain.species import (
     SPECIES_DB,
     _INSHORE_SLAM_SPECIES,
     _SPECIES_CATEGORIES,
+    _condition_rig_tip,
     _retention_prohibited,
     _score_species,
     _species_matches_profile,
     build_bait_ranking,
     build_natural_bait_chart,
+    build_rig_recommendations,
     build_species_calendar,
     build_species_ranking,
     build_spawning_report,
 )
+
+
+class TestConditionRigTip:
+    def test_heavy_surf_recommends_heavier_sinker_and_rod(self):
+        tip = _condition_rig_tip((20, 25), (4, 6), 65, "", {"surf"}, "bait")
+        assert "5-6 oz" in tip
+        assert "surf rod" in tip
+
+    def test_calm_clear_recommends_lighter_leader(self):
+        tip = _condition_rig_tip((3, 6), (0.5, 1.0), 68, "", set(), "lure")
+        assert "fluorocarbon" in tip.lower()
+
+    def test_cold_water_presentation_cue(self):
+        tip = _condition_rig_tip((5, 8), (1, 1.5), 48, "", set(), "bait")
+        assert "cold water" in tip.lower()
+        assert "downsize" in tip
+
+    def test_moving_current_at_bridge_adds_weight(self):
+        tip = _condition_rig_tip((10, 14), (1, 2), 70, "Rising", {"bridge"}, "bait")
+        assert "current" in tip.lower()
+
+    def test_no_signal_returns_empty(self):
+        # Mild conditions with a lure rig produce nothing actionable.
+        assert _condition_rig_tip((9, 11), (2, 2.5), 70, "", set(), "lure") == ""
+
+    def test_lure_rig_gets_no_sinker_advice(self):
+        tip = _condition_rig_tip((20, 25), (5, 7), 65, "", set(), "lure")
+        assert "pyramid" not in tip
+
+
+class TestRigRecommendationsConditionAware:
+    def _ranking(self):
+        return build_species_ranking(month=10, water_temp=65, coast="east")
+
+    def test_conditions_annotate_cond_tip(self):
+        recs = build_rig_recommendations(
+            self._ranking(),
+            fishing_types=["surf"],
+            wind_range=(20, 25),
+            wave_range=(4, 6),
+            water_temp=65,
+        )
+        assert any(r.get("cond_tip") for r in recs)
+
+    def test_backward_compatible_without_conditions(self):
+        recs = build_rig_recommendations(self._ranking())
+        assert recs
+        assert all("cond_tip" not in r for r in recs)
 
 
 # Grab a known species entry for testing

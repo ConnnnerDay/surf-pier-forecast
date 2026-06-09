@@ -388,6 +388,15 @@
                             <dt>Hook</dt><dd>{{ rig.hook }}</dd>
                             <dt>Sinker</dt><dd>{{ rig.sinker }}</dd>
                         </dl>
+                        {% if rig.cond_tip %}
+                        <p class="rig-cond-tip">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a7 7 0 0 0-4 12.7V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.3A7 7 0 0 0 12 2z"/><line x1="9" y1="21" x2="15" y2="21"/></svg>
+                            <span><strong>Today&rsquo;s tweak:</strong> {{ rig.cond_tip }}</span>
+                        </p>
+                        {% endif %}
+                        {% if rig.cr_tip %}
+                        <p class="rig-cr-tip">{{ rig.cr_tip }}</p>
+                        {% endif %}
                         {% if rig.knots %}
                         <div class="rig-knots">
                             <h4 class="rig-knots-title">Recommended Knots</h4>

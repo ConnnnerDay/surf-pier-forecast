@@ -2619,7 +2619,16 @@ def generate_forecast(
         targets=profile.get("targets"),
         fish_region=loc_fish_region,
     )
-    rig_recommendations = build_rig_recommendations(species)
+    # Tide state isn't resolved yet at this point in assembly, so the base
+    # rig tips use wind/wave/temp only; personalize_forecast rebuilds these
+    # with tide_state for anglers who have fishing types set.
+    rig_recommendations = build_rig_recommendations(
+        species,
+        fishing_types=profile.get("fishing_types"),
+        wind_range=wind_range,
+        wave_range=wave_range,
+        water_temp=water_temp,
+    )
 
     loc_name = ""
     if location:
@@ -3211,6 +3220,10 @@ def personalize_forecast(
         live_bait=live_bait,
         cut_bait=cut_bait,
         lures=lures,
+        wind_range=wind_range,
+        wave_range=wave_range,
+        water_temp=water_temp,
+        tide_state=t_state,
     )
     # Annotate rigs with a circle-hook tip for catch-and-release anglers.
     # Only fires when the rig doesn't already specify a circle hook.

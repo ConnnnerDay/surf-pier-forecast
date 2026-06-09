@@ -116,12 +116,15 @@ class TestRunNotificationCheck:
         sent_emails, _sp, fake_email, fake_push = patched
         monkeypatch.setattr(notif, "iter_notification_candidates", lambda: [self._candidate()])
         recorded = []
-        monkeypatch.setattr(notif, "was_notified", lambda u, l, d: (u, l, d) in recorded)
+        monkeypatch.setattr(notif, "was_notified", lambda u, loc, d: (u, loc, d) in recorded)
         monkeypatch.setattr(
             notif, "record_notification",
-            lambda u, l, d, w="", c="": recorded.append((u, l, d)),
+            lambda u, loc, d, w="", c="": recorded.append((u, loc, d)),
         )
-        loader = lambda lid, loc, prof: _forecast("Good")
+
+        def loader(lid, loc, prof):
+            return _forecast("Good")
+
         now = datetime(2026, 6, 9, 5, 0, tzinfo=EAST)
 
         s1 = notif.run_notification_check(now, forecast_loader=loader, email_sender=fake_email, push_sender=fake_push)

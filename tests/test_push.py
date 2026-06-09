@@ -3,8 +3,6 @@
 import sys
 import types
 
-import pytest
-
 import services.push as push
 from storage.sqlite import create_user, get_push_subscriptions
 

@@ -1904,6 +1904,32 @@ h2::before {
   color: var(--text);
 }
 
+/* Condition-aware gear tweak shown under a rig's specs */
+.rig-cond-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  margin: 0.6rem 0 0;
+  padding: 0.5rem 0.6rem;
+  border-radius: 6px;
+  background: rgba(14, 95, 120, 0.08);
+  border-left: 3px solid var(--ocean, #0e5f78);
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--text);
+}
+.rig-cond-tip svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--ocean, #0e5f78);
+}
+.rig-cr-tip {
+  margin: 0.4rem 0 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
 /* ---------- Rig knots ---------- */
 
 .rig-knots {
