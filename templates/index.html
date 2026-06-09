@@ -734,12 +734,16 @@ if (IS_REFRESHING && CURRENT_LOC_ID) {
 // ── Offline snapshot — saves key forecast data so offline.html can show it ──
 (function () {
     try {
+        {% set _score = forecast.conditions.fishability_score_for_angler | default(none) %}
+        {% if _score is none %}{% set _score = forecast.conditions.fishability_score | default(none) %}{% endif %}
         var snap = {
             location_name: {{ (forecast.location_name or '') | tojson }},
             generated_at:  {{ (forecast.generated_at or '') | tojson }},
             saved_at: Date.now(),
             conditions: {
-                verdict:      {{ (forecast.conditions.verdict or '') | tojson }},
+                verdict:      {{ (forecast.conditions.verdict_for_angler or forecast.conditions.verdict_for_type or forecast.conditions.verdict or '') | tojson }},
+                score:        {{ _score | tojson if _score is not none else 'null' }},
+                summary:      {{ (forecast.conditions.summary or '') | tojson }},
                 water_temp_f: {{ (forecast.conditions.water_temp_f | string) if forecast.conditions.water_temp_f is not none else 'null' }},
                 wind:         {{ (forecast.conditions.wind or '') | tojson }},
                 waves:        {{ (forecast.conditions.waves or '') | tojson }},
@@ -748,6 +752,8 @@ if (IS_REFRESHING && CURRENT_LOC_ID) {
             tide_state: {{ (forecast.tide_state or '') | tojson }},
             tides: {{ (forecast.tides[:6] if forecast.tides else []) | tojson }},
             species: {{ (forecast.species[:5] if forecast.species else []) | tojson }},
+            best_times: {{ (forecast.best_times[:4] if forecast.best_times else []) | tojson }},
+            gear: {{ (forecast.gear_checklist[:14] if forecast.gear_checklist else []) | tojson }},
             solunar: {{ (forecast.solunar) | tojson if forecast.solunar else 'null' }}
         };
         localStorage.setItem('fishforecast_snapshot', JSON.stringify(snap));
