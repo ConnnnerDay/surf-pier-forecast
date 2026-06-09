@@ -121,6 +121,44 @@ def test_v1_profile_get_and_post(client):
     assert set(gbody.keys()) == {"ok", "data", "error", "meta"}
 
 
+def test_v1_profile_notification_prefs_roundtrip(client):
+    from storage.sqlite import get_preferences
+
+    uid = create_user("apiv1_notif", "pass1234")
+    assert uid is not None
+    _login_session(client, uid)
+
+    post = client.post(
+        "/api/v1/profile",
+        json={
+            "notification_prefs": {
+                "enabled": True,
+                "email": True,
+                "push": False,
+                "min_rating": "Excellent",
+                "lead_hours": 3,
+            }
+        },
+    )
+    assert post.status_code == 200
+    np = post.get_json()["data"]["profile"]["notification_prefs"]
+    assert np["enabled"] is True
+    assert np["min_rating"] == "Excellent"
+    assert np["lead_hours"] == 3
+    # Persisted to storage as well.
+    assert get_preferences(uid)["notification_prefs"]["enabled"] is True
+
+
+def test_v1_profile_rejects_bad_notification_prefs(client):
+    uid = create_user("apiv1_notif_bad", "pass1234")
+    _login_session(client, uid)
+    resp = client.post(
+        "/api/v1/profile",
+        json={"notification_prefs": {"min_rating": "Perfect"}},
+    )
+    assert resp.status_code == 400
+
+
 def test_v1_log_crud(client):
     uid = create_user("apiv1_log", "pass1234")
     assert uid is not None

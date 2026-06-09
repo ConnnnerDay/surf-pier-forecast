@@ -96,7 +96,7 @@ def _validate_notification_prefs(value: Any) -> dict[str, Any]:
             status=400,
         )
     out: dict[str, Any] = {}
-    for flag in ("enabled", "email", "push"):
+    for flag in ("enabled", "email", "push", "weekly_email"):
         fv = value.get(flag)
         if fv is not None:
             if not isinstance(fv, bool):
@@ -410,4 +410,5 @@ def normalize_preferences(prefs: dict[str, Any]) -> dict[str, Any]:
         "units": prefs.get("units", "F"),
         "fishing_profile": prefs.get("fishing_profile"),
         "favorites": prefs.get("favorites", []),
+        "notification_prefs": prefs.get("notification_prefs", {}),
     }
