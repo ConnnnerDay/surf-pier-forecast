@@ -1,13 +1,25 @@
         <!-- Conditions grid -->
         <section class="conditions-section">
+            {% set _eff_verdict = forecast.conditions.verdict_for_angler or forecast.conditions.verdict_for_type or forecast.conditions.verdict %}
+            {% set _score = forecast.conditions.fishability_score_for_angler if forecast.conditions.fishability_score_for_angler is not none else forecast.conditions.fishability_score %}
             <div class="csc-verdict-bar">
                 <div class="csc-verdict-info">
                     <p class="csc-location">Today&rsquo;s Forecast</p>
-                    {% if forecast.conditions.verdict %}
-                    <span class="verdict-badge verdict-{{ forecast.conditions.verdict|lower|replace(' ', '-') }} csc-verdict-badge">{{ forecast.conditions.verdict }}</span>
+                    {% if _eff_verdict %}
+                    <span class="verdict-badge verdict-{{ _eff_verdict|lower|replace(' ', '-') }} csc-verdict-badge">{{ _eff_verdict }}{% if _score is not none %} &middot; {{ _score }}/100{% endif %}</span>
                     {% endif %}
                     {% if forecast.conditions.summary %}
                     <p class="csc-verdict-summary">{{ forecast.conditions.summary }}</p>
+                    {% endif %}
+                    {% if forecast.conditions.exceeds_thresholds %}
+                    <ul class="csc-verdict-exceeds" aria-label="Conditions exceeding your limits">
+                        {% for warn in forecast.conditions.exceeds_thresholds %}
+                        <li class="csc-verdict-exceed">
+                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            {{ warn }}
+                        </li>
+                        {% endfor %}
+                    </ul>
                     {% endif %}
                 </div>
                 <button class="csc-share-btn" type="button" aria-label="Share forecast" onclick="shareConditions(this)">

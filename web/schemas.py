@@ -237,6 +237,23 @@ class ProfilePayload:
                     f"catch_release must be one of: {sorted(_VALID_CATCH_RELEASE)}",
                     status=400,
                 )
+            # Personal go/no-go comfort thresholds (optional numeric limits).
+            for thresh_field, hi in (("max_wind_kt", 60), ("max_wave_ft", 30)):
+                tval = fishing_profile.get(thresh_field)
+                if tval is None:
+                    continue
+                if isinstance(tval, bool) or not isinstance(tval, (int, float)):
+                    raise ApiError(
+                        f"invalid_{thresh_field}",
+                        f"{thresh_field} must be a number between 0 and {hi}",
+                        status=400,
+                    )
+                if not (0 <= tval <= hi):
+                    raise ApiError(
+                        f"invalid_{thresh_field}",
+                        f"{thresh_field} must be between 0 and {hi}",
+                        status=400,
+                    )
 
         location_id = data.get("location_id")
         if location_id is not None:

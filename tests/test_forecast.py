@@ -15,6 +15,7 @@ from domain.forecast import (
     _heat_index_f,
     _wind_chill_f,
     classify_conditions,
+    score_conditions,
     recompute_current_uv,
     MONTHLY_AVG_WIND,
     MONTHLY_AVG_WAVES,
@@ -89,6 +90,59 @@ class TestClassifyConditions:
         se = classify_conditions((6, 10), (1, 2), wind_dir="SE", coast="east", water_temp_f=65)
         order = {"Poor": 1, "Challenging": 2, "Fair": 3, "Good": 4, "Excellent": 5}
         assert order[sw] >= order[se]
+
+
+class TestScoreConditions:
+    def test_returns_index_verdict_and_explanation(self):
+        result = score_conditions(
+            (4, 8), (1, 1.5), wind_dir="NW", water_temp_f=68
+        )
+        assert isinstance(result["score"], int)
+        assert 0 <= result["score"] <= 100
+        assert result["verdict"] in {"Excellent", "Good"}
+        # Explanation should surface the dominant drivers as plain phrases.
+        assert result["factors"]
+        assert result["summary"]
+        assert any("surf" in f.lower() for f in result["factors"])
+        assert any("wind" in f.lower() for f in result["factors"])
+
+    def test_unknown_when_data_missing(self):
+        result = score_conditions(None, None)
+        assert result["score"] is None
+        assert result["verdict"] == "Unknown"
+        assert result["factors"] == []
+        assert result["exceeds"] == []
+
+    def test_classify_conditions_matches_score_verdict(self):
+        kwargs = dict(wind_dir="NW", water_temp_f=68)
+        assert (
+            classify_conditions((4, 8), (1, 1.5), **kwargs)
+            == score_conditions((4, 8), (1, 1.5), **kwargs)["verdict"]
+        )
+
+    def test_wind_threshold_exceeded_penalises_and_warns(self):
+        base = score_conditions((14, 18), (1, 2), wind_dir="NW", water_temp_f=68)
+        limited = score_conditions(
+            (14, 18), (1, 2), wind_dir="NW", water_temp_f=68, max_wind_kt=10
+        )
+        assert limited["score"] < base["score"]
+        assert limited["exceeds"]
+        assert any("limit" in w.lower() for w in limited["exceeds"])
+        # The warning is surfaced as a leading driver in the explanation.
+        assert any("limit" in f.lower() for f in limited["factors"])
+
+    def test_wave_threshold_exceeded_warns(self):
+        limited = score_conditions(
+            (6, 10), (4, 5), wind_dir="NW", water_temp_f=68, max_wave_ft=3
+        )
+        assert any("ft limit" in w.lower() for w in limited["exceeds"])
+
+    def test_threshold_not_exceeded_no_warning(self):
+        ok = score_conditions(
+            (4, 8), (1, 2), wind_dir="NW", water_temp_f=68,
+            max_wind_kt=20, max_wave_ft=5,
+        )
+        assert ok["exceeds"] == []
 
 
 class TestMonthlyData:

@@ -4,7 +4,8 @@ A self-hosted Flask web app that combines NOAA/NWS/NDBC marine data with species
 
 ## Highlights
 
-- **Live fishing outlook dashboard** with conditions cards, confidence/verdict summary, and trend charts
+- **Live fishing outlook dashboard** with conditions cards, a 0–100 go/no-go index, plain-language "why" explanation, and trend charts
+- **Personal comfort thresholds** — set a max wind and max surf you'll fish; the rating downgrades and flags any day that exceeds your limits
 - **Location-aware forecast engine** — wind, waves, tide windows, sunrise/sunset, solunar, pressure, weather
 - **851-species database** with ranked targets, natural bait picks, rig recommendations, knots, and spot tips
 - **Fishing styles & profiles** — customize tactics by style (surf, pier, kayak, etc.) and personal preferences

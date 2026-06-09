@@ -5194,6 +5194,29 @@ footer p {
   margin: 0 0 0.75rem;
 }
 
+.profile-threshold-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+}
+.profile-threshold {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.profile-threshold-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.profile-threshold-input {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border, rgba(0,0,0,0.15));
+  border-radius: 8px;
+  font-size: 1rem;
+  background: var(--surface, #fff);
+  color: inherit;
+}
+
 .profile-options {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -8502,6 +8525,25 @@ body.has-app-header main {
   font-family: 'Instrument Serif', Georgia, serif;
   font-style: italic;
 }
+
+/* Personal comfort-threshold warnings on the go/no-go rating */
+.csc-verdict-exceeds {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.csc-verdict-exceed {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #FB923C;
+}
+.csc-verdict-exceed svg { flex: 0 0 auto; }
 
 /* Wrapper so share btn can sit flush top-right without disrupting badge/summary flow */
 .csc-verdict-info {

@@ -452,6 +452,8 @@ def _render_forecast(
             "live_bait",
             "cut_bait",
             "lures",
+            "max_wind_kt",
+            "max_wave_ft",
         )
     ):
         profile = stored_profile

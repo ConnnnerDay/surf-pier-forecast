@@ -152,6 +152,20 @@ def test_profile_payload_rejects_invalid_condition_tolerance():
     )
 
 
+def test_profile_payload_rejects_out_of_range_max_wind():
+    _raises(
+        {"fishing_profile": {"max_wind_kt": 999}},
+        "invalid_max_wind_kt",
+    )
+
+
+def test_profile_payload_rejects_non_numeric_max_wave():
+    _raises(
+        {"fishing_profile": {"max_wave_ft": "lots"}},
+        "invalid_max_wave_ft",
+    )
+
+
 def test_profile_payload_accepts_valid_fishing_profile():
     p = ProfilePayload.from_json(
         {
@@ -163,10 +177,13 @@ def test_profile_payload_accepts_valid_fishing_profile():
                 "preferred_times": ["dawn", "morning"],
                 "primary_goal": "action",
                 "condition_tolerance": "moderate",
+                "max_wind_kt": 15,
+                "max_wave_ft": 4,
             }
         }
     )
     assert p.fishing_profile["experience"] == "intermediate"
+    assert p.fishing_profile["max_wind_kt"] == 15
 
 
 def test_success_envelope_meta_merge():
