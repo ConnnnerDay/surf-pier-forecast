@@ -331,7 +331,7 @@
                         <div class="auth-field">
                             <label for="notif_lead_hours">Look ahead (hours)</label>
                             <input type="number" id="notif_lead_hours" class="auth-input" min="0" max="24" step="1"
-                                   value="{{ np.lead_hours if np.lead_hours is not none else 0 }}"
+                                   value="{{ np.lead_hours or 0 }}"
                                    placeholder="0 = any time today">
                         </div>
                     </div>
