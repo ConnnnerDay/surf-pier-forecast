@@ -77,6 +77,18 @@ class TestBuildEmail:
         assert "5:30 - 7:30 AM" in text
         assert "<h2>" in html and "Montauk" in html
 
+    def test_manage_link_included_when_url_given(self):
+        d = notif.evaluate_forecast(
+            _forecast("Good"), {"min_rating": "Good"},
+            datetime(2026, 6, 9, 5, 0, tzinfo=EAST),
+        )
+        _s, text, html = notif.build_email("Montauk", d, manage_url="https://x.test/account")
+        assert "https://x.test/account" in text
+        assert "https://x.test/account" in html
+        # Omitted when no URL is supplied.
+        _s2, text2, html2 = notif.build_email("Montauk", d)
+        assert "Manage or turn off" not in text2
+
 
 class TestRunNotificationCheck:
     @pytest.fixture

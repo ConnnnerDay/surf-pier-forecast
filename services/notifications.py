@@ -137,8 +137,14 @@ def evaluate_forecast(
 # ---------------------------------------------------------------------------
 
 
-def build_email(location_name: str, decision: dict[str, Any]) -> tuple[str, str, str]:
-    """Return (subject, text_body, html_body) for an alert email."""
+def build_email(
+    location_name: str, decision: dict[str, Any], manage_url: str = ""
+) -> tuple[str, str, str]:
+    """Return (subject, text_body, html_body) for an alert email.
+
+    *manage_url* (when given) is appended as a "manage alerts" link so the
+    recipient can adjust or turn off notifications.
+    """
     verdict = decision["verdict"]
     score = decision.get("score")
     score_str = f" ({score}/100)" if score is not None else ""
@@ -157,6 +163,9 @@ def build_email(location_name: str, decision: dict[str, Any]) -> tuple[str, str,
             lines.append(f"  - {win}{(' — ' + reason) if reason else ''}")
     lines.append("")
     lines.append("Tight lines! — Surf & Pier Fishing Forecast")
+    if manage_url:
+        lines.append("")
+        lines.append(f"Manage or turn off alerts: {manage_url}")
     text_body = "\n".join(lines)
 
     wins_html = "".join(
@@ -164,11 +173,18 @@ def build_email(location_name: str, decision: dict[str, Any]) -> tuple[str, str,
         f"{(' — ' + bt.get('reason','')) if bt.get('reason') else ''}</li>"
         for bt in decision.get("best_times", [])
     )
+    manage_html = (
+        f'<p style="font-size:12px;color:#888">'
+        f'<a href="{manage_url}">Manage or turn off alerts</a></p>'
+        if manage_url
+        else ""
+    )
     html_body = (
         f"<h2>{verdict}{score_str} fishing at {location_name} today</h2>"
         + (f"<p>{decision['summary']}</p>" if decision.get("summary") else "")
         + (f"<p><strong>Best windows:</strong></p><ul>{wins_html}</ul>" if wins_html else "")
         + "<p>Tight lines! — Surf &amp; Pier Fishing Forecast</p>"
+        + manage_html
     )
     return subject, text_body, html_body
 
@@ -288,7 +304,10 @@ def run_notification_check(
             channels: list[str] = []
 
             if prefs.get("email") and cand.get("email"):
-                subject, text_body, html_body = build_email(loc_name, decision)
+                manage_url = f"{site_url}/account" if site_url else ""
+                subject, text_body, html_body = build_email(
+                    loc_name, decision, manage_url=manage_url
+                )
                 try:
                     if send_email_fn(cand["email"], subject, text_body, html_body):
                         channels.append("email")
