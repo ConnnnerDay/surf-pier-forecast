@@ -188,3 +188,48 @@ class TestRunNotificationCheck:
             email_sender=fake_email, push_sender=fake_push,
         )
         assert s["sent"] == 0
+
+
+class TestRunNotificationCheckRealDB:
+    """End-to-end through the real SQLite layer (no mocked storage)."""
+
+    def test_seeded_user_sends_then_dedupes(self, app, monkeypatch):
+        from storage.sqlite import create_user, save_preferences, get_db
+
+        uid = create_user("notif_e2e", "pass1234", email="e2e@example.com")
+        con = get_db()
+        con.execute("UPDATE users SET email_confirmed=1 WHERE id=?", (uid,))
+        con.commit()
+        con.close()
+        save_preferences(
+            uid,
+            favorites=["montauk-ny"],
+            notification_prefs={"enabled": True, "email": True, "min_rating": "Good"},
+        )
+
+        monkeypatch.setattr(
+            notif, "get_location",
+            lambda lid: {"id": lid, "name": "Montauk", "timezone": "America/New_York"}
+            if lid == "montauk-ny" else None,
+        )
+        sent = []
+        now = datetime(2026, 6, 9, 5, 0, tzinfo=EAST)
+
+        s1 = notif.run_notification_check(
+            now,
+            forecast_loader=lambda *a: _forecast("Good"),
+            email_sender=lambda *a: (sent.append(a[0]) or True),
+            push_sender=lambda *a: False,
+        )
+        assert s1["candidates"] == 1 and s1["sent"] == 1
+        assert sent == ["e2e@example.com"]
+
+        # Same day → real notification_log dedupe suppresses a second send.
+        s2 = notif.run_notification_check(
+            now,
+            forecast_loader=lambda *a: _forecast("Good"),
+            email_sender=lambda *a: (sent.append(a[0]) or True),
+            push_sender=lambda *a: False,
+        )
+        assert s2["sent"] == 0
+        assert len(sent) == 1
