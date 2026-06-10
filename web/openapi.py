@@ -119,6 +119,28 @@ def build_openapi_spec() -> dict[str, Any]:
                     ],
                 }
             },
+            "/api/v1/log/patterns": {
+                "get": {
+                    "summary": "Learned catch patterns for the current user",
+                    "parameters": [
+                        {
+                            "name": "location_id",
+                            "in": "query",
+                            "required": False,
+                            "schema": {"type": "string"},
+                        }
+                    ],
+                }
+            },
+            "/api/v1/push/public-key": {
+                "get": {"summary": "VAPID public key for web-push subscription"},
+            },
+            "/api/v1/push/subscribe": {
+                "post": {"summary": "Register a web-push subscription"},
+            },
+            "/api/v1/push/unsubscribe": {
+                "post": {"summary": "Remove a web-push subscription"},
+            },
             "/api/openapi.json": {"get": {"summary": "OpenAPI spec"}},
         },
     }

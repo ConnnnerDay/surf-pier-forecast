@@ -76,6 +76,10 @@ def test_openapi_contains_versioned_routes():
     assert "/api/v1/forecast" in spec["paths"]
     assert "/api/v1/profile" in spec["paths"]
     assert "/api/v1/log" in spec["paths"]
+    # Endpoints added for catch-pattern learning and web-push notifications.
+    assert "/api/v1/log/patterns" in spec["paths"]
+    assert "/api/v1/push/subscribe" in spec["paths"]
+    assert "/api/v1/push/public-key" in spec["paths"]
 
 
 # ---------------------------------------------------------------------------
