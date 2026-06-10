@@ -520,6 +520,27 @@
             });
         }
 
+        // Unsubscribe this browser from web push and drop it server-side.
+        // Best-effort: resolves even when push is unsupported or no sub exists.
+        function removePushSubscription() {
+            if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+                return Promise.resolve();
+            }
+            return navigator.serviceWorker.ready.then(function (reg) {
+                return reg.pushManager.getSubscription();
+            }).then(function (sub) {
+                if (!sub) return;
+                var endpoint = sub.endpoint;
+                return sub.unsubscribe().then(function () {
+                    return fetch('/api/v1/push/unsubscribe', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ endpoint: endpoint }),
+                    });
+                });
+            }).catch(function () { /* best-effort */ });
+        }
+
         function savePrefs(enabled) {
             var lead = parseInt(leadEl && leadEl.value, 10);
             if (isNaN(lead) || lead < 0) lead = 0;
@@ -564,9 +585,9 @@
 
         disableBtn.addEventListener('click', function () {
             disableBtn.disabled = true;
-            savePrefs(false).then(function () {
+            if (pushEl) pushEl.checked = false;  // reflect in the saved prefs
+            Promise.all([savePrefs(false), removePushSubscription()]).then(function () {
                 serverEnabled = false;
-                if (pushEl) pushEl.checked = false;
                 showMsg('All alerts turned off.', false);
                 setStatus('Alerts are off.');
                 refreshButtons();
