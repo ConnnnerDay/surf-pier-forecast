@@ -1,7 +1,8 @@
         <!-- Conditions grid -->
         <section class="conditions-section">
             {% set _eff_verdict = forecast.conditions.verdict_for_angler or forecast.conditions.verdict_for_type or forecast.conditions.verdict %}
-            {% set _score = forecast.conditions.fishability_score_for_angler if forecast.conditions.fishability_score_for_angler is not none else forecast.conditions.fishability_score %}
+            {% set _score = forecast.conditions.fishability_score_for_angler | default(none) %}
+            {% if _score is none %}{% set _score = forecast.conditions.fishability_score | default(none) %}{% endif %}
             <div class="csc-verdict-bar">
                 <div class="csc-verdict-info">
                     <p class="csc-location">Today&rsquo;s Forecast</p>
