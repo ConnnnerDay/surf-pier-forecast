@@ -1590,12 +1590,16 @@ def build_bite_alerts(
 def pick_best_fishing_day(
     today_verdict: str,
     outlook: list[dict[str, Any]],
+    today_score: Optional[int] = None,
 ) -> dict[str, str]:
     """Analyze today and 3-day outlook to recommend the best day to fish.
 
-    Returns a dict with 'best_day', 'reason', and 'recommendation'.
+    Ranks by verdict tier first (so an Excellent day always beats a Good one),
+    then by the 0-100 go/no-go score within a tier — so two "Good" days are
+    separated by their actual scores — and finally by active-species count.
+
+    Returns a dict with 'best_day', 'verdict', and 'recommendation'.
     """
-    # Score mapping for verdicts
     verdict_scores = {
         "Excellent": 5,
         "Good": 4,
@@ -1605,30 +1609,36 @@ def pick_best_fishing_day(
         "Unknown": 2,
     }
 
+    def _combined(verdict: str, score: Optional[int], n_species: int) -> float:
+        # Tier dominates (×1000); numeric score breaks ties within a tier;
+        # species count is the final, smallest tiebreaker.
+        tier = verdict_scores.get(verdict, 2) * 1000
+        num = score if isinstance(score, (int, float)) else verdict_scores.get(verdict, 2) * 20
+        return tier + num + min(n_species, 5) * 0.1
+
     best_day = "Today"
-    best_score = verdict_scores.get(today_verdict, 2)
+    best_tier = verdict_scores.get(today_verdict, 2)
+    best_score = _combined(today_verdict, today_score, 0)
     best_verdict = today_verdict
 
     for day in outlook:
         v = day.get("verdict", "Unknown")
-        s: float = verdict_scores.get(v, 2)
-        n_species = len(day.get("top_species", []))
-        # Bonus for having more active species
-        s += min(n_species * 0.2, 1.0)
+        s = _combined(v, day.get("score"), len(day.get("top_species", [])))
         if s > best_score:
             best_score = s
+            best_tier = verdict_scores.get(v, 2)
             best_day = day["day"]
             best_verdict = v
 
     if best_day == "Today":
-        if best_score >= 4:
+        if best_tier >= 4:
             recommendation = "Today looks great — get out there!"
-        elif best_score >= 3:
+        elif best_tier >= 3:
             recommendation = "Decent day today, but conditions are fishable."
         else:
             recommendation = "Tough day today. Check back tomorrow."
     else:
-        if best_score >= 4:
+        if best_tier >= 4:
             recommendation = f"{best_day} has the best forecast — plan your trip then."
         else:
             recommendation = (
@@ -2876,6 +2886,7 @@ def generate_forecast(
         forecast["best_day"] = pick_best_fishing_day(
             forecast["conditions"]["verdict"],
             forecast["outlook"],
+            today_score=forecast["conditions"].get("fishability_score"),
         )
 
     # Species availability calendar — shows popular regional target species,
@@ -3306,9 +3317,12 @@ def personalize_forecast(
     )
     if outlook:
         forecast["outlook"] = outlook
+        _conds = forecast.get("conditions", {})
         forecast["best_day"] = pick_best_fishing_day(
-            forecast.get("conditions", {}).get("verdict", "Fair"),
+            _conds.get("verdict", "Fair"),
             outlook,
+            today_score=_conds.get("fishability_score_for_angler")
+            or _conds.get("fishability_score"),
         )
 
     # Rebuild spot tips with type-specific content

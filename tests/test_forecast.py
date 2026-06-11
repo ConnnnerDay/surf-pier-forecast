@@ -1019,3 +1019,41 @@ def test_personalize_caught_here_boost(monkeypatch):
     )
     assert out2["species"][0]["name"] == "Red drum"  # 75+8=83 > 80
     assert out2["species"][0]["rank"] == 1
+
+
+class TestPickBestFishingDay:
+    def test_tier_dominates_score(self):
+        from domain.forecast import pick_best_fishing_day
+        # Excellent (low score) beats Good (high score) — tier wins.
+        out = pick_best_fishing_day(
+            "Fair",
+            [
+                {"day": "Sat", "verdict": "Good", "score": 70, "top_species": []},
+                {"day": "Sun", "verdict": "Excellent", "score": 50, "top_species": []},
+            ],
+            today_score=40,
+        )
+        assert out["best_day"] == "Sun"
+        assert out["verdict"] == "Excellent"
+
+    def test_numeric_score_breaks_tie_within_tier(self):
+        from domain.forecast import pick_best_fishing_day
+        out = pick_best_fishing_day(
+            "Fair",
+            [
+                {"day": "Sat", "verdict": "Good", "score": 62, "top_species": []},
+                {"day": "Sun", "verdict": "Good", "score": 75, "top_species": []},
+            ],
+            today_score=40,
+        )
+        assert out["best_day"] == "Sun"  # higher score within the same tier
+
+    def test_today_can_win(self):
+        from domain.forecast import pick_best_fishing_day
+        out = pick_best_fishing_day(
+            "Excellent",
+            [{"day": "Sat", "verdict": "Fair", "score": 50, "top_species": []}],
+            today_score=88,
+        )
+        assert out["best_day"] == "Today"
+        assert "great" in out["recommendation"].lower()
