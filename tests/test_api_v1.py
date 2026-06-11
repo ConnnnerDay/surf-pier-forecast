@@ -198,6 +198,43 @@ def test_v1_log_patterns_requires_login(client):
     assert resp.status_code == 401
 
 
+def test_v1_notifications_test_requires_login(client):
+    assert client.post("/api/v1/notifications/test", json={}).status_code == 401
+
+
+def test_v1_notifications_test_email_channel(client, monkeypatch):
+    from storage.sqlite import create_user, save_preferences
+
+    sent = {}
+    monkeypatch.setattr(
+        "services.email.send_email",
+        lambda to, subj, text, html: sent.update(to=to, subj=subj) or True,
+    )
+    uid = create_user("notif_test", "pass1234", email="t@example.com")
+    _login_session(client, uid)
+    save_preferences(
+        uid, notification_prefs={"enabled": True, "email": True, "push": False}
+    )
+    resp = client.post("/api/v1/notifications/test", json={})
+    assert resp.status_code == 200
+    data = resp.get_json()["data"]["sent"]
+    assert data["email"] is True
+    assert data["push"] is False
+    assert sent["to"] == "t@example.com"
+    assert "[Test]" in sent["subj"]
+
+
+def test_v1_notifications_test_nothing_when_channels_off(client, monkeypatch):
+    from storage.sqlite import create_user, save_preferences
+
+    uid = create_user("notif_off", "pass1234", email="o@example.com")
+    _login_session(client, uid)
+    save_preferences(uid, notification_prefs={"enabled": True, "email": False})
+    resp = client.post("/api/v1/notifications/test", json={})
+    data = resp.get_json()["data"]["sent"]
+    assert data == {"email": False, "push": False}
+
+
 def test_v1_log_crud(client):
     uid = create_user("apiv1_log", "pass1234")
     assert uid is not None

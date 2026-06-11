@@ -349,6 +349,9 @@
                     <button type="button" id="disable-alerts-btn" class="auth-btn auth-btn--danger" hidden>
                         Turn Off All Alerts
                     </button>
+                    <button type="button" id="test-alert-btn" class="auth-btn auth-btn--ghost">
+                        Send a test alert
+                    </button>
                     <div id="alerts-msg" class="notif-msg" hidden></div>
                 </div>
             </details>
@@ -595,6 +598,37 @@
                 showMsg('Could not update settings. Please try again.', true);
             }).then(function () { disableBtn.disabled = false; });
         });
+
+        var testBtn = document.getElementById('test-alert-btn');
+        if (testBtn) {
+            testBtn.addEventListener('click', function () {
+                testBtn.disabled = true;
+                var prev = testBtn.textContent;
+                testBtn.textContent = 'Sending…';
+                fetch('/api/v1/notifications/test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: '{}',
+                }).then(function (r) {
+                    return r.ok ? r.json() : null;
+                }).then(function (body) {
+                    var sent = body && body.data && body.data.sent || {};
+                    if (sent.email || sent.push) {
+                        var chans = [];
+                        if (sent.email) chans.push('email');
+                        if (sent.push) chans.push('push');
+                        showMsg('Test alert sent via ' + chans.join(' and ') + '.', false);
+                    } else {
+                        showMsg('No test sent — enable a channel and make sure it\'s configured.', true);
+                    }
+                }).catch(function () {
+                    showMsg('Could not send a test alert. Please try again.', true);
+                }).then(function () {
+                    testBtn.disabled = false;
+                    testBtn.textContent = prev;
+                });
+            });
+        }
 
         setStatus(serverEnabled ? 'Alerts are on.' : 'Alerts are off.');
         refreshButtons();

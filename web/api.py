@@ -439,6 +439,59 @@ def push_unsubscribe_v1() -> Any:
     return jsonify(success_envelope({"ok": True}))
 
 
+@bp.route("/api/v1/notifications/test", methods=["POST"])
+def notifications_test_v1() -> Any:
+    """Send a test alert to the current user over their enabled channels.
+
+    Only ever targets the logged-in user's own email / push subscriptions, so
+    it can't be used to message anyone else. Reports which channels actually
+    sent (False when the channel is off or unconfigured).
+    """
+    if g.user is None:
+        return jsonify(error_envelope("unauthorized", "Not logged in")), 401
+
+    from storage.sqlite import get_push_subscriptions
+    from services.notifications import build_email
+
+    uid = g.user["id"]
+    prefs = get_preferences(uid).get("notification_prefs") or {}
+    import os as _os
+
+    site_url = _os.environ.get("SITE_URL", "").rstrip("/")
+    results = {"email": False, "push": False}
+
+    decision: dict[str, Any] = {
+        "verdict": "Test alert",
+        "score": None,
+        "summary": "If you can read this, your fishing alerts are set up correctly.",
+        "best_times": [],
+        "window": "",
+    }
+
+    if prefs.get("email") and g.user.get("email"):
+        from services.email import send_email
+
+        manage_url = f"{site_url}/account" if site_url else ""
+        subject, text_body, html_body = build_email(
+            "your saved spot", decision, manage_url=manage_url
+        )
+        results["email"] = bool(
+            send_email(g.user["email"], f"[Test] {subject}", text_body, html_body)
+        )
+
+    if prefs.get("push"):
+        from services.push import send_push
+
+        url = f"{site_url}/account" if site_url else "/account"
+        for sub in get_push_subscriptions(uid):
+            if send_push(
+                sub, "Test alert", "Your push notifications are working.", url
+            ):
+                results["push"] = True
+
+    return jsonify(success_envelope({"sent": results}))
+
+
 @bp.route("/api/log", methods=["GET", "POST"])
 def log() -> Any:
     """Legacy log endpoint — superseded by /api/v1/log."""

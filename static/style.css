@@ -9489,6 +9489,12 @@ body.has-app-header main {
 .auth-btn--slate  { background: linear-gradient(135deg, #5a6e8a, #3d5068); }
 .auth-btn--brown  { background: linear-gradient(135deg, #6e5a3d, #504029); }
 .auth-btn--danger { background: linear-gradient(135deg, #8b4545, #6b3030); }
+.auth-btn--ghost {
+  background: transparent;
+  color: var(--ocean, #0e5f78);
+  border: 1px solid var(--border, rgba(14,95,120,0.3));
+}
+.auth-btn--ghost:hover { background: rgba(14,95,120,0.08); }
 /* Conditions partial: tide trend arrow icons */
 .stat-trend-icon { vertical-align: -2px; margin-right: 0.2rem; }
 /* Verify email pages */
