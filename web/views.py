@@ -438,9 +438,20 @@ def _render_forecast(
     # Query params take precedence; fall back to the user's stored DB profile.
     user_prefs: dict[str, Any] = {}
     stored_profile: dict[str, Any] = {}
+    caught_species: set[str] = set()
     if g.user:
         user_prefs = get_prefs_cached(g.user["id"])
         stored_profile = user_prefs.get("fishing_profile") or {}
+        # Species the user has logged at this location — used both for the
+        # "Caught here" badge and to nudge proven local producers up the rank.
+        try:
+            _log_stats = get_log_stats(g.user["id"], loc_id)
+            caught_species = {
+                entry["species"].lower()
+                for entry in _log_stats.get("species_breakdown", [])
+            }
+        except Exception:
+            pass
 
     profile = _extract_profile_from_request()
     if not profile and any(
@@ -457,8 +468,10 @@ def _render_forecast(
         )
     ):
         profile = stored_profile
-    if profile:
-        forecast = personalize_forecast(forecast, profile, location)
+    if profile or caught_species:
+        forecast = personalize_forecast(
+            forecast, profile or {}, location, caught_species=caught_species
+        )
 
     _apply_wind_unit_preference(forecast, user_prefs.get("wind_units", "knots"))
 
@@ -495,23 +508,12 @@ def _render_forecast(
 
     # Build favorite locations list for the quick-switch bar.
     favorite_locations = []
-    caught_species: set[str] = set()
     if g.user:
         fav_ids = user_prefs.get("favorites") or []
         for fav_id in fav_ids:
             fav_loc = get_location(fav_id)
             if fav_loc:
                 favorite_locations.append({"id": fav_id, "name": fav_loc["name"]})
-
-        # Collect species the user has logged at this location for badge display.
-        try:
-            log_stats = get_log_stats(g.user["id"], loc_id)
-            caught_species = {
-                entry["species"].lower()
-                for entry in log_stats.get("species_breakdown", [])
-            }
-        except Exception:
-            pass
 
     profile_incomplete = bool(
         g.user

@@ -3051,6 +3051,10 @@ _TOLERANCE_SHIFT: dict[str, dict[str, str]] = {
     "calm": {"Fair": "Challenging", "Challenging": "Poor"},
 }
 
+# Score bump for species the angler has previously landed at this location.
+# Modest by design — a local track record is a nudge, not an override.
+_CAUGHT_HERE_BOOST = 8
+
 def _coerce_threshold(value: Any) -> Optional[float]:
     """Parse a user-supplied comfort threshold to a float, or ``None``.
 
@@ -3087,6 +3091,7 @@ def personalize_forecast(
     forecast: dict[str, Any],
     profile: dict[str, Any],
     location: Optional[dict[str, Any]] = None,
+    caught_species: Optional[set[str]] = None,
 ) -> dict[str, Any]:
     """Apply profile-based personalization to a cached forecast.
 
@@ -3094,11 +3099,16 @@ def personalize_forecast(
     species-dependent sections (rigs, baits, bite alerts, gear checklist,
     calendar).  Conditions data, tides, weather, etc. remain unchanged.
 
+    *caught_species* (lowercased names the user has logged at this location)
+    gives a modest rank boost to proven local producers.
+
     Results are cached in _PERSONALIZE_CACHE keyed by
-    (loc_id, generated_at, hour, profile_tuple) so repeat renders within
-    the same hour return immediately without re-running species scoring.
+    (loc_id, generated_at, hour, profile_tuple, caught_species) so repeat
+    renders within the same hour return immediately without re-running
+    species scoring.
     """
-    cache_key = _profile_cache_key(forecast, location, profile)
+    caught_lc = frozenset(caught_species or ())
+    cache_key = _profile_cache_key(forecast, location, profile) + (caught_lc,)
     cached = _PERSONALIZE_CACHE.get(cache_key)
     if cached is not None:
         return cached
@@ -3120,7 +3130,12 @@ def personalize_forecast(
     has_type_prefs = bool(fishing_types or targets)
     has_gear_prefs = bool(experience or live_bait or cut_bait or lures)
     has_threshold_prefs = max_wind_kt is not None or max_wave_ft is not None
-    if not has_type_prefs and not has_gear_prefs and not has_threshold_prefs:
+    if (
+        not has_type_prefs
+        and not has_gear_prefs
+        and not has_threshold_prefs
+        and not caught_lc
+    ):
         return forecast
 
     tz_name = (location or {}).get("timezone", "America/New_York")
@@ -3213,6 +3228,17 @@ def personalize_forecast(
     # abundant easy-to-catch species ranked higher.
     if primary_goal:
         species = _apply_primary_goal_boost(species, primary_goal)
+
+    # Proven-here boost: species the angler has actually landed at this spot
+    # get a modest bump and a flag, so local track record nudges the ranking.
+    if caught_lc:
+        for sp in species:
+            if sp.get("name", "").lower() in caught_lc:
+                sp["score"] = min(100, sp.get("score", 0) + _CAUGHT_HERE_BOOST)
+                sp["caught_here"] = True
+        species.sort(key=lambda x: -x.get("score", 0))
+        for i, sp in enumerate(species):
+            sp["rank"] = i + 1
 
     # Rebuild species-dependent sections
     forecast = dict(forecast)  # shallow copy to avoid mutating cache

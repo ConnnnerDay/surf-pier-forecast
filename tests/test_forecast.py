@@ -968,3 +968,54 @@ class TestDeriveCoast:
         assert ranking == [], (
             "Unknown coast must produce empty species list, not east/default species"
         )
+
+
+def test_personalize_caught_here_boost(monkeypatch):
+    """Species the user has landed here get a score bump, a flag, and rerank."""
+    from domain import forecast as fc
+
+    # Stub the species-dependent section rebuilds (and the networked outlook)
+    # so the test isolates the caught-here boost.
+    for name in (
+        "build_rig_recommendations", "build_bait_ranking", "build_lure_recommendations",
+        "build_species_calendar", "build_bite_alerts", "build_gear_checklist",
+        "build_safety_checklist", "build_spot_tips", "build_best_times",
+        "build_multiday_outlook", "pick_best_fishing_day",
+    ):
+        monkeypatch.setattr(fc, name, lambda *a, **k: [])
+    monkeypatch.setattr(fc, "_get_technique_tip", lambda *a, **k: "")
+
+    forecast = {
+        "generated_at": "2026-06-10T10:00:00",
+        "conditions": {"verdict": "Good", "water_temp_f": 70, "wind": "NE 6-10 kt",
+                       "waves": "1-2 ft", "wind_dir": "NE"},
+        "tide_state": "Rising",
+        "solunar": {},
+        "species": [
+            {"name": "Bluefish", "score": 80, "rank": 1, "rig": "x", "hook_size": "2/0",
+             "sinker": "2 oz", "bait": "cut", "activity": "Hot", "explanation": "",
+             "categories": [], "lures": ""},
+            {"name": "Red drum", "score": 70, "rank": 2, "rig": "x", "hook_size": "2/0",
+             "sinker": "2 oz", "bait": "cut", "activity": "Active", "explanation": "",
+             "categories": [], "lures": ""},
+        ],
+    }
+    loc = {"id": "loc", "conditions_region": "atlantic", "timezone": "America/New_York"}
+
+    out = fc.personalize_forecast(
+        forecast, {}, loc, caught_species={"red drum"}
+    )
+    by_name = {s["name"]: s for s in out["species"]}
+    assert by_name["Red drum"].get("caught_here") is True
+    assert by_name["Red drum"]["score"] == 78  # 70 + 8
+    # 78 < 80 so Bluefish still leads, but Red drum keeps its flag and bump.
+    assert by_name["Bluefish"].get("caught_here") is not True
+
+    # A bigger boost would overtake — verify reranking happens when it does.
+    fc._PERSONALIZE_CACHE.clear()  # same generated_at would otherwise cache-hit
+    forecast["species"][1]["score"] = 75
+    out2 = fc.personalize_forecast(
+        forecast, {}, loc, caught_species={"red drum"}
+    )
+    assert out2["species"][0]["name"] == "Red drum"  # 75+8=83 > 80
+    assert out2["species"][0]["rank"] == 1
