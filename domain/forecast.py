@@ -1098,7 +1098,7 @@ def build_multiday_outlook(
                 )
             except Exception:
                 logger.debug("Solunar times unavailable for %s", future, exc_info=True)
-            verdict = classify_conditions(
+            _day_score = score_conditions(
                 wind_range,
                 wave_range,
                 wind_dir=wind_dir_day,
@@ -1110,8 +1110,11 @@ def build_multiday_outlook(
                 coast=coast or "east",
                 fishing_types=fishing_types,
             )
+            verdict = _day_score["verdict"]
+            day_score = _day_score["score"]
         else:
             verdict = "Unknown"
+            day_score = None
 
         # --- Top species for this day ---
         _day_cond_modifier = _build_conditions_modifier(
@@ -1146,6 +1149,7 @@ def build_multiday_outlook(
                 "wind": wind_str,
                 "waves": wave_str,
                 "verdict": verdict,
+                "score": day_score,
                 "top_species": top_species_names,
             }
         )
