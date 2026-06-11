@@ -1076,3 +1076,27 @@ class TestSafetyChecklistPFD:
         from domain.forecast import build_safety_checklist
         items = build_safety_checklist(wave_range=(4, 5), fishing_types=["kayak"])
         assert sum("inflatable PFD" in i["text"] for i in items) == 0
+
+
+class TestRecentRainTips:
+    def _titles(self, tips):
+        return [t["title"] for t in tips]
+
+    def test_heavy_rain_muddy_water_tip(self):
+        from domain.forecast import build_spot_tips
+        tips = build_spot_tips(recent_rain_in=1.3, coast="east")
+        assert any("Muddy Water" in t for t in self._titles(tips))
+
+    def test_moderate_rain_runoff_tip(self):
+        from domain.forecast import build_spot_tips
+        tips = build_spot_tips(recent_rain_in=0.6, coast="east")
+        assert any("Runoff" in t for t in self._titles(tips))
+
+    def test_light_rain_no_tip(self):
+        from domain.forecast import build_spot_tips
+        tips = build_spot_tips(recent_rain_in=0.2, coast="east")
+        assert not any("Runoff" in t or "Muddy" in t for t in self._titles(tips))
+
+    def test_none_rain_safe(self):
+        from domain.forecast import build_spot_tips
+        assert isinstance(build_spot_tips(recent_rain_in=None, coast="east"), list)

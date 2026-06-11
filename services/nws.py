@@ -316,6 +316,21 @@ def fetch_current_weather(lat: float, lng: float) -> Optional[dict[str, Any]]:
         if wind_chill_c is not None:
             result["wind_chill_f"] = round(wind_chill_c * 9 / 5 + 32, 1)
 
+        # Recent rainfall (NWS reports it in mm) — heavy recent rain muddies
+        # inlets and the surf zone, which affects clarity-sensitive species.
+        # Prefer the 6-hour total, fall back to 3-hour, then 1-hour.
+        for _field, _hours in (
+            ("precipitationLast6Hours", 6),
+            ("precipitationLast3Hours", 3),
+            ("precipitationLastHour", 1),
+        ):
+            _mm = props.get(_field, {}).get("value") if isinstance(props.get(_field), dict) else None
+            if _mm is not None:
+                result["precip_recent_mm"] = round(_mm, 1)
+                result["precip_recent_in"] = round(_mm / 25.4, 2)
+                result["precip_recent_hours"] = _hours
+                break
+
         # Compute feels-like / heat index for warm weather
         if temp_c is not None and humidity is not None:
             temp_f = result["air_temp_f"]

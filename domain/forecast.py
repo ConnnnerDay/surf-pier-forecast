@@ -1169,6 +1169,7 @@ def build_spot_tips(
     fishing_types: Optional[list[str]] = None,
     experience: str = "",
     water_quality: Optional[dict[str, Any]] = None,
+    recent_rain_in: Optional[float] = None,
 ) -> list[dict[str, str]]:
     """Generate 3-5 actionable fishing tips based on current conditions.
 
@@ -1181,6 +1182,37 @@ def build_spot_tips(
     are breached.
     """
     tips: list[dict[str, str]] = []
+
+    # Recent-rain turbidity warning — heavy runoff muddies inlets and the surf
+    # zone. Surfaced first since it changes bait/color/location strategy.
+    if recent_rain_in is not None and recent_rain_in >= 0.5:
+        if recent_rain_in >= 1.0:
+            tips.append(
+                {
+                    "icon": "water",
+                    "title": "Muddy Water After Heavy Rain",
+                    "detail": (
+                        f"About {recent_rain_in:.1f}\" of rain recently — inlets and the "
+                        "surf zone will be stained and full of runoff. Fish scent-heavy "
+                        "cut/natural bait over lures, work the cleaner edges where muddy "
+                        "and clear water meet, and bump up to darker, high-vibration "
+                        "presentations fish can find by feel."
+                    ),
+                }
+            )
+        else:
+            tips.append(
+                {
+                    "icon": "water",
+                    "title": "Some Runoff From Recent Rain",
+                    "detail": (
+                        f"Around {recent_rain_in:.1f}\" of recent rain may cloud the water "
+                        "near inlets and creek mouths. Lean on scent and contrast — "
+                        "chartreuse or dark baits — and target the clearer water just "
+                        "outside the stained plume."
+                    ),
+                }
+            )
 
     # Water quality warnings — injected first so they appear prominently.
     if water_quality and water_quality.get("available"):
@@ -2929,6 +2961,7 @@ def generate_forecast(
         coast=coast,
         tide_state=forecast.get("tide_state", ""),
         water_quality=forecast.get("water_quality"),
+        recent_rain_in=(forecast.get("weather") or {}).get("precip_recent_in"),
     )
 
     # Conditions explainer
@@ -3350,6 +3383,8 @@ def personalize_forecast(
         tide_state=tide_state_val,
         fishing_types=fishing_types,
         experience=experience,
+        water_quality=forecast.get("water_quality"),
+        recent_rain_in=(forecast.get("weather") or {}).get("precip_recent_in"),
     )
 
     # Rebuild best fishing times with type-specific windows, boosting
