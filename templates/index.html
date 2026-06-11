@@ -170,6 +170,39 @@
         {% include 'partials/_species.html' %}
     </div>
     </div><!-- /.section-block whats-biting -->
+    {% if g.user %}
+    <div class="section-block" data-section-id="your-patterns" data-section-label="Your Patterns" id="your-patterns-block" hidden>
+        <div class="catch-patterns" style="border-top:none;margin-top:0">
+            <h4 class="cp-title">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg>
+                Your Patterns
+            </h4>
+            <p class="cp-sub">Learned from the conditions recorded when you logged catches here.</p>
+            <ul class="cp-list" id="dash-cp-list"></ul>
+        </div>
+    </div>
+    <script>
+    (function () {
+        var locId = {{ (forecast.location_id or '') | tojson }};
+        var block = document.getElementById('your-patterns-block');
+        var list = document.getElementById('dash-cp-list');
+        if (!block || !list || !locId) return;
+        fetch('/api/v1/log/patterns?location_id=' + encodeURIComponent(locId))
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (body) {
+                var insights = body && body.data && body.data.insights || [];
+                if (!insights.length) return;
+                insights.forEach(function (text) {
+                    var li = document.createElement('li');
+                    li.className = 'cp-item';
+                    li.textContent = text;
+                    list.appendChild(li);
+                });
+                block.hidden = false;
+            }).catch(function () {});
+    })();
+    </script>
+    {% endif %}
     {% if profile_incomplete %}
     <div class="banner banner--profile-nudge" id="profile-nudge-banner">
         <span>
