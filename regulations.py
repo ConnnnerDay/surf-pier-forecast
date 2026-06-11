@@ -256,6 +256,11 @@ _LEGALITY_MONTH_ABBREVS: dict[str, int] = {
 
 _CLOSED_RANGE_RE = re.compile(r"closed\s+([a-z]+)[–\-]([a-z]+)")
 _CLOSED_SEASON_RE = re.compile(r"(season\s+closed|closed\s+season)", re.IGNORECASE)
+# Open-season windows, e.g. "open May-September", "season: Mar-Oct",
+# "open March 1 - Oct 31".  Captures the start and end month words.
+_OPEN_RANGE_RE = re.compile(
+    r"(?:open|season:?)\s+([a-z]+)\.?\s*\d*\s*[–\-]\s*([a-z]+)", re.IGNORECASE
+)
 _QUALIFIER_WORDS = frozenset(
     ("some", "certain", "have", "having", "with", "may", "areas")
 )
@@ -295,14 +300,38 @@ def season_status(reg: Optional[dict], month: int) -> str:
     combined = f"{season} {notes}".strip()
     if not combined:
         return "unknown"
-    closed_months = _parse_closed_months_text(combined)
     low = combined.lower()
+    # Year-round phrasing wins outright (avoids a stray "open Jan-Dec" parse).
+    if "year-round" in low or "year round" in low or "all year" in low:
+        return "open"
+    closed_months = _parse_closed_months_text(combined)
     if closed_months:
         return "closed" if month in closed_months else "open"
+    open_months = _parse_open_months_text(combined)
+    if open_months:
+        return "open" if month in open_months else "closed"
     # No explicit month window — only assert "open" when the text says so.
-    if "year-round" in low or "year round" in low or "all year" in low or "open" in low:
+    if "open" in low:
         return "open"
     return "unknown"
+
+def _parse_open_months_text(text: str) -> set:
+    """Parse open-season month ranges from text like 'open May-September'.
+
+    Returns the set of open month numbers (1-12), handling year-wrap windows
+    such as 'open Oct-Mar'.  Empty when no open window is found.
+    """
+    open_months: set[int] = set()
+    for m in _OPEN_RANGE_RE.finditer(text.lower()):
+        start = _LEGALITY_MONTH_ABBREVS.get(m.group(1)[:3])
+        end = _LEGALITY_MONTH_ABBREVS.get(m.group(2)[:3])
+        if start and end:
+            if end >= start:
+                open_months.update(range(start, end + 1))
+            else:
+                open_months.update(range(start, 13))
+                open_months.update(range(1, end + 1))
+    return open_months
 
 def get_official_regulations_url(state: str) -> str:
     """Return the official state fishing regulations URL for *state* (2-letter code).

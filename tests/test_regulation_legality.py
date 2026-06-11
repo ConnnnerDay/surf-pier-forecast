@@ -40,6 +40,24 @@ class TestSeasonStatus:
         assert season_status(None, 6) == "unknown"
         assert season_status({"season": "Open year-round"}, 0) == "unknown"
 
+    def test_open_window_in_and_out(self):
+        assert season_status({"season": "Open May-September"}, 7) == "open"
+        assert season_status({"season": "Open May-September"}, 1) == "closed"
+
+    def test_season_colon_window(self):
+        assert season_status({"season": "Season: Mar-Oct"}, 4) == "open"
+        assert season_status({"season": "Season: Mar-Oct"}, 12) == "closed"
+
+    def test_open_window_year_wrap(self):
+        assert season_status({"season": "Open Oct-Mar"}, 1) == "open"
+        assert season_status({"season": "Open Oct-Mar"}, 7) == "closed"
+
+    def test_year_round_beats_open_window_parse(self):
+        assert season_status({"season": "Open year-round"}, 1) == "open"
+
+    def test_bare_open_keyword_fallback(self):
+        assert season_status({"season": "open"}, 6) == "open"
+
 
 # ---------------------------------------------------------------------------
 # Helpers
