@@ -132,6 +132,19 @@ def build_openapi_spec() -> dict[str, Any]:
                     ],
                 }
             },
+            "/api/v1/community/activity": {
+                "get": {
+                    "summary": "Anonymized aggregated recent-catch activity for a location",
+                    "parameters": [
+                        {
+                            "name": "location_id",
+                            "in": "query",
+                            "required": True,
+                            "schema": {"type": "string"},
+                        }
+                    ],
+                }
+            },
             "/api/v1/push/public-key": {
                 "get": {"summary": "VAPID public key for web-push subscription"},
             },

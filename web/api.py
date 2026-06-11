@@ -56,6 +56,7 @@ from storage.sqlite import (
     get_log_stats,
     get_page_layout,
     get_preferences,
+    get_recent_catch_activity,
     save_page_layout,
     save_preferences,
 )
@@ -558,6 +559,24 @@ def log_patterns_v1() -> Any:
     # When scoped to a location, compare patterns against its current forecast.
     current = _catch_conditions_snapshot(loc_id) if loc_id else None
     return jsonify(success_envelope(analyze_catch_patterns(catches, current=current)))
+
+
+@bp.route("/api/v1/community/activity", methods=["GET"])
+def community_activity_v1() -> Any:
+    """Anonymized, aggregated recent-catch activity for a location.
+
+    Returns counts and top species only when enough distinct opted-in anglers
+    contributed (k-anonymity in the storage layer); otherwise ``available``
+    is false. No individual user data is ever exposed.
+    """
+    if g.user is None:
+        return jsonify(error_envelope("unauthorized", "Not logged in")), 401
+    loc_id = (request.args.get("location_id") or request.args.get("location") or "").strip()
+    activity = get_recent_catch_activity(loc_id) if loc_id else None
+    if not activity:
+        return jsonify(success_envelope({"available": False}))
+    activity["available"] = True
+    return jsonify(success_envelope(activity))
 
 
 @bp.route("/api/v1/log", methods=["GET", "POST"])

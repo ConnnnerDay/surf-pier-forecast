@@ -536,6 +536,19 @@
                 </div>
             </section>
 
+            <!-- Community sharing (opt-in) -->
+            <section class="profile-section profile-section--step" data-step="opt">
+                <h3 class="profile-question">Share your catches with the community?</h3>
+                <p class="profile-hint">Optional. Adds your catches to an anonymized, aggregated "recent catches nearby" count — never your name or individual logs, and only shown when several anglers have contributed.</p>
+                <label class="profile-chip profile-chip--check">
+                    <input type="checkbox" name="share_catches" value="1">
+                    <span class="chip-body">
+                        <strong>Yes, include my catches anonymously</strong>
+                        <span class="chip-desc">You can turn this off any time</span>
+                    </span>
+                </label>
+            </section>
+
             <div class="profile-actions profile-actions--sticky">
                 <div id="profile-save-error" class="profile-save-error" hidden role="alert"></div>
                 <button type="submit" id="profile-save-btn" class="profile-save-btn">Save &amp; View Forecast</button>
@@ -746,6 +759,8 @@
                 if (el) el.value = existing[name];
             }
         });
+        var shareEl = document.querySelector('input[name="share_catches"]');
+        if (shareEl && existing.share_catches) shareEl.checked = true;
     }
 
     // Pre-fill: server profile takes priority; fall back to localStorage draft.
@@ -779,6 +794,8 @@
                 var el = document.querySelector('input[name="' + name + '"]');
                 if (el && el.value !== '') draft[name] = parseFloat(el.value);
             });
+            var shareEl = document.querySelector('input[name="share_catches"]');
+            if (shareEl) draft.share_catches = shareEl.checked;
             localStorage.setItem(_DRAFT_KEY, JSON.stringify(draft));
         } catch (e) {}
     }
@@ -899,6 +916,10 @@
                 if (!isNaN(n) && n >= 0) profile[name] = n;
             }
         });
+
+        // Community sharing opt-in (consent)
+        var shareEl = document.querySelector('input[name="share_catches"]');
+        profile.share_catches = !!(shareEl && shareEl.checked);
 
         // Persist to server, then redirect with key profile fields in URL
         // so personalization applies immediately on first load.

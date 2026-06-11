@@ -204,6 +204,40 @@
             }).catch(function () {});
     })();
     </script>
+    <div class="section-block" data-section-id="community" data-section-label="Recent Catches Nearby" id="community-block" hidden>
+        <div class="catch-patterns" style="border-top:none;margin-top:0">
+            <h4 class="cp-title">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                Recent Catches Nearby
+            </h4>
+            <p class="cp-sub" id="community-sub"></p>
+            <ul class="cp-list" id="community-list"></ul>
+        </div>
+    </div>
+    <script>
+    (function () {
+        var locId = {{ (forecast.location_id or '') | tojson }};
+        var block = document.getElementById('community-block');
+        var sub = document.getElementById('community-sub');
+        var list = document.getElementById('community-list');
+        if (!block || !list || !locId) return;
+        fetch('/api/v1/community/activity?location_id=' + encodeURIComponent(locId))
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (body) {
+                var d = body && body.data;
+                if (!d || !d.available) return;
+                sub.textContent = d.contributors + ' anglers logged ' + d.count +
+                    ' catch' + (d.count === 1 ? '' : 'es') + ' here in the last ' + d.days + ' days.';
+                (d.top_species || []).forEach(function (s) {
+                    var li = document.createElement('li');
+                    li.className = 'cp-item';
+                    li.textContent = s.species + ' — ' + s.count;
+                    list.appendChild(li);
+                });
+                block.hidden = false;
+            }).catch(function () {});
+    })();
+    </script>
     {% endif %}
     {% if profile_incomplete %}
     <div class="banner banner--profile-nudge" id="profile-nudge-banner">

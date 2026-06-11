@@ -655,3 +655,30 @@ def test_v1_forecast_section_endpoints_fall_back_to_shared_cache_for_logged_in_u
     # Each endpoint makes exactly one call with the logged-in user_id.
     assert calls.count(("wrightsville-beach-nc", 999)) == 2
     assert ("wrightsville-beach-nc", None) not in calls
+
+
+def test_v1_community_activity_requires_login(client):
+    assert client.get("/api/v1/community/activity?location_id=x").status_code == 401
+
+
+def test_v1_community_activity_unavailable_below_threshold(client):
+    from storage.sqlite import create_user
+    uid = create_user("comm_api", "pass1234")
+    _login_session(client, uid)
+    resp = client.get("/api/v1/community/activity?location_id=wrightsville-beach-nc")
+    assert resp.status_code == 200
+    assert resp.get_json()["data"]["available"] is False
+
+
+def test_v1_community_activity_available_when_threshold_met(client):
+    from storage.sqlite import create_user, save_preferences, add_log_entry
+    viewer = create_user("comm_viewer", "pass1234")
+    _login_session(client, viewer)
+    for i in range(3):
+        uid = create_user(f"comm_c{i}", "pass1234")
+        save_preferences(uid, fishing_profile={"share_catches": True})
+        add_log_entry(uid, "wrightsville-beach-nc", "Red drum")
+    resp = client.get("/api/v1/community/activity?location_id=wrightsville-beach-nc")
+    data = resp.get_json()["data"]
+    assert data["available"] is True
+    assert data["contributors"] == 3

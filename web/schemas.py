@@ -310,6 +310,15 @@ class ProfilePayload:
                         f"{thresh_field} must be between 0 and {hi}",
                         status=400,
                     )
+            # Opt-in consent to include this angler's catches in anonymized,
+            # aggregated community activity.
+            share_catches = fishing_profile.get("share_catches")
+            if share_catches is not None and not isinstance(share_catches, bool):
+                raise ApiError(
+                    "invalid_share_catches",
+                    "share_catches must be a boolean",
+                    status=400,
+                )
 
         notification_prefs = data.get("notification_prefs")
         if notification_prefs is not None:

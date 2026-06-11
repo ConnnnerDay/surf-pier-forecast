@@ -1030,6 +1030,54 @@ _CATCH_LOG_NOTES_MAX = 1000  # free-text field
 _CATCH_LOG_BAIT_MAX = 60  # e.g. "live shrimp"
 
 
+def get_recent_catch_activity(
+    location_id: str, days: int = 7, min_contributors: int = 3
+) -> Optional[dict[str, Any]]:
+    """Aggregate recent shared catches at a location (privacy-preserving).
+
+    Only counts catches from users who opted in (``fishing_profile.share_catches``)
+    and only returns anything when at least *min_contributors* distinct anglers
+    contributed — k-anonymity so no single user's activity is identifiable.
+    Returns ``None`` when the threshold isn't met. The result never exposes
+    individual users: just totals and the top species.
+    """
+    if not location_id:
+        return None
+    conn = get_db()
+    try:
+        rows = conn.execute(
+            """
+            SELECT cl.user_id AS uid, cl.species AS species
+            FROM catch_log cl
+            JOIN profiles p ON p.user_id = cl.user_id
+            WHERE cl.location_id = ?
+              AND cl.caught_at >= datetime('now', ?)
+              AND json_extract(p.fishing_profile, '$.share_catches') = 1
+            """,
+            (location_id, f"-{int(days)} days"),
+        ).fetchall()
+    finally:
+        conn.close()
+
+    contributors = {r["uid"] for r in rows}
+    if len(contributors) < min_contributors:
+        return None
+
+    species_counts: dict[str, int] = {}
+    for r in rows:
+        name = (r["species"] or "").strip()
+        if name:
+            species_counts[name] = species_counts.get(name, 0) + 1
+    top = sorted(species_counts.items(), key=lambda kv: -kv[1])[:5]
+
+    return {
+        "count": len(rows),
+        "contributors": len(contributors),
+        "days": int(days),
+        "top_species": [{"species": n, "count": c} for n, c in top],
+    }
+
+
 def add_log_entry(
     user_id: int,
     location_id: str,

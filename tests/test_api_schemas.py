@@ -80,6 +80,7 @@ def test_openapi_contains_versioned_routes():
     assert "/api/v1/log/patterns" in spec["paths"]
     assert "/api/v1/push/subscribe" in spec["paths"]
     assert "/api/v1/push/public-key" in spec["paths"]
+    assert "/api/v1/community/activity" in spec["paths"]
 
 
 # ---------------------------------------------------------------------------
@@ -239,6 +240,15 @@ def test_profile_payload_accepts_valid_fishing_profile():
     )
     assert p.fishing_profile["experience"] == "intermediate"
     assert p.fishing_profile["max_wind_kt"] == 15
+
+
+def test_profile_payload_rejects_non_bool_share_catches():
+    _raises({"fishing_profile": {"share_catches": "yes"}}, "invalid_share_catches")
+
+
+def test_profile_payload_accepts_share_catches():
+    p = ProfilePayload.from_json({"fishing_profile": {"share_catches": True}})
+    assert p.fishing_profile["share_catches"] is True
 
 
 def test_success_envelope_meta_merge():

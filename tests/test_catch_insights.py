@@ -132,3 +132,41 @@ class TestConditionSnapshotStorage:
         rows = get_catch_conditions(uid, "montauk-ny")
         assert rows[0]["tide_state"] is None
         assert rows[0]["water_temp_f"] is None
+
+
+class TestCommunityActivity:
+    def _user_with_share(self, idx, share):
+        from storage.sqlite import create_user, save_preferences
+        uid = create_user(f"comm{idx}", "pass1234")
+        save_preferences(uid, fishing_profile={"share_catches": share, "completed": True})
+        return uid
+
+    def test_below_threshold_returns_none(self, app):
+        from storage.sqlite import add_log_entry, get_recent_catch_activity
+        # Two opted-in contributors — below the default min of 3.
+        for i in range(2):
+            uid = self._user_with_share(i, True)
+            add_log_entry(uid, "loc-a", "Red drum")
+        assert get_recent_catch_activity("loc-a") is None
+
+    def test_threshold_met_aggregates(self, app):
+        from storage.sqlite import add_log_entry, get_recent_catch_activity
+        for i in range(3):
+            uid = self._user_with_share(i, True)
+            add_log_entry(uid, "loc-b", "Red drum")
+            add_log_entry(uid, "loc-b", "Bluefish")
+        act = get_recent_catch_activity("loc-b")
+        assert act is not None
+        assert act["contributors"] == 3
+        assert act["count"] == 6
+        assert act["top_species"][0]["species"] in ("Red drum", "Bluefish")
+
+    def test_opt_out_users_excluded(self, app):
+        from storage.sqlite import add_log_entry, get_recent_catch_activity
+        # 3 contributors but only 2 opted in → below threshold.
+        for i in range(2):
+            uid = self._user_with_share(i, True)
+            add_log_entry(uid, "loc-c", "Red drum")
+        uid_out = self._user_with_share(99, False)
+        add_log_entry(uid_out, "loc-c", "Red drum")
+        assert get_recent_catch_activity("loc-c") is None
