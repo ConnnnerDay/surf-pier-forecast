@@ -49,6 +49,7 @@ _MAX_LOCATION_ID_LEN = 100
 _MAX_SPECIES_LEN = 100
 _MAX_SIZE_LEN = 50
 _MAX_NOTES_LEN = 1000
+_MAX_BAIT_LEN = 60
 
 _VALID_FISHING_TYPES = frozenset(
     {
@@ -357,6 +358,7 @@ class LogCreatePayload:
     species: str
     size: str = ""
     notes: str = ""
+    bait: str = ""
     location_id: str = ""
 
     @classmethod
@@ -384,10 +386,15 @@ class LogCreatePayload:
             raise ApiError(
                 "invalid_notes", f"notes must be {_MAX_NOTES_LEN} characters or fewer", status=400
             )
+        bait = str(data.get("bait", "")).strip()
+        if len(bait) > _MAX_BAIT_LEN:
+            raise ApiError(
+                "invalid_bait", f"bait must be {_MAX_BAIT_LEN} characters or fewer", status=400
+            )
         loc = str(data.get("location_id", "")).strip() or location_id
         if not loc:
             raise ApiError("missing_location", "location_id is required", status=400)
-        return cls(species=species, size=size, notes=notes, location_id=loc)
+        return cls(species=species, size=size, notes=notes, bait=bait, location_id=loc)
 
 
 def normalize_log_stats(stats: dict[str, Any]) -> dict[str, Any]:

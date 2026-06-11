@@ -93,6 +93,21 @@ def analyze_catch_patterns(catches: list[dict[str, Any]]) -> dict[str, Any]:
                 f"{lead_name} is your most-logged catch ({lead_count} times)."
             )
 
+    # Most effective bait (only when enough catches recorded one).
+    baits = Counter(
+        (c.get("bait") or "").strip() for c in catches if (c.get("bait") or "").strip()
+    )
+    bait_top = baits.most_common(3)
+    if bait_top and sum(baits.values()) >= _MIN_SAMPLES:
+        factors["top_bait"] = [
+            {"bait": name, "count": count} for name, count in bait_top
+        ]
+        lead_bait, lead_bait_count = bait_top[0]
+        if lead_bait_count >= 2:
+            insights.append(
+                f"{lead_bait} is your most productive bait ({lead_bait_count} catches)."
+            )
+
     return {
         "total": total,
         "with_conditions": sum(

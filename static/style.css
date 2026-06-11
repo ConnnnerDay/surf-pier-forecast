@@ -3586,6 +3586,12 @@ h2::before {
   font-variant-numeric: tabular-nums;
 }
 
+.fishlog-bait {
+  font-size: 0.72rem;
+  color: var(--ocean, #0e5f78);
+  font-weight: 600;
+}
+
 .fishlog-notes {
   font-size: 0.72rem;
   color: var(--text-muted);

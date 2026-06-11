@@ -8,13 +8,15 @@ from storage.sqlite import (
 )
 
 
-def _catch(species="Red drum", tide="Rising", wind="NE", temp=66.0, moon="Full Moon"):
+def _catch(species="Red drum", tide="Rising", wind="NE", temp=66.0, moon="Full Moon",
+           bait="Live shrimp"):
     return {
         "species": species,
         "tide_state": tide,
         "wind_dir": wind,
         "water_temp_f": temp,
         "moon_phase": moon,
+        "bait": bait,
     }
 
 
@@ -58,6 +60,19 @@ class TestAnalyzeCatchPatterns:
         assert out["factors"]["top_species"][0]["species"] == "Red drum"
         assert any("Red drum" in i for i in out["insights"])
 
+    def test_top_bait(self):
+        catches = [_catch(bait="Live shrimp") for _ in range(4)] + [
+            _catch(bait="Cut mullet")
+        ]
+        out = analyze_catch_patterns(catches)
+        assert out["factors"]["top_bait"][0]["bait"] == "Live shrimp"
+        assert any("Live shrimp" in i and "productive bait" in i for i in out["insights"])
+
+    def test_no_bait_no_insight(self):
+        catches = [_catch(bait="") for _ in range(5)]
+        out = analyze_catch_patterns(catches)
+        assert "top_bait" not in out["factors"]
+
     def test_with_conditions_count(self):
         catches = [_catch()] + [
             {"species": "X", "tide_state": None, "wind_dir": None, "moon_phase": None}
@@ -75,6 +90,7 @@ class TestConditionSnapshotStorage:
             "montauk-ny",
             "Striped bass",
             size="28 in",
+            bait="Live eel",
             conditions={
                 "tide_state": "Falling",
                 "wind_dir": "NW",
@@ -88,6 +104,7 @@ class TestConditionSnapshotStorage:
         assert rows[0]["wind_dir"] == "NW"
         assert rows[0]["water_temp_f"] == 58.5
         assert rows[0]["moon_phase"] == "Waning Crescent"
+        assert rows[0]["bait"] == "Live eel"
 
     def test_missing_conditions_are_null(self, app):
         uid = create_user("catchuser2", "pass1234")

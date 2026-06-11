@@ -7,7 +7,7 @@
     {% include 'partials/_head_fonts.html' %}
     <link rel="preload" as="style" href="{{ surl('style.min.css') }}" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="{{ surl('style.min.css') }}"></noscript>
-    <link rel="preload" as="script" href="{{ surl('js/fishing_log.min.js') }}" fetchpriority="high">
+    <link rel="preload" as="script" href="{{ surl('js/fishing_log.js') }}" fetchpriority="high">
     {% include 'partials/_theme_bootstrap.html' %}
 </head>
 <body class="forecast-page has-app-header">
@@ -29,8 +29,10 @@
                     <input type="text" id="log-size" placeholder="Size (optional)" class="fishlog-input fishlog-input--sm" maxlength="20" autocomplete="off">
                 </div>
                 <div class="fishlog-row">
+                    <label for="log-bait" class="sr-only">Bait or lure used</label>
+                    <input type="text" id="log-bait" placeholder="Bait / lure (optional)" class="fishlog-input fishlog-input--sm" maxlength="60" autocomplete="off">
                     <label for="log-notes" class="sr-only">Notes</label>
-                    <input type="text" id="log-notes" placeholder="Notes (bait used, location, etc.)" class="fishlog-input" maxlength="200" autocomplete="off">
+                    <input type="text" id="log-notes" placeholder="Notes (location, tactics, etc.)" class="fishlog-input" maxlength="200" autocomplete="off">
                     <button type="button" class="fishlog-add-btn" id="fishlog-add-btn" aria-label="Add catch entry">
                         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                         Add
@@ -87,7 +89,7 @@
         </section>
     </main>
 
-    <script src="{{ surl('js/fishing_log.min.js') }}" defer></script>
+    <script src="{{ surl('js/fishing_log.js') }}" defer></script>
     <script>
     // Catch-pattern insights — fetched from the API and rendered when present.
     (function () {

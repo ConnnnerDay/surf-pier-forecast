@@ -122,6 +122,7 @@ CREATE TABLE IF NOT EXISTS catch_log (
     species     TEXT NOT NULL,
     size        TEXT,
     notes       TEXT,
+    bait          TEXT,
     tide_state    TEXT,
     wind_dir      TEXT,
     water_temp_f  REAL,
@@ -301,6 +302,7 @@ def _run_migrations(conn: sqlite3.Connection) -> None:
     if _table_exists(conn, "catch_log"):
         catch_cols = set(_column_names(conn, "catch_log"))
         for col, decl in (
+            ("bait", "TEXT"),
             ("tide_state", "TEXT"),
             ("wind_dir", "TEXT"),
             ("water_temp_f", "REAL"),
@@ -964,7 +966,7 @@ def get_log_entries(
     conn = get_db()
     try:
         rows = conn.execute(
-            "SELECT id, species, size, notes, caught_at FROM catch_log "
+            "SELECT id, species, size, notes, bait, caught_at FROM catch_log "
             "WHERE user_id = ? AND location_id = ? ORDER BY caught_at DESC, id DESC LIMIT ?",
             (user_id, location_id, limit),
         ).fetchall()
@@ -976,6 +978,7 @@ def get_log_entries(
             "species": r["species"],
             "size": r["size"],
             "notes": r["notes"],
+            "bait": r["bait"],
             "date": r["caught_at"],
         }
         for r in rows
@@ -994,14 +997,14 @@ def get_catch_conditions(
     try:
         if location_id:
             rows = conn.execute(
-                "SELECT species, tide_state, wind_dir, water_temp_f, moon_phase, "
+                "SELECT species, bait, tide_state, wind_dir, water_temp_f, moon_phase, "
                 "caught_at FROM catch_log WHERE user_id = ? AND location_id = ? "
                 "ORDER BY caught_at DESC, id DESC LIMIT ?",
                 (user_id, location_id, limit),
             ).fetchall()
         else:
             rows = conn.execute(
-                "SELECT species, tide_state, wind_dir, water_temp_f, moon_phase, "
+                "SELECT species, bait, tide_state, wind_dir, water_temp_f, moon_phase, "
                 "caught_at FROM catch_log WHERE user_id = ? "
                 "ORDER BY caught_at DESC, id DESC LIMIT ?",
                 (user_id, limit),
@@ -1011,6 +1014,7 @@ def get_catch_conditions(
     return [
         {
             "species": r["species"],
+            "bait": r["bait"],
             "tide_state": r["tide_state"],
             "wind_dir": r["wind_dir"],
             "water_temp_f": r["water_temp_f"],
@@ -1023,6 +1027,7 @@ def get_catch_conditions(
 
 _CATCH_LOG_SIZE_MAX = 50  # e.g. "24 inches"
 _CATCH_LOG_NOTES_MAX = 1000  # free-text field
+_CATCH_LOG_BAIT_MAX = 60  # e.g. "live shrimp"
 
 
 def add_log_entry(
@@ -1031,6 +1036,7 @@ def add_log_entry(
     species: str,
     size: str = "",
     notes: str = "",
+    bait: str = "",
     conditions: Optional[dict[str, Any]] = None,
 ) -> int:
     """Insert a catch-log entry, optionally snapshotting the conditions.
@@ -1043,6 +1049,7 @@ def add_log_entry(
     tide_state = (str(c.get("tide_state") or "")[:20]) or None
     wind_dir = (str(c.get("wind_dir") or "")[:8]) or None
     moon_phase = (str(c.get("moon_phase") or "")[:32]) or None
+    bait_val = (bait.strip()[:_CATCH_LOG_BAIT_MAX]) or None
     try:
         water_temp_f = (
             float(c["water_temp_f"]) if c.get("water_temp_f") is not None else None
@@ -1054,14 +1061,15 @@ def add_log_entry(
     try:
         cur = conn.execute(
             "INSERT INTO catch_log "
-            "(user_id, location_id, species, size, notes, tide_state, wind_dir, "
-            "water_temp_f, moon_phase) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "(user_id, location_id, species, size, notes, bait, tide_state, wind_dir, "
+            "water_temp_f, moon_phase) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 user_id,
                 location_id,
                 species.strip()[:100],
                 size.strip()[:_CATCH_LOG_SIZE_MAX],
                 notes.strip()[:_CATCH_LOG_NOTES_MAX],
+                bait_val,
                 tide_state,
                 wind_dir,
                 water_temp_f,
