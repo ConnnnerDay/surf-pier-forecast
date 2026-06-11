@@ -1057,3 +1057,22 @@ class TestPickBestFishingDay:
         )
         assert out["best_day"] == "Today"
         assert "great" in out["recommendation"].lower()
+
+
+class TestSafetyChecklistPFD:
+    def _has_pfd(self, items):
+        return any("PFD" in i["text"] or "life vest" in i["text"] for i in items)
+
+    def test_heavy_surf_adds_pfd_for_shore_angler(self):
+        from domain.forecast import build_safety_checklist
+        assert self._has_pfd(build_safety_checklist(wave_range=(4, 5), fishing_types=["surf"]))
+        assert self._has_pfd(build_safety_checklist(wave_range=(5, 7), fishing_types=["jetty"]))
+
+    def test_calm_surf_no_pfd(self):
+        from domain.forecast import build_safety_checklist
+        assert not self._has_pfd(build_safety_checklist(wave_range=(1, 2), fishing_types=["surf"]))
+
+    def test_kayak_not_duplicated(self):
+        from domain.forecast import build_safety_checklist
+        items = build_safety_checklist(wave_range=(4, 5), fishing_types=["kayak"])
+        assert sum("inflatable PFD" in i["text"] for i in items) == 0

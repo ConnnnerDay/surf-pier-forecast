@@ -2082,6 +2082,18 @@ def build_safety_checklist(
                 }
             )
 
+        # Heavy surf PFD reminder for shore/structure anglers — being swept off
+        # rocks/jetties or by sneaker waves is a leading surf-fishing fatality
+        # cause. Kayakers already get a dedicated PFD reminder above.
+        if max_wave >= 5 and "kayak" not in ft:
+            items.append(
+                {
+                    "text": "Heavy surf — wear an inflatable PFD/life vest, especially on "
+                    "jetties or rocks where a wave can sweep you in",
+                    "icon": "warning",
+                }
+            )
+
     # --- Wind-based ---
     if wind_range:
         if max_wind >= 25:
