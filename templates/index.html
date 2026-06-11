@@ -190,11 +190,13 @@
         fetch('/api/v1/log/patterns?location_id=' + encodeURIComponent(locId))
             .then(function (r) { return r.ok ? r.json() : null; })
             .then(function (body) {
-                var insights = body && body.data && body.data.insights || [];
+                var data = body && body.data || {};
+                var insights = data.insights || [];
+                var matches = data.matches || [];
                 if (!insights.length) return;
                 insights.forEach(function (text) {
                     var li = document.createElement('li');
-                    li.className = 'cp-item';
+                    li.className = 'cp-item' + (matches.indexOf(text) !== -1 ? ' cp-item--match' : '');
                     li.textContent = text;
                     list.appendChild(li);
                 });

@@ -555,7 +555,9 @@ def log_patterns_v1() -> Any:
     uid = g.user["id"]
     loc_id = (request.args.get("location_id") or request.args.get("location") or "").strip()
     catches = get_catch_conditions(uid, loc_id)
-    return jsonify(success_envelope(analyze_catch_patterns(catches)))
+    # When scoped to a location, compare patterns against its current forecast.
+    current = _catch_conditions_snapshot(loc_id) if loc_id else None
+    return jsonify(success_envelope(analyze_catch_patterns(catches, current=current)))
 
 
 @bp.route("/api/v1/log", methods=["GET", "POST"])

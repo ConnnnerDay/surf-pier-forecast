@@ -32,12 +32,20 @@ def _dominant(values: list[str]) -> Optional[tuple[str, int, int]]:
     return value, count, len(cleaned)
 
 
-def analyze_catch_patterns(catches: list[dict[str, Any]]) -> dict[str, Any]:
+def analyze_catch_patterns(
+    catches: list[dict[str, Any]],
+    current: Optional[dict[str, Any]] = None,
+) -> dict[str, Any]:
     """Summarize productive patterns from a list of catch dicts.
 
     Each catch may carry: species, tide_state, wind_dir, water_temp_f,
     moon_phase. Returns a dict with the catch counts, a list of human-readable
     ``insights`` strings, and the structured ``factors`` behind them.
+
+    When *current* (the forecast conditions right now: tide_state, wind_dir,
+    moon_phase) is supplied, any dominant factor that matches today's
+    conditions is reported under ``matches`` so the angler knows when the
+    moment lines up with what's historically worked.
     """
     total = len(catches)
     factors: dict[str, Any] = {}
@@ -108,6 +116,22 @@ def analyze_catch_patterns(catches: list[dict[str, Any]]) -> dict[str, Any]:
                 f"{lead_bait} is your most productive bait ({lead_bait_count} catches)."
             )
 
+    # Does today's forecast line up with a historically productive factor?
+    matches: list[str] = []
+    if current:
+        _match_labels = {
+            "tide_state": lambda v: f"Today's {v.lower()} tide matches your most productive pattern.",
+            "wind_dir": lambda v: f"Today's {v} wind matches your most productive pattern.",
+            "moon_phase": lambda v: f"Tonight's {v.lower()} moon matches your most productive pattern.",
+        }
+        for key, label in _match_labels.items():
+            fac = factors.get(key)
+            cur = (current.get(key) or "").strip()
+            if fac and cur and cur.lower() == str(fac["value"]).lower():
+                matches.append(label(cur))
+        # Surface matches at the top of the insight list.
+        insights = matches + insights
+
     return {
         "total": total,
         "with_conditions": sum(
@@ -116,5 +140,6 @@ def analyze_catch_patterns(catches: list[dict[str, Any]]) -> dict[str, Any]:
             if c.get("tide_state") or c.get("wind_dir") or c.get("moon_phase")
         ),
         "insights": insights,
+        "matches": matches,
         "factors": factors,
     }

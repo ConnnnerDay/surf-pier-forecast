@@ -3950,6 +3950,11 @@ h2::before {
   border-radius: 50%;
   background: var(--ocean, #0e5f78);
 }
+.cp-item--match {
+  background: rgba(34, 197, 94, 0.12);
+  font-weight: 600;
+}
+.cp-item--match::before { background: #22c55e; }
 
 .pb-list {
   display: grid;

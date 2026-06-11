@@ -73,6 +73,26 @@ class TestAnalyzeCatchPatterns:
         out = analyze_catch_patterns(catches)
         assert "top_bait" not in out["factors"]
 
+    def test_current_conditions_match_surfaced(self):
+        catches = [_catch(tide="Rising", wind="NE") for _ in range(5)]
+        out = analyze_catch_patterns(
+            catches, current={"tide_state": "Rising", "wind_dir": "SW"}
+        )
+        assert any("rising tide matches" in m.lower() for m in out["matches"])
+        # Wind doesn't match (NE pattern vs SW now), so no wind match.
+        assert not any("wind matches" in m.lower() for m in out["matches"])
+        # Matches are surfaced at the top of insights.
+        assert out["insights"][0] in out["matches"]
+
+    def test_no_match_when_conditions_differ(self):
+        catches = [_catch(tide="Rising") for _ in range(5)]
+        out = analyze_catch_patterns(catches, current={"tide_state": "Falling"})
+        assert out["matches"] == []
+
+    def test_matches_empty_without_current(self):
+        out = analyze_catch_patterns([_catch() for _ in range(5)])
+        assert out["matches"] == []
+
     def test_with_conditions_count(self):
         catches = [_catch()] + [
             {"species": "X", "tide_state": None, "wind_dir": None, "moon_phase": None}

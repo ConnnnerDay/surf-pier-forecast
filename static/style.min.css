@@ -6,3 +6,4 @@
 .fishlog-bait{font-size:.72rem;color:var(--ocean, #0e5f78);font-weight:600}
 .reg-chip--open{background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.35);color:#15803d}[data-theme="dark"] .reg-chip--open{color:#4ade80}
 .auth-btn--ghost{background:transparent;color:var(--ocean, #0e5f78);border:1px solid var(--border, rgba(14,95,120,0.3))}.auth-btn--ghost:hover{background:rgba(14,95,120,.08)}
+.cp-item--match{background:rgba(34,197,94,.12);font-weight:600}.cp-item--match::before{background:#22c55e}
