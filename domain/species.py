@@ -10,7 +10,12 @@ from pathlib import Path
 from typing import Any, Callable, Optional
 
 from locations import get_monthly_water_temps
-from regulations import classify_legality, lookup_regulation, should_hide_from_forecast
+from regulations import (
+    classify_legality,
+    lookup_regulation,
+    season_status as _season_status,
+    should_hide_from_forecast,
+)
 from storage.species_loader import SPECIES_DB, SPECIES_DB_BY_COAST, SPECIES_DB_MAP
 
 logger = logging.getLogger(__name__)
@@ -2131,6 +2136,10 @@ def build_species_ranking(
 
         if regulation:
             entry["regulation"] = regulation
+            # Whether this species is in its open season *right now*, so the
+            # card can show an accurate badge instead of a raw "Closed Jan-Apr"
+            # string that's actually inactive this month.
+            entry["season_status"] = _season_status(regulation, month)
         # Expose legality status so templates can show uncertainty / stale warnings
         # without needing to re-parse regulation text.  Only set when state was queried.
         if regulation_status is not None:

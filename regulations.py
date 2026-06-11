@@ -281,6 +281,29 @@ def _parse_closed_months_text(text: str) -> set:
                 closed.update(range(1, end + 1))
     return closed
 
+def season_status(reg: Optional[dict], month: int) -> str:
+    """Return 'open' / 'closed' / 'unknown' for a regulation in a given month.
+
+    Uses the same closed-month parsing as :func:`classify_legality`. Returns
+    'unknown' when *month* is missing/invalid or the season text carries no
+    parseable month window (a plain "Open year-round" is treated as 'open').
+    """
+    if not reg or not month or not (1 <= month <= 12):
+        return "unknown"
+    season = str(reg.get("season", "") or "")
+    notes = str(reg.get("notes", "") or "")
+    combined = f"{season} {notes}".strip()
+    if not combined:
+        return "unknown"
+    closed_months = _parse_closed_months_text(combined)
+    low = combined.lower()
+    if closed_months:
+        return "closed" if month in closed_months else "open"
+    # No explicit month window — only assert "open" when the text says so.
+    if "year-round" in low or "year round" in low or "all year" in low or "open" in low:
+        return "open"
+    return "unknown"
+
 def get_official_regulations_url(state: str) -> str:
     """Return the official state fishing regulations URL for *state* (2-letter code).
 

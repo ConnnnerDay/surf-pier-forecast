@@ -15,8 +15,30 @@ from domain.species import build_spawning_report, build_species_ranking
 from regulations import (
     classify_legality,
     get_official_regulations_url,
+    season_status,
     should_hide_from_forecast,
 )
+
+
+class TestSeasonStatus:
+    def test_year_round_is_open(self):
+        assert season_status({"season": "Open year-round"}, 6) == "open"
+
+    def test_inactive_closure_is_open(self):
+        # "Closed Jan-Apr" in June is currently open.
+        assert season_status({"season": "Closed Jan-Apr"}, 6) == "open"
+
+    def test_active_closure_is_closed(self):
+        assert season_status({"season": "Closed Jan-Apr"}, 2) == "closed"
+
+    def test_year_wrap_closure(self):
+        assert season_status({"season": "Closed Nov-Feb"}, 1) == "closed"
+        assert season_status({"season": "Closed Nov-Feb"}, 7) == "open"
+
+    def test_unknown_when_no_text_or_month(self):
+        assert season_status({"season": ""}, 6) == "unknown"
+        assert season_status(None, 6) == "unknown"
+        assert season_status({"season": "Open year-round"}, 0) == "unknown"
 
 
 # ---------------------------------------------------------------------------
