@@ -190,6 +190,60 @@ class TestRunNotificationCheck:
         assert s["sent"] == 0
 
 
+class TestBuildDigestEmail:
+    def test_single_item_matches_build_email(self):
+        d = notif.evaluate_forecast(
+            _forecast("Good"), {"min_rating": "Good"},
+            datetime(2026, 6, 9, 5, 0, tzinfo=EAST),
+        )
+        single = notif.build_digest_email([("Montauk", d)])
+        assert single == notif.build_email("Montauk", d)
+
+    def test_multiple_items_roll_up(self):
+        d = notif.evaluate_forecast(
+            _forecast("Excellent", 90), {"min_rating": "Good"},
+            datetime(2026, 6, 9, 5, 0, tzinfo=EAST),
+        )
+        subject, text, html = notif.build_digest_email(
+            [("Montauk", d), ("Cape May", d)], manage_url="https://x/account"
+        )
+        assert "2 of your spots" in subject
+        assert "Montauk" in text and "Cape May" in text
+        assert "Montauk" in html and "Cape May" in html
+        assert "https://x/account" in text
+
+
+class TestDigestBatching:
+    def test_two_locations_one_email_two_records(self, app, monkeypatch):
+        from storage.sqlite import create_user, save_preferences, get_db
+
+        uid = create_user("digest", "pass1234", email="d@example.com")
+        con = get_db()
+        con.execute("UPDATE users SET email_confirmed=1 WHERE id=?", (uid,))
+        con.commit()
+        con.close()
+        save_preferences(
+            uid,
+            favorites=["montauk-ny", "cape-may-nj"],
+            notification_prefs={"enabled": True, "email": True, "min_rating": "Good"},
+        )
+        monkeypatch.setattr(
+            notif, "get_location",
+            lambda lid: {"id": lid, "name": lid, "timezone": "America/New_York"},
+        )
+        emails = []
+        s = notif.run_notification_check(
+            datetime(2026, 6, 9, 5, 0, tzinfo=EAST),
+            forecast_loader=lambda *a: _forecast("Good"),
+            email_sender=lambda to, subj, t, h: emails.append(subj) or True,
+            push_sender=lambda *a: False,
+        )
+        # One email, but both locations recorded (so dedupe covers each).
+        assert len(emails) == 1
+        assert "2 of your spots" in emails[0]
+        assert s["sent"] == 2
+
+
 class TestRunNotificationCheckRealDB:
     """End-to-end through the real SQLite layer (no mocked storage)."""
 

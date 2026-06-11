@@ -189,6 +189,56 @@ def build_email(
     return subject, text_body, html_body
 
 
+def build_digest_email(
+    items: list[tuple[str, dict[str, Any]]], manage_url: str = ""
+) -> tuple[str, str, str]:
+    """Build one email covering one *or more* qualifying locations.
+
+    *items* is a list of (location_name, decision). A single item produces the
+    same subject as :func:`build_email`; multiple items roll up into one digest
+    so a user with several good spots gets one email, not one per location.
+    """
+    if len(items) == 1:
+        return build_email(items[0][0], items[0][1], manage_url=manage_url)
+
+    subject = f"Good fishing at {len(items)} of your spots today"
+    lines = ["Several of your saved spots are worth a trip today:", ""]
+    blocks_html = []
+    for name, decision in items:
+        score = decision.get("score")
+        score_str = f" ({score}/100)" if score is not None else ""
+        lines.append(f"- {name}: {decision['verdict']}{score_str}")
+        if decision.get("window"):
+            lines.append(f"    Best window: {decision['window']}")
+        blocks_html.append(
+            f"<li><strong>{name}</strong>: {decision['verdict']}{score_str}"
+            + (
+                f"<br><small>Best window: {decision['window']}</small>"
+                if decision.get("window")
+                else ""
+            )
+            + "</li>"
+        )
+    lines.append("")
+    lines.append("Tight lines! — Surf & Pier Fishing Forecast")
+    if manage_url:
+        lines.append("")
+        lines.append(f"Manage or turn off alerts: {manage_url}")
+
+    manage_html = (
+        f'<p style="font-size:12px;color:#888">'
+        f'<a href="{manage_url}">Manage or turn off alerts</a></p>'
+        if manage_url
+        else ""
+    )
+    html_body = (
+        f"<h2>Good fishing at {len(items)} of your spots today</h2>"
+        f"<ul>{''.join(blocks_html)}</ul>"
+        "<p>Tight lines! — Surf &amp; Pier Fishing Forecast</p>" + manage_html
+    )
+    return subject, "\n".join(lines), html_body
+
+
 # ---------------------------------------------------------------------------
 # Orchestration (I/O)
 # ---------------------------------------------------------------------------
@@ -276,6 +326,11 @@ def run_notification_check(
         uid = cand["user_id"]
         profile = cand.get("fishing_profile") or {}
 
+        # Collect every qualifying location for this user this poll, so the
+        # email channel can roll them into a single digest instead of one
+        # message per spot.
+        # (loc_id, name, decision, sent_date)
+        qualifying: list[tuple[str, str, dict[str, Any], str]] = []
         for loc_id in _user_location_ids(cand):
             location = get_location(loc_id)
             if not location:
@@ -285,7 +340,6 @@ def run_notification_check(
             sent_date = local_now.strftime("%Y-%m-%d")
             if was_notified(uid, loc_id, sent_date):
                 continue
-
             try:
                 forecast = forecast_loader(loc_id, location, profile)
             except Exception:
@@ -295,44 +349,56 @@ def run_notification_check(
                 continue
             if not forecast:
                 continue
-
             decision = evaluate_forecast(forecast, prefs, local_now)
-            if not decision:
-                continue
-
-            loc_name = location.get("name", loc_id)
-            channels: list[str] = []
-
-            if prefs.get("email") and cand.get("email"):
-                manage_url = f"{site_url}/account" if site_url else ""
-                subject, text_body, html_body = build_email(
-                    loc_name, decision, manage_url=manage_url
+            if decision:
+                qualifying.append(
+                    (loc_id, location.get("name", loc_id), decision, sent_date)
                 )
-                try:
-                    if send_email_fn(cand["email"], subject, text_body, html_body):
-                        channels.append("email")
-                except Exception:
-                    logger.warning("notify.email_failed user=%s", uid, exc_info=True)
 
-            if prefs.get("push"):
+        if not qualifying:
+            continue
+
+        # Email: a single digest covering all qualifying locations.
+        email_ok = False
+        if prefs.get("email") and cand.get("email"):
+            manage_url = f"{site_url}/account" if site_url else ""
+            subject, text_body, html_body = build_digest_email(
+                [(name, dec) for _, name, dec, _ in qualifying], manage_url=manage_url
+            )
+            try:
+                email_ok = bool(
+                    send_email_fn(cand["email"], subject, text_body, html_body)
+                )
+            except Exception:
+                logger.warning("notify.email_failed user=%s", uid, exc_info=True)
+
+        # Push: per-location (each is its own actionable nudge).
+        subs = get_push_subscriptions(uid) if prefs.get("push") else []
+
+        for loc_id, loc_name, decision, sent_date in qualifying:
+            channels: list[str] = []
+            if email_ok:
+                channels.append("email")
+            if subs:
                 title = f"{decision['verdict']} fishing at {loc_name}"
                 body = decision.get("window") or decision.get("summary") or ""
                 url = f"{site_url}/f/{loc_id}" if site_url else f"/f/{loc_id}"
                 pushed_any = False
-                for sub in get_push_subscriptions(uid):
+                for sub in subs:
                     try:
                         if push_fn(sub, title, body, url):
                             pushed_any = True
                     except Exception:
-                        logger.debug(
-                            "notify.push_failed user=%s", uid, exc_info=True
-                        )
+                        logger.debug("notify.push_failed user=%s", uid, exc_info=True)
                 if pushed_any:
                     channels.append("push")
-
             if channels:
                 record_notification(
-                    uid, loc_id, sent_date, decision.get("window", ""), ",".join(channels)
+                    uid,
+                    loc_id,
+                    sent_date,
+                    decision.get("window", ""),
+                    ",".join(channels),
                 )
                 sent += 1
                 logger.info(
