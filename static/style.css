@@ -4052,6 +4052,26 @@ h2::before {
   margin-top: 0.5rem;
 }
 
+.gear-actions {
+  margin-top: 0.6rem;
+  display: flex;
+  justify-content: flex-end;
+}
+.gear-print-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 7px;
+  border: 1px solid var(--border, rgba(14,95,120,0.3));
+  background: transparent;
+  color: var(--ocean, #0e5f78);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.gear-print-btn:hover { background: rgba(14,95,120,0.08); }
+
 .gear-category {
   font-size: 0.7rem;
   font-weight: 700;
