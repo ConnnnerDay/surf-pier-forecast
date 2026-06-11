@@ -991,6 +991,42 @@ h2::before {
   font-weight: 700;
 }
 
+/* Day-timeline overlays: feeding bands + sun/tide event markers */
+.timeline-bar-col--feed-major::before,
+.timeline-bar-col--feed-minor::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 14px;
+  left: 0;
+  right: 0;
+  border-radius: 3px;
+  z-index: 0;
+}
+.timeline-bar-col--feed-major::before { background: rgba(220, 38, 38, 0.12); }
+.timeline-bar-col--feed-minor::before { background: rgba(217, 119, 6, 0.10); }
+.timeline-bar,
+.timeline-events,
+.timeline-hour { position: relative; z-index: 1; }
+
+.timeline-events {
+  display: flex;
+  gap: 1px;
+  align-items: center;
+  justify-content: center;
+  height: 12px;
+  margin-top: 2px;
+  line-height: 1;
+}
+.tl-evt {
+  font-size: 0.6rem;
+  line-height: 1;
+}
+.tl-evt--sun { color: var(--amber, #D97706); display: inline-flex; }
+.tl-evt--tide-high { color: var(--ocean, #0077B6); }
+.tl-evt--tide-low { color: #64748b; }
+.tl-key--feed { background: rgba(220, 38, 38, 0.35); }
+
 /* Peak bar subtle shimmer */
 .timeline-bar--peak {
   filter: brightness(1.15);
@@ -1866,6 +1902,32 @@ h2::before {
 .rig-specs dd {
   margin: 0;
   color: var(--text);
+}
+
+/* Condition-aware gear tweak shown under a rig's specs */
+.rig-cond-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  margin: 0.6rem 0 0;
+  padding: 0.5rem 0.6rem;
+  border-radius: 6px;
+  background: rgba(14, 95, 120, 0.08);
+  border-left: 3px solid var(--ocean, #0e5f78);
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--text);
+}
+.rig-cond-tip svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--ocean, #0e5f78);
+}
+.rig-cr-tip {
+  margin: 0.4rem 0 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-style: italic;
 }
 
 /* ---------- Rig knots ---------- */
@@ -3524,6 +3586,12 @@ h2::before {
   font-variant-numeric: tabular-nums;
 }
 
+.fishlog-bait {
+  font-size: 0.72rem;
+  color: var(--ocean, #0e5f78);
+  font-weight: 600;
+}
+
 .fishlog-notes {
   font-size: 0.72rem;
   color: var(--text-muted);
@@ -3834,6 +3902,60 @@ h2::before {
   margin: 0 0 0.5rem;
 }
 
+/* Catch-pattern insights panel */
+.catch-patterns {
+  margin-top: 0.7rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--border-light, #e8ecef);
+}
+.cp-title {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 0.2rem;
+}
+.cp-title svg { color: var(--ocean, #0e5f78); }
+.cp-sub {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  margin: 0 0 0.5rem;
+}
+.cp-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.cp-item {
+  position: relative;
+  padding: 0.45rem 0.6rem 0.45rem 1.5rem;
+  border-radius: 7px;
+  background: rgba(14, 95, 120, 0.07);
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: var(--text);
+}
+.cp-item::before {
+  content: "";
+  position: absolute;
+  left: 0.6rem;
+  top: 0.7rem;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ocean, #0e5f78);
+}
+.cp-item--match {
+  background: rgba(34, 197, 94, 0.12);
+  font-weight: 600;
+}
+.cp-item--match::before { background: #22c55e; }
+
 .pb-list {
   display: grid;
   gap: 0.3rem;
@@ -3929,6 +4051,26 @@ h2::before {
 .gear-list {
   margin-top: 0.5rem;
 }
+
+.gear-actions {
+  margin-top: 0.6rem;
+  display: flex;
+  justify-content: flex-end;
+}
+.gear-print-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 7px;
+  border: 1px solid var(--border, rgba(14,95,120,0.3));
+  background: transparent;
+  color: var(--ocean, #0e5f78);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.gear-print-btn:hover { background: rgba(14,95,120,0.08); }
 
 .gear-category {
   font-size: 0.7rem;
@@ -5194,6 +5336,29 @@ footer p {
   margin: 0 0 0.75rem;
 }
 
+.profile-threshold-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+}
+.profile-threshold {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.profile-threshold-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.profile-threshold-input {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border, rgba(0,0,0,0.15));
+  border-radius: 8px;
+  font-size: 1rem;
+  background: var(--surface, #fff);
+  color: inherit;
+}
+
 .profile-options {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -6384,6 +6549,45 @@ footer p {
   color: var(--text);
 }
 
+/* At-a-glance regulation chips on species cards */
+.species-reg {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.55rem;
+}
+.reg-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  padding: 0.18rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(14, 95, 120, 0.08);
+  border: 1px solid rgba(14, 95, 120, 0.18);
+  color: var(--text);
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+.reg-chip svg { flex: 0 0 auto; opacity: 0.8; }
+.reg-chip--warn {
+  background: rgba(217, 119, 6, 0.12);
+  border-color: rgba(217, 119, 6, 0.35);
+  color: #9a6200;
+}
+[data-theme="dark"] .reg-chip--warn { color: #e6a52b; }
+.reg-chip--slot {
+  background: rgba(124, 58, 237, 0.10);
+  border-color: rgba(124, 58, 237, 0.28);
+}
+.reg-chip--open {
+  background: rgba(34, 197, 94, 0.12);
+  border-color: rgba(34, 197, 94, 0.35);
+  color: #15803d;
+}
+[data-theme="dark"] .reg-chip--open { color: #4ade80; }
+
 /* Inline stale-data warning on species / spawning cards */
 .reg-inline-stale {
   display: flex;
@@ -6776,7 +6980,7 @@ footer p {
 }
 
 .hourly-timeline-section .timeline-bars {
-  height: 70px;
+  height: 84px;
 }
 
 /* ---------- Bite Windows Section ---------- */
@@ -8503,6 +8707,25 @@ body.has-app-header main {
   font-style: italic;
 }
 
+/* Personal comfort-threshold warnings on the go/no-go rating */
+.csc-verdict-exceeds {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.csc-verdict-exceed {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #FB923C;
+}
+.csc-verdict-exceed svg { flex: 0 0 auto; }
+
 /* Wrapper so share btn can sit flush top-right without disrupting badge/summary flow */
 .csc-verdict-info {
   flex: 1;
@@ -9291,6 +9514,12 @@ body.has-app-header main {
 .auth-btn--slate  { background: linear-gradient(135deg, #5a6e8a, #3d5068); }
 .auth-btn--brown  { background: linear-gradient(135deg, #6e5a3d, #504029); }
 .auth-btn--danger { background: linear-gradient(135deg, #8b4545, #6b3030); }
+.auth-btn--ghost {
+  background: transparent;
+  color: var(--ocean, #0e5f78);
+  border: 1px solid var(--border, rgba(14,95,120,0.3));
+}
+.auth-btn--ghost:hover { background: rgba(14,95,120,0.08); }
 /* Conditions partial: tide trend arrow icons */
 .stat-trend-icon { vertical-align: -2px; margin-right: 0.2rem; }
 /* Verify email pages */

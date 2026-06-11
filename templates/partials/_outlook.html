@@ -24,8 +24,9 @@
                         <span class="outlook-day">{{ day.day }}</span>
                         <span class="outlook-date">{{ day.date }}</span>
                     </div>
+                    {% set _day_score = day.score | default(none) %}
                     <div class="outlook-verdict verdict-badge verdict-{{ day.verdict|lower|replace(' ', '-') }}">
-                        {{ day.verdict }}
+                        {{ day.verdict }}{% if _day_score is not none %} &middot; {{ _day_score }}{% endif %}
                     </div>
                     <div class="outlook-details">
                         <div class="outlook-detail">

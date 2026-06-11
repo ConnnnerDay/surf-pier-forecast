@@ -27,9 +27,59 @@
                     </label>
                     {% endfor %}
                 </div>
+                <div class="gear-actions">
+                    <button type="button" class="gear-print-btn" onclick="printChecklist()">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                        Print checklist
+                    </button>
+                </div>
             </details>
         </section>
         {% endif %}
+        <script>
+        // Build a clean, print-friendly view of the gear (and safety) lists
+        // from the rendered DOM, so it stays in sync with whatever's shown.
+        function printChecklist() {
+            function collect(listSel, catSel, itemSel) {
+                var out = [];
+                document.querySelectorAll(listSel + ' > *').forEach(function (n) {
+                    if (catSel && n.matches(catSel)) {
+                        out.push({ cat: n.textContent.trim() });
+                    } else {
+                        var name = n.querySelector(itemSel);
+                        if (name) out.push({ item: name.textContent.trim() });
+                    }
+                });
+                return out;
+            }
+            var loc = {{ (forecast.location_name or 'Fishing trip') | tojson }};
+            var gear = collect('.gear-list', '.gear-category', '.gear-name');
+            var safety = collect('.safety-list', null, '.safety-text');
+            function rows(arr) {
+                return arr.map(function (e) {
+                    return e.cat ? '<h3>' + e.cat + '</h3>' : '<label>&#9744; ' + e.item + '</label>';
+                }).join('');
+            }
+            var html = '<!doctype html><html><head><meta charset="utf-8">' +
+                '<title>Checklist</title><style>' +
+                'body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;padding:24px;color:#111}' +
+                'h1{font-size:18px;margin:0 0 4px}h2{font-size:14px;margin:18px 0 6px;border-bottom:1px solid #ccc;padding-bottom:3px}' +
+                'h3{font-size:12px;margin:10px 0 2px;color:#555;text-transform:uppercase;letter-spacing:.04em}' +
+                'label{display:block;font-size:13px;padding:3px 0}small{color:#777}' +
+                '</style></head><body>' +
+                '<h1>Fishing Checklist</h1><small></small>' +
+                (gear.length ? '<h2>Gear</h2>' + rows(gear) : '') +
+                (safety.length ? '<h2>Safety</h2>' + rows(safety) : '') +
+                '</body></html>';
+            html = html.replace('<small></small>', '<small>' + (loc || '') + '</small>');
+            var w = window.open('', '_blank');
+            if (!w) return;
+            w.document.write(html);
+            w.document.close();
+            w.focus();
+            setTimeout(function () { w.print(); }, 250);
+        }
+        </script>
 
         <!-- Safety Checklist -->
         {% if forecast.safety %}

@@ -1,13 +1,26 @@
         <!-- Conditions grid -->
         <section class="conditions-section">
+            {% set _eff_verdict = forecast.conditions.verdict_for_angler or forecast.conditions.verdict_for_type or forecast.conditions.verdict %}
+            {% set _score = forecast.conditions.fishability_score_for_angler | default(none) %}
+            {% if _score is none %}{% set _score = forecast.conditions.fishability_score | default(none) %}{% endif %}
             <div class="csc-verdict-bar">
                 <div class="csc-verdict-info">
                     <p class="csc-location">Today&rsquo;s Forecast</p>
-                    {% if forecast.conditions.verdict %}
-                    <span class="verdict-badge verdict-{{ forecast.conditions.verdict|lower|replace(' ', '-') }} csc-verdict-badge">{{ forecast.conditions.verdict }}</span>
+                    {% if _eff_verdict %}
+                    <span class="verdict-badge verdict-{{ _eff_verdict|lower|replace(' ', '-') }} csc-verdict-badge">{{ _eff_verdict }}{% if _score is not none %} &middot; {{ _score }}/100{% endif %}</span>
                     {% endif %}
                     {% if forecast.conditions.summary %}
                     <p class="csc-verdict-summary">{{ forecast.conditions.summary }}</p>
+                    {% endif %}
+                    {% if forecast.conditions.exceeds_thresholds %}
+                    <ul class="csc-verdict-exceeds" aria-label="Conditions exceeding your limits">
+                        {% for warn in forecast.conditions.exceeds_thresholds %}
+                        <li class="csc-verdict-exceed">
+                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            {{ warn }}
+                        </li>
+                        {% endfor %}
+                    </ul>
                     {% endif %}
                 </div>
                 <button class="csc-share-btn" type="button" aria-label="Share forecast" onclick="shareConditions(this)">
@@ -265,14 +278,31 @@
 
         {% if forecast.activity_timeline %}
         <section class="hourly-timeline-section">
-            <p class="timeline-label">Fishing Activity</p>
+            <p class="timeline-label">Fishing Activity &amp; Day Timeline</p>
             <div class="activity-timeline">
                 <div class="timeline-bars">
                     {% for entry in forecast.activity_timeline %}
-                    <div class="timeline-bar-col{% if entry.is_now %} timeline-bar-col--now{% endif %}">
+                    {%- set _evt_title -%}
+                        {{ entry.label }}{% if entry.reason %} — {{ entry.reason }}{% endif %} ({{ entry.level }}%)
+                        {%- if entry.sun == 'sunrise' %} · Sunrise{% elif entry.sun == 'sunset' %} · Sunset{% endif -%}
+                        {%- if entry.tide == 'high' %} · High tide {{ entry.tide_time }}{% elif entry.tide == 'low' %} · Low tide {{ entry.tide_time }}{% endif -%}
+                    {%- endset -%}
+                    <div class="timeline-bar-col{% if entry.is_now %} timeline-bar-col--now{% endif %}{% if entry.feeding %} timeline-bar-col--feed-{{ entry.feeding }}{% endif %}"
+                         title="{{ _evt_title | trim }}">
                         <div class="timeline-bar timeline-bar--{{ entry.tag }}{% if entry.peak %} timeline-bar--peak{% endif %}"
-                             style="height: {{ [((entry.level * 0.58) | round | int), 2] | max }}px;"
-                             title="{{ entry.label }}{% if entry.reason %} — {{ entry.reason }}{% endif %} ({{ entry.level }}%)"></div>
+                             style="height: {{ [((entry.level * 0.58) | round | int), 2] | max }}px;"></div>
+                        <div class="timeline-events" aria-hidden="true">
+                            {%- if entry.sun == 'sunrise' -%}
+                            <span class="tl-evt tl-evt--sun" aria-label="Sunrise"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 18a5 5 0 0 0-10 0"/><line x1="12" y1="2" x2="12" y2="9"/><line x1="4.22" y1="10.22" x2="5.64" y2="11.64"/><line x1="1" y1="18" x2="3" y2="18"/><line x1="21" y1="18" x2="23" y2="18"/><line x1="18.36" y1="11.64" x2="19.78" y2="10.22"/><line x1="23" y1="22" x2="1" y2="22"/><polyline points="8 6 12 2 16 6"/></svg></span>
+                            {%- elif entry.sun == 'sunset' -%}
+                            <span class="tl-evt tl-evt--sun" aria-label="Sunset"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 18a5 5 0 0 0-10 0"/><line x1="12" y1="9" x2="12" y2="2"/><line x1="4.22" y1="10.22" x2="5.64" y2="11.64"/><line x1="1" y1="18" x2="3" y2="18"/><line x1="21" y1="18" x2="23" y2="18"/><line x1="18.36" y1="11.64" x2="19.78" y2="10.22"/><line x1="23" y1="22" x2="1" y2="22"/><polyline points="16 5 12 9 8 5"/></svg></span>
+                            {%- endif -%}
+                            {%- if entry.tide == 'high' -%}
+                            <span class="tl-evt tl-evt--tide-high" aria-label="High tide">&#9650;</span>
+                            {%- elif entry.tide == 'low' -%}
+                            <span class="tl-evt tl-evt--tide-low" aria-label="Low tide">&#9660;</span>
+                            {%- endif -%}
+                        </div>
                         <div class="timeline-hour">
                             {%- if entry.is_now -%}Now{%- elif entry.hour % 6 == 0 -%}{{ entry.short_label }}{%- endif -%}
                         </div>
@@ -284,6 +314,8 @@
                     <span><span class="tl-key tl-key--high"></span>High</span>
                     <span><span class="tl-key tl-key--med"></span>Good</span>
                     <span><span class="tl-key tl-key--low"></span>Low</span>
+                    <span><span class="tl-key tl-key--feed"></span>Feeding window</span>
+                    <span><span class="tl-evt tl-evt--tide-high">&#9650;</span>/<span class="tl-evt tl-evt--tide-low">&#9660;</span> Tide</span>
                 </div>
             </div>
         </section>

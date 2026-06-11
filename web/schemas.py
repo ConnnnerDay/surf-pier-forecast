@@ -49,6 +49,7 @@ _MAX_LOCATION_ID_LEN = 100
 _MAX_SPECIES_LEN = 100
 _MAX_SIZE_LEN = 50
 _MAX_NOTES_LEN = 1000
+_MAX_BAIT_LEN = 60
 
 _VALID_FISHING_TYPES = frozenset(
     {
@@ -75,6 +76,60 @@ _VALID_CONDITION_TOLERANCE = frozenset({"calm", "moderate", "rough"})
 _VALID_TIDE_PREFERENCE = frozenset({"incoming", "outgoing", "high", "low", "any"})
 _VALID_SESSION_FREQUENCY = frozenset({"weekly", "monthly", "occasional"})
 _VALID_CATCH_RELEASE = frozenset({"always", "sometimes", "keep"})
+
+# Notification preferences: the minimum forecast rating that triggers an alert,
+# and how many hours of lead time the daily check looks ahead.
+_VALID_MIN_RATING = frozenset({"Good", "Excellent"})
+_NOTIFY_LEAD_HOURS_MAX = 24
+
+
+def _validate_notification_prefs(value: Any) -> dict[str, Any]:
+    """Validate and normalize the notification_prefs object.
+
+    Shape: {enabled: bool, email: bool, push: bool,
+            min_rating: "Good"|"Excellent", lead_hours: int 0..24}
+    Unknown keys are dropped so the stored object stays small and predictable.
+    """
+    if not isinstance(value, dict):
+        raise ApiError(
+            "invalid_notification_prefs",
+            "notification_prefs must be an object",
+            status=400,
+        )
+    out: dict[str, Any] = {}
+    for flag in ("enabled", "email", "push", "weekly_email"):
+        fv = value.get(flag)
+        if fv is not None:
+            if not isinstance(fv, bool):
+                raise ApiError(
+                    f"invalid_notification_{flag}",
+                    f"notification_prefs.{flag} must be a boolean",
+                    status=400,
+                )
+            out[flag] = fv
+    min_rating = value.get("min_rating")
+    if min_rating is not None:
+        if min_rating not in _VALID_MIN_RATING:
+            raise ApiError(
+                "invalid_min_rating",
+                f"min_rating must be one of: {sorted(_VALID_MIN_RATING)}",
+                status=400,
+            )
+        out["min_rating"] = min_rating
+    lead_hours = value.get("lead_hours")
+    if lead_hours is not None:
+        if (
+            isinstance(lead_hours, bool)
+            or not isinstance(lead_hours, int)
+            or not (0 <= lead_hours <= _NOTIFY_LEAD_HOURS_MAX)
+        ):
+            raise ApiError(
+                "invalid_lead_hours",
+                f"lead_hours must be an integer between 0 and {_NOTIFY_LEAD_HOURS_MAX}",
+                status=400,
+            )
+        out["lead_hours"] = lead_hours
+    return out
 
 
 def _validate_enum_list(field: str, value: Any, valid: frozenset) -> None:
@@ -118,6 +173,7 @@ class ProfilePayload:
     units: Optional[str] = None
     fishing_profile: Optional[dict[str, Any]] = None
     favorites: Optional[list[str]] = None
+    notification_prefs: Optional[dict[str, Any]] = None
 
     @classmethod
     def from_json(cls, data: dict[str, Any]) -> "ProfilePayload":
@@ -237,6 +293,36 @@ class ProfilePayload:
                     f"catch_release must be one of: {sorted(_VALID_CATCH_RELEASE)}",
                     status=400,
                 )
+            # Personal go/no-go comfort thresholds (optional numeric limits).
+            for thresh_field, hi in (("max_wind_kt", 60), ("max_wave_ft", 30)):
+                tval = fishing_profile.get(thresh_field)
+                if tval is None:
+                    continue
+                if isinstance(tval, bool) or not isinstance(tval, (int, float)):
+                    raise ApiError(
+                        f"invalid_{thresh_field}",
+                        f"{thresh_field} must be a number between 0 and {hi}",
+                        status=400,
+                    )
+                if not (0 <= tval <= hi):
+                    raise ApiError(
+                        f"invalid_{thresh_field}",
+                        f"{thresh_field} must be between 0 and {hi}",
+                        status=400,
+                    )
+            # Opt-in consent to include this angler's catches in anonymized,
+            # aggregated community activity.
+            share_catches = fishing_profile.get("share_catches")
+            if share_catches is not None and not isinstance(share_catches, bool):
+                raise ApiError(
+                    "invalid_share_catches",
+                    "share_catches must be a boolean",
+                    status=400,
+                )
+
+        notification_prefs = data.get("notification_prefs")
+        if notification_prefs is not None:
+            notification_prefs = _validate_notification_prefs(notification_prefs)
 
         location_id = data.get("location_id")
         if location_id is not None:
@@ -257,11 +343,19 @@ class ProfilePayload:
             units=units,
             fishing_profile=fishing_profile,
             favorites=favorites,
+            notification_prefs=notification_prefs,
         )
 
     def as_updates(self) -> dict[str, Any]:
         updates: dict[str, Any] = {}
-        for k in ("location_id", "theme", "units", "fishing_profile", "favorites"):
+        for k in (
+            "location_id",
+            "theme",
+            "units",
+            "fishing_profile",
+            "favorites",
+            "notification_prefs",
+        ):
             v = getattr(self, k)
             if v is not None:
                 updates[k] = v
@@ -273,6 +367,7 @@ class LogCreatePayload:
     species: str
     size: str = ""
     notes: str = ""
+    bait: str = ""
     location_id: str = ""
 
     @classmethod
@@ -300,10 +395,15 @@ class LogCreatePayload:
             raise ApiError(
                 "invalid_notes", f"notes must be {_MAX_NOTES_LEN} characters or fewer", status=400
             )
+        bait = str(data.get("bait", "")).strip()
+        if len(bait) > _MAX_BAIT_LEN:
+            raise ApiError(
+                "invalid_bait", f"bait must be {_MAX_BAIT_LEN} characters or fewer", status=400
+            )
         loc = str(data.get("location_id", "")).strip() or location_id
         if not loc:
             raise ApiError("missing_location", "location_id is required", status=400)
-        return cls(species=species, size=size, notes=notes, location_id=loc)
+        return cls(species=species, size=size, notes=notes, bait=bait, location_id=loc)
 
 
 def normalize_log_stats(stats: dict[str, Any]) -> dict[str, Any]:
@@ -326,4 +426,5 @@ def normalize_preferences(prefs: dict[str, Any]) -> dict[str, Any]:
         "units": prefs.get("units", "F"),
         "fishing_profile": prefs.get("fishing_profile"),
         "favorites": prefs.get("favorites", []),
+        "notification_prefs": prefs.get("notification_prefs", {}),
     }

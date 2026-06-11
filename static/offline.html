@@ -226,7 +226,9 @@
 
   <div class="section" id="snap-header"></div>
   <div class="section" id="snap-conditions" style="display:none"></div>
+  <div class="section" id="snap-besttimes" style="display:none"></div>
   <div class="section" id="snap-species" style="display:none"></div>
+  <div class="section" id="snap-gear" style="display:none"></div>
   <div class="section" id="snap-tides" style="display:none"></div>
   <div class="section" id="snap-solunar" style="display:none"></div>
 </div>
@@ -273,7 +275,11 @@
     var condEl = $id('snap-conditions');
     condEl.style.display = '';
     condEl.appendChild(el('p', 'section-title', 'Conditions'));
-    if (c.verdict) condEl.appendChild(el('div', 'verdict', c.verdict));
+    if (c.verdict) {
+      var vtxt = c.verdict + (c.score != null ? ' · ' + c.score + '/100' : '');
+      condEl.appendChild(el('div', 'verdict', vtxt));
+    }
+    if (c.summary) condEl.appendChild(el('p', 'sol-meta', c.summary));
     var grid = el('div', 'cond-grid');
     function condItem(label, val) {
       if (!val && val !== 0) return;
@@ -288,6 +294,27 @@
     condItem('Swell', c.swell);
     if (snap.tide_state) condItem('Tide', snap.tide_state.charAt(0).toUpperCase() + snap.tide_state.slice(1));
     if (grid.children.length) condEl.appendChild(grid);
+  }
+
+  // ── When to Fish (best windows) ──────────────────────────────────────────
+  if (snap.best_times && snap.best_times.length) {
+    var btEl = $id('snap-besttimes');
+    btEl.style.display = '';
+    btEl.appendChild(el('p', 'section-title', 'When to Fish'));
+    var btUl = el('ul', 'species-list');
+    snap.best_times.forEach(function (bt) {
+      var li = el('li');
+      var left = el('span');
+      left.appendChild(el('span', 'sp-name', bt.window || ''));
+      if (bt.quality) {
+        left.appendChild(document.createTextNode(' '));
+        left.appendChild(el('span', 'sp-rating', '— ' + bt.quality));
+      }
+      li.appendChild(left);
+      if (bt.reason) li.appendChild(el('span', 'sp-bait', bt.reason));
+      btUl.appendChild(li);
+    });
+    btEl.appendChild(btUl);
   }
 
   // ── Top Species ─────────────────────────────────────────────────────────
@@ -309,6 +336,27 @@
       ul.appendChild(li);
     });
     spEl.appendChild(ul);
+  }
+
+  // ── Gear Checklist ───────────────────────────────────────────────────────
+  if (snap.gear && snap.gear.length) {
+    var gearEl = $id('snap-gear');
+    gearEl.style.display = '';
+    gearEl.appendChild(el('p', 'section-title', 'Gear Checklist'));
+    var gUl = el('ul', 'species-list');
+    snap.gear.forEach(function (g) {
+      var li = el('li');
+      var left = el('span');
+      left.appendChild(el('span', 'sp-name', g.item || ''));
+      if (g.category) {
+        left.appendChild(document.createTextNode(' '));
+        left.appendChild(el('span', 'sp-rating', '— ' + g.category));
+      }
+      li.appendChild(left);
+      if (g.reason) li.appendChild(el('span', 'sp-bait', g.reason));
+      gUl.appendChild(li);
+    });
+    gearEl.appendChild(gUl);
   }
 
   // ── Tides ───────────────────────────────────────────────────────────────

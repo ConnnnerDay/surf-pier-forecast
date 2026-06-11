@@ -413,6 +413,17 @@
                         </span>
                     </label>
                 </div>
+                <p class="profile-hint" style="margin-top:1rem">Optional: set hard limits and we'll flag any day that exceeds them on your go/no-go rating.</p>
+                <div class="profile-threshold-grid">
+                    <label class="profile-threshold">
+                        <span class="profile-threshold-label">Max wind I'll fish (kt)</span>
+                        <input type="number" name="max_wind_kt" min="0" max="60" step="1" inputmode="numeric" placeholder="e.g. 15" class="profile-threshold-input">
+                    </label>
+                    <label class="profile-threshold">
+                        <span class="profile-threshold-label">Max surf I'll fish (ft)</span>
+                        <input type="number" name="max_wave_ft" min="0" max="30" step="0.5" inputmode="decimal" placeholder="e.g. 4" class="profile-threshold-input">
+                    </label>
+                </div>
             </section>
 
             <!-- Tide preference -->
@@ -523,6 +534,19 @@
                         </span>
                     </label>
                 </div>
+            </section>
+
+            <!-- Community sharing (opt-in) -->
+            <section class="profile-section profile-section--step" data-step="opt">
+                <h3 class="profile-question">Share your catches with the community?</h3>
+                <p class="profile-hint">Optional. Adds your catches to an anonymized, aggregated "recent catches nearby" count — never your name or individual logs, and only shown when several anglers have contributed.</p>
+                <label class="profile-chip profile-chip--check">
+                    <input type="checkbox" name="share_catches" value="1">
+                    <span class="chip-body">
+                        <strong>Yes, include my catches anonymously</strong>
+                        <span class="chip-desc">You can turn this off any time</span>
+                    </span>
+                </label>
             </section>
 
             <div class="profile-actions profile-actions--sticky">
@@ -729,6 +753,14 @@
             var el = document.querySelector('input[name="preferred_times"][value="' + t + '"]');
             if (el) el.checked = true;
         });
+        ['max_wind_kt', 'max_wave_ft'].forEach(function(name) {
+            if (existing[name] !== undefined && existing[name] !== null && existing[name] !== '') {
+                var el = document.querySelector('input[name="' + name + '"]');
+                if (el) el.value = existing[name];
+            }
+        });
+        var shareEl = document.querySelector('input[name="share_catches"]');
+        if (shareEl && existing.share_catches) shareEl.checked = true;
     }
 
     // Pre-fill: server profile takes priority; fall back to localStorage draft.
@@ -758,6 +790,12 @@
             document.querySelectorAll('input[name="targets"]:checked').forEach(function(el) { draft.targets.push(el.value); });
             draft.preferred_times = [];
             document.querySelectorAll('input[name="preferred_times"]:checked').forEach(function(el) { draft.preferred_times.push(el.value); });
+            ['max_wind_kt', 'max_wave_ft'].forEach(function(name) {
+                var el = document.querySelector('input[name="' + name + '"]');
+                if (el && el.value !== '') draft[name] = parseFloat(el.value);
+            });
+            var shareEl = document.querySelector('input[name="share_catches"]');
+            if (shareEl) draft.share_catches = shareEl.checked;
             localStorage.setItem(_DRAFT_KEY, JSON.stringify(draft));
         } catch (e) {}
     }
@@ -869,6 +907,19 @@
         // Catch & release
         var catchRelease = document.querySelector('input[name="catch_release"]:checked');
         if (catchRelease) profile.catch_release = catchRelease.value;
+
+        // Personal go/no-go comfort thresholds (optional numeric limits)
+        ['max_wind_kt', 'max_wave_ft'].forEach(function(name) {
+            var el = document.querySelector('input[name="' + name + '"]');
+            if (el && el.value !== '') {
+                var n = parseFloat(el.value);
+                if (!isNaN(n) && n >= 0) profile[name] = n;
+            }
+        });
+
+        // Community sharing opt-in (consent)
+        var shareEl = document.querySelector('input[name="share_catches"]');
+        profile.share_catches = !!(shareEl && shareEl.checked);
 
         // Persist to server, then redirect with key profile fields in URL
         // so personalization applies immediately on first load.

@@ -15,6 +15,8 @@ from domain.forecast import (
     _heat_index_f,
     _wind_chill_f,
     classify_conditions,
+    score_conditions,
+    build_activity_timeline,
     recompute_current_uv,
     MONTHLY_AVG_WIND,
     MONTHLY_AVG_WAVES,
@@ -89,6 +91,132 @@ class TestClassifyConditions:
         se = classify_conditions((6, 10), (1, 2), wind_dir="SE", coast="east", water_temp_f=65)
         order = {"Poor": 1, "Challenging": 2, "Fair": 3, "Good": 4, "Excellent": 5}
         assert order[sw] >= order[se]
+
+
+class TestScoreConditions:
+    def test_returns_index_verdict_and_explanation(self):
+        result = score_conditions(
+            (4, 8), (1, 1.5), wind_dir="NW", water_temp_f=68
+        )
+        assert isinstance(result["score"], int)
+        assert 0 <= result["score"] <= 100
+        assert result["verdict"] in {"Excellent", "Good"}
+        # Explanation should surface the dominant drivers as plain phrases.
+        assert result["factors"]
+        assert result["summary"]
+        assert any("surf" in f.lower() for f in result["factors"])
+        assert any("wind" in f.lower() for f in result["factors"])
+
+    def test_unknown_when_data_missing(self):
+        result = score_conditions(None, None)
+        assert result["score"] is None
+        assert result["verdict"] == "Unknown"
+        assert result["factors"] == []
+        assert result["exceeds"] == []
+
+    def test_classify_conditions_matches_score_verdict(self):
+        kwargs = dict(wind_dir="NW", water_temp_f=68)
+        assert (
+            classify_conditions((4, 8), (1, 1.5), **kwargs)
+            == score_conditions((4, 8), (1, 1.5), **kwargs)["verdict"]
+        )
+
+    def test_wind_threshold_exceeded_penalises_and_warns(self):
+        base = score_conditions((14, 18), (1, 2), wind_dir="NW", water_temp_f=68)
+        limited = score_conditions(
+            (14, 18), (1, 2), wind_dir="NW", water_temp_f=68, max_wind_kt=10
+        )
+        assert limited["score"] < base["score"]
+        assert limited["exceeds"]
+        assert any("limit" in w.lower() for w in limited["exceeds"])
+        # The warning is surfaced as a leading driver in the explanation.
+        assert any("limit" in f.lower() for f in limited["factors"])
+
+    def test_wave_threshold_exceeded_warns(self):
+        limited = score_conditions(
+            (6, 10), (4, 5), wind_dir="NW", water_temp_f=68, max_wave_ft=3
+        )
+        assert any("ft limit" in w.lower() for w in limited["exceeds"])
+
+    def test_threshold_not_exceeded_no_warning(self):
+        ok = score_conditions(
+            (4, 8), (1, 2), wind_dir="NW", water_temp_f=68,
+            max_wind_kt=20, max_wave_ft=5,
+        )
+        assert ok["exceeds"] == []
+
+
+class TestActivityTimelineOverlays:
+    def _forecast(self):
+        return {
+            "conditions": {"sunrise_sunset": "6:00 AM / 8:00 PM", "wind": "NW 6-10 kt"},
+            "solunar": {
+                "major_periods": [{"start": "7:00 AM", "end": "9:00 AM"}],
+                "minor_periods": [{"start": "2:00 PM", "end": "3:00 PM"}],
+            },
+            "tides": [
+                {"hour": 4.0, "type": "Low", "time": "4:00 AM"},
+                {"hour": 10.0, "type": "High", "time": "10:00 AM"},
+            ],
+        }
+
+    def test_timeline_has_24_hours_with_overlay_keys(self):
+        tl = build_activity_timeline(self._forecast(), now_hour=12)
+        assert len(tl) == 24
+        for entry in tl:
+            assert {"sun", "tide", "tide_time", "feeding"} <= set(entry)
+
+    def test_sun_events_mapped_to_hours(self):
+        tl = build_activity_timeline(self._forecast(), now_hour=12)
+        assert tl[6]["sun"] == "sunrise"
+        assert tl[20]["sun"] == "sunset"
+
+    def test_tide_events_mapped_to_hours(self):
+        tl = build_activity_timeline(self._forecast(), now_hour=12)
+        assert tl[4]["tide"] == "low"
+        assert tl[10]["tide"] == "high"
+        assert tl[10]["tide_time"] == "10:00 AM"
+
+    def test_feeding_bands_tagged(self):
+        tl = build_activity_timeline(self._forecast(), now_hour=12)
+        # Major band covers 7-9 AM; minor band covers 2 PM.
+        assert tl[8]["feeding"] == "major"
+        assert tl[14]["feeding"] == "minor"
+        # A quiet hour with no period is untagged.
+        assert tl[0]["feeding"] == ""
+
+    def test_major_band_not_downgraded_by_minor(self):
+        fc = self._forecast()
+        # Overlap a minor period onto the major band; major must win.
+        fc["solunar"]["minor_periods"].append({"start": "8:00 AM", "end": "8:30 AM"})
+        tl = build_activity_timeline(fc, now_hour=12)
+        assert tl[8]["feeding"] == "major"
+
+    def test_falling_pressure_beats_rising(self):
+        falling = self._forecast()
+        falling["pressure"] = {"trend": "Falling", "pressure_mb": 1005}
+        rising = self._forecast()
+        rising["pressure"] = {"trend": "Rising", "pressure_mb": 1025}
+        peak_falling = max(e["level"] for e in build_activity_timeline(falling, 12))
+        peak_rising = max(e["level"] for e in build_activity_timeline(rising, 12))
+        assert peak_falling > peak_rising
+
+    def test_pressure_missing_is_safe(self):
+        fc = self._forecast()
+        # No pressure key, and a malformed one, must not raise.
+        assert build_activity_timeline(fc, 12)
+        fc["pressure"] = {"trend": "falling", "pressure_mb": "n/a"}
+        assert build_activity_timeline(fc, 12)
+
+    def test_bright_moon_boosts_night_hours(self):
+        dark = self._forecast()
+        dark["solunar"]["illumination_pct"] = 5
+        bright = self._forecast()
+        bright["solunar"]["illumination_pct"] = 95
+        # Compare the raw (pre-normalization shape) night activity via levels at 1 AM.
+        dark_tl = build_activity_timeline(dark, 12)
+        bright_tl = build_activity_timeline(bright, 12)
+        assert bright_tl[1]["level"] >= dark_tl[1]["level"]
 
 
 class TestMonthlyData:
@@ -840,3 +968,135 @@ class TestDeriveCoast:
         assert ranking == [], (
             "Unknown coast must produce empty species list, not east/default species"
         )
+
+
+def test_personalize_caught_here_boost(monkeypatch):
+    """Species the user has landed here get a score bump, a flag, and rerank."""
+    from domain import forecast as fc
+
+    # Stub the species-dependent section rebuilds (and the networked outlook)
+    # so the test isolates the caught-here boost.
+    for name in (
+        "build_rig_recommendations", "build_bait_ranking", "build_lure_recommendations",
+        "build_species_calendar", "build_bite_alerts", "build_gear_checklist",
+        "build_safety_checklist", "build_spot_tips", "build_best_times",
+        "build_multiday_outlook", "pick_best_fishing_day",
+    ):
+        monkeypatch.setattr(fc, name, lambda *a, **k: [])
+    monkeypatch.setattr(fc, "_get_technique_tip", lambda *a, **k: "")
+
+    forecast = {
+        "generated_at": "2026-06-10T10:00:00",
+        "conditions": {"verdict": "Good", "water_temp_f": 70, "wind": "NE 6-10 kt",
+                       "waves": "1-2 ft", "wind_dir": "NE"},
+        "tide_state": "Rising",
+        "solunar": {},
+        "species": [
+            {"name": "Bluefish", "score": 80, "rank": 1, "rig": "x", "hook_size": "2/0",
+             "sinker": "2 oz", "bait": "cut", "activity": "Hot", "explanation": "",
+             "categories": [], "lures": ""},
+            {"name": "Red drum", "score": 70, "rank": 2, "rig": "x", "hook_size": "2/0",
+             "sinker": "2 oz", "bait": "cut", "activity": "Active", "explanation": "",
+             "categories": [], "lures": ""},
+        ],
+    }
+    loc = {"id": "loc", "conditions_region": "atlantic", "timezone": "America/New_York"}
+
+    out = fc.personalize_forecast(
+        forecast, {}, loc, caught_species={"red drum"}
+    )
+    by_name = {s["name"]: s for s in out["species"]}
+    assert by_name["Red drum"].get("caught_here") is True
+    assert by_name["Red drum"]["score"] == 78  # 70 + 8
+    # 78 < 80 so Bluefish still leads, but Red drum keeps its flag and bump.
+    assert by_name["Bluefish"].get("caught_here") is not True
+
+    # A bigger boost would overtake — verify reranking happens when it does.
+    fc._PERSONALIZE_CACHE.clear()  # same generated_at would otherwise cache-hit
+    forecast["species"][1]["score"] = 75
+    out2 = fc.personalize_forecast(
+        forecast, {}, loc, caught_species={"red drum"}
+    )
+    assert out2["species"][0]["name"] == "Red drum"  # 75+8=83 > 80
+    assert out2["species"][0]["rank"] == 1
+
+
+class TestPickBestFishingDay:
+    def test_tier_dominates_score(self):
+        from domain.forecast import pick_best_fishing_day
+        # Excellent (low score) beats Good (high score) — tier wins.
+        out = pick_best_fishing_day(
+            "Fair",
+            [
+                {"day": "Sat", "verdict": "Good", "score": 70, "top_species": []},
+                {"day": "Sun", "verdict": "Excellent", "score": 50, "top_species": []},
+            ],
+            today_score=40,
+        )
+        assert out["best_day"] == "Sun"
+        assert out["verdict"] == "Excellent"
+
+    def test_numeric_score_breaks_tie_within_tier(self):
+        from domain.forecast import pick_best_fishing_day
+        out = pick_best_fishing_day(
+            "Fair",
+            [
+                {"day": "Sat", "verdict": "Good", "score": 62, "top_species": []},
+                {"day": "Sun", "verdict": "Good", "score": 75, "top_species": []},
+            ],
+            today_score=40,
+        )
+        assert out["best_day"] == "Sun"  # higher score within the same tier
+
+    def test_today_can_win(self):
+        from domain.forecast import pick_best_fishing_day
+        out = pick_best_fishing_day(
+            "Excellent",
+            [{"day": "Sat", "verdict": "Fair", "score": 50, "top_species": []}],
+            today_score=88,
+        )
+        assert out["best_day"] == "Today"
+        assert "great" in out["recommendation"].lower()
+
+
+class TestSafetyChecklistPFD:
+    def _has_pfd(self, items):
+        return any("PFD" in i["text"] or "life vest" in i["text"] for i in items)
+
+    def test_heavy_surf_adds_pfd_for_shore_angler(self):
+        from domain.forecast import build_safety_checklist
+        assert self._has_pfd(build_safety_checklist(wave_range=(4, 5), fishing_types=["surf"]))
+        assert self._has_pfd(build_safety_checklist(wave_range=(5, 7), fishing_types=["jetty"]))
+
+    def test_calm_surf_no_pfd(self):
+        from domain.forecast import build_safety_checklist
+        assert not self._has_pfd(build_safety_checklist(wave_range=(1, 2), fishing_types=["surf"]))
+
+    def test_kayak_not_duplicated(self):
+        from domain.forecast import build_safety_checklist
+        items = build_safety_checklist(wave_range=(4, 5), fishing_types=["kayak"])
+        assert sum("inflatable PFD" in i["text"] for i in items) == 0
+
+
+class TestRecentRainTips:
+    def _titles(self, tips):
+        return [t["title"] for t in tips]
+
+    def test_heavy_rain_muddy_water_tip(self):
+        from domain.forecast import build_spot_tips
+        tips = build_spot_tips(recent_rain_in=1.3, coast="east")
+        assert any("Muddy Water" in t for t in self._titles(tips))
+
+    def test_moderate_rain_runoff_tip(self):
+        from domain.forecast import build_spot_tips
+        tips = build_spot_tips(recent_rain_in=0.6, coast="east")
+        assert any("Runoff" in t for t in self._titles(tips))
+
+    def test_light_rain_no_tip(self):
+        from domain.forecast import build_spot_tips
+        tips = build_spot_tips(recent_rain_in=0.2, coast="east")
+        assert not any("Runoff" in t or "Muddy" in t for t in self._titles(tips))
+
+    def test_none_rain_safe(self):
+        from domain.forecast import build_spot_tips
+        assert isinstance(build_spot_tips(recent_rain_in=None, coast="east"), list)

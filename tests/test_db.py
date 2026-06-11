@@ -114,3 +114,53 @@ class TestLogStats:
         assert stats2["total"] == 1
         assert stats1["top_species"] == "Drum"
         assert stats2["top_species"] == "Bluefish"
+
+
+def test_catch_log_migration_upgrades_old_db(tmp_path, monkeypatch):
+    """An old catch_log (no condition columns) is upgraded in place, data kept."""
+    import sqlite3
+    import storage.sqlite as sq
+
+    db_path = str(tmp_path / "old.db")
+    con = sqlite3.connect(db_path)
+    con.executescript(
+        """
+        CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE COLLATE NOCASE, password_hash TEXT,
+            email TEXT UNIQUE COLLATE NOCASE, email_confirmed INTEGER NOT NULL DEFAULT 1,
+            default_location_id TEXT, session_version INTEGER NOT NULL DEFAULT 0,
+            is_anonymous INTEGER DEFAULT 0, display_name TEXT, avatar_url TEXT,
+            is_admin INTEGER DEFAULT 0, password_reset_token TEXT,
+            password_reset_sent_at TEXT, created_at TEXT DEFAULT (datetime('now')));
+        CREATE TABLE catch_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL,
+            location_id TEXT NOT NULL, species TEXT NOT NULL, size TEXT, notes TEXT,
+            caught_at TEXT NOT NULL DEFAULT (datetime('now')));
+        INSERT INTO users (id, username, password_hash) VALUES (5, 'old', 'x');
+        INSERT INTO catch_log (user_id, location_id, species, size)
+            VALUES (5, 'loc', 'Red drum', '20 in');
+        """
+    )
+    con.commit()
+    con.close()
+
+    monkeypatch.setattr(sq, "DB_PATH", db_path)
+    sq.init_db()  # runs the migration
+    sq.init_db()  # must be idempotent
+
+    conn = sq.get_db()
+    try:
+        cols = {r[1] for r in conn.execute("PRAGMA table_info(catch_log)").fetchall()}
+        assert {"bait", "tide_state", "wind_dir", "water_temp_f", "moon_phase"} <= cols
+        row = conn.execute(
+            "SELECT species, size, tide_state FROM catch_log WHERE id = 1"
+        ).fetchone()
+        assert row["species"] == "Red drum" and row["size"] == "20 in"
+        assert row["tide_state"] is None
+        tables = {
+            r[0] for r in conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='table'"
+            ).fetchall()
+        }
+        assert {"push_subscriptions", "notification_log"} <= tables
+    finally:
+        conn.close()

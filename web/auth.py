@@ -447,6 +447,11 @@ def account_settings() -> Any:
     if temp_units not in {"F", "C"}:
         temp_units = "F"
     weekly_email = request.form.get("weekly_email") == "on"
+    # Merge into existing notification_prefs so toggling display settings here
+    # doesn't wipe the alert settings managed by the Fishing Condition Alerts
+    # panel (enabled / channels / min_rating / lead_hours).
+    notif_prefs = dict(get_preferences(g.user["id"]).get("notification_prefs") or {})
+    notif_prefs["weekly_email"] = weekly_email
     favorite_ids = [
         loc_id.strip()
         for loc_id in request.form.get("favorites_csv", "").split(",")
@@ -463,7 +468,7 @@ def account_settings() -> Any:
         wind_units=wind_units,
         temp_units=temp_units,
         units=temp_units,
-        notification_prefs={"weekly_email": weekly_email},
+        notification_prefs=notif_prefs,
         favorites=favorite_ids,
         default_location_id=default_location_id,
     )

@@ -122,6 +122,11 @@ CREATE TABLE IF NOT EXISTS catch_log (
     species     TEXT NOT NULL,
     size        TEXT,
     notes       TEXT,
+    bait          TEXT,
+    tide_state    TEXT,
+    wind_dir      TEXT,
+    water_temp_f  REAL,
+    moon_phase    TEXT,
     caught_at   TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_catch_log_user_loc_time
@@ -176,6 +181,27 @@ CREATE TABLE IF NOT EXISTS custom_habitat_types (
     created_by    INTEGER REFERENCES users(id) ON DELETE SET NULL,
     is_deleted    INTEGER NOT NULL DEFAULT 0,
     created_at    TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    endpoint    TEXT    NOT NULL UNIQUE,
+    p256dh      TEXT    NOT NULL,
+    auth        TEXT    NOT NULL,
+    created_at  TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user
+ON push_subscriptions(user_id);
+
+CREATE TABLE IF NOT EXISTS notification_log (
+    user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    location_id TEXT    NOT NULL,
+    sent_date   TEXT    NOT NULL,
+    window_label TEXT,
+    channel     TEXT,
+    created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (user_id, location_id, sent_date)
 );
 """
 
@@ -271,6 +297,19 @@ def _run_migrations(conn: sqlite3.Connection) -> None:
         )
     if "is_admin" not in user_cols:
         conn.execute("ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0")
+
+    # Catch-log condition snapshot columns (added for catch-pattern learning).
+    if _table_exists(conn, "catch_log"):
+        catch_cols = set(_column_names(conn, "catch_log"))
+        for col, decl in (
+            ("bait", "TEXT"),
+            ("tide_state", "TEXT"),
+            ("wind_dir", "TEXT"),
+            ("water_temp_f", "REAL"),
+            ("moon_phase", "TEXT"),
+        ):
+            if col not in catch_cols:
+                conn.execute(f"ALTER TABLE catch_log ADD COLUMN {col} {decl}")
 
     # Seed the built-in admin account (dev / local use).
     _ADMIN_USERNAME = "admin"
@@ -744,6 +783,148 @@ def save_preferences(user_id: int, **kwargs: Any) -> None:
         conn.close()
 
 
+# Notifications --------------------------------------------------------------
+
+
+def iter_notification_candidates() -> list[dict[str, Any]]:
+    """Return verified users who have a non-empty notification_prefs object.
+
+    Each row: {user_id, email, notification_prefs, fishing_profile, favorites,
+    default_location_id, timezone}.  Callers still decide whether each user is
+    actually opted in (prefs['enabled']) and how to reach them; this only does
+    the cheap SQL-side filtering (confirmed email present, prefs not empty).
+    """
+    conn = get_db()
+    try:
+        rows = conn.execute(
+            """
+            SELECT u.id AS user_id, u.email AS email,
+                   u.default_location_id AS default_location_id,
+                   p.notification_prefs AS notification_prefs,
+                   p.fishing_profile AS fishing_profile,
+                   p.favorites AS favorites,
+                   p.timezone AS timezone
+            FROM users u
+            JOIN profiles p ON p.user_id = u.id
+            WHERE u.email IS NOT NULL
+              AND u.email_confirmed = 1
+              AND p.notification_prefs IS NOT NULL
+              AND p.notification_prefs NOT IN ('', '{}')
+            """
+        ).fetchall()
+    finally:
+        conn.close()
+
+    def _loads(raw: Any, default: Any) -> Any:
+        if not raw:
+            return default
+        try:
+            return json.loads(raw)
+        except Exception:
+            return default
+
+    out: list[dict[str, Any]] = []
+    for row in rows:
+        out.append(
+            {
+                "user_id": row["user_id"],
+                "email": row["email"],
+                "default_location_id": row["default_location_id"],
+                "notification_prefs": _loads(row["notification_prefs"], {}),
+                "fishing_profile": _loads(row["fishing_profile"], {}) or {},
+                "favorites": _loads(row["favorites"], []) or [],
+                "timezone": row["timezone"] or "",
+            }
+        )
+    return out
+
+
+def was_notified(user_id: int, location_id: str, sent_date: str) -> bool:
+    """True if this user/location was already notified on *sent_date* (YYYY-MM-DD)."""
+    conn = get_db()
+    try:
+        row = conn.execute(
+            "SELECT 1 FROM notification_log WHERE user_id = ? AND location_id = ? AND sent_date = ?",
+            (user_id, location_id, sent_date),
+        ).fetchone()
+        return row is not None
+    finally:
+        conn.close()
+
+
+def record_notification(
+    user_id: int,
+    location_id: str,
+    sent_date: str,
+    window_label: str = "",
+    channel: str = "",
+) -> None:
+    """Record that a notification fired (idempotent per user/location/day)."""
+    conn = get_db()
+    try:
+        conn.execute(
+            """
+            INSERT OR IGNORE INTO notification_log
+                (user_id, location_id, sent_date, window_label, channel)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (user_id, location_id, sent_date, window_label, channel),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def add_push_subscription(
+    user_id: int, endpoint: str, p256dh: str, auth: str
+) -> None:
+    """Store (or refresh) a Web Push subscription for a user."""
+    conn = get_db()
+    try:
+        conn.execute(
+            """
+            INSERT INTO push_subscriptions (user_id, endpoint, p256dh, auth)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(endpoint) DO UPDATE SET
+                user_id = excluded.user_id,
+                p256dh = excluded.p256dh,
+                auth = excluded.auth
+            """,
+            (user_id, endpoint, p256dh, auth),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def get_push_subscriptions(user_id: int) -> list[dict[str, str]]:
+    """Return all stored Web Push subscriptions for a user."""
+    conn = get_db()
+    try:
+        rows = conn.execute(
+            "SELECT endpoint, p256dh, auth FROM push_subscriptions WHERE user_id = ?",
+            (user_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+    return [
+        {"endpoint": r["endpoint"], "p256dh": r["p256dh"], "auth": r["auth"]}
+        for r in rows
+    ]
+
+
+def delete_push_subscription(endpoint: str) -> None:
+    """Remove a single push subscription by endpoint (e.g. after a 410 Gone)."""
+    conn = get_db()
+    try:
+        conn.execute(
+            "DELETE FROM push_subscriptions WHERE endpoint = ?", (endpoint,)
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
 # Page layout ----------------------------------------------------------------
 
 
@@ -785,7 +966,7 @@ def get_log_entries(
     conn = get_db()
     try:
         rows = conn.execute(
-            "SELECT id, species, size, notes, caught_at FROM catch_log "
+            "SELECT id, species, size, notes, bait, caught_at FROM catch_log "
             "WHERE user_id = ? AND location_id = ? ORDER BY caught_at DESC, id DESC LIMIT ?",
             (user_id, location_id, limit),
         ).fetchall()
@@ -797,6 +978,47 @@ def get_log_entries(
             "species": r["species"],
             "size": r["size"],
             "notes": r["notes"],
+            "bait": r["bait"],
+            "date": r["caught_at"],
+        }
+        for r in rows
+    ]
+
+
+def get_catch_conditions(
+    user_id: int, location_id: str = "", limit: int = 500
+) -> list[dict[str, Any]]:
+    """Return catch-log rows with their captured condition snapshot.
+
+    When *location_id* is empty, returns catches across all of the user's
+    locations (for cross-location pattern analysis).
+    """
+    conn = get_db()
+    try:
+        if location_id:
+            rows = conn.execute(
+                "SELECT species, bait, tide_state, wind_dir, water_temp_f, moon_phase, "
+                "caught_at FROM catch_log WHERE user_id = ? AND location_id = ? "
+                "ORDER BY caught_at DESC, id DESC LIMIT ?",
+                (user_id, location_id, limit),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT species, bait, tide_state, wind_dir, water_temp_f, moon_phase, "
+                "caught_at FROM catch_log WHERE user_id = ? "
+                "ORDER BY caught_at DESC, id DESC LIMIT ?",
+                (user_id, limit),
+            ).fetchall()
+    finally:
+        conn.close()
+    return [
+        {
+            "species": r["species"],
+            "bait": r["bait"],
+            "tide_state": r["tide_state"],
+            "wind_dir": r["wind_dir"],
+            "water_temp_f": r["water_temp_f"],
+            "moon_phase": r["moon_phase"],
             "date": r["caught_at"],
         }
         for r in rows
@@ -805,21 +1027,101 @@ def get_log_entries(
 
 _CATCH_LOG_SIZE_MAX = 50  # e.g. "24 inches"
 _CATCH_LOG_NOTES_MAX = 1000  # free-text field
+_CATCH_LOG_BAIT_MAX = 60  # e.g. "live shrimp"
+
+
+def get_recent_catch_activity(
+    location_id: str, days: int = 7, min_contributors: int = 3
+) -> Optional[dict[str, Any]]:
+    """Aggregate recent shared catches at a location (privacy-preserving).
+
+    Only counts catches from users who opted in (``fishing_profile.share_catches``)
+    and only returns anything when at least *min_contributors* distinct anglers
+    contributed — k-anonymity so no single user's activity is identifiable.
+    Returns ``None`` when the threshold isn't met. The result never exposes
+    individual users: just totals and the top species.
+    """
+    if not location_id:
+        return None
+    conn = get_db()
+    try:
+        rows = conn.execute(
+            """
+            SELECT cl.user_id AS uid, cl.species AS species
+            FROM catch_log cl
+            JOIN profiles p ON p.user_id = cl.user_id
+            WHERE cl.location_id = ?
+              AND cl.caught_at >= datetime('now', ?)
+              AND json_extract(p.fishing_profile, '$.share_catches') = 1
+            """,
+            (location_id, f"-{int(days)} days"),
+        ).fetchall()
+    finally:
+        conn.close()
+
+    contributors = {r["uid"] for r in rows}
+    if len(contributors) < min_contributors:
+        return None
+
+    species_counts: dict[str, int] = {}
+    for r in rows:
+        name = (r["species"] or "").strip()
+        if name:
+            species_counts[name] = species_counts.get(name, 0) + 1
+    top = sorted(species_counts.items(), key=lambda kv: -kv[1])[:5]
+
+    return {
+        "count": len(rows),
+        "contributors": len(contributors),
+        "days": int(days),
+        "top_species": [{"species": n, "count": c} for n, c in top],
+    }
 
 
 def add_log_entry(
-    user_id: int, location_id: str, species: str, size: str = "", notes: str = ""
+    user_id: int,
+    location_id: str,
+    species: str,
+    size: str = "",
+    notes: str = "",
+    bait: str = "",
+    conditions: Optional[dict[str, Any]] = None,
 ) -> int:
+    """Insert a catch-log entry, optionally snapshotting the conditions.
+
+    *conditions* (when supplied) captures the forecast at catch time so the
+    pattern-analysis can later correlate catches with tide/wind/temp/moon.
+    Recognized keys: tide_state, wind_dir, water_temp_f, moon_phase.
+    """
+    c = conditions or {}
+    tide_state = (str(c.get("tide_state") or "")[:20]) or None
+    wind_dir = (str(c.get("wind_dir") or "")[:8]) or None
+    moon_phase = (str(c.get("moon_phase") or "")[:32]) or None
+    bait_val = (bait.strip()[:_CATCH_LOG_BAIT_MAX]) or None
+    try:
+        water_temp_f = (
+            float(c["water_temp_f"]) if c.get("water_temp_f") is not None else None
+        )
+    except (TypeError, ValueError):
+        water_temp_f = None
+
     conn = get_db()
     try:
         cur = conn.execute(
-            "INSERT INTO catch_log (user_id, location_id, species, size, notes) VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO catch_log "
+            "(user_id, location_id, species, size, notes, bait, tide_state, wind_dir, "
+            "water_temp_f, moon_phase) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 user_id,
                 location_id,
                 species.strip()[:100],
                 size.strip()[:_CATCH_LOG_SIZE_MAX],
                 notes.strip()[:_CATCH_LOG_NOTES_MAX],
+                bait_val,
+                tide_state,
+                wind_dir,
+                water_temp_f,
+                moon_phase,
             ),
         )
         conn.commit()

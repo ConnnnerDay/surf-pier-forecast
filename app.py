@@ -566,6 +566,19 @@ def create_app() -> Flask:
 
     _threading.Thread(target=_prune_cache, daemon=True).start()
 
+    # Opt-in fishing-condition notifications.  Safe to start unconditionally:
+    # it is a cheap DB scan when nobody has opted in and never sends anything
+    # unless a channel (SMTP / VAPID) is configured.  Disable with
+    # NOTIFICATIONS_ENABLED=0.
+    try:
+        from services.notifications import start_notification_poller
+
+        start_notification_poller()
+    except Exception as _exc:
+        logging.getLogger(__name__).debug(
+            "notification poller not started (non-fatal): %s", _exc
+        )
+
     return app
 
 

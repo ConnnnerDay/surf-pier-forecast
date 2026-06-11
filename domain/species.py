@@ -10,7 +10,12 @@ from pathlib import Path
 from typing import Any, Callable, Optional
 
 from locations import get_monthly_water_temps
-from regulations import classify_legality, lookup_regulation, should_hide_from_forecast
+from regulations import (
+    classify_legality,
+    lookup_regulation,
+    season_status as _season_status,
+    should_hide_from_forecast,
+)
 from storage.species_loader import SPECIES_DB, SPECIES_DB_BY_COAST, SPECIES_DB_MAP
 
 logger = logging.getLogger(__name__)
@@ -849,6 +854,84 @@ _BEGINNER_FRIENDLY_RIGS = frozenset(
     {"fishfinder", "hi-lo", "pompano", "float", "popping-cork"}
 )
 
+def _condition_rig_tip(
+    wind_range: Optional[tuple[float, float]],
+    wave_range: Optional[tuple[float, float]],
+    water_temp: Optional[float],
+    tide_state: str,
+    fishing_types: set[str],
+    gear_type: str,
+) -> str:
+    """A short, actionable gear tweak for the current conditions.
+
+    Tailored by *gear_type* ("bait" / "lure" / "fly" / "mixed") so a bottom
+    rig hears about sinker weight while a lure rig hears about line/clarity.
+    Returns "" when there's nothing condition-specific worth saying.
+    """
+    avg_wind = (wind_range[0] + wind_range[1]) / 2 if wind_range else None
+    avg_wave = (wave_range[0] + wave_range[1]) / 2 if wave_range else None
+    moving_tide = tide_state in ("Rising", "Falling")
+    parts: list[str] = []
+
+    # Sinker / holding weight — most relevant to bottom & bait presentations.
+    if gear_type in ("bait", "mixed"):
+        rough = (avg_wave is not None and avg_wave >= 4) or (
+            avg_wind is not None and avg_wind >= 20
+        )
+        moderate = (avg_wave is not None and avg_wave >= 2.5) or (
+            avg_wind is not None and avg_wind >= 14
+        )
+        calm = (avg_wave is not None and avg_wave < 1.5) and (
+            avg_wind is not None and avg_wind < 8
+        )
+        if rough:
+            parts.append(
+                "Heavy surf/wind — step up to a 5-6 oz pyramid or sputnik to hold bottom"
+            )
+        elif moderate:
+            parts.append("Choppy — a 3-4 oz pyramid holds best in the wash")
+        elif calm:
+            parts.append("Calm — a 1-2 oz egg or bank sinker is plenty")
+        if moving_tide and ("bridge" in fishing_types or "jetty" in fishing_types):
+            parts.append("add weight to hold against the moving current")
+
+    # Line / leader — clarity proxy from sea state, relevant to lures & fly.
+    if gear_type in ("lure", "fly", "mixed"):
+        if avg_wave is not None and avg_wind is not None and avg_wave < 1.5 and avg_wind < 8:
+            parts.append(
+                "Clear, calm water — drop to a lighter 15-20 lb fluorocarbon "
+                "leader; fish are line-shy"
+            )
+        elif avg_wave is not None and avg_wave >= 4:
+            parts.append(
+                "Stirred-up water — a heavier 40-50 lb leader is fine and adds "
+                "abrasion resistance"
+            )
+
+    # Rod length — surf distance and pier height.
+    if "surf" in fishing_types and avg_wave is not None and avg_wave >= 3:
+        parts.append("a 10-12 ft surf rod helps reach past the breakers")
+    elif "pier" in fishing_types and avg_wave is not None and avg_wave >= 4:
+        parts.append("bring a pier gaff or drop net to land fish from height")
+
+    # Water temperature presentation cue.
+    if water_temp is not None:
+        if water_temp < 55:
+            parts.append(
+                "Cold water — downsize baits and slow the presentation for finicky fish"
+            )
+        elif water_temp > 82:
+            parts.append("Warm water — fish deeper or shaded structure and keep bait lively")
+
+    if not parts:
+        return ""
+    # Capitalize the first fragment; join the rest as a single sentence.
+    tip = parts[0]
+    for extra in parts[1:]:
+        tip += "; " + extra[0].lower() + extra[1:]
+    return tip + "."
+
+
 def build_rig_recommendations(
     species_ranking: list[dict[str, Any]],
     fishing_types: Optional[list[str]] = None,
@@ -856,6 +939,10 @@ def build_rig_recommendations(
     live_bait: str = "",
     cut_bait: str = "",
     lures: str = "",
+    wind_range: Optional[tuple[float, float]] = None,
+    wave_range: Optional[tuple[float, float]] = None,
+    water_temp: Optional[float] = None,
+    tide_state: str = "",
 ) -> list[dict[str, Any]]:
     """Build rig recommendations based on currently-active species.
 
@@ -973,6 +1060,23 @@ def build_rig_recommendations(
         advanced = [r for r in recommendations if r not in beginner]
         # Beginners get friendly rigs first, capped at 3 total.
         recommendations = (beginner + advanced)[:3]
+
+    # ── Condition-aware gear tweaks ─────────────────────────────────────────
+    # Annotate each rig with an actionable adjustment for today's wind, waves,
+    # current, and water temp (heavier sinkers in surf, lighter leaders in
+    # clear calm water, rod-length and presentation cues).
+    if wind_range or wave_range or water_temp is not None:
+        for rec in recommendations:
+            tip = _condition_rig_tip(
+                wind_range,
+                wave_range,
+                water_temp,
+                tide_state,
+                ft,
+                _gear_type_for_rec(rec),
+            )
+            if tip:
+                rec["cond_tip"] = tip
 
     return recommendations
 
@@ -2032,6 +2136,10 @@ def build_species_ranking(
 
         if regulation:
             entry["regulation"] = regulation
+            # Whether this species is in its open season *right now*, so the
+            # card can show an accurate badge instead of a raw "Closed Jan-Apr"
+            # string that's actually inactive this month.
+            entry["season_status"] = _season_status(regulation, month)
         # Expose legality status so templates can show uncertainty / stale warnings
         # without needing to re-parse regulation text.  Only set when state was queried.
         if regulation_status is not None:

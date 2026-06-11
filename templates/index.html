@@ -170,6 +170,75 @@
         {% include 'partials/_species.html' %}
     </div>
     </div><!-- /.section-block whats-biting -->
+    {% if g.user %}
+    <div class="section-block" data-section-id="your-patterns" data-section-label="Your Patterns" id="your-patterns-block" hidden>
+        <div class="catch-patterns" style="border-top:none;margin-top:0">
+            <h4 class="cp-title">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg>
+                Your Patterns
+            </h4>
+            <p class="cp-sub">Learned from the conditions recorded when you logged catches here.</p>
+            <ul class="cp-list" id="dash-cp-list"></ul>
+        </div>
+    </div>
+    <script>
+    (function () {
+        var locId = {{ (forecast.location_id or '') | tojson }};
+        var block = document.getElementById('your-patterns-block');
+        var list = document.getElementById('dash-cp-list');
+        if (!block || !list || !locId) return;
+        fetch('/api/v1/log/patterns?location_id=' + encodeURIComponent(locId))
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (body) {
+                var data = body && body.data || {};
+                var insights = data.insights || [];
+                var matches = data.matches || [];
+                if (!insights.length) return;
+                insights.forEach(function (text) {
+                    var li = document.createElement('li');
+                    li.className = 'cp-item' + (matches.indexOf(text) !== -1 ? ' cp-item--match' : '');
+                    li.textContent = text;
+                    list.appendChild(li);
+                });
+                block.hidden = false;
+            }).catch(function () {});
+    })();
+    </script>
+    <div class="section-block" data-section-id="community" data-section-label="Recent Catches Nearby" id="community-block" hidden>
+        <div class="catch-patterns" style="border-top:none;margin-top:0">
+            <h4 class="cp-title">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                Recent Catches Nearby
+            </h4>
+            <p class="cp-sub" id="community-sub"></p>
+            <ul class="cp-list" id="community-list"></ul>
+        </div>
+    </div>
+    <script>
+    (function () {
+        var locId = {{ (forecast.location_id or '') | tojson }};
+        var block = document.getElementById('community-block');
+        var sub = document.getElementById('community-sub');
+        var list = document.getElementById('community-list');
+        if (!block || !list || !locId) return;
+        fetch('/api/v1/community/activity?location_id=' + encodeURIComponent(locId))
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (body) {
+                var d = body && body.data;
+                if (!d || !d.available) return;
+                sub.textContent = d.contributors + ' anglers logged ' + d.count +
+                    ' catch' + (d.count === 1 ? '' : 'es') + ' here in the last ' + d.days + ' days.';
+                (d.top_species || []).forEach(function (s) {
+                    var li = document.createElement('li');
+                    li.className = 'cp-item';
+                    li.textContent = s.species + ' — ' + s.count;
+                    list.appendChild(li);
+                });
+                block.hidden = false;
+            }).catch(function () {});
+    })();
+    </script>
+    {% endif %}
     {% if profile_incomplete %}
     <div class="banner banner--profile-nudge" id="profile-nudge-banner">
         <span>
@@ -388,6 +457,15 @@
                             <dt>Hook</dt><dd>{{ rig.hook }}</dd>
                             <dt>Sinker</dt><dd>{{ rig.sinker }}</dd>
                         </dl>
+                        {% if rig.cond_tip %}
+                        <p class="rig-cond-tip">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a7 7 0 0 0-4 12.7V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.3A7 7 0 0 0 12 2z"/><line x1="9" y1="21" x2="15" y2="21"/></svg>
+                            <span><strong>Today&rsquo;s tweak:</strong> {{ rig.cond_tip }}</span>
+                        </p>
+                        {% endif %}
+                        {% if rig.cr_tip %}
+                        <p class="rig-cr-tip">{{ rig.cr_tip }}</p>
+                        {% endif %}
                         {% if rig.knots %}
                         <div class="rig-knots">
                             <h4 class="rig-knots-title">Recommended Knots</h4>
@@ -417,6 +495,8 @@
                             {% elif tip.icon == 'tide' %}<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h4l3-9 4 18 3-9h6"/></svg>
                             {% elif tip.icon == 'time' %}<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                             {% elif tip.icon == 'season' %}<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                            {% elif tip.icon == 'water' %}<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.7s6 6 6 10a6 6 0 0 1-12 0c0-4 6-10 6-10z"/></svg>
+                            {% elif tip.icon == 'warning' %}<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                             {% endif %}
                         </div>
                         <div class="spot-tip-body">
@@ -725,12 +805,16 @@ if (IS_REFRESHING && CURRENT_LOC_ID) {
 // ── Offline snapshot — saves key forecast data so offline.html can show it ──
 (function () {
     try {
+        {% set _score = forecast.conditions.fishability_score_for_angler | default(none) %}
+        {% if _score is none %}{% set _score = forecast.conditions.fishability_score | default(none) %}{% endif %}
         var snap = {
             location_name: {{ (forecast.location_name or '') | tojson }},
             generated_at:  {{ (forecast.generated_at or '') | tojson }},
             saved_at: Date.now(),
             conditions: {
-                verdict:      {{ (forecast.conditions.verdict or '') | tojson }},
+                verdict:      {{ (forecast.conditions.verdict_for_angler or forecast.conditions.verdict_for_type or forecast.conditions.verdict or '') | tojson }},
+                score:        {{ _score | tojson if _score is not none else 'null' }},
+                summary:      {{ (forecast.conditions.summary or '') | tojson }},
                 water_temp_f: {{ (forecast.conditions.water_temp_f | string) if forecast.conditions.water_temp_f is not none else 'null' }},
                 wind:         {{ (forecast.conditions.wind or '') | tojson }},
                 waves:        {{ (forecast.conditions.waves or '') | tojson }},
@@ -739,6 +823,8 @@ if (IS_REFRESHING && CURRENT_LOC_ID) {
             tide_state: {{ (forecast.tide_state or '') | tojson }},
             tides: {{ (forecast.tides[:6] if forecast.tides else []) | tojson }},
             species: {{ (forecast.species[:5] if forecast.species else []) | tojson }},
+            best_times: {{ (forecast.best_times[:4] if forecast.best_times else []) | tojson }},
+            gear: {{ (forecast.gear_checklist[:14] if forecast.gear_checklist else []) | tojson }},
             solunar: {{ (forecast.solunar) | tojson if forecast.solunar else 'null' }}
         };
         localStorage.setItem('fishforecast_snapshot', JSON.stringify(snap));

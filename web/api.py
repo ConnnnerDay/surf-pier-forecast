@@ -48,14 +48,19 @@ from services.arcgis_live_feeds import (
 )
 from storage.sqlite import (
     add_log_entry,
+    add_push_subscription,
     delete_log_entry,
+    delete_push_subscription,
+    get_catch_conditions,
     get_log_entries,
     get_log_stats,
     get_page_layout,
     get_preferences,
+    get_recent_catch_activity,
     save_page_layout,
     save_preferences,
 )
+from domain.catch_insights import analyze_catch_patterns
 from web.auth import record_refresh_attempt, refresh_is_rate_limited
 from web.helpers import get_session_location
 from web.openapi import build_openapi_spec
@@ -377,6 +382,117 @@ def page_layout_v1() -> Any:
     return jsonify(success_envelope({"ok": True}))
 
 
+@bp.route("/api/v1/push/public-key", methods=["GET"])
+def push_public_key_v1() -> Any:
+    """Return the VAPID public key (and whether push is configured)."""
+    from services.push import get_public_key, is_push_configured
+
+    return jsonify(
+        success_envelope(
+            {"publicKey": get_public_key(), "configured": is_push_configured()}
+        )
+    )
+
+
+@bp.route("/api/v1/push/subscribe", methods=["POST"])
+def push_subscribe_v1() -> Any:
+    """Store a browser Web Push subscription for the logged-in user."""
+    if g.user is None:
+        return jsonify(error_envelope("unauthorized", "Not logged in")), 401
+
+    data = request.get_json(silent=True) or {}
+    sub = data.get("subscription") if isinstance(data.get("subscription"), dict) else data
+    endpoint = sub.get("endpoint") if isinstance(sub, dict) else None
+    keys = sub.get("keys") if isinstance(sub, dict) else None
+    if (
+        not isinstance(endpoint, str)
+        or not endpoint
+        or len(endpoint) > 1024
+        or not isinstance(keys, dict)
+    ):
+        return _json_error(
+            ApiError("invalid_subscription", "Malformed push subscription", status=400)
+        )
+    p256dh = keys.get("p256dh")
+    auth = keys.get("auth")
+    if not isinstance(p256dh, str) or not isinstance(auth, str) or not p256dh or not auth:
+        return _json_error(
+            ApiError("invalid_subscription", "Subscription missing keys", status=400)
+        )
+
+    add_push_subscription(g.user["id"], endpoint, p256dh, auth)
+    return jsonify(success_envelope({"ok": True}))
+
+
+@bp.route("/api/v1/push/unsubscribe", methods=["POST"])
+def push_unsubscribe_v1() -> Any:
+    """Remove a browser Web Push subscription by endpoint."""
+    if g.user is None:
+        return jsonify(error_envelope("unauthorized", "Not logged in")), 401
+
+    data = request.get_json(silent=True) or {}
+    endpoint = data.get("endpoint")
+    if not isinstance(endpoint, str) or not endpoint:
+        return _json_error(
+            ApiError("invalid_param", "endpoint is required", status=400)
+        )
+    delete_push_subscription(endpoint)
+    return jsonify(success_envelope({"ok": True}))
+
+
+@bp.route("/api/v1/notifications/test", methods=["POST"])
+def notifications_test_v1() -> Any:
+    """Send a test alert to the current user over their enabled channels.
+
+    Only ever targets the logged-in user's own email / push subscriptions, so
+    it can't be used to message anyone else. Reports which channels actually
+    sent (False when the channel is off or unconfigured).
+    """
+    if g.user is None:
+        return jsonify(error_envelope("unauthorized", "Not logged in")), 401
+
+    from storage.sqlite import get_push_subscriptions
+    from services.notifications import build_email
+
+    uid = g.user["id"]
+    prefs = get_preferences(uid).get("notification_prefs") or {}
+    import os as _os
+
+    site_url = _os.environ.get("SITE_URL", "").rstrip("/")
+    results = {"email": False, "push": False}
+
+    decision: dict[str, Any] = {
+        "verdict": "Test alert",
+        "score": None,
+        "summary": "If you can read this, your fishing alerts are set up correctly.",
+        "best_times": [],
+        "window": "",
+    }
+
+    if prefs.get("email") and g.user.get("email"):
+        from services.email import send_email
+
+        manage_url = f"{site_url}/account" if site_url else ""
+        subject, text_body, html_body = build_email(
+            "your saved spot", decision, manage_url=manage_url
+        )
+        results["email"] = bool(
+            send_email(g.user["email"], f"[Test] {subject}", text_body, html_body)
+        )
+
+    if prefs.get("push"):
+        from services.push import send_push
+
+        url = f"{site_url}/account" if site_url else "/account"
+        for sub in get_push_subscriptions(uid):
+            if send_push(
+                sub, "Test alert", "Your push notifications are working.", url
+            ):
+                results["push"] = True
+
+    return jsonify(success_envelope({"sent": results}))
+
+
 @bp.route("/api/log", methods=["GET", "POST"])
 def log() -> Any:
     """Legacy log endpoint — superseded by /api/v1/log."""
@@ -402,11 +518,65 @@ def log() -> Any:
         payload.species,
         size=payload.size,
         notes=payload.notes,
+        bait=payload.bait,
+        conditions=_catch_conditions_snapshot(payload.location_id),
     )
     resp = jsonify({"ok": True, "id": entry_id})
     resp.headers["Deprecation"] = _DEPRECATION_HEADER
     resp.headers["Link"] = '</api/v1/log>; rel="successor-version"'
     return resp, 201
+
+
+def _catch_conditions_snapshot(location_id: str) -> dict[str, Any]:
+    """Pull the current forecast conditions for a location to stamp on a catch.
+
+    Best-effort: returns an empty dict if there's no cached forecast yet so a
+    catch is still logged (just without a condition snapshot).
+    """
+    if not location_id:
+        return {}
+    forecast = load_cached_forecast(location_id, user_id=None, include_stale=True)
+    if not forecast:
+        return {}
+    conditions = forecast.get("conditions", {}) or {}
+    solunar = forecast.get("solunar", {}) or {}
+    return {
+        "tide_state": forecast.get("tide_state", ""),
+        "wind_dir": conditions.get("wind_dir", ""),
+        "water_temp_f": conditions.get("water_temp_f"),
+        "moon_phase": solunar.get("moon_phase", ""),
+    }
+
+
+@bp.route("/api/v1/log/patterns", methods=["GET"])
+def log_patterns_v1() -> Any:
+    """Return learned catch patterns for the logged-in user."""
+    if g.user is None:
+        return jsonify(error_envelope("unauthorized", "Not logged in")), 401
+    uid = g.user["id"]
+    loc_id = (request.args.get("location_id") or request.args.get("location") or "").strip()
+    catches = get_catch_conditions(uid, loc_id)
+    # When scoped to a location, compare patterns against its current forecast.
+    current = _catch_conditions_snapshot(loc_id) if loc_id else None
+    return jsonify(success_envelope(analyze_catch_patterns(catches, current=current)))
+
+
+@bp.route("/api/v1/community/activity", methods=["GET"])
+def community_activity_v1() -> Any:
+    """Anonymized, aggregated recent-catch activity for a location.
+
+    Returns counts and top species only when enough distinct opted-in anglers
+    contributed (k-anonymity in the storage layer); otherwise ``available``
+    is false. No individual user data is ever exposed.
+    """
+    if g.user is None:
+        return jsonify(error_envelope("unauthorized", "Not logged in")), 401
+    loc_id = (request.args.get("location_id") or request.args.get("location") or "").strip()
+    activity = get_recent_catch_activity(loc_id) if loc_id else None
+    if not activity:
+        return jsonify(success_envelope({"available": False}))
+    activity["available"] = True
+    return jsonify(success_envelope(activity))
 
 
 @bp.route("/api/v1/log", methods=["GET", "POST"])
@@ -443,12 +613,15 @@ def log_v1() -> Any:
         payload.species,
         size=payload.size,
         notes=payload.notes,
+        bait=payload.bait,
+        conditions=_catch_conditions_snapshot(payload.location_id),
     )
     created = {
         "id": entry_id,
         "species": payload.species,
         "size": payload.size,
         "notes": payload.notes,
+        "bait": payload.bait,
         "location_id": payload.location_id,
     }
     return jsonify(success_envelope({"entry": created})), 201

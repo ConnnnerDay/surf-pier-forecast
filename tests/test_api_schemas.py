@@ -76,6 +76,11 @@ def test_openapi_contains_versioned_routes():
     assert "/api/v1/forecast" in spec["paths"]
     assert "/api/v1/profile" in spec["paths"]
     assert "/api/v1/log" in spec["paths"]
+    # Endpoints added for catch-pattern learning and web-push notifications.
+    assert "/api/v1/log/patterns" in spec["paths"]
+    assert "/api/v1/push/subscribe" in spec["paths"]
+    assert "/api/v1/push/public-key" in spec["paths"]
+    assert "/api/v1/community/activity" in spec["paths"]
 
 
 # ---------------------------------------------------------------------------
@@ -152,6 +157,71 @@ def test_profile_payload_rejects_invalid_condition_tolerance():
     )
 
 
+def test_notification_prefs_rejects_bad_min_rating():
+    _raises(
+        {"notification_prefs": {"min_rating": "Amazing"}},
+        "invalid_min_rating",
+    )
+
+
+def test_notification_prefs_rejects_out_of_range_lead_hours():
+    _raises(
+        {"notification_prefs": {"lead_hours": 99}},
+        "invalid_lead_hours",
+    )
+
+
+def test_notification_prefs_rejects_non_bool_enabled():
+    _raises(
+        {"notification_prefs": {"enabled": "yes"}},
+        "invalid_notification_enabled",
+    )
+
+
+def test_notification_prefs_accepted_and_normalized():
+    p = ProfilePayload.from_json(
+        {
+            "notification_prefs": {
+                "enabled": True,
+                "email": True,
+                "push": False,
+                "min_rating": "Excellent",
+                "lead_hours": 4,
+                "bogus": "dropped",
+            }
+        }
+    )
+    np = p.notification_prefs
+    assert np["enabled"] is True
+    assert np["min_rating"] == "Excellent"
+    assert np["lead_hours"] == 4
+    assert "bogus" not in np  # unknown keys are stripped
+    assert "notification_prefs" in p.as_updates()
+
+
+def test_notification_prefs_preserves_weekly_email():
+    # weekly_email is owned by the display-settings form; the API must keep it
+    # so saving alert settings doesn't wipe it.
+    p = ProfilePayload.from_json(
+        {"notification_prefs": {"enabled": True, "weekly_email": True}}
+    )
+    assert p.notification_prefs["weekly_email"] is True
+
+
+def test_profile_payload_rejects_out_of_range_max_wind():
+    _raises(
+        {"fishing_profile": {"max_wind_kt": 999}},
+        "invalid_max_wind_kt",
+    )
+
+
+def test_profile_payload_rejects_non_numeric_max_wave():
+    _raises(
+        {"fishing_profile": {"max_wave_ft": "lots"}},
+        "invalid_max_wave_ft",
+    )
+
+
 def test_profile_payload_accepts_valid_fishing_profile():
     p = ProfilePayload.from_json(
         {
@@ -163,10 +233,22 @@ def test_profile_payload_accepts_valid_fishing_profile():
                 "preferred_times": ["dawn", "morning"],
                 "primary_goal": "action",
                 "condition_tolerance": "moderate",
+                "max_wind_kt": 15,
+                "max_wave_ft": 4,
             }
         }
     )
     assert p.fishing_profile["experience"] == "intermediate"
+    assert p.fishing_profile["max_wind_kt"] == 15
+
+
+def test_profile_payload_rejects_non_bool_share_catches():
+    _raises({"fishing_profile": {"share_catches": "yes"}}, "invalid_share_catches")
+
+
+def test_profile_payload_accepts_share_catches():
+    p = ProfilePayload.from_json({"fishing_profile": {"share_catches": True}})
+    assert p.fishing_profile["share_catches"] is True
 
 
 def test_success_envelope_meta_merge():

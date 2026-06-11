@@ -7,7 +7,7 @@
     {% include 'partials/_head_fonts.html' %}
     <link rel="preload" as="style" href="{{ surl('style.min.css') }}" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="{{ surl('style.min.css') }}"></noscript>
-    <link rel="preload" as="script" href="{{ surl('js/fishing_log.min.js') }}" fetchpriority="high">
+    <link rel="preload" as="script" href="{{ surl('js/fishing_log.js') }}" fetchpriority="high">
     {% include 'partials/_theme_bootstrap.html' %}
 </head>
 <body class="forecast-page has-app-header">
@@ -29,8 +29,10 @@
                     <input type="text" id="log-size" placeholder="Size (optional)" class="fishlog-input fishlog-input--sm" maxlength="20" autocomplete="off">
                 </div>
                 <div class="fishlog-row">
+                    <label for="log-bait" class="sr-only">Bait or lure used</label>
+                    <input type="text" id="log-bait" placeholder="Bait / lure (optional)" class="fishlog-input fishlog-input--sm" maxlength="60" autocomplete="off">
                     <label for="log-notes" class="sr-only">Notes</label>
-                    <input type="text" id="log-notes" placeholder="Notes (bait used, location, etc.)" class="fishlog-input" maxlength="200" autocomplete="off">
+                    <input type="text" id="log-notes" placeholder="Notes (location, tactics, etc.)" class="fishlog-input" maxlength="200" autocomplete="off">
                     <button type="button" class="fishlog-add-btn" id="fishlog-add-btn" aria-label="Add catch entry">
                         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                         Add
@@ -75,9 +77,43 @@
                 <h4 class="pb-title">Personal Bests</h4>
                 <div class="pb-list" id="pb-list"></div>
             </div>
+
+            <div class="catch-patterns" id="catch-patterns" hidden>
+                <h4 class="cp-title">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg>
+                    Your Patterns
+                </h4>
+                <p class="cp-sub">Learned from the conditions recorded when you logged catches.</p>
+                <ul class="cp-list" id="cp-list"></ul>
+            </div>
         </section>
     </main>
 
-    <script src="{{ surl('js/fishing_log.min.js') }}" defer></script>
+    <script src="{{ surl('js/fishing_log.js') }}" defer></script>
+    <script>
+    // Catch-pattern insights — fetched from the API and rendered when present.
+    (function () {
+        var sec = document.getElementById('fish-log');
+        if (!sec || sec.getAttribute('data-logged-in') !== '1') return;
+        var panel = document.getElementById('catch-patterns');
+        var list = document.getElementById('cp-list');
+        if (!panel || !list) return;
+        var locId = sec.getAttribute('data-location-id') || '';
+        var url = '/api/v1/log/patterns' + (locId ? ('?location_id=' + encodeURIComponent(locId)) : '');
+        fetch(url).then(function (r) { return r.ok ? r.json() : null; }).then(function (body) {
+            if (!body || !body.data) return;
+            var insights = body.data.insights || [];
+            var matches = body.data.matches || [];
+            if (!insights.length) return;
+            insights.forEach(function (text) {
+                var li = document.createElement('li');
+                li.className = 'cp-item' + (matches.indexOf(text) !== -1 ? ' cp-item--match' : '');
+                li.textContent = text;
+                list.appendChild(li);
+            });
+            panel.hidden = false;
+        }).catch(function () {});
+    })();
+    </script>
 </body>
 </html>

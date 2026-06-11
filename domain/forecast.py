@@ -543,7 +543,7 @@ def _derive_coast(location: Optional[dict[str, Any]]) -> Optional[str]:
         return "east"
     return None
 
-def classify_conditions(
+def score_conditions(
     wind_range: Optional[tuple[float, float]],
     wave_range: Optional[tuple[float, float]],
     wind_dir: str = "",
@@ -557,47 +557,83 @@ def classify_conditions(
     solunar: Optional[dict[str, Any]] = None,
     coast: str = "east",
     fishing_types: Optional[list[str]] = None,
-) -> str:
-    """Classify fishability using all available marine + astronomical signals.
+    max_wind_kt: Optional[float] = None,
+    max_wave_ft: Optional[float] = None,
+) -> dict[str, Any]:
+    """Score fishability from all available marine + astronomical signals.
 
-    Produces a 5-tier verdict: Excellent / Good / Fair / Challenging / Poor.
+    Returns a dict with:
+
+    - ``score``   — 0-100 go/no-go index (``None`` when conditions are unknown)
+    - ``verdict`` — 5-tier label: Excellent / Good / Fair / Challenging / Poor
+    - ``factors`` — ordered plain-language drivers (most impactful first), e.g.
+      ``["Flat surf (1-2 ft)", "Light wind (4-8 kt)", "Major feeding window"]``
+    - ``summary`` — the top factors joined into a one-line explanation
+    - ``exceeds`` — warnings when conditions exceed the angler's personal
+      ``max_wind_kt`` / ``max_wave_ft`` comfort thresholds (empty when unset)
+
     When *fishing_types* is supplied the score is adjusted to reflect what
     actually matters for each method — e.g. kayak anglers are penalised
     more steeply for wind/waves, fly anglers for wind, wade/bridge anglers
-    get a partial offset on the open-ocean wave penalty.
+    get a partial offset on the open-ocean wave penalty.  When *max_wind_kt*
+    or *max_wave_ft* are supplied, exceeding them applies an extra penalty so
+    the verdict reflects the angler's stated tolerance.
     """
     if wind_range is None or wave_range is None:
-        return "Unknown"
+        return {
+            "score": None,
+            "verdict": "Unknown",
+            "factors": [],
+            "summary": "",
+            "exceeds": [],
+        }
 
     score = _SCORE_BASELINE
     wind_max = wind_range[1]
     wave_max = wave_range[1]
 
+    # (impact, phrase) pairs — sorted by absolute impact to surface the
+    # dominant drivers in the explanation regardless of sign.
+    factors: list[tuple[float, str]] = []
+    wind_lbl = f"{int(wind_range[0])}-{int(wind_range[1])} kt"
+    wave_lbl = f"{int(wave_range[0])}-{int(wave_range[1])} ft"
+
     # Wind speed (primary safety + fishability signal)
     if wind_max <= _WIND_LIGHT_KT:
         score += 14
+        factors.append((14, f"Light wind ({wind_lbl})"))
     elif wind_max <= _WIND_MODERATE_LOW_KT:
         score += 8
+        factors.append((8, f"Moderate wind ({wind_lbl})"))
     elif wind_max <= _WIND_MODERATE_HIGH_KT:
         score += 2
+        factors.append((2, f"Breezy ({wind_lbl})"))
     elif wind_max <= _WIND_STRONG_KT:
         score -= 8
+        factors.append((-8, f"Strong wind ({wind_lbl})"))
     elif wind_max <= _WIND_VERY_STRONG_KT:
         score -= 16
+        factors.append((-16, f"Very strong wind ({wind_lbl})"))
     else:
         score -= 26
+        factors.append((-26, f"Gale-force wind ({wind_lbl})"))
 
     # Wave height (primary surf-access signal)
     if wave_max <= _WAVE_FLAT_FT:
         score += 10
+        factors.append((10, f"Flat surf ({wave_lbl})"))
     elif wave_max <= _WAVE_MODERATE_FT:
         score += 6
+        factors.append((6, f"Light surf ({wave_lbl})"))
     elif wave_max <= _WAVE_ROUGH_FT:
         score -= 4
+        factors.append((-4, f"Moderate surf ({wave_lbl})"))
     elif wave_max <= _WAVE_HEAVY_FT:
         score -= 12
+        factors.append((-12, f"Rough surf ({wave_lbl})"))
     else:
         score -= 22
+        factors.append((-22, f"Heavy surf ({wave_lbl})"))
 
     # Wind direction heuristic by coast (offshore usually cleaner water).
     if wind_dir:
@@ -609,23 +645,29 @@ def classify_conditions(
             onshore_dirs = _ONSHORE_DIRS_EAST
         if wind_dir in offshore_dirs:
             score += 4
+            factors.append((4, f"Clean offshore wind ({wind_dir})"))
         elif wind_dir in onshore_dirs:
             score -= 4
+            factors.append((-4, f"Onshore wind ({wind_dir}) — murkier water"))
 
     # Water temp comfort/activity proxy (still species-specific elsewhere).
     if water_temp_f is not None:
         if 58 <= water_temp_f <= 78:
             score += 6
+            factors.append((6, f"Ideal water temp ({water_temp_f:.0f}°F)"))
         elif 50 <= water_temp_f < 58 or 78 < water_temp_f <= 84:
             score += 2
+            factors.append((2, f"Fair water temp ({water_temp_f:.0f}°F)"))
         else:
             score -= 4
+            factors.append((-4, f"Off-peak water temp ({water_temp_f:.0f}°F)"))
         if is_live_temp:
             score += 1
 
     # Tide state and tide range (bigger movement often improves feeding windows).
     if tide_state in {"Rising", "Falling"}:
         score += 2
+        factors.append((2, f"Moving tide ({tide_state.lower()})"))
     if tides:
         heights = [
             float(t.get("height", 0.0)) for t in tides if t.get("height") is not None
@@ -634,6 +676,7 @@ def classify_conditions(
             tide_range = max(heights) - min(heights)
             if tide_range >= 4:
                 score += 5
+                factors.append((5, "Big tidal swing"))
             elif tide_range >= 2:
                 score += 2
 
@@ -656,13 +699,16 @@ def classify_conditions(
                 )
             if nearest_delta is not None and nearest_delta <= 90 * 60:
                 score += 3
+                factors.append((3, "Near a tide turn"))
 
     # Light windows around sunrise/sunset are usually better bite periods.
     if now and sunrise and sunset:
         if abs((now - sunrise).total_seconds()) <= 2 * 3600:
             score += 4
+            factors.append((4, "Dawn bite window"))
         if abs((sunset - now).total_seconds()) <= 2 * 3600:
             score += 4
+            factors.append((4, "Dusk bite window"))
 
     # Solunar quality + illumination.
     if solunar:
@@ -672,7 +718,14 @@ def classify_conditions(
             "Fair": 0,
             "Poor": -6,
         }
-        score += rating_bonus.get(solunar.get("rating", ""), 0)
+        s_rating = solunar.get("rating", "")
+        score += rating_bonus.get(s_rating, 0)
+        if s_rating == "Excellent":
+            factors.append((8, "Major feeding window (solunar)"))
+        elif s_rating == "Good":
+            factors.append((4, "Good solunar period"))
+        elif s_rating == "Poor":
+            factors.append((-6, "Weak solunar period"))
 
         illum = solunar.get("illumination_pct")
         if isinstance(illum, (int, float)):
@@ -759,16 +812,87 @@ def classify_conditions(
             elif wave_max >= 4:
                 score -= 2
 
+    # --- Angler comfort thresholds ---
+    # When the user has stated a personal limit, exceeding it both penalises the
+    # score and surfaces an explicit warning so a technically-"Fair" day is
+    # flagged as above their comfort zone.
+    exceeds: list[str] = []
+    if max_wind_kt is not None and wind_max > max_wind_kt:
+        score -= 12
+        warning = f"Wind {int(wind_max)} kt over your {int(max_wind_kt)} kt limit"
+        exceeds.append(warning)
+        factors.append((-12, warning))
+    if max_wave_ft is not None and wave_max > max_wave_ft:
+        score -= 12
+        warning = f"Surf {int(wave_max)} ft over your {int(max_wave_ft)} ft limit"
+        exceeds.append(warning)
+        factors.append((-12, warning))
+
     score = max(0, min(100, score))
     if score >= _VERDICT_EXCELLENT:
-        return "Excellent"
-    if score >= _VERDICT_GOOD:
-        return "Good"
-    if score >= _VERDICT_FAIR:
-        return "Fair"
-    if score >= _VERDICT_CHALLENGING:
-        return "Challenging"
-    return "Poor"
+        verdict = "Excellent"
+    elif score >= _VERDICT_GOOD:
+        verdict = "Good"
+    elif score >= _VERDICT_FAIR:
+        verdict = "Fair"
+    elif score >= _VERDICT_CHALLENGING:
+        verdict = "Challenging"
+    else:
+        verdict = "Poor"
+
+    # Order drivers by absolute impact so the explanation leads with what
+    # matters most.  Threshold warnings always sort to the front (impact 12+).
+    factors.sort(key=lambda f: -abs(f[0]))
+    factor_phrases = [phrase for _, phrase in factors]
+    summary = ", ".join(factor_phrases[:4])
+
+    return {
+        "score": int(round(score)),
+        "verdict": verdict,
+        "factors": factor_phrases,
+        "summary": summary,
+        "exceeds": exceeds,
+    }
+
+def classify_conditions(
+    wind_range: Optional[tuple[float, float]],
+    wave_range: Optional[tuple[float, float]],
+    wind_dir: str = "",
+    water_temp_f: Optional[float] = None,
+    is_live_temp: bool = False,
+    tide_state: str = "",
+    tides: Optional[list[dict[str, Any]]] = None,
+    sunrise: Optional[datetime] = None,
+    sunset: Optional[datetime] = None,
+    now: Optional[datetime] = None,
+    solunar: Optional[dict[str, Any]] = None,
+    coast: str = "east",
+    fishing_types: Optional[list[str]] = None,
+    max_wind_kt: Optional[float] = None,
+    max_wave_ft: Optional[float] = None,
+) -> str:
+    """Return just the 5-tier fishability verdict label.
+
+    Thin backward-compatible wrapper around :func:`score_conditions` for
+    callers that only need the label (e.g. the multi-day outlook).
+    """
+    return score_conditions(
+        wind_range,
+        wave_range,
+        wind_dir=wind_dir,
+        water_temp_f=water_temp_f,
+        is_live_temp=is_live_temp,
+        tide_state=tide_state,
+        tides=tides,
+        sunrise=sunrise,
+        sunset=sunset,
+        now=now,
+        solunar=solunar,
+        coast=coast,
+        fishing_types=fishing_types,
+        max_wind_kt=max_wind_kt,
+        max_wave_ft=max_wave_ft,
+    )["verdict"]
 
 def build_multiday_outlook(
     now: datetime,
@@ -974,7 +1098,7 @@ def build_multiday_outlook(
                 )
             except Exception:
                 logger.debug("Solunar times unavailable for %s", future, exc_info=True)
-            verdict = classify_conditions(
+            _day_score = score_conditions(
                 wind_range,
                 wave_range,
                 wind_dir=wind_dir_day,
@@ -986,8 +1110,11 @@ def build_multiday_outlook(
                 coast=coast or "east",
                 fishing_types=fishing_types,
             )
+            verdict = _day_score["verdict"]
+            day_score = _day_score["score"]
         else:
             verdict = "Unknown"
+            day_score = None
 
         # --- Top species for this day ---
         _day_cond_modifier = _build_conditions_modifier(
@@ -1022,6 +1149,7 @@ def build_multiday_outlook(
                 "wind": wind_str,
                 "waves": wave_str,
                 "verdict": verdict,
+                "score": day_score,
                 "top_species": top_species_names,
             }
         )
@@ -1041,6 +1169,7 @@ def build_spot_tips(
     fishing_types: Optional[list[str]] = None,
     experience: str = "",
     water_quality: Optional[dict[str, Any]] = None,
+    recent_rain_in: Optional[float] = None,
 ) -> list[dict[str, str]]:
     """Generate 3-5 actionable fishing tips based on current conditions.
 
@@ -1053,6 +1182,37 @@ def build_spot_tips(
     are breached.
     """
     tips: list[dict[str, str]] = []
+
+    # Recent-rain turbidity warning — heavy runoff muddies inlets and the surf
+    # zone. Surfaced first since it changes bait/color/location strategy.
+    if recent_rain_in is not None and recent_rain_in >= 0.5:
+        if recent_rain_in >= 1.0:
+            tips.append(
+                {
+                    "icon": "water",
+                    "title": "Muddy Water After Heavy Rain",
+                    "detail": (
+                        f"About {recent_rain_in:.1f}\" of rain recently — inlets and the "
+                        "surf zone will be stained and full of runoff. Fish scent-heavy "
+                        "cut/natural bait over lures, work the cleaner edges where muddy "
+                        "and clear water meet, and bump up to darker, high-vibration "
+                        "presentations fish can find by feel."
+                    ),
+                }
+            )
+        else:
+            tips.append(
+                {
+                    "icon": "water",
+                    "title": "Some Runoff From Recent Rain",
+                    "detail": (
+                        f"Around {recent_rain_in:.1f}\" of recent rain may cloud the water "
+                        "near inlets and creek mouths. Lean on scent and contrast — "
+                        "chartreuse or dark baits — and target the clearer water just "
+                        "outside the stained plume."
+                    ),
+                }
+            )
 
     # Water quality warnings — injected first so they appear prominently.
     if water_quality and water_quality.get("available"):
@@ -1462,12 +1622,16 @@ def build_bite_alerts(
 def pick_best_fishing_day(
     today_verdict: str,
     outlook: list[dict[str, Any]],
+    today_score: Optional[int] = None,
 ) -> dict[str, str]:
     """Analyze today and 3-day outlook to recommend the best day to fish.
 
-    Returns a dict with 'best_day', 'reason', and 'recommendation'.
+    Ranks by verdict tier first (so an Excellent day always beats a Good one),
+    then by the 0-100 go/no-go score within a tier — so two "Good" days are
+    separated by their actual scores — and finally by active-species count.
+
+    Returns a dict with 'best_day', 'verdict', and 'recommendation'.
     """
-    # Score mapping for verdicts
     verdict_scores = {
         "Excellent": 5,
         "Good": 4,
@@ -1477,30 +1641,36 @@ def pick_best_fishing_day(
         "Unknown": 2,
     }
 
+    def _combined(verdict: str, score: Optional[int], n_species: int) -> float:
+        # Tier dominates (×1000); numeric score breaks ties within a tier;
+        # species count is the final, smallest tiebreaker.
+        tier = verdict_scores.get(verdict, 2) * 1000
+        num = score if isinstance(score, (int, float)) else verdict_scores.get(verdict, 2) * 20
+        return tier + num + min(n_species, 5) * 0.1
+
     best_day = "Today"
-    best_score = verdict_scores.get(today_verdict, 2)
+    best_tier = verdict_scores.get(today_verdict, 2)
+    best_score = _combined(today_verdict, today_score, 0)
     best_verdict = today_verdict
 
     for day in outlook:
         v = day.get("verdict", "Unknown")
-        s: float = verdict_scores.get(v, 2)
-        n_species = len(day.get("top_species", []))
-        # Bonus for having more active species
-        s += min(n_species * 0.2, 1.0)
+        s = _combined(v, day.get("score"), len(day.get("top_species", [])))
         if s > best_score:
             best_score = s
+            best_tier = verdict_scores.get(v, 2)
             best_day = day["day"]
             best_verdict = v
 
     if best_day == "Today":
-        if best_score >= 4:
+        if best_tier >= 4:
             recommendation = "Today looks great — get out there!"
-        elif best_score >= 3:
+        elif best_tier >= 3:
             recommendation = "Decent day today, but conditions are fishable."
         else:
             recommendation = "Tough day today. Check back tomorrow."
     else:
-        if best_score >= 4:
+        if best_tier >= 4:
             recommendation = f"{best_day} has the best forecast — plan your trip then."
         else:
             recommendation = (
@@ -1941,6 +2111,18 @@ def build_safety_checklist(
                 {
                     "text": "Moderate surf — watch for sneaker waves and keep gear secured",
                     "icon": "caution",
+                }
+            )
+
+        # Heavy surf PFD reminder for shore/structure anglers — being swept off
+        # rocks/jetties or by sneaker waves is a leading surf-fishing fatality
+        # cause. Kayakers already get a dedicated PFD reminder above.
+        if max_wave >= 5 and "kayak" not in ft:
+            items.append(
+                {
+                    "text": "Heavy surf — wear an inflatable PFD/life vest, especially on "
+                    "jetties or rocks where a wave can sweep you in",
+                    "icon": "warning",
                 }
             )
 
@@ -2495,7 +2677,16 @@ def generate_forecast(
         targets=profile.get("targets"),
         fish_region=loc_fish_region,
     )
-    rig_recommendations = build_rig_recommendations(species)
+    # Tide state isn't resolved yet at this point in assembly, so the base
+    # rig tips use wind/wave/temp only; personalize_forecast rebuilds these
+    # with tide_state for anglers who have fishing types set.
+    rig_recommendations = build_rig_recommendations(
+        species,
+        fishing_types=profile.get("fishing_types"),
+        wind_range=wind_range,
+        wave_range=wave_range,
+        water_temp=water_temp,
+    )
 
     loc_name = ""
     if location:
@@ -2702,8 +2893,8 @@ def generate_forecast(
     if derived_indices:
         forecast["derived_indices"] = derived_indices
 
-    # Final fishability verdict based on all available signals
-    conditions["verdict"] = classify_conditions(
+    # Final fishability verdict + go/no-go index based on all available signals
+    _fishability = score_conditions(
         wind_range,
         wave_range,
         wind_dir=wind_dir or "",
@@ -2717,6 +2908,10 @@ def generate_forecast(
         solunar=solunar,
         coast=coast or "east",
     )
+    conditions["verdict"] = _fishability["verdict"]
+    conditions["fishability_score"] = _fishability["score"]
+    conditions["fishability_factors"] = _fishability["factors"]
+    conditions["summary"] = _fishability["summary"]
 
     # Multi-day outlook (3 days)
     try:
@@ -2735,6 +2930,7 @@ def generate_forecast(
         forecast["best_day"] = pick_best_fishing_day(
             forecast["conditions"]["verdict"],
             forecast["outlook"],
+            today_score=forecast["conditions"].get("fishability_score"),
         )
 
     # Species availability calendar — shows popular regional target species,
@@ -2765,6 +2961,7 @@ def generate_forecast(
         coast=coast,
         tide_state=forecast.get("tide_state", ""),
         water_quality=forecast.get("water_quality"),
+        recent_rain_in=(forecast.get("weather") or {}).get("precip_recent_in"),
     )
 
     # Conditions explainer
@@ -2910,6 +3107,24 @@ _TOLERANCE_SHIFT: dict[str, dict[str, str]] = {
     "calm": {"Fair": "Challenging", "Challenging": "Poor"},
 }
 
+# Score bump for species the angler has previously landed at this location.
+# Modest by design — a local track record is a nudge, not an override.
+_CAUGHT_HERE_BOOST = 8
+
+def _coerce_threshold(value: Any) -> Optional[float]:
+    """Parse a user-supplied comfort threshold to a float, or ``None``.
+
+    Accepts numbers or numeric strings; rejects blanks, bools, and junk so a
+    malformed profile value never blows up the go/no-go index calculation.
+    """
+    if value is None or isinstance(value, bool):
+        return None
+    try:
+        f = float(value)
+    except (TypeError, ValueError):
+        return None
+    return f if f > 0 else None
+
 def _apply_primary_goal_boost(
     species: list[dict[str, Any]], primary_goal: str
 ) -> list[dict[str, Any]]:
@@ -2932,6 +3147,7 @@ def personalize_forecast(
     forecast: dict[str, Any],
     profile: dict[str, Any],
     location: Optional[dict[str, Any]] = None,
+    caught_species: Optional[set[str]] = None,
 ) -> dict[str, Any]:
     """Apply profile-based personalization to a cached forecast.
 
@@ -2939,11 +3155,16 @@ def personalize_forecast(
     species-dependent sections (rigs, baits, bite alerts, gear checklist,
     calendar).  Conditions data, tides, weather, etc. remain unchanged.
 
+    *caught_species* (lowercased names the user has logged at this location)
+    gives a modest rank boost to proven local producers.
+
     Results are cached in _PERSONALIZE_CACHE keyed by
-    (loc_id, generated_at, hour, profile_tuple) so repeat renders within
-    the same hour return immediately without re-running species scoring.
+    (loc_id, generated_at, hour, profile_tuple, caught_species) so repeat
+    renders within the same hour return immediately without re-running
+    species scoring.
     """
-    cache_key = _profile_cache_key(forecast, location, profile)
+    caught_lc = frozenset(caught_species or ())
+    cache_key = _profile_cache_key(forecast, location, profile) + (caught_lc,)
     cached = _PERSONALIZE_CACHE.get(cache_key)
     if cached is not None:
         return cached
@@ -2959,10 +3180,18 @@ def personalize_forecast(
     condition_tolerance = profile.get("condition_tolerance") or ""
     tide_preference = profile.get("tide_preference") or ""
     catch_release = profile.get("catch_release") or ""
+    max_wind_kt = _coerce_threshold(profile.get("max_wind_kt"))
+    max_wave_ft = _coerce_threshold(profile.get("max_wave_ft"))
 
     has_type_prefs = bool(fishing_types or targets)
     has_gear_prefs = bool(experience or live_bait or cut_bait or lures)
-    if not has_type_prefs and not has_gear_prefs:
+    has_threshold_prefs = max_wind_kt is not None or max_wave_ft is not None
+    if (
+        not has_type_prefs
+        and not has_gear_prefs
+        and not has_threshold_prefs
+        and not caught_lc
+    ):
         return forecast
 
     tz_name = (location or {}).get("timezone", "America/New_York")
@@ -3056,6 +3285,17 @@ def personalize_forecast(
     if primary_goal:
         species = _apply_primary_goal_boost(species, primary_goal)
 
+    # Proven-here boost: species the angler has actually landed at this spot
+    # get a modest bump and a flag, so local track record nudges the ranking.
+    if caught_lc:
+        for sp in species:
+            if sp.get("name", "").lower() in caught_lc:
+                sp["score"] = min(100, sp.get("score", 0) + _CAUGHT_HERE_BOOST)
+                sp["caught_here"] = True
+        species.sort(key=lambda x: -x.get("score", 0))
+        for i, sp in enumerate(species):
+            sp["rank"] = i + 1
+
     # Rebuild species-dependent sections
     forecast = dict(forecast)  # shallow copy to avoid mutating cache
     forecast["species"] = species
@@ -3066,6 +3306,10 @@ def personalize_forecast(
         live_bait=live_bait,
         cut_bait=cut_bait,
         lures=lures,
+        wind_range=wind_range,
+        wave_range=wave_range,
+        water_temp=water_temp,
+        tide_state=t_state,
     )
     # Annotate rigs with a circle-hook tip for catch-and-release anglers.
     # Only fires when the rig doesn't already specify a circle hook.
@@ -3118,9 +3362,12 @@ def personalize_forecast(
     )
     if outlook:
         forecast["outlook"] = outlook
+        _conds = forecast.get("conditions", {})
         forecast["best_day"] = pick_best_fishing_day(
-            forecast.get("conditions", {}).get("verdict", "Fair"),
+            _conds.get("verdict", "Fair"),
             outlook,
+            today_score=_conds.get("fishability_score_for_angler")
+            or _conds.get("fishability_score"),
         )
 
     # Rebuild spot tips with type-specific content
@@ -3136,6 +3383,8 @@ def personalize_forecast(
         tide_state=tide_state_val,
         fishing_types=fishing_types,
         experience=experience,
+        water_quality=forecast.get("water_quality"),
+        recent_rain_in=(forecast.get("weather") or {}).get("precip_recent_in"),
     )
 
     # Rebuild best fishing times with type-specific windows, boosting
@@ -3148,10 +3397,11 @@ def personalize_forecast(
         tide_preference=tide_preference,
     )
 
-    # Recalculate the conditions verdict with fishing-type adjustments so
-    # the dashboard shows an accurate rating for this angler's method.
-    if fishing_types and wind_range and wave_range:
-        adjusted_verdict = classify_conditions(
+    # Recalculate the go/no-go index with this angler's method and personal
+    # comfort thresholds so the dashboard shows a rating and explanation tuned
+    # to how *they* fish, not just the generic baseline.
+    if (fishing_types or has_threshold_prefs) and wind_range and wave_range:
+        adjusted = score_conditions(
             wind_range,
             wave_range,
             wind_dir=wind_dir or "",
@@ -3162,11 +3412,17 @@ def personalize_forecast(
             solunar=forecast.get("solunar"),
             coast=loc_coast,
             fishing_types=fishing_types,
+            max_wind_kt=max_wind_kt,
+            max_wave_ft=max_wave_ft,
         )
-        # Store as a separate field so the template can show both the generic
+        # Store as separate fields so the template can show both the generic
         # verdict and the method-specific one without breaking cached data.
         updated_conditions = dict(forecast.get("conditions", {}))
-        updated_conditions["verdict_for_type"] = adjusted_verdict
+        updated_conditions["verdict_for_type"] = adjusted["verdict"]
+        updated_conditions["fishability_score_for_angler"] = adjusted["score"]
+        updated_conditions["fishability_factors"] = adjusted["factors"]
+        updated_conditions["summary"] = adjusted["summary"]
+        updated_conditions["exceeds_thresholds"] = adjusted["exceeds"]
         forecast["conditions"] = updated_conditions
 
     # Condition tolerance: shift the effective verdict for this angler's
@@ -3470,6 +3726,10 @@ def build_activity_timeline(
     """
     activity = [15.0] * 24
     reason_parts: list[list[str]] = [[] for _ in range(24)]
+    # Overlay rails aligned to the same 24 hourly columns as the bars.
+    feeding_tag = [""] * 24  # "major" / "minor" — solunar feeding bands
+    sun_events: dict[int, str] = {}  # hour -> "sunrise" / "sunset"
+    tide_events: dict[int, dict[str, str]] = {}  # hour -> {type, time}
 
     # Dawn/dusk boost
     sun_str = forecast.get("conditions", {}).get("sunrise_sunset", "")
@@ -3477,6 +3737,8 @@ def build_activity_timeline(
         parts = sun_str.split("/")
         sr_h = _parse_time_str(parts[0].strip())
         ss_h = _parse_time_str(parts[1].strip())
+        sun_events[int(round(sr_h)) % 24] = "sunrise"
+        sun_events[int(round(ss_h)) % 24] = "sunset"
 
         for h in range(24):
             dist = abs(h - sr_h)
@@ -3501,6 +3763,7 @@ def build_activity_timeline(
             if s_h <= h <= e_h:
                 activity[h] += 35
                 reason_parts[h].append("Major solunar")
+                feeding_tag[h] = "major"
             elif abs(h - s_h) < 1 or abs(h - e_h) < 1:
                 activity[h] += 15
 
@@ -3511,6 +3774,9 @@ def build_activity_timeline(
             if s_h <= h <= e_h:
                 activity[h] += 20
                 reason_parts[h].append("Minor solunar")
+                # Don't downgrade an hour already inside a major band.
+                if feeding_tag[h] != "major":
+                    feeding_tag[h] = "minor"
             elif abs(h - s_h) < 1 or abs(h - e_h) < 1:
                 activity[h] += 8
 
@@ -3519,6 +3785,11 @@ def build_activity_timeline(
     for t in tides:
         t_h = t.get("hour", _parse_time_str(t.get("time", "12:00 PM")))
         t_type = t.get("type", "")
+        if t_type in ("High", "Low"):
+            tide_events[int(round(float(t_h))) % 24] = {
+                "type": t_type,
+                "time": t.get("time", ""),
+            }
         for h in range(24):
             dist = abs(h - t_h)
             if dist < 2:
@@ -3532,6 +3803,13 @@ def build_activity_timeline(
     # Night penalty (fish less active 11 PM – 4 AM)
     for h in [23, 0, 1, 2, 3, 4]:
         activity[h] *= 0.7
+
+    # Bright-moon nocturnal feeding: a near-full moon keeps fish active after
+    # dark, partially offsetting the night penalty.
+    illum = (solunar or {}).get("illumination_pct")
+    if isinstance(illum, (int, float)) and illum >= 70:
+        for h in [21, 22, 23, 0, 1, 2, 3]:
+            activity[h] *= 1.25
 
     # Normalize relative to today's peak
     max_val = max(activity) if max(activity) > 0 else 1
@@ -3554,7 +3832,26 @@ def build_activity_timeline(
     else:
         condition_mult = 1.0
 
-    levels = [int(v * condition_mult) for v in normalized]
+    # Barometric-pressure trend multiplier: a falling glass (especially a low,
+    # pre-front reading) triggers aggressive feeding; a high post-front rise
+    # or a too-stable bluebird high slows the bite.  Applied day-wide since we
+    # only have a current reading, not an hourly pressure forecast.
+    pressure_mult = 1.0
+    pressure = forecast.get("pressure")
+    if pressure:
+        p_trend = str(pressure.get("trend", "")).lower()
+        try:
+            p_mb = float(pressure.get("pressure_mb") or 0) or None
+        except (TypeError, ValueError):
+            p_mb = None
+        if "falling" in p_trend:
+            pressure_mult = 1.10 if (p_mb is not None and p_mb < 1010) else 1.05
+        elif "rising" in p_trend:
+            pressure_mult = 0.90 if (p_mb is not None and p_mb > 1020) else 0.95
+        elif p_mb is not None and p_mb > 1025:
+            pressure_mult = 0.95  # stagnant high — bluebird slowdown
+
+    levels = [min(100, int(v * condition_mult * pressure_mult)) for v in normalized]
     peak_level = max(levels) if levels else 0
 
     labels_12h = [
@@ -3630,6 +3927,7 @@ def build_activity_timeline(
                 deduped.append(p)
         reason = " · ".join(deduped)
 
+        tide_evt = tide_events.get(h)
         timeline.append(
             {
                 "hour": h,
@@ -3640,6 +3938,11 @@ def build_activity_timeline(
                 "is_now": h == now_hour,
                 "peak": level == peak_level and level >= 50,
                 "reason": reason,
+                # Overlay rail metadata (aligned to the same hourly columns).
+                "sun": sun_events.get(h, ""),
+                "tide": (tide_evt or {}).get("type", "").lower(),
+                "tide_time": (tide_evt or {}).get("time", ""),
+                "feeding": feeding_tag[h],
             }
         )
 

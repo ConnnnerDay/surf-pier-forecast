@@ -121,6 +121,120 @@ def test_v1_profile_get_and_post(client):
     assert set(gbody.keys()) == {"ok", "data", "error", "meta"}
 
 
+def test_v1_profile_notification_prefs_roundtrip(client):
+    from storage.sqlite import get_preferences
+
+    uid = create_user("apiv1_notif", "pass1234")
+    assert uid is not None
+    _login_session(client, uid)
+
+    post = client.post(
+        "/api/v1/profile",
+        json={
+            "notification_prefs": {
+                "enabled": True,
+                "email": True,
+                "push": False,
+                "min_rating": "Excellent",
+                "lead_hours": 3,
+            }
+        },
+    )
+    assert post.status_code == 200
+    np = post.get_json()["data"]["profile"]["notification_prefs"]
+    assert np["enabled"] is True
+    assert np["min_rating"] == "Excellent"
+    assert np["lead_hours"] == 3
+    # Persisted to storage as well.
+    assert get_preferences(uid)["notification_prefs"]["enabled"] is True
+
+
+def test_v1_profile_rejects_bad_notification_prefs(client):
+    uid = create_user("apiv1_notif_bad", "pass1234")
+    _login_session(client, uid)
+    resp = client.post(
+        "/api/v1/profile",
+        json={"notification_prefs": {"min_rating": "Perfect"}},
+    )
+    assert resp.status_code == 400
+
+
+def test_v1_log_captures_conditions_and_patterns(client, monkeypatch):
+    from storage.sqlite import create_user, get_catch_conditions
+
+    # Stub the cached forecast so logging snapshots conditions.
+    sample = {
+        "tide_state": "Rising",
+        "conditions": {"wind_dir": "NE", "water_temp_f": 64.0},
+        "solunar": {"moon_phase": "Full Moon"},
+    }
+    monkeypatch.setattr(
+        "web.api.load_cached_forecast",
+        lambda loc_id, user_id=None, include_stale=False: sample,
+    )
+    uid = create_user("apiv1_patterns", "pass1234")
+    _login_session(client, uid)
+
+    for _ in range(5):
+        resp = client.post(
+            "/api/v1/log",
+            json={"species": "Red drum", "location_id": "wrightsville-beach-nc"},
+        )
+        assert resp.status_code == 201
+
+    rows = get_catch_conditions(uid, "wrightsville-beach-nc")
+    assert rows and rows[0]["tide_state"] == "Rising"
+    assert rows[0]["moon_phase"] == "Full Moon"
+
+    pat = client.get("/api/v1/log/patterns?location_id=wrightsville-beach-nc")
+    assert pat.status_code == 200
+    data = pat.get_json()["data"]
+    assert data["total"] == 5
+    assert any("rising tide" in i.lower() for i in data["insights"])
+
+
+def test_v1_log_patterns_requires_login(client):
+    resp = client.get("/api/v1/log/patterns")
+    assert resp.status_code == 401
+
+
+def test_v1_notifications_test_requires_login(client):
+    assert client.post("/api/v1/notifications/test", json={}).status_code == 401
+
+
+def test_v1_notifications_test_email_channel(client, monkeypatch):
+    from storage.sqlite import create_user, save_preferences
+
+    sent = {}
+    monkeypatch.setattr(
+        "services.email.send_email",
+        lambda to, subj, text, html: sent.update(to=to, subj=subj) or True,
+    )
+    uid = create_user("notif_test", "pass1234", email="t@example.com")
+    _login_session(client, uid)
+    save_preferences(
+        uid, notification_prefs={"enabled": True, "email": True, "push": False}
+    )
+    resp = client.post("/api/v1/notifications/test", json={})
+    assert resp.status_code == 200
+    data = resp.get_json()["data"]["sent"]
+    assert data["email"] is True
+    assert data["push"] is False
+    assert sent["to"] == "t@example.com"
+    assert "[Test]" in sent["subj"]
+
+
+def test_v1_notifications_test_nothing_when_channels_off(client, monkeypatch):
+    from storage.sqlite import create_user, save_preferences
+
+    uid = create_user("notif_off", "pass1234", email="o@example.com")
+    _login_session(client, uid)
+    save_preferences(uid, notification_prefs={"enabled": True, "email": False})
+    resp = client.post("/api/v1/notifications/test", json={})
+    data = resp.get_json()["data"]["sent"]
+    assert data == {"email": False, "push": False}
+
+
 def test_v1_log_crud(client):
     uid = create_user("apiv1_log", "pass1234")
     assert uid is not None
@@ -541,3 +655,30 @@ def test_v1_forecast_section_endpoints_fall_back_to_shared_cache_for_logged_in_u
     # Each endpoint makes exactly one call with the logged-in user_id.
     assert calls.count(("wrightsville-beach-nc", 999)) == 2
     assert ("wrightsville-beach-nc", None) not in calls
+
+
+def test_v1_community_activity_requires_login(client):
+    assert client.get("/api/v1/community/activity?location_id=x").status_code == 401
+
+
+def test_v1_community_activity_unavailable_below_threshold(client):
+    from storage.sqlite import create_user
+    uid = create_user("comm_api", "pass1234")
+    _login_session(client, uid)
+    resp = client.get("/api/v1/community/activity?location_id=wrightsville-beach-nc")
+    assert resp.status_code == 200
+    assert resp.get_json()["data"]["available"] is False
+
+
+def test_v1_community_activity_available_when_threshold_met(client):
+    from storage.sqlite import create_user, save_preferences, add_log_entry
+    viewer = create_user("comm_viewer", "pass1234")
+    _login_session(client, viewer)
+    for i in range(3):
+        uid = create_user(f"comm_c{i}", "pass1234")
+        save_preferences(uid, fishing_profile={"share_catches": True})
+        add_log_entry(uid, "wrightsville-beach-nc", "Red drum")
+    resp = client.get("/api/v1/community/activity?location_id=wrightsville-beach-nc")
+    data = resp.get_json()["data"]
+    assert data["available"] is True
+    assert data["contributors"] == 3

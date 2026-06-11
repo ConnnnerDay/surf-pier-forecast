@@ -314,15 +314,43 @@
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
                 </summary>
                 <div class="account-stats-body">
+                    {% set np = prefs.notification_prefs or {} %}
                     <p class="notif-intro">
-                        Get a notification when conditions look great at your saved location &mdash; right when you open the app.
+                        Get an alert when conditions look great at your pinned locations.
+                        We check your saved spots and notify you at most once a day per location.
                     </p>
+
+                    <div class="account-prefs-grid">
+                        <div class="auth-field">
+                            <label for="notif_min_rating">Alert me when conditions are</label>
+                            <select id="notif_min_rating" class="auth-input">
+                                <option value="Good" {% if np.min_rating != 'Excellent' %}selected{% endif %}>Good or better</option>
+                                <option value="Excellent" {% if np.min_rating == 'Excellent' %}selected{% endif %}>Excellent only</option>
+                            </select>
+                        </div>
+                        <div class="auth-field">
+                            <label for="notif_lead_hours">Look ahead (hours)</label>
+                            <input type="number" id="notif_lead_hours" class="auth-input" min="0" max="24" step="1"
+                                   value="{{ np.lead_hours or 0 }}"
+                                   placeholder="0 = any time today">
+                        </div>
+                    </div>
+                    <div class="auth-field">
+                        <label><input type="checkbox" id="notif_email" {% if np.email %}checked{% endif %}> Email me alerts</label>
+                    </div>
+                    <div class="auth-field">
+                        <label><input type="checkbox" id="notif_push" {% if np.push %}checked{% endif %}> Browser push alerts (this device)</label>
+                    </div>
+
                     <div id="notif-status" class="notif-status">Checking&hellip;</div>
-                    <button type="button" id="enable-alerts-btn" class="auth-btn auth-btn--teal" hidden>
-                        Enable Alerts
+                    <button type="button" id="enable-alerts-btn" class="auth-btn auth-btn--teal">
+                        Save Alert Settings
                     </button>
                     <button type="button" id="disable-alerts-btn" class="auth-btn auth-btn--danger" hidden>
-                        Disable Alerts
+                        Turn Off All Alerts
+                    </button>
+                    <button type="button" id="test-alert-btn" class="auth-btn auth-btn--ghost">
+                        Send a test alert
                     </button>
                     <div id="alerts-msg" class="notif-msg" hidden></div>
                 </div>
@@ -423,15 +451,19 @@
 
     <footer><p>Surf &amp; Pier Fishing Outlook</p></footer>
     <script>
-    // ── Fishing condition alerts (notification permission management) ──────────
+    // ── Fishing condition alerts (server-backed email + web push) ─────────────
     (function () {
-        var ALERTS_KEY = 'fish_alerts_enabled';
         var statusEl = document.getElementById('notif-status');
         var enableBtn = document.getElementById('enable-alerts-btn');
         var disableBtn = document.getElementById('disable-alerts-btn');
         var msgEl = document.getElementById('alerts-msg');
+        var emailEl = document.getElementById('notif_email');
+        var pushEl = document.getElementById('notif_push');
+        var ratingEl = document.getElementById('notif_min_rating');
+        var leadEl = document.getElementById('notif_lead_hours');
+        if (!statusEl || !enableBtn) return;
 
-        if (!statusEl) return;
+        var serverEnabled = {{ (np.enabled or false) | tojson }};
 
         function showMsg(text, isError) {
             if (!msgEl) return;
@@ -440,62 +472,166 @@
             msgEl.hidden = !text;
         }
 
-        function updateUI() {
-            if (!('Notification' in window)) {
-                statusEl.textContent = 'Notifications are not supported in this browser.';
-                return;
-            }
-            var perm = Notification.permission;
-            var enabled = localStorage.getItem(ALERTS_KEY) === '1';
+        function setStatus(text) { statusEl.textContent = text; }
 
-            if (perm === 'denied') {
-                statusEl.textContent = 'Notifications are blocked. To enable, update your browser site settings for this page.';
-                enableBtn.hidden = true;
-                disableBtn.hidden = true;
-            } else if (perm === 'granted' && enabled) {
-                statusEl.textContent = 'Alerts are on. You\'ll be notified when conditions look great.';
-                enableBtn.hidden = true;
-                disableBtn.hidden = false;
-            } else {
-                statusEl.textContent = 'Alerts are off.';
-                enableBtn.hidden = false;
-                disableBtn.hidden = true;
-            }
+        function refreshButtons() {
+            disableBtn.hidden = !serverEnabled;
         }
 
-        if (enableBtn) {
-            enableBtn.addEventListener('click', function () {
-                Notification.requestPermission().then(function (result) {
-                    if (result === 'granted') {
-                        localStorage.setItem(ALERTS_KEY, '1');
-                        showMsg('Alerts enabled! You\'ll see a notification when great conditions are detected.', false);
-                        // Show a welcome notification via the service worker
-                        if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-                            navigator.serviceWorker.ready.then(function (reg) {
-                                reg.showNotification('Fishing alerts are on!', {
-                                    body: 'We\'ll let you know when conditions look great at your saved location.',
-                                    icon: '/static/icons/icon-192.svg',
-                                    tag: 'alerts-welcome',
-                                });
-                            }).catch(function () {});
-                        }
-                    } else {
-                        showMsg('Permission not granted. You can try again from your browser settings.', true);
+        function urlBase64ToUint8Array(base64String) {
+            var padding = '='.repeat((4 - base64String.length % 4) % 4);
+            var base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+            var raw = window.atob(base64);
+            var out = new Uint8Array(raw.length);
+            for (var i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+            return out;
+        }
+
+        // Subscribe this browser to web push; returns a Promise<bool success>.
+        function ensurePushSubscription() {
+            if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+                showMsg('This browser does not support push notifications. Email alerts still work.', true);
+                return Promise.resolve(false);
+            }
+            return Notification.requestPermission().then(function (perm) {
+                if (perm !== 'granted') {
+                    showMsg('Push permission was not granted. Email alerts still work.', true);
+                    return false;
+                }
+                return fetch('/api/v1/push/public-key').then(function (r) { return r.json(); }).then(function (body) {
+                    var key = body && body.data && body.data.publicKey;
+                    if (!key) {
+                        showMsg('Push is not configured on the server yet. Email alerts still work.', true);
+                        return false;
                     }
-                    updateUI();
+                    return navigator.serviceWorker.ready.then(function (reg) {
+                        return reg.pushManager.subscribe({
+                            userVisibleOnly: true,
+                            applicationServerKey: urlBase64ToUint8Array(key),
+                        });
+                    }).then(function (sub) {
+                        return fetch('/api/v1/push/subscribe', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ subscription: sub.toJSON() }),
+                        }).then(function () { return true; });
+                    });
+                });
+            }).catch(function () {
+                showMsg('Could not enable push on this device. Email alerts still work.', true);
+                return false;
+            });
+        }
+
+        // Unsubscribe this browser from web push and drop it server-side.
+        // Best-effort: resolves even when push is unsupported or no sub exists.
+        function removePushSubscription() {
+            if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+                return Promise.resolve();
+            }
+            return navigator.serviceWorker.ready.then(function (reg) {
+                return reg.pushManager.getSubscription();
+            }).then(function (sub) {
+                if (!sub) return;
+                var endpoint = sub.endpoint;
+                return sub.unsubscribe().then(function () {
+                    return fetch('/api/v1/push/unsubscribe', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ endpoint: endpoint }),
+                    });
+                });
+            }).catch(function () { /* best-effort */ });
+        }
+
+        function savePrefs(enabled) {
+            var lead = parseInt(leadEl && leadEl.value, 10);
+            if (isNaN(lead) || lead < 0) lead = 0;
+            if (lead > 24) lead = 24;
+            var prefs = {
+                enabled: enabled,
+                email: !!(emailEl && emailEl.checked),
+                push: !!(pushEl && pushEl.checked),
+                min_rating: (ratingEl && ratingEl.value === 'Excellent') ? 'Excellent' : 'Good',
+                lead_hours: lead,
+            };
+            // Preserve the separate weekly-digest toggle (owned by the display
+            // settings form) so saving alert settings doesn't wipe it.
+            var weeklyEmail = {{ (np.weekly_email or false) | tojson }};
+            if (weeklyEmail) prefs.weekly_email = true;
+            return fetch('{{ url_for("api.profile_v1") }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ notification_prefs: prefs }),
+            }).then(function (r) {
+                if (!r.ok) throw new Error('save failed');
+                return r.json();
+            });
+        }
+
+        enableBtn.addEventListener('click', function () {
+            enableBtn.disabled = true;
+            var needPush = pushEl && pushEl.checked;
+            var pre = needPush ? ensurePushSubscription() : Promise.resolve(true);
+            pre.then(function (pushOk) {
+                if (needPush && !pushOk && pushEl) pushEl.checked = false;
+                return savePrefs(true);
+            }).then(function () {
+                serverEnabled = true;
+                showMsg('Alert settings saved.', false);
+                setStatus('Alerts are on.');
+                refreshButtons();
+            }).catch(function () {
+                showMsg('Could not save alert settings. Please try again.', true);
+            }).then(function () { enableBtn.disabled = false; });
+        });
+
+        disableBtn.addEventListener('click', function () {
+            disableBtn.disabled = true;
+            if (pushEl) pushEl.checked = false;  // reflect in the saved prefs
+            Promise.all([savePrefs(false), removePushSubscription()]).then(function () {
+                serverEnabled = false;
+                showMsg('All alerts turned off.', false);
+                setStatus('Alerts are off.');
+                refreshButtons();
+            }).catch(function () {
+                showMsg('Could not update settings. Please try again.', true);
+            }).then(function () { disableBtn.disabled = false; });
+        });
+
+        var testBtn = document.getElementById('test-alert-btn');
+        if (testBtn) {
+            testBtn.addEventListener('click', function () {
+                testBtn.disabled = true;
+                var prev = testBtn.textContent;
+                testBtn.textContent = 'Sending…';
+                fetch('/api/v1/notifications/test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: '{}',
+                }).then(function (r) {
+                    return r.ok ? r.json() : null;
+                }).then(function (body) {
+                    var sent = body && body.data && body.data.sent || {};
+                    if (sent.email || sent.push) {
+                        var chans = [];
+                        if (sent.email) chans.push('email');
+                        if (sent.push) chans.push('push');
+                        showMsg('Test alert sent via ' + chans.join(' and ') + '.', false);
+                    } else {
+                        showMsg('No test sent — enable a channel and make sure it\'s configured.', true);
+                    }
+                }).catch(function () {
+                    showMsg('Could not send a test alert. Please try again.', true);
+                }).then(function () {
+                    testBtn.disabled = false;
+                    testBtn.textContent = prev;
                 });
             });
         }
 
-        if (disableBtn) {
-            disableBtn.addEventListener('click', function () {
-                localStorage.removeItem(ALERTS_KEY);
-                showMsg('Alerts disabled.', false);
-                updateUI();
-            });
-        }
-
-        updateUI();
+        setStatus(serverEnabled ? 'Alerts are on.' : 'Alerts are off.');
+        refreshButtons();
     })();
     </script>
     <script>

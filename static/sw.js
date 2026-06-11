@@ -5,7 +5,7 @@
 //     cached dynamically on first use via the fetch handler below.
 //     Navigate requests fall back to a branded offline page on network failure.
 //     HTML pages are never cached — they embed session-specific CSRF tokens.
-var CACHE_NAME = 'fishforecast-v8';
+var CACHE_NAME = 'fishforecast-v9';
 var OFFLINE_URL = '/static/offline.html';
 var PRECACHE = [
   '/static/icons/icon-192.svg',
