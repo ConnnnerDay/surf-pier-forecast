@@ -116,6 +116,19 @@ def analyze_catch_patterns(
                 f"{lead_bait} is your most productive bait ({lead_bait_count} catches)."
             )
 
+    # Most effective rig.
+    rigs = Counter(
+        (c.get("rig") or "").strip() for c in catches if (c.get("rig") or "").strip()
+    )
+    rig_top = rigs.most_common(3)
+    if rig_top and sum(rigs.values()) >= _MIN_SAMPLES:
+        factors["top_rig"] = [{"rig": name, "count": count} for name, count in rig_top]
+        lead_rig, lead_rig_count = rig_top[0]
+        if lead_rig_count >= 2:
+            insights.append(
+                f"The {lead_rig} is your most productive rig ({lead_rig_count} catches)."
+            )
+
     # Does today's forecast line up with a historically productive factor?
     matches: list[str] = []
     if current:

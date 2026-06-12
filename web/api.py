@@ -519,6 +519,7 @@ def log() -> Any:
         size=payload.size,
         notes=payload.notes,
         bait=payload.bait,
+        rig=payload.rig,
         conditions=_catch_conditions_snapshot(payload.location_id),
     )
     resp = jsonify({"ok": True, "id": entry_id})
@@ -614,6 +615,7 @@ def log_v1() -> Any:
         size=payload.size,
         notes=payload.notes,
         bait=payload.bait,
+        rig=payload.rig,
         conditions=_catch_conditions_snapshot(payload.location_id),
     )
     created = {
@@ -622,6 +624,7 @@ def log_v1() -> Any:
         "size": payload.size,
         "notes": payload.notes,
         "bait": payload.bait,
+        "rig": payload.rig,
         "location_id": payload.location_id,
     }
     return jsonify(success_envelope({"entry": created})), 201

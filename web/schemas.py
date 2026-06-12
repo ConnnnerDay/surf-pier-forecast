@@ -368,6 +368,7 @@ class LogCreatePayload:
     size: str = ""
     notes: str = ""
     bait: str = ""
+    rig: str = ""
     location_id: str = ""
 
     @classmethod
@@ -400,10 +401,15 @@ class LogCreatePayload:
             raise ApiError(
                 "invalid_bait", f"bait must be {_MAX_BAIT_LEN} characters or fewer", status=400
             )
+        rig = str(data.get("rig", "")).strip()
+        if len(rig) > _MAX_BAIT_LEN:
+            raise ApiError(
+                "invalid_rig", f"rig must be {_MAX_BAIT_LEN} characters or fewer", status=400
+            )
         loc = str(data.get("location_id", "")).strip() or location_id
         if not loc:
             raise ApiError("missing_location", "location_id is required", status=400)
-        return cls(species=species, size=size, notes=notes, bait=bait, location_id=loc)
+        return cls(species=species, size=size, notes=notes, bait=bait, rig=rig, location_id=loc)
 
 
 def normalize_log_stats(stats: dict[str, Any]) -> dict[str, Any]:
