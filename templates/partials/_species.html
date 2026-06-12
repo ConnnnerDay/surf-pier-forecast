@@ -66,8 +66,8 @@
                             </div>
                             {% endif %}
                         </div>
-                        {# At-a-glance regulation summary — size / bag / season / slot #}
-                        {% if sp.regulation and (sp.regulation.min_size or sp.regulation.bag_limit or sp.regulation.season) %}
+                        {# At-a-glance regulation summary — size / bag / season / slot / gear #}
+                        {% if sp.regulation and (sp.regulation.min_size or sp.regulation.bag_limit or sp.regulation.season or sp.regulation.gear) %}
                         {% set _season_lc = (sp.regulation.season or '')|lower %}
                         {# Only warn on the season text when the closure is active *now*;
                            an inactive "Closed Jan-Apr" on a species shown in June is informational. #}
@@ -101,6 +101,12 @@
                             <span class="reg-chip reg-chip--slot" title="{{ sp.regulation.notes }}">
                                 <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
                                 Slot limit
+                            </span>
+                            {% endif %}
+                            {% if sp.regulation.gear %}
+                            <span class="reg-chip reg-chip--gear" title="Gear restriction: {{ sp.regulation.gear }}">
+                                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v10a4 4 0 0 1-4 4H6"/><path d="M4 14l2 2-2 2"/></svg>
+                                {{ sp.regulation.gear }}
                             </span>
                             {% endif %}
                         </div>

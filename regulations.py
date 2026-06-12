@@ -525,7 +525,61 @@ def _schedule_reg_refresh(species_name: str, state_key: str) -> None:
             _reg_refresh_pending.discard(key)
 
 
+# Gear-restriction phrases → a short normalized label. Scanned against the
+# combined regulation text (size / bag / season / notes) so it works across
+# every state's data, live or snapshot, without per-scraper changes. Patterns
+# are deliberately specific to avoid false positives.
+_GEAR_RULES: list[tuple] = [
+    (re.compile(r"non[-\s]?offset\s+circle\s+hook", re.I), "Non-offset circle hooks"),
+    (re.compile(r"circle\s+hook", re.I), "Circle hooks"),
+    (re.compile(r"barbless", re.I), "Barbless hooks"),
+    (re.compile(r"single[-\s]hook|single\s+barbless", re.I), "Single hook"),
+    (re.compile(r"no\s+treble|treble\s+hooks?\s+(?:are\s+)?prohibit", re.I), "No treble hooks"),
+    (re.compile(r"hook[-\s]and[-\s]line\s+only", re.I), "Hook and line only"),
+    (re.compile(r"artificial\s+(?:lures?|baits?)\s+only|artificials?\s+only", re.I), "Artificial lures only"),
+    (re.compile(r"(?:no\s+gigging|gigging\s+(?:is\s+)?prohibit|no\s+gig\b)", re.I), "No gigging"),
+    (re.compile(r"(?:snatch|snag)\w*\s+(?:hook\w*\s+)?(?:is\s+)?prohibit|no\s+(?:snatch|snag)", re.I), "No snatch hooking"),
+    (re.compile(r"spear\w*\s+(?:is\s+)?prohibit|no\s+spear", re.I), "No spearfishing"),
+    (re.compile(r"no\s+live\s+bait|live\s+bait\s+(?:is\s+)?prohibit", re.I), "No live bait"),
+]
+
+
+def _extract_gear_restrictions(reg: Optional[dict]) -> str:
+    """Derive a gear-restriction summary from a regulation payload's text.
+
+    Returns a comma-joined list of detected restrictions (e.g. "Circle hooks,
+    No gigging"), or "" when none are mentioned. A more specific match
+    suppresses the generic one (non-offset circle hooks vs circle hooks).
+    """
+    if not reg:
+        return ""
+    text = " ".join(
+        str(reg.get(k, "") or "")
+        for k in ("min_size", "bag_limit", "season", "notes")
+    )
+    if not text.strip():
+        return ""
+    found: list[str] = []
+    for pattern, label in _GEAR_RULES:
+        if pattern.search(text) and label not in found:
+            found.append(label)
+    # If the specific "Non-offset circle hooks" matched, drop the generic one.
+    if "Non-offset circle hooks" in found and "Circle hooks" in found:
+        found.remove("Circle hooks")
+    return ", ".join(found)
+
+
 def lookup_regulation(species_name: str, state: str) -> Optional[dict[str, str]]:
+    """Look up regulations for a species, enriched with parsed gear restrictions."""
+    payload = _lookup_regulation_impl(species_name, state)
+    if payload is not None and not payload.get("gear"):
+        gear = _extract_gear_restrictions(payload)
+        if gear:
+            payload["gear"] = gear
+    return payload
+
+
+def _lookup_regulation_impl(species_name: str, state: str) -> Optional[dict[str, str]]:
     """Look up fishing regulations for a species in a state.
 
     Uses stale-while-revalidate for the live scraper:

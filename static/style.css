@@ -10866,3 +10866,10 @@ details[open] .collapsible-module-body {
   }
 }
 
+
+.reg-chip--gear {
+  background: rgba(180, 83, 9, 0.10);
+  border-color: rgba(180, 83, 9, 0.30);
+  color: #9a4a09;
+}
+[data-theme="dark"] .reg-chip--gear { color: #f0a868; }

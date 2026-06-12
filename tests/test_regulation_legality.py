@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from domain.species import build_spawning_report, build_species_ranking
 from regulations import (
+    _extract_gear_restrictions,
     classify_legality,
     get_official_regulations_url,
     season_status,
@@ -886,3 +887,36 @@ class TestOfficialRegulationsUrl:
             assert url.startswith("https://"), (
                 f"State {state} returned unexpected URL: {url!r}"
             )
+
+
+class TestGearRestrictions:
+    def test_circle_hooks(self):
+        assert "Circle hooks" in _extract_gear_restrictions(
+            {"notes": "Circle hooks required when using natural bait."}
+        )
+
+    def test_non_offset_suppresses_generic(self):
+        out = _extract_gear_restrictions(
+            {"notes": "Non-offset circle hooks required for all natural bait."}
+        )
+        assert out == "Non-offset circle hooks"
+
+    def test_multiple_restrictions(self):
+        out = _extract_gear_restrictions(
+            {"notes": "Hook-and-line only. No snatch hooking permitted."}
+        )
+        assert "Hook and line only" in out
+        assert "No snatch hooking" in out
+
+    def test_gigging_and_spear(self):
+        assert "No gigging" in _extract_gear_restrictions({"notes": "Gigging is prohibited."})
+        assert "No spearfishing" in _extract_gear_restrictions({"notes": "Spearfishing prohibited."})
+
+    def test_no_false_positive_on_standard_limits(self):
+        assert _extract_gear_restrictions(
+            {"min_size": "18 in", "bag_limit": "3/day", "season": "Open", "notes": "Standard limits."}
+        ) == ""
+
+    def test_none_and_empty_safe(self):
+        assert _extract_gear_restrictions(None) == ""
+        assert _extract_gear_restrictions({}) == ""
