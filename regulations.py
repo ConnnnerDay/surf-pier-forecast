@@ -54,6 +54,7 @@ _RELOAD_INTERVAL_SECONDS = 300.0
 _STATE_REGULATION_SOURCES: dict[str, str] = {
     "AL": "https://www.outdooralabama.com/saltwater-fishing",
     "CA": "https://wildlife.ca.gov/Fishing/Ocean/Regulations",
+    "CT": "https://portal.ct.gov/deep/fishing/saltwater/saltwater-recreational-fishing-regulations",
     "DE": "https://dnrec.delaware.gov/fish-wildlife/fishing/saltwater-fishing/",
     "FL": "https://myfwc.com/fishing/saltwater/recreational/",
     "GA": "https://georgiawildlife.com/fishing/regulations",
