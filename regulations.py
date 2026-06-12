@@ -52,6 +52,7 @@ _DEFAULT_REGULATIONS_PATH = (
 _RELOAD_INTERVAL_SECONDS = 300.0
 
 _STATE_REGULATION_SOURCES: dict[str, str] = {
+    "AK": "https://www.adfg.alaska.gov/index.cfm?adfg=fishingsportfishingbyareasaltwater.main",
     "AL": "https://www.outdooralabama.com/saltwater-fishing",
     "CA": "https://wildlife.ca.gov/Fishing/Ocean/Regulations",
     "CT": "https://portal.ct.gov/deep/fishing/saltwater/saltwater-recreational-fishing-regulations",
@@ -64,6 +65,7 @@ _STATE_REGULATION_SOURCES: dict[str, str] = {
     "MD": "https://dnr.maryland.gov/fisheries/pages/recreational.aspx",
     "ME": "https://www.maine.gov/dmr/fisheries/recreational",
     "MS": "https://www.mdwfp.com/fishing-boating/saltwater-fishing/",
+    "NH": "https://www.wildlife.state.nh.us/fishing/saltwater.html",
     "NC": "https://www.deq.nc.gov/about/divisions/marine-fisheries/recreational-fishing",
     "NJ": "https://dep.nj.gov/njfw/fishing/marine/",
     "NY": "https://dec.ny.gov/things-to-do/saltwater-fishing/recreational-regulations",

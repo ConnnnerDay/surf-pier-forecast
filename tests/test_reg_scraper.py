@@ -68,9 +68,15 @@ class TestMakeTableScraper:
 
 class TestNewStatesRegistered:
     def test_new_saltwater_states_have_scrapers(self):
-        for state in ("SC", "NJ", "MD", "MA", "LA", "CA", "CT", "DE"):
+        for state in ("SC", "NJ", "MD", "MA", "LA", "CA", "CT", "DE",
+                      "ME", "NH", "WA", "OR", "AK"):
             assert state in rs._SCRAPERS
             assert callable(rs._SCRAPERS[state])
+
+    def test_every_scraper_state_has_official_source(self):
+        from regulations import _STATE_REGULATION_SOURCES
+        for state in rs._SCRAPERS:
+            assert state in _STATE_REGULATION_SOURCES, f"{state} missing official source"
 
     def test_original_states_still_present(self):
         for state in ("FL", "VA", "GA", "NC", "NY", "AL", "RI", "TX", "MS"):

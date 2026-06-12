@@ -14,9 +14,10 @@ Supported states with live scraping:
   MS — MS DMR via eRegulations.com inshore/nearshore table
 
 Additional saltwater states use a shared generic "Species | Size | Bag |
-Season" table scraper (see _NEW_TABLE_STATES): SC, NJ, MD, MA, LA, CA, CT, DE.
-If a live page's structure differs from a standard limits table the parser
-returns None, so the caller safely falls back to the snapshot.
+Season" table scraper (see _NEW_TABLE_STATES): SC, NJ, MD, MA, LA, CA, CT, DE,
+ME, NH, WA, OR, AK, HI — covering every US saltwater state. If a live page's
+structure differs from a standard limits table the parser returns None, so the
+caller safely falls back to the snapshot.
 
 All other states return None so the caller falls back to the static JSON
 snapshot in storage/regulations_data.json.
@@ -1230,6 +1231,15 @@ _COMMON_NAMES: dict[str, list[str]] = {
     "white_seabass": ["white seabass", "white sea bass"],
     "lingcod": ["lingcod"],
     "barred_surfperch": ["barred surfperch", "surfperch", "perch"],
+    # Northern Atlantic (ME/NH/MA) groundfish + flatfish
+    "winter_flounder": ["winter flounder", "blackback"],
+    "atlantic_cod": ["atlantic cod", "cod"],
+    "haddock": ["haddock"],
+    "pollock": ["pollock"],
+    # Pacific & Alaska (WA/OR/AK) species
+    "rockfish": ["rockfish"],
+    "cabezon": ["cabezon"],
+    "pacific_halibut": ["pacific halibut", "halibut"],
 }
 
 # Per-state live table scrapers. URLs point at each agency's recreational
@@ -1275,6 +1285,36 @@ _NEW_TABLE_STATES = {
         "https://dnrec.delaware.gov/fish-wildlife/fishing/saltwater/",
         "Delaware DNREC (dnrec.delaware.gov)",
         "dnrec.delaware.gov",
+    ),
+    "ME": (
+        "https://www.maine.gov/dmr/fisheries/recreational/regulations",
+        "Maine DMR (maine.gov)",
+        "maine.gov",
+    ),
+    "NH": (
+        "https://www.wildlife.state.nh.us/fishing/saltwater.html",
+        "NH Fish & Game (wildlife.state.nh.us)",
+        "wildlife.state.nh.us",
+    ),
+    "WA": (
+        "https://wdfw.wa.gov/fishing/regulations/saltwater",
+        "Washington DFW (wdfw.wa.gov)",
+        "wdfw.wa.gov",
+    ),
+    "OR": (
+        "https://myodfw.com/recreational-regulations/general-regulations/marine-zone",
+        "Oregon DFW (myodfw.com)",
+        "myodfw.com",
+    ),
+    "AK": (
+        "https://www.adfg.alaska.gov/index.cfm?adfg=fishingsportfishingbyareasaltwater.main",
+        "Alaska DFG (adfg.alaska.gov)",
+        "adfg.alaska.gov",
+    ),
+    "HI": (
+        "https://dlnr.hawaii.gov/dar/fishing/fishing-regulations/",
+        "Hawaii DAR (dlnr.hawaii.gov)",
+        "dlnr.hawaii.gov",
     ),
 }
 
