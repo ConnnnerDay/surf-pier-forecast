@@ -575,6 +575,13 @@ _GEAR_RULES: list[tuple] = [
     (re.compile(r"(?:snatch|snag)\w*\s+(?:hook\w*\s+)?(?:is\s+)?prohibit|no\s+(?:snatch|snag)", re.I), "No snatch hooking"),
     (re.compile(r"spear\w*\s+(?:is\s+)?prohibit|no\s+spear", re.I), "No spearfishing"),
     (re.compile(r"no\s+live\s+bait|live\s+bait\s+(?:is\s+)?prohibit", re.I), "No live bait"),
+    (re.compile(r"natural\s+bait\s+only", re.I), "Natural bait only"),
+    (re.compile(r"j[-\s]?hooks?\s+(?:are\s+)?prohibit|no\s+j[-\s]?hooks?", re.I), "No J-hooks"),
+    (re.compile(r"no\s+(?:multiple|treble|gang)\s+hooks?|single\s+hook\s+only", re.I), "Single hook only"),
+    (re.compile(r"no\s+chumming|chumming\s+(?:is\s+)?prohibit", re.I), "No chumming"),
+    (re.compile(r"no\s+gaff(?:ing)?|gaff(?:ing)?\s+(?:is\s+)?prohibit", re.I), "No gaffing"),
+    (re.compile(r"(?:venting|descend\w*)\s+(?:tool|device)\s+(?:is\s+)?required", re.I), "Descending device required"),
+    (re.compile(r"cast\s+net\s+(?:only|required)", re.I), "Cast net only"),
 ]
 
 

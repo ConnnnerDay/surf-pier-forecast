@@ -922,6 +922,15 @@ class TestGearRestrictions:
         assert _extract_gear_restrictions(None) == ""
         assert _extract_gear_restrictions({}) == ""
 
+    def test_more_gear_methods(self):
+        assert "Natural bait only" in _extract_gear_restrictions({"notes": "Natural bait only."})
+        assert "No J-hooks" in _extract_gear_restrictions({"notes": "J-hooks are prohibited."})
+        assert "No chumming" in _extract_gear_restrictions({"notes": "No chumming permitted."})
+        assert "Descending device required" in _extract_gear_restrictions(
+            {"notes": "A descending device is required for reef fish."}
+        )
+
+
 
 class TestSlotLimit:
     def test_parses_range_with_slot_keyword(self):
