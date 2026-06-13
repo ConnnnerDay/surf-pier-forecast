@@ -10873,3 +10873,27 @@ details[open] .collapsible-module-body {
   color: #9a4a09;
 }
 [data-theme="dark"] .reg-chip--gear { color: #f0a868; }
+
+/* Closure advisory — species off-limits this month */
+.closure-advisory {
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 9px;
+  background: rgba(192, 57, 43, 0.07);
+  border: 1px solid rgba(192, 57, 43, 0.22);
+}
+.closure-advisory-hdr {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #b5402f;
+  margin-bottom: 0.4rem;
+}
+[data-theme="dark"] .closure-advisory-hdr { color: #f08a7a; }
+.closure-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.25rem; }
+.closure-item { display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap; font-size: 0.82rem; }
+.closure-name { font-weight: 600; }
+.closure-season { font-size: 0.74rem; color: var(--text-muted); }
+.closure-link { font-size: 0.72rem; color: var(--ocean, #0e5f78); text-decoration: underline; text-underline-offset: 2px; }

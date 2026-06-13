@@ -7,6 +7,23 @@
                 <a href="{{ forecast.official_regulations_url }}" target="_blank" rel="noopener noreferrer" class="reg-disclaimer-link">Official {{ forecast.location_state or '' }} regulations ↗</a>
                 {% endif %}
             </p>
+            {% if forecast.closures %}
+            <div class="closure-advisory" role="note">
+                <div class="closure-advisory-hdr">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                    Closed right now &mdash; in season elsewhere in the year
+                </div>
+                <ul class="closure-list">
+                    {% for c in forecast.closures %}
+                    <li class="closure-item">
+                        <span class="closure-name">{{ c.name }}</span>
+                        {% if c.season %}<span class="closure-season">{{ c.season }}</span>{% endif %}
+                        {% if c.official_source %}<a href="{{ c.official_source }}" target="_blank" rel="noopener noreferrer" class="closure-link">regs ↗</a>{% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
             <div class="species-cards">
                 {% for sp in forecast.species %}
                 <div class="species-card" data-species-name="{{ sp.name }}" data-species-bait="{{ sp.bait|lower }}" data-species-rig="{{ sp.rig|lower }}" data-activity="{{ sp.activity|lower }}"{% if sp.regulation %} data-reg-min-size="{{ sp.regulation.min_size }}" data-reg-bag-limit="{{ sp.regulation.bag_limit }}" data-reg-season="{{ sp.regulation.season }}" data-reg-notes="{{ sp.regulation.notes }}" data-reg-gear="{{ sp.regulation.gear or '' }}" data-reg-slot="{{ sp.regulation.slot or '' }}" data-reg-official-source="{{ sp.regulation.official_source or '' }}" data-reg-data-status="{{ sp.regulation.data_status or '' }}" data-reg-last-updated="{{ sp.regulation.last_updated or '' }}" data-reg-is-stale="{{ sp.regulation.is_stale|lower }}" data-reg-fetched-at="{{ sp.regulation.fetched_at or '' }}"{% endif %}>

@@ -952,3 +952,40 @@ class TestSlotLimit:
 
     def test_none_safe(self):
         assert _extract_slot_limit(None) == ""
+
+
+class TestClosureCapture:
+    def test_out_of_season_species_captured(self, monkeypatch):
+        # Everything is closed Jan-Apr; querying in February should populate
+        # the closures list with out_of_season species (not the visible ranking).
+        def fake_lookup(name, state):
+            return _open_reg(season="Closed Jan-Apr")
+
+        monkeypatch.setattr("domain.species.lookup_regulation", fake_lookup)
+        closures: list = []
+        ranking = build_species_ranking(
+            month=2, water_temp=58, coast="east", state="NC", closures_out=closures
+        )
+        # Closed species are hidden from the ranking but captured as closures.
+        assert ranking == [] or all(s.get("regulation_status") != "out_of_season" for s in ranking)
+        assert closures, "expected out-of-season species to be captured"
+        assert all(c["status"] == "out_of_season" for c in closures)
+        assert all("season" in c and "name" in c for c in closures)
+
+    def test_no_closures_when_all_legal(self, monkeypatch):
+        monkeypatch.setattr(
+            "domain.species.lookup_regulation", lambda n, s: _open_reg()
+        )
+        closures: list = []
+        build_species_ranking(
+            month=6, water_temp=72, coast="east", state="NC", closures_out=closures
+        )
+        assert closures == []
+
+    def test_closures_opt_in_only(self, monkeypatch):
+        # Without closures_out, nothing breaks (back-compat).
+        monkeypatch.setattr(
+            "domain.species.lookup_regulation", lambda n, s: _open_reg(season="Closed Jan-Apr")
+        )
+        ranking = build_species_ranking(month=2, water_temp=58, coast="east", state="NC")
+        assert isinstance(ranking, list)
