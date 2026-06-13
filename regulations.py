@@ -528,6 +528,37 @@ def _schedule_reg_refresh(species_name: str, state_key: str) -> None:
             _reg_refresh_pending.discard(key)
 
 
+# Slot-limit range, e.g. "slot limit: 18-27 in", "18 to 27 inches".
+_SLOT_RE = re.compile(
+    r"(\d{1,2}(?:\.\d)?)\s*(?:-|–|—|to)\s*(\d{1,2}(?:\.\d)?)\s*(in(?:ch(?:es)?)?|\"|cm|mm)",
+    re.IGNORECASE,
+)
+
+
+def _extract_slot_limit(reg: Optional[dict]) -> str:
+    """Parse a slot-limit range like '18-27 in' from a regulation payload.
+
+    Only fires when the text actually mentions a slot/protected range *and* a
+    numeric range is present, so a plain "18-27 in" minimum-only note isn't
+    mislabeled. Returns "" otherwise.
+    """
+    if not reg:
+        return ""
+    text = " ".join(
+        str(reg.get(k, "") or "")
+        for k in ("min_size", "notes", "season", "bag_limit")
+    )
+    low = text.lower()
+    if "slot" not in low and "protected" not in low:
+        return ""
+    m = _SLOT_RE.search(text)
+    if not m:
+        return ""
+    unit = (m.group(3) or "in").lower()
+    unit = "in" if unit in ('"', "inch", "inches", "in") else unit
+    return f"{m.group(1)}-{m.group(2)} {unit}"
+
+
 # Gear-restriction phrases → a short normalized label. Scanned against the
 # combined regulation text (size / bag / season / notes) so it works across
 # every state's data, live or snapshot, without per-scraper changes. Patterns
@@ -575,10 +606,15 @@ def _extract_gear_restrictions(reg: Optional[dict]) -> str:
 def lookup_regulation(species_name: str, state: str) -> Optional[dict[str, str]]:
     """Look up regulations for a species, enriched with parsed gear restrictions."""
     payload = _lookup_regulation_impl(species_name, state)
-    if payload is not None and not payload.get("gear"):
-        gear = _extract_gear_restrictions(payload)
-        if gear:
-            payload["gear"] = gear
+    if payload is not None:
+        if not payload.get("gear"):
+            gear = _extract_gear_restrictions(payload)
+            if gear:
+                payload["gear"] = gear
+        if not payload.get("slot"):
+            slot = _extract_slot_limit(payload)
+            if slot:
+                payload["slot"] = slot
     return payload
 
 

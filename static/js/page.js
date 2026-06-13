@@ -492,6 +492,8 @@ if ('serviceWorker' in navigator) {
         var bagLimit = card.getAttribute('data-reg-bag-limit') || '';
         var season = card.getAttribute('data-reg-season') || '';
         var notes = card.getAttribute('data-reg-notes') || '';
+        var gear = card.getAttribute('data-reg-gear') || '';
+        var slot = card.getAttribute('data-reg-slot') || '';
         var regOfficialSource = card.getAttribute('data-reg-official-source') || '';
         var isStale = card.getAttribute('data-reg-is-stale') === 'true';
         var lastUpdated = card.getAttribute('data-reg-last-updated') || '';
@@ -502,8 +504,10 @@ if ('serviceWorker' in navigator) {
         }
         html += '<div class="reg-modal__grid">';
         if (minSize) html += '<div><span class="reg-label">Min. Size</span><span class="reg-value">' + esc(minSize) + '</span></div>';
+        if (slot) html += '<div><span class="reg-label">Slot Limit</span><span class="reg-value">' + esc(slot) + '</span></div>';
         if (bagLimit) html += '<div><span class="reg-label">Bag Limit</span><span class="reg-value">' + esc(bagLimit) + '</span></div>';
         if (season) html += '<div><span class="reg-label">Season</span><span class="reg-value">' + esc(season) + '</span></div>';
+        if (gear) html += '<div class="reg-modal__grid-full"><span class="reg-label">Gear Restrictions</span><span class="reg-value">' + esc(gear) + '</span></div>';
         if (notes) html += '<div class="reg-modal__grid-full"><span class="reg-label">Notes</span><span class="reg-value">' + esc(notes) + '</span></div>';
         html += '</div>';
         if (regOfficialSource) {

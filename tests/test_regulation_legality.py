@@ -14,6 +14,7 @@ from __future__ import annotations
 from domain.species import build_spawning_report, build_species_ranking
 from regulations import (
     _extract_gear_restrictions,
+    _extract_slot_limit,
     classify_legality,
     get_official_regulations_url,
     season_status,
@@ -920,3 +921,25 @@ class TestGearRestrictions:
     def test_none_and_empty_safe(self):
         assert _extract_gear_restrictions(None) == ""
         assert _extract_gear_restrictions({}) == ""
+
+
+class TestSlotLimit:
+    def test_parses_range_with_slot_keyword(self):
+        assert _extract_slot_limit({"notes": "Slot limit: 18-27 in TL."}) == "18-27 in"
+
+    def test_to_and_unicode_dash(self):
+        assert _extract_slot_limit({"notes": "Slot 18 to 27 inches"}) == "18-27 in"
+        assert _extract_slot_limit({"min_size": 'Slot: 15–23"'}) == "15-23 in"
+
+    def test_protected_slot(self):
+        assert _extract_slot_limit({"notes": "Protected slot 20-28 inches"}) == "20-28 in"
+
+    def test_no_slot_keyword_no_match(self):
+        # A plain range without 'slot'/'protected' is not a slot limit.
+        assert _extract_slot_limit({"notes": "3 per day, 18-27 in range"}) == ""
+
+    def test_min_only_no_match(self):
+        assert _extract_slot_limit({"min_size": "18 in minimum"}) == ""
+
+    def test_none_safe(self):
+        assert _extract_slot_limit(None) == ""
