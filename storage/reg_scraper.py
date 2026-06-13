@@ -1141,6 +1141,26 @@ def _scrape_ms(species_name: str) -> Optional[dict[str, str]]:
 # the static snapshot, so adding a state is low-risk.
 # ──────────────────────────────────────────────────────────────────
 
+def _detect_reg_columns(cells: list[str]) -> dict[str, int]:
+    """Map size/bag/season fields to column indices from a header row.
+
+    Agencies order their columns differently, so rather than assume
+    size=1/bag=2/season=3 we read the header text. Size keywords win over the
+    generic "limit" (a "Minimum Size Limit" header is a size column, not bag).
+    """
+    cols: dict[str, int] = {}
+    for i, raw in enumerate(cells):
+        h = raw.lower()
+        if "species" in h or "common name" in h:
+            cols.setdefault("species", i)
+        elif ("size" in h or "length" in h or "minimum" in h or '"' in h or " in" in h) and "season" not in h:
+            cols.setdefault("size", i)
+        elif "season" in h or "open" in h or "closed" in h or "dates" in h:
+            cols.setdefault("season", i)
+        elif "bag" in h or "creel" in h or "possession" in h or "daily" in h or "limit" in h or "number" in h:
+            cols.setdefault("bag", i)
+    return cols
+
 def _parse_reg_table(
     html: str,
     species_name: str,
@@ -1148,7 +1168,12 @@ def _parse_reg_table(
     source: str,
     notes: str,
 ) -> Optional[dict[str, str]]:
-    """Match a species row in any Species|Size|Bag[|Season] table on the page."""
+    """Match a species row in any limits table, adapting to the column order.
+
+    For each table, the header row is read to locate the size / bag / season
+    columns by name; if no usable header is found it falls back to the common
+    positional layout (species, size, bag, season).
+    """
     names = None
     for candidate in _name_variants(species_name):
         names = names_map.get(candidate)
@@ -1156,19 +1181,38 @@ def _parse_reg_table(
             break
     if not names:
         return None
+    lname = [n.lower() for n in names]
 
     soup = BeautifulSoup(html, "html.parser")
     for table in soup.find_all("table"):
-        for row in table.find_all("tr"):
+        rows = table.find_all("tr")
+        # Detect columns from the first row that looks like a header.
+        cols: dict[str, int] = {}
+        for r in rows[:2]:
+            cells = [c.get_text(" ", strip=True) for c in r.find_all(["th", "td"])]
+            detected = _detect_reg_columns(cells)
+            if "size" in detected or "bag" in detected:
+                cols = detected
+                break
+        sp_col = cols.get("species", 0)
+        size_col = cols.get("size", 1)
+        bag_col = cols.get("bag", 2)
+        season_col = cols.get("season", 3)
+
+        for row in rows:
             tds = row.find_all(["td", "th"])
-            if len(tds) < 2:
+            if len(tds) < 2 or sp_col >= len(tds):
                 continue
-            cell0 = tds[0].get_text(" ", strip=True).lower()
-            if not any(name.lower() in cell0 for name in names):
+            cell0 = tds[sp_col].get_text(" ", strip=True).lower()
+            if not any(n in cell0 for n in lname):
                 continue
-            size = tds[1].get_text(" ", strip=True).strip() if len(tds) > 1 else ""
-            bag = tds[2].get_text(" ", strip=True).strip() if len(tds) > 2 else ""
-            season = tds[3].get_text(" ", strip=True).strip() if len(tds) > 3 else ""
+
+            def _cell(idx: int) -> str:
+                return tds[idx].get_text(" ", strip=True).strip() if 0 <= idx < len(tds) else ""
+
+            size = _cell(size_col)
+            bag = _cell(bag_col)
+            season = _cell(season_col)
             if size or bag:
                 return {
                     "min_size": size[:120],
@@ -1178,6 +1222,69 @@ def _parse_reg_table(
                     "scraped_source": source,
                 }
     return None
+
+
+# Label/value layout (e.g. "Minimum size: 14". "Bag limit: 10 per day.") used
+# by agencies that publish per-species blurbs rather than a table.
+_REG_SIZE_LABEL = re.compile(
+    r"(?:minimum\s+(?:size|length)|size\s+limit|legal\s+(?:size|length)|min(?:imum)?\.?\s*length)"
+    r"\s*[:\-]?\s*([^.;\n|]{1,80})",
+    re.IGNORECASE,
+)
+_REG_BAG_LABEL = re.compile(
+    r"(?:bag|creel|possession|daily)\s+limit\s*[:\-]?\s*([^.;\n|]{1,80})",
+    re.IGNORECASE,
+)
+_REG_SEASON_LABEL = re.compile(
+    r"(?:open\s+)?season\s*[:\-]?\s*([^.;\n|]{1,80})",
+    re.IGNORECASE,
+)
+
+
+def _parse_reg_labels(
+    html: str,
+    species_name: str,
+    names_map: dict[str, list[str]],
+    source: str,
+    notes: str,
+) -> Optional[dict[str, str]]:
+    """Fallback: extract size/bag/season from a per-species text block."""
+    names = None
+    for candidate in _name_variants(species_name):
+        names = names_map.get(candidate)
+        if names:
+            break
+    if not names:
+        return None
+
+    text = _strip_html(html)
+    low = text.lower()
+    pos = -1
+    for n in names:
+        pos = low.find(n.lower())
+        if pos != -1:
+            break
+    if pos == -1:
+        return None
+    # Look at a window starting at the species mention.
+    window = text[pos : pos + 500]
+
+    def _first(rx: re.Pattern) -> str:
+        m = rx.search(window)
+        return m.group(1).strip()[:120] if m else ""
+
+    size = _first(_REG_SIZE_LABEL)
+    bag = _first(_REG_BAG_LABEL)
+    season = _first(_REG_SEASON_LABEL)
+    if not (size or bag):
+        return None
+    return {
+        "min_size": size,
+        "bag_limit": bag,
+        "season": season,
+        "notes": notes,
+        "scraped_source": source,
+    }
 
 def _make_table_scraper(
     url: str,
@@ -1202,7 +1309,10 @@ def _make_table_scraper(
         html = _get_html()
         if not html:
             return None
-        return _parse_reg_table(html, species_name, names_map, source, notes)
+        # Prefer the structured table; fall back to per-species label/value text.
+        return _parse_reg_table(html, species_name, names_map, source, notes) or (
+            _parse_reg_labels(html, species_name, names_map, source, notes)
+        )
 
     return _scrape
 

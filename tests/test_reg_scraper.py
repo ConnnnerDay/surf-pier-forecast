@@ -81,3 +81,74 @@ class TestNewStatesRegistered:
     def test_original_states_still_present(self):
         for state in ("FL", "VA", "GA", "NC", "NY", "AL", "RI", "TX", "MS"):
             assert state in rs._SCRAPERS
+
+
+_REORDERED_TABLE = """
+<html><body>
+<table>
+  <tr><th>Species</th><th>Possession Limit</th><th>Minimum Length</th><th>Open Season</th></tr>
+  <tr><td>Striped Bass</td><td>1 per day</td><td>28-31 in</td><td>May 1 - Dec 31</td></tr>
+</table>
+</body></html>
+"""
+
+_ALT_HEADERS_TABLE = """
+<table>
+  <tr><th>Fish</th><th>Creel</th><th>Legal Size</th></tr>
+  <tr><td>Lingcod</td><td>2 fish</td><td>22 inches</td></tr>
+</table>
+"""
+
+_NO_HEADER_TABLE = """
+<table>
+  <tr><td>Bluefish</td><td>12 in</td><td>3 per day</td><td>Year-round</td></tr>
+</table>
+"""
+
+_LABEL_PAGE = """
+<html><body>
+<h2>Cobia (Ling)</h2>
+<p>Minimum size: 36 inches fork length. Bag limit: 1 per person per day.
+Open season: year-round.</p>
+<h2>Other species</h2>
+</body></html>
+"""
+
+
+class TestColumnAdaptivity:
+    def test_reordered_columns_by_header(self):
+        out = rs._parse_reg_table(_REORDERED_TABLE, "Striped bass", _NAMES, "s", "n")
+        assert out["min_size"] == "28-31 in"
+        assert out["bag_limit"] == "1 per day"
+        assert out["season"] == "May 1 - Dec 31"
+
+    def test_alternate_header_names(self):
+        out = rs._parse_reg_table(_ALT_HEADERS_TABLE, "Lingcod", _NAMES, "s", "n")
+        assert out["min_size"] == "22 inches"
+        assert out["bag_limit"] == "2 fish"
+
+    def test_positional_fallback_without_header(self):
+        out = rs._parse_reg_table(_NO_HEADER_TABLE, "Bluefish", _NAMES, "s", "n")
+        assert out["min_size"] == "12 in"
+        assert out["bag_limit"] == "3 per day"
+        assert out["season"] == "Year-round"
+
+    def test_detect_columns_size_beats_limit(self):
+        cols = rs._detect_reg_columns(["Species", "Minimum Size Limit", "Bag Limit"])
+        assert cols["size"] == 1
+        assert cols["bag"] == 2
+
+
+class TestLabelFallback:
+    def test_label_value_block(self):
+        out = rs._parse_reg_labels(_LABEL_PAGE, "Cobia", _NAMES, "src", "note")
+        assert out is not None
+        assert "36 inches" in out["min_size"]
+        assert "1 per person" in out["bag_limit"]
+
+    def test_scraper_falls_back_to_labels(self, monkeypatch):
+        # A page with no table — table parse returns None, labels succeed.
+        monkeypatch.setattr(rs, "_fetch_page", lambda url: _LABEL_PAGE)
+        scrape = rs._make_table_scraper("http://x.test", _NAMES, "x.test", "note")
+        out = scrape("Cobia")
+        assert out is not None and "36 inches" in out["min_size"]
