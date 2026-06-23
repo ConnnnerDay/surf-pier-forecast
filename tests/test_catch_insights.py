@@ -9,7 +9,7 @@ from storage.sqlite import (
 
 
 def _catch(species="Red drum", tide="Rising", wind="NE", temp=66.0, moon="Full Moon",
-           bait="Live shrimp"):
+           bait="Live shrimp", rig="Hi-lo"):
     return {
         "species": species,
         "tide_state": tide,
@@ -17,6 +17,7 @@ def _catch(species="Red drum", tide="Rising", wind="NE", temp=66.0, moon="Full M
         "water_temp_f": temp,
         "moon_phase": moon,
         "bait": bait,
+        "rig": rig,
     }
 
 
@@ -68,6 +69,12 @@ class TestAnalyzeCatchPatterns:
         assert out["factors"]["top_bait"][0]["bait"] == "Live shrimp"
         assert any("Live shrimp" in i and "productive bait" in i for i in out["insights"])
 
+    def test_top_rig(self):
+        catches = [_catch(rig="Fish-finder") for _ in range(4)] + [_catch(rig="Hi-lo")]
+        out = analyze_catch_patterns(catches)
+        assert out["factors"]["top_rig"][0]["rig"] == "Fish-finder"
+        assert any("Fish-finder" in i and "productive rig" in i for i in out["insights"])
+
     def test_no_bait_no_insight(self):
         catches = [_catch(bait="") for _ in range(5)]
         out = analyze_catch_patterns(catches)
@@ -111,6 +118,7 @@ class TestConditionSnapshotStorage:
             "Striped bass",
             size="28 in",
             bait="Live eel",
+            rig="Fish-finder",
             conditions={
                 "tide_state": "Falling",
                 "wind_dir": "NW",
@@ -125,6 +133,7 @@ class TestConditionSnapshotStorage:
         assert rows[0]["water_temp_f"] == 58.5
         assert rows[0]["moon_phase"] == "Waning Crescent"
         assert rows[0]["bait"] == "Live eel"
+        assert rows[0]["rig"] == "Fish-finder"
 
     def test_missing_conditions_are_null(self, app):
         uid = create_user("catchuser2", "pass1234")

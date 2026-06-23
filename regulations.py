@@ -52,8 +52,10 @@ _DEFAULT_REGULATIONS_PATH = (
 _RELOAD_INTERVAL_SECONDS = 300.0
 
 _STATE_REGULATION_SOURCES: dict[str, str] = {
+    "AK": "https://www.adfg.alaska.gov/index.cfm?adfg=fishingsportfishingbyareasaltwater.main",
     "AL": "https://www.outdooralabama.com/saltwater-fishing",
     "CA": "https://wildlife.ca.gov/Fishing/Ocean/Regulations",
+    "CT": "https://portal.ct.gov/deep/fishing/saltwater/saltwater-recreational-fishing-regulations",
     "DE": "https://dnrec.delaware.gov/fish-wildlife/fishing/saltwater-fishing/",
     "FL": "https://myfwc.com/fishing/saltwater/recreational/",
     "GA": "https://georgiawildlife.com/fishing/regulations",
@@ -63,6 +65,7 @@ _STATE_REGULATION_SOURCES: dict[str, str] = {
     "MD": "https://dnr.maryland.gov/fisheries/pages/recreational.aspx",
     "ME": "https://www.maine.gov/dmr/fisheries/recreational",
     "MS": "https://www.mdwfp.com/fishing-boating/saltwater-fishing/",
+    "NH": "https://www.wildlife.state.nh.us/fishing/saltwater.html",
     "NC": "https://www.deq.nc.gov/about/divisions/marine-fisheries/recreational-fishing",
     "NJ": "https://dep.nj.gov/njfw/fishing/marine/",
     "NY": "https://dec.ny.gov/things-to-do/saltwater-fishing/recreational-regulations",
@@ -525,7 +528,104 @@ def _schedule_reg_refresh(species_name: str, state_key: str) -> None:
             _reg_refresh_pending.discard(key)
 
 
+# Slot-limit range, e.g. "slot limit: 18-27 in", "18 to 27 inches".
+_SLOT_RE = re.compile(
+    r"(\d{1,2}(?:\.\d)?)\s*(?:-|–|—|to)\s*(\d{1,2}(?:\.\d)?)\s*(in(?:ch(?:es)?)?|\"|cm|mm)",
+    re.IGNORECASE,
+)
+
+
+def _extract_slot_limit(reg: Optional[dict]) -> str:
+    """Parse a slot-limit range like '18-27 in' from a regulation payload.
+
+    Only fires when the text actually mentions a slot/protected range *and* a
+    numeric range is present, so a plain "18-27 in" minimum-only note isn't
+    mislabeled. Returns "" otherwise.
+    """
+    if not reg:
+        return ""
+    text = " ".join(
+        str(reg.get(k, "") or "")
+        for k in ("min_size", "notes", "season", "bag_limit")
+    )
+    low = text.lower()
+    if "slot" not in low and "protected" not in low:
+        return ""
+    m = _SLOT_RE.search(text)
+    if not m:
+        return ""
+    unit = (m.group(3) or "in").lower()
+    unit = "in" if unit in ('"', "inch", "inches", "in") else unit
+    return f"{m.group(1)}-{m.group(2)} {unit}"
+
+
+# Gear-restriction phrases → a short normalized label. Scanned against the
+# combined regulation text (size / bag / season / notes) so it works across
+# every state's data, live or snapshot, without per-scraper changes. Patterns
+# are deliberately specific to avoid false positives.
+_GEAR_RULES: list[tuple] = [
+    (re.compile(r"non[-\s]?offset\s+circle\s+hook", re.I), "Non-offset circle hooks"),
+    (re.compile(r"circle\s+hook", re.I), "Circle hooks"),
+    (re.compile(r"barbless", re.I), "Barbless hooks"),
+    (re.compile(r"single[-\s]hook|single\s+barbless", re.I), "Single hook"),
+    (re.compile(r"no\s+treble|treble\s+hooks?\s+(?:are\s+)?prohibit", re.I), "No treble hooks"),
+    (re.compile(r"hook[-\s]and[-\s]line\s+only", re.I), "Hook and line only"),
+    (re.compile(r"artificial\s+(?:lures?|baits?)\s+only|artificials?\s+only", re.I), "Artificial lures only"),
+    (re.compile(r"(?:no\s+gigging|gigging\s+(?:is\s+)?prohibit|no\s+gig\b)", re.I), "No gigging"),
+    (re.compile(r"(?:snatch|snag)\w*\s+(?:hook\w*\s+)?(?:is\s+)?prohibit|no\s+(?:snatch|snag)", re.I), "No snatch hooking"),
+    (re.compile(r"spear\w*\s+(?:is\s+)?prohibit|no\s+spear", re.I), "No spearfishing"),
+    (re.compile(r"no\s+live\s+bait|live\s+bait\s+(?:is\s+)?prohibit", re.I), "No live bait"),
+    (re.compile(r"natural\s+bait\s+only", re.I), "Natural bait only"),
+    (re.compile(r"j[-\s]?hooks?\s+(?:are\s+)?prohibit|no\s+j[-\s]?hooks?", re.I), "No J-hooks"),
+    (re.compile(r"no\s+(?:multiple|treble|gang)\s+hooks?|single\s+hook\s+only", re.I), "Single hook only"),
+    (re.compile(r"no\s+chumming|chumming\s+(?:is\s+)?prohibit", re.I), "No chumming"),
+    (re.compile(r"no\s+gaff(?:ing)?|gaff(?:ing)?\s+(?:is\s+)?prohibit", re.I), "No gaffing"),
+    (re.compile(r"(?:venting|descend\w*)\s+(?:tool|device)\s+(?:is\s+)?required", re.I), "Descending device required"),
+    (re.compile(r"cast\s+net\s+(?:only|required)", re.I), "Cast net only"),
+]
+
+
+def _extract_gear_restrictions(reg: Optional[dict]) -> str:
+    """Derive a gear-restriction summary from a regulation payload's text.
+
+    Returns a comma-joined list of detected restrictions (e.g. "Circle hooks,
+    No gigging"), or "" when none are mentioned. A more specific match
+    suppresses the generic one (non-offset circle hooks vs circle hooks).
+    """
+    if not reg:
+        return ""
+    text = " ".join(
+        str(reg.get(k, "") or "")
+        for k in ("min_size", "bag_limit", "season", "notes")
+    )
+    if not text.strip():
+        return ""
+    found: list[str] = []
+    for pattern, label in _GEAR_RULES:
+        if pattern.search(text) and label not in found:
+            found.append(label)
+    # If the specific "Non-offset circle hooks" matched, drop the generic one.
+    if "Non-offset circle hooks" in found and "Circle hooks" in found:
+        found.remove("Circle hooks")
+    return ", ".join(found)
+
+
 def lookup_regulation(species_name: str, state: str) -> Optional[dict[str, str]]:
+    """Look up regulations for a species, enriched with parsed gear restrictions."""
+    payload = _lookup_regulation_impl(species_name, state)
+    if payload is not None:
+        if not payload.get("gear"):
+            gear = _extract_gear_restrictions(payload)
+            if gear:
+                payload["gear"] = gear
+        if not payload.get("slot"):
+            slot = _extract_slot_limit(payload)
+            if slot:
+                payload["slot"] = slot
+    return payload
+
+
+def _lookup_regulation_impl(species_name: str, state: str) -> Optional[dict[str, str]]:
     """Look up fishing regulations for a species in a state.
 
     Uses stale-while-revalidate for the live scraper:

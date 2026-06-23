@@ -2027,6 +2027,7 @@ def build_species_ranking(
     fishing_types: Optional[list[str]] = None,
     targets: Optional[list[str]] = None,
     fish_region: str = "",
+    closures_out: Optional[list[dict[str, Any]]] = None,
 ) -> list[dict[str, Any]]:
     """Dynamically rank species based on conditions and user profile.
 
@@ -2108,6 +2109,23 @@ def build_species_ranking(
             if reg:
                 regulation_status = classify_legality(reg, month)
                 if should_hide_from_forecast(regulation_status):
+                    # Capture genuine closures (can't target/keep right now) so
+                    # the dashboard can warn about otherwise-relevant species
+                    # that are off-limits this month. C&R/restricted are not
+                    # closures (you can still target), so they're excluded.
+                    if closures_out is not None and regulation_status in (
+                        "out_of_season",
+                        "prohibited",
+                    ):
+                        closures_out.append(
+                            {
+                                "name": sp["name"],
+                                "status": regulation_status,
+                                "season": reg.get("season", ""),
+                                "official_source": reg.get("official_source", ""),
+                                "score": score,
+                            }
+                        )
                     continue
                 regulation = reg
 

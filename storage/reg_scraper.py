@@ -13,6 +13,12 @@ Supported states with live scraping:
   TX — TPWD per-species bag/length limit pages at tpwd.texas.gov
   MS — MS DMR via eRegulations.com inshore/nearshore table
 
+Additional saltwater states use a shared generic "Species | Size | Bag |
+Season" table scraper (see _NEW_TABLE_STATES): SC, NJ, MD, MA, LA, CA, CT, DE,
+ME, NH, WA, OR, AK, HI — covering every US saltwater state. If a live page's
+structure differs from a standard limits table the parser returns None, so the
+caller safely falls back to the snapshot.
+
 All other states return None so the caller falls back to the static JSON
 snapshot in storage/regulations_data.json.
 """
@@ -25,7 +31,7 @@ import re
 from collections import Counter
 from datetime import datetime
 from threading import Lock
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 import requests
 from bs4 import BeautifulSoup
@@ -1128,10 +1134,308 @@ def _scrape_ms(species_name: str) -> Optional[dict[str, str]]:
     return _parse_ms_page(html, species_name)
 
 # ──────────────────────────────────────────────────────────────────
+# Generic table scraper — for the many states whose recreational rules
+# are published as a "Species | Min Size | Bag/Possession | (Season)" table.
+# A new state only needs a URL + a species-name map; if the live page's
+# structure differs the parser returns None and the caller falls back to
+# the static snapshot, so adding a state is low-risk.
+# ──────────────────────────────────────────────────────────────────
+
+def _detect_reg_columns(cells: list[str]) -> dict[str, int]:
+    """Map size/bag/season fields to column indices from a header row.
+
+    Agencies order their columns differently, so rather than assume
+    size=1/bag=2/season=3 we read the header text. Size keywords win over the
+    generic "limit" (a "Minimum Size Limit" header is a size column, not bag).
+    """
+    cols: dict[str, int] = {}
+    for i, raw in enumerate(cells):
+        h = raw.lower()
+        if "species" in h or "common name" in h:
+            cols.setdefault("species", i)
+        elif ("size" in h or "length" in h or "minimum" in h or '"' in h or " in" in h) and "season" not in h:
+            cols.setdefault("size", i)
+        elif "season" in h or "open" in h or "closed" in h or "dates" in h:
+            cols.setdefault("season", i)
+        elif "bag" in h or "creel" in h or "possession" in h or "daily" in h or "limit" in h or "number" in h:
+            cols.setdefault("bag", i)
+    return cols
+
+def _parse_reg_table(
+    html: str,
+    species_name: str,
+    names_map: dict[str, list[str]],
+    source: str,
+    notes: str,
+) -> Optional[dict[str, str]]:
+    """Match a species row in any limits table, adapting to the column order.
+
+    For each table, the header row is read to locate the size / bag / season
+    columns by name; if no usable header is found it falls back to the common
+    positional layout (species, size, bag, season).
+    """
+    names = None
+    for candidate in _name_variants(species_name):
+        names = names_map.get(candidate)
+        if names:
+            break
+    if not names:
+        return None
+    lname = [n.lower() for n in names]
+
+    soup = BeautifulSoup(html, "html.parser")
+    for table in soup.find_all("table"):
+        rows = table.find_all("tr")
+        # Detect columns from the first row that looks like a header.
+        cols: dict[str, int] = {}
+        for r in rows[:2]:
+            cells = [c.get_text(" ", strip=True) for c in r.find_all(["th", "td"])]
+            detected = _detect_reg_columns(cells)
+            if "size" in detected or "bag" in detected:
+                cols = detected
+                break
+        sp_col = cols.get("species", 0)
+        size_col = cols.get("size", 1)
+        bag_col = cols.get("bag", 2)
+        season_col = cols.get("season", 3)
+
+        for row in rows:
+            tds = row.find_all(["td", "th"])
+            if len(tds) < 2 or sp_col >= len(tds):
+                continue
+            cell0 = tds[sp_col].get_text(" ", strip=True).lower()
+            if not any(n in cell0 for n in lname):
+                continue
+
+            def _cell(idx: int) -> str:
+                return tds[idx].get_text(" ", strip=True).strip() if 0 <= idx < len(tds) else ""
+
+            size = _cell(size_col)
+            bag = _cell(bag_col)
+            season = _cell(season_col)
+            if size or bag:
+                return {
+                    "min_size": size[:120],
+                    "bag_limit": bag[:120],
+                    "season": season[:120],
+                    "notes": notes,
+                    "scraped_source": source,
+                }
+    return None
+
+
+# Label/value layout (e.g. "Minimum size: 14". "Bag limit: 10 per day.") used
+# by agencies that publish per-species blurbs rather than a table.
+_REG_SIZE_LABEL = re.compile(
+    r"(?:minimum\s+(?:size|length)|size\s+limit|legal\s+(?:size|length)|min(?:imum)?\.?\s*length)"
+    r"\s*[:\-]?\s*([^.;\n|]{1,80})",
+    re.IGNORECASE,
+)
+_REG_BAG_LABEL = re.compile(
+    r"(?:bag|creel|possession|daily)\s+limit\s*[:\-]?\s*([^.;\n|]{1,80})",
+    re.IGNORECASE,
+)
+_REG_SEASON_LABEL = re.compile(
+    r"(?:open\s+)?season\s*[:\-]?\s*([^.;\n|]{1,80})",
+    re.IGNORECASE,
+)
+
+
+def _parse_reg_labels(
+    html: str,
+    species_name: str,
+    names_map: dict[str, list[str]],
+    source: str,
+    notes: str,
+) -> Optional[dict[str, str]]:
+    """Fallback: extract size/bag/season from a per-species text block."""
+    names = None
+    for candidate in _name_variants(species_name):
+        names = names_map.get(candidate)
+        if names:
+            break
+    if not names:
+        return None
+
+    text = _strip_html(html)
+    low = text.lower()
+    pos = -1
+    for n in names:
+        pos = low.find(n.lower())
+        if pos != -1:
+            break
+    if pos == -1:
+        return None
+    # Look at a window starting at the species mention.
+    window = text[pos : pos + 500]
+
+    def _first(rx: re.Pattern) -> str:
+        m = rx.search(window)
+        return m.group(1).strip()[:120] if m else ""
+
+    size = _first(_REG_SIZE_LABEL)
+    bag = _first(_REG_BAG_LABEL)
+    season = _first(_REG_SEASON_LABEL)
+    if not (size or bag):
+        return None
+    return {
+        "min_size": size,
+        "bag_limit": bag,
+        "season": season,
+        "notes": notes,
+        "scraped_source": source,
+    }
+
+def _make_table_scraper(
+    url: str,
+    names_map: dict[str, list[str]],
+    source: str,
+    notes: str,
+) -> Callable[[str], Optional[dict[str, str]]]:
+    """Build a cached table scraper for one state (one network page per process)."""
+    cache: dict[str, Optional[str]] = {"html": None}
+    lock = Lock()
+
+    def _get_html() -> Optional[str]:
+        with lock:
+            if cache["html"] is not None:
+                return cache["html"]
+            html = _fetch_page(url)
+            if html:
+                cache["html"] = html
+            return html
+
+    def _scrape(species_name: str) -> Optional[dict[str, str]]:
+        html = _get_html()
+        if not html:
+            return None
+        # Prefer the structured table; fall back to per-species label/value text.
+        return _parse_reg_table(html, species_name, names_map, source, notes) or (
+            _parse_reg_labels(html, species_name, names_map, source, notes)
+        )
+
+    return _scrape
+
+# Common coastal species → the substrings (incl. regional aliases) likely to
+# appear in a state regulation table's first column.
+_COMMON_NAMES: dict[str, list[str]] = {
+    "red_drum": ["red drum", "redfish", "channel bass", "puppy drum"],
+    "spotted_seatrout": ["spotted seatrout", "spotted sea trout", "speckled trout", "spotted weakfish"],
+    "striped_bass": ["striped bass", "rockfish", "striper"],
+    "bluefish": ["bluefish"],
+    "summer_flounder": ["summer flounder", "fluke"],
+    "southern_flounder": ["southern flounder", "flounder"],
+    "black_drum": ["black drum"],
+    "sheepshead": ["sheepshead"],
+    "black_sea_bass": ["black sea bass", "sea bass"],
+    "tautog": ["tautog", "blackfish"],
+    "scup": ["scup", "porgy"],
+    "weakfish": ["weakfish", "gray trout"],
+    "cobia": ["cobia", "ling"],
+    "spanish_mackerel": ["spanish mackerel"],
+    "king_mackerel": ["king mackerel", "kingfish"],
+    "flounder": ["flounder", "fluke"],
+    "tarpon": ["tarpon"],
+    "snook": ["snook"],
+    "california_halibut": ["california halibut", "halibut"],
+    "white_seabass": ["white seabass", "white sea bass"],
+    "lingcod": ["lingcod"],
+    "barred_surfperch": ["barred surfperch", "surfperch", "perch"],
+    # Northern Atlantic (ME/NH/MA) groundfish + flatfish
+    "winter_flounder": ["winter flounder", "blackback"],
+    "atlantic_cod": ["atlantic cod", "cod"],
+    "haddock": ["haddock"],
+    "pollock": ["pollock"],
+    # Pacific & Alaska (WA/OR/AK) species
+    "rockfish": ["rockfish"],
+    "cabezon": ["cabezon"],
+    "pacific_halibut": ["pacific halibut", "halibut"],
+}
+
+# Per-state live table scrapers. URLs point at each agency's recreational
+# saltwater limits page. These augment the snapshot (storage/regulations_data.json)
+# with live data where the page is a standard limits table.
+_NEW_TABLE_STATES = {
+    "SC": (
+        "https://www.dnr.sc.gov/regulations/saltwater/fishing.html",
+        "South Carolina DNR (dnr.sc.gov)",
+        "dnr.sc.gov",
+    ),
+    "NJ": (
+        "https://dep.nj.gov/njfw/fishing/marine/recreational-minimum-size-possession-limits-and-seasons/",
+        "NJ Fish & Wildlife (dep.nj.gov)",
+        "dep.nj.gov",
+    ),
+    "MD": (
+        "https://dnr.maryland.gov/fisheries/pages/regulations/recreational.aspx",
+        "Maryland DNR (dnr.maryland.gov)",
+        "dnr.maryland.gov",
+    ),
+    "MA": (
+        "https://www.mass.gov/info-details/saltwater-fishing-regulations",
+        "Massachusetts DMF (mass.gov)",
+        "mass.gov",
+    ),
+    "LA": (
+        "https://www.wlf.louisiana.gov/page/saltwater-sport-fishing",
+        "Louisiana WLF (wlf.louisiana.gov)",
+        "wlf.louisiana.gov",
+    ),
+    "CA": (
+        "https://wildlife.ca.gov/Fishing/Ocean/Regulations/Fishing-Map/Southern",
+        "California DFW (wildlife.ca.gov)",
+        "wildlife.ca.gov",
+    ),
+    "CT": (
+        "https://portal.ct.gov/deep/fishing/saltwater/saltwater-recreational-fishing-regulations",
+        "Connecticut DEEP (portal.ct.gov)",
+        "portal.ct.gov",
+    ),
+    "DE": (
+        "https://dnrec.delaware.gov/fish-wildlife/fishing/saltwater/",
+        "Delaware DNREC (dnrec.delaware.gov)",
+        "dnrec.delaware.gov",
+    ),
+    "ME": (
+        "https://www.maine.gov/dmr/fisheries/recreational/regulations",
+        "Maine DMR (maine.gov)",
+        "maine.gov",
+    ),
+    "NH": (
+        "https://www.wildlife.state.nh.us/fishing/saltwater.html",
+        "NH Fish & Game (wildlife.state.nh.us)",
+        "wildlife.state.nh.us",
+    ),
+    "WA": (
+        "https://wdfw.wa.gov/fishing/regulations/saltwater",
+        "Washington DFW (wdfw.wa.gov)",
+        "wdfw.wa.gov",
+    ),
+    "OR": (
+        "https://myodfw.com/recreational-regulations/general-regulations/marine-zone",
+        "Oregon DFW (myodfw.com)",
+        "myodfw.com",
+    ),
+    "AK": (
+        "https://www.adfg.alaska.gov/index.cfm?adfg=fishingsportfishingbyareasaltwater.main",
+        "Alaska DFG (adfg.alaska.gov)",
+        "adfg.alaska.gov",
+    ),
+    "HI": (
+        "https://dlnr.hawaii.gov/dar/fishing/fishing-regulations/",
+        "Hawaii DAR (dlnr.hawaii.gov)",
+        "dlnr.hawaii.gov",
+    ),
+}
+
+def _verify_note(source_label: str) -> str:
+    return f"Verify current rules with {source_label} before fishing."
+
+# ──────────────────────────────────────────────────────────────────
 # State dispatcher
 # ──────────────────────────────────────────────────────────────────
 
-_SCRAPERS = {
+_SCRAPERS: dict[str, Callable[[str], Optional[dict[str, str]]]] = {
     "FL": _scrape_fl,
     "VA": _scrape_va,
     "GA": _scrape_ga,
@@ -1142,6 +1446,12 @@ _SCRAPERS = {
     "TX": _scrape_tx,
     "MS": _scrape_ms,
 }
+
+# Register the generic table scrapers for additional saltwater states.
+for _state_code, (_url, _label, _src) in _NEW_TABLE_STATES.items():
+    _SCRAPERS[_state_code] = _make_table_scraper(
+        _url, _COMMON_NAMES, _src, _verify_note(_label)
+    )
 
 # ──────────────────────────────────────────────────────────────────
 # SQLite cache helpers

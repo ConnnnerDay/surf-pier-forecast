@@ -181,6 +181,7 @@
       html += '<strong class="fishlog-species">' + esc(e.species) + '</strong>';
       if (e.size) html += ' <span class="fishlog-size">' + esc(e.size) + '</span>';
       if (e.bait) html += ' <span class="fishlog-bait">on ' + esc(e.bait) + '</span>';
+      if (e.rig) html += ' <span class="fishlog-bait">(' + esc(e.rig) + ')</span>';
       if (e.notes) html += '<p class="fishlog-notes">' + esc(e.notes) + '</p>';
       if (e.photos && e.photos.length) {
         html += '<div class="fishlog-photo-grid">';
@@ -217,11 +218,13 @@
     var sizeInput = document.getElementById('log-size');
     var notesInput = document.getElementById('log-notes');
     var baitInput = document.getElementById('log-bait');
+    var rigInput = document.getElementById('log-rig');
     var photosInput = document.getElementById('log-photos');
     if (speciesInput) speciesInput.value = '';
     if (sizeInput) sizeInput.value = '';
     if (notesInput) notesInput.value = '';
     if (baitInput) baitInput.value = '';
+    if (rigInput) rigInput.value = '';
     if (photosInput) photosInput.value = '';
     window._capturedPhotos = [];
     var help = document.getElementById('fishlog-photo-help');
@@ -240,11 +243,13 @@
     var sizeInput = document.getElementById('log-size');
     var notesInput = document.getElementById('log-notes');
     var baitInput = document.getElementById('log-bait');
+    var rigInput = document.getElementById('log-rig');
     var photosInput = document.getElementById('log-photos');
     if (speciesInput) speciesInput.value = entry.species || '';
     if (sizeInput) sizeInput.value = entry.size || '';
     if (notesInput) notesInput.value = entry.notes || '';
     if (baitInput) baitInput.value = entry.bait || '';
+    if (rigInput) rigInput.value = entry.rig || '';
     if (photosInput) photosInput.value = '';
     window._capturedPhotos = [];
 
@@ -275,6 +280,7 @@
     var sizeInput = document.getElementById('log-size');
     var notesInput = document.getElementById('log-notes');
     var baitInput = document.getElementById('log-bait');
+    var rigInput = document.getElementById('log-rig');
     var photosInput = document.getElementById('log-photos');
 
     var species = speciesInput.value.trim();
@@ -286,6 +292,7 @@
     var size = sizeInput.value.trim();
     var notes = notesInput.value.trim();
     var bait = baitInput ? baitInput.value.trim() : '';
+    var rig = rigInput ? rigInput.value.trim() : '';
 
     // Warn if any selected photos were skipped due to size limit
     var allFiles = Array.prototype.slice.call(photosInput.files || []);
@@ -319,6 +326,7 @@
           size: size,
           notes: notes,
           bait: bait,
+          rig: rig,
           photos: photos,
           date: existing.date
         };
@@ -333,7 +341,7 @@
           fetch('/api/log?location=' + encodeURIComponent(currentLocId), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ species: species, size: size, notes: notes, bait: bait }),
+            body: JSON.stringify({ species: species, size: size, notes: notes, bait: bait, rig: rig }),
             signal: ctrl.signal
           }).then(function() { clearTimeout(tid); }).catch(function (err) {
             clearTimeout(tid);
@@ -347,6 +355,7 @@
           size: size,
           notes: notes,
           bait: bait,
+          rig: rig,
           photos: newPhotos,
           date: now.toLocaleDateString() + ' ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         });
@@ -357,6 +366,7 @@
         sizeInput.value = '';
         notesInput.value = '';
         if (baitInput) baitInput.value = '';
+        if (rigInput) rigInput.value = '';
         photosInput.value = '';
         var help = document.getElementById('fishlog-photo-help');
         if (help) { help.textContent = 'You can add multiple photos per catch.'; help.style.color = ''; }
@@ -369,7 +379,7 @@
           fetch('/api/log?location=' + encodeURIComponent(currentLocId), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ species: species, size: size, notes: notes, bait: bait }),
+            body: JSON.stringify({ species: species, size: size, notes: notes, bait: bait, rig: rig }),
             signal: ctrl2.signal
           }).then(function() { clearTimeout(tid2); }).catch(function (err) {
             clearTimeout(tid2);
@@ -395,13 +405,14 @@
     var entries = getLog();
     if (!entries.length) return;
 
-    var rows = [['Date', 'Species', 'Size', 'Bait', 'Notes', 'Photo Count']];
+    var rows = [['Date', 'Species', 'Size', 'Bait', 'Rig', 'Notes', 'Photo Count']];
     entries.forEach(function (e) {
       rows.push([
         '"' + (e.date || '').replace(/"/g, '""') + '"',
         '"' + (e.species || '').replace(/"/g, '""') + '"',
         '"' + (e.size || '').replace(/"/g, '""') + '"',
         '"' + (e.bait || '').replace(/"/g, '""') + '"',
+        '"' + (e.rig || '').replace(/"/g, '""') + '"',
         '"' + (e.notes || '').replace(/"/g, '""') + '"',
         String((e.photos || []).length)
       ]);

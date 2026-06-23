@@ -129,7 +129,36 @@ def evaluate_forecast(
         "window": headline.get("window", ""),
         "window_reason": headline.get("reason", ""),
         "best_times": best_times[:3],
+        "next_tide": _next_tide(forecast, now),
+        "gear": _gear_hint(forecast),
     }
+
+
+def _next_tide(forecast: dict[str, Any], now: datetime) -> str:
+    """The next upcoming tide change, e.g. 'High tide at 2:30 PM' (or '')."""
+    now_h = now.hour + now.minute / 60
+    upcoming = []
+    for t in forecast.get("tides") or []:
+        th = t.get("hour")
+        if isinstance(th, (int, float)) and th > now_h and t.get("time"):
+            upcoming.append((th, t))
+    if not upcoming:
+        return ""
+    upcoming.sort(key=lambda x: x[0])
+    t = upcoming[0][1]
+    return f"{t.get('type', '')} tide at {t.get('time', '')}".strip()
+
+
+def _gear_hint(forecast: dict[str, Any]) -> list[str]:
+    """A few recommended gear items to pack (from the gear checklist)."""
+    items = []
+    for g in forecast.get("gear_checklist") or []:
+        name = (g.get("item") or "").strip()
+        if name and name not in items:
+            items.append(name)
+        if len(items) >= 3:
+            break
+    return items
 
 
 # ---------------------------------------------------------------------------
@@ -154,6 +183,9 @@ def build_email(
     if decision.get("summary"):
         lines.append("")
         lines.append(decision["summary"])
+    if decision.get("next_tide"):
+        lines.append("")
+        lines.append(f"Next tide: {decision['next_tide']}")
     if decision.get("best_times"):
         lines.append("")
         lines.append("Best windows:")
@@ -161,6 +193,9 @@ def build_email(
             win = bt.get("window", "")
             reason = bt.get("reason", "")
             lines.append(f"  - {win}{(' — ' + reason) if reason else ''}")
+    if decision.get("gear"):
+        lines.append("")
+        lines.append("Don't forget: " + ", ".join(decision["gear"]))
     lines.append("")
     lines.append("Tight lines! — Surf & Pier Fishing Forecast")
     if manage_url:
@@ -173,6 +208,16 @@ def build_email(
         f"{(' — ' + bt.get('reason','')) if bt.get('reason') else ''}</li>"
         for bt in decision.get("best_times", [])
     )
+    next_tide_html = (
+        f"<p><strong>Next tide:</strong> {decision['next_tide']}</p>"
+        if decision.get("next_tide")
+        else ""
+    )
+    gear_html = (
+        f"<p><strong>Don't forget:</strong> {', '.join(decision['gear'])}</p>"
+        if decision.get("gear")
+        else ""
+    )
     manage_html = (
         f'<p style="font-size:12px;color:#888">'
         f'<a href="{manage_url}">Manage or turn off alerts</a></p>'
@@ -182,7 +227,9 @@ def build_email(
     html_body = (
         f"<h2>{verdict}{score_str} fishing at {location_name} today</h2>"
         + (f"<p>{decision['summary']}</p>" if decision.get("summary") else "")
+        + next_tide_html
         + (f"<p><strong>Best windows:</strong></p><ul>{wins_html}</ul>" if wins_html else "")
+        + gear_html
         + "<p>Tight lines! — Surf &amp; Pier Fishing Forecast</p>"
         + manage_html
     )

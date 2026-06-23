@@ -2664,6 +2664,7 @@ def generate_forecast(
 
     loc_fish_region = (location or {}).get("fish_region", "")
     profile = profile or {}
+    _closures: list[dict[str, Any]] = []
     species = build_species_ranking(
         month,
         water_temp,
@@ -2676,6 +2677,7 @@ def generate_forecast(
         fishing_types=profile.get("fishing_types"),
         targets=profile.get("targets"),
         fish_region=loc_fish_region,
+        closures_out=_closures,
     )
     # Tide state isn't resolved yet at this point in assembly, so the base
     # rig tips use wind/wave/temp only; personalize_forecast rebuilds these
@@ -2950,6 +2952,30 @@ def generate_forecast(
     forecast["spawning"] = build_spawning_report(
         month, water_temp, coast, state=loc_state
     )
+
+    # Closure advisory: otherwise-relevant species that are off-limits this
+    # month (out of season or prohibited), captured during species ranking at
+    # no extra lookup cost. Deduped, highest-scoring first, capped at 4.
+    if _closures:
+        _seen: set[str] = set()
+        _uniq = []
+        for c in sorted(_closures, key=lambda x: -x.get("score", 0)):
+            key = c["name"].lower()
+            if key in _seen:
+                continue
+            _seen.add(key)
+            _uniq.append(
+                {
+                    "name": c["name"],
+                    "status": c["status"],
+                    "season": c.get("season", ""),
+                    "official_source": c.get("official_source", ""),
+                }
+            )
+            if len(_uniq) >= 4:
+                break
+        if _uniq:
+            forecast["closures"] = _uniq
 
     # Spot tips based on current conditions
     forecast["spot_tips"] = build_spot_tips(

@@ -150,7 +150,7 @@ def test_catch_log_migration_upgrades_old_db(tmp_path, monkeypatch):
     conn = sq.get_db()
     try:
         cols = {r[1] for r in conn.execute("PRAGMA table_info(catch_log)").fetchall()}
-        assert {"bait", "tide_state", "wind_dir", "water_temp_f", "moon_phase"} <= cols
+        assert {"bait", "rig", "tide_state", "wind_dir", "water_temp_f", "moon_phase"} <= cols
         row = conn.execute(
             "SELECT species, size, tide_state FROM catch_log WHERE id = 1"
         ).fetchone()

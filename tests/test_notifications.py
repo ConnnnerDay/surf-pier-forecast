@@ -15,7 +15,7 @@ import services.notifications as notif
 EAST = ZoneInfo("America/New_York")
 
 
-def _forecast(verdict="Good", score=72, tags=None, best_times=None):
+def _forecast(verdict="Good", score=72, tags=None, best_times=None, tides=None, gear=None):
     timeline = []
     for h in range(24):
         tag = (tags or {}).get(h, "low")
@@ -30,6 +30,14 @@ def _forecast(verdict="Good", score=72, tags=None, best_times=None):
         "activity_timeline": timeline,
         "best_times": best_times if best_times is not None else [
             {"window": "5:30 - 7:30 AM", "reason": "Dawn bite", "quality": "Prime"}
+        ],
+        "tides": tides if tides is not None else [
+            {"hour": 14.5, "type": "High", "time": "2:30 PM"},
+            {"hour": 8.0, "type": "Low", "time": "8:00 AM"},
+        ],
+        "gear_checklist": gear if gear is not None else [
+            {"category": "Rigs", "item": "Hi-lo rig"},
+            {"category": "Bait", "item": "Fresh shrimp"},
         ],
     }
 
@@ -76,6 +84,18 @@ class TestBuildEmail:
         assert "91/100" in text
         assert "5:30 - 7:30 AM" in text
         assert "<h2>" in html and "Montauk" in html
+
+    def test_includes_next_tide_and_gear(self):
+        d = notif.evaluate_forecast(
+            _forecast("Good"), {"min_rating": "Good"},
+            datetime(2026, 6, 9, 5, 0, tzinfo=EAST),
+        )
+        assert d["next_tide"] == "Low tide at 8:00 AM"  # 8 AM is the next after 5 AM
+        assert "Hi-lo rig" in d["gear"]
+        _s, text, html = notif.build_email("Montauk", d)
+        assert "Next tide: Low tide at 8:00 AM" in text
+        assert "Don't forget: Hi-lo rig" in text
+        assert "Next tide:" in html
 
     def test_manage_link_included_when_url_given(self):
         d = notif.evaluate_forecast(

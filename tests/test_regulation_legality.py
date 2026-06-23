@@ -13,6 +13,8 @@ from __future__ import annotations
 
 from domain.species import build_spawning_report, build_species_ranking
 from regulations import (
+    _extract_gear_restrictions,
+    _extract_slot_limit,
     classify_legality,
     get_official_regulations_url,
     season_status,
@@ -886,3 +888,104 @@ class TestOfficialRegulationsUrl:
             assert url.startswith("https://"), (
                 f"State {state} returned unexpected URL: {url!r}"
             )
+
+
+class TestGearRestrictions:
+    def test_circle_hooks(self):
+        assert "Circle hooks" in _extract_gear_restrictions(
+            {"notes": "Circle hooks required when using natural bait."}
+        )
+
+    def test_non_offset_suppresses_generic(self):
+        out = _extract_gear_restrictions(
+            {"notes": "Non-offset circle hooks required for all natural bait."}
+        )
+        assert out == "Non-offset circle hooks"
+
+    def test_multiple_restrictions(self):
+        out = _extract_gear_restrictions(
+            {"notes": "Hook-and-line only. No snatch hooking permitted."}
+        )
+        assert "Hook and line only" in out
+        assert "No snatch hooking" in out
+
+    def test_gigging_and_spear(self):
+        assert "No gigging" in _extract_gear_restrictions({"notes": "Gigging is prohibited."})
+        assert "No spearfishing" in _extract_gear_restrictions({"notes": "Spearfishing prohibited."})
+
+    def test_no_false_positive_on_standard_limits(self):
+        assert _extract_gear_restrictions(
+            {"min_size": "18 in", "bag_limit": "3/day", "season": "Open", "notes": "Standard limits."}
+        ) == ""
+
+    def test_none_and_empty_safe(self):
+        assert _extract_gear_restrictions(None) == ""
+        assert _extract_gear_restrictions({}) == ""
+
+    def test_more_gear_methods(self):
+        assert "Natural bait only" in _extract_gear_restrictions({"notes": "Natural bait only."})
+        assert "No J-hooks" in _extract_gear_restrictions({"notes": "J-hooks are prohibited."})
+        assert "No chumming" in _extract_gear_restrictions({"notes": "No chumming permitted."})
+        assert "Descending device required" in _extract_gear_restrictions(
+            {"notes": "A descending device is required for reef fish."}
+        )
+
+
+
+class TestSlotLimit:
+    def test_parses_range_with_slot_keyword(self):
+        assert _extract_slot_limit({"notes": "Slot limit: 18-27 in TL."}) == "18-27 in"
+
+    def test_to_and_unicode_dash(self):
+        assert _extract_slot_limit({"notes": "Slot 18 to 27 inches"}) == "18-27 in"
+        assert _extract_slot_limit({"min_size": 'Slot: 15–23"'}) == "15-23 in"
+
+    def test_protected_slot(self):
+        assert _extract_slot_limit({"notes": "Protected slot 20-28 inches"}) == "20-28 in"
+
+    def test_no_slot_keyword_no_match(self):
+        # A plain range without 'slot'/'protected' is not a slot limit.
+        assert _extract_slot_limit({"notes": "3 per day, 18-27 in range"}) == ""
+
+    def test_min_only_no_match(self):
+        assert _extract_slot_limit({"min_size": "18 in minimum"}) == ""
+
+    def test_none_safe(self):
+        assert _extract_slot_limit(None) == ""
+
+
+class TestClosureCapture:
+    def test_out_of_season_species_captured(self, monkeypatch):
+        # Everything is closed Jan-Apr; querying in February should populate
+        # the closures list with out_of_season species (not the visible ranking).
+        def fake_lookup(name, state):
+            return _open_reg(season="Closed Jan-Apr")
+
+        monkeypatch.setattr("domain.species.lookup_regulation", fake_lookup)
+        closures: list = []
+        ranking = build_species_ranking(
+            month=2, water_temp=58, coast="east", state="NC", closures_out=closures
+        )
+        # Closed species are hidden from the ranking but captured as closures.
+        assert ranking == [] or all(s.get("regulation_status") != "out_of_season" for s in ranking)
+        assert closures, "expected out-of-season species to be captured"
+        assert all(c["status"] == "out_of_season" for c in closures)
+        assert all("season" in c and "name" in c for c in closures)
+
+    def test_no_closures_when_all_legal(self, monkeypatch):
+        monkeypatch.setattr(
+            "domain.species.lookup_regulation", lambda n, s: _open_reg()
+        )
+        closures: list = []
+        build_species_ranking(
+            month=6, water_temp=72, coast="east", state="NC", closures_out=closures
+        )
+        assert closures == []
+
+    def test_closures_opt_in_only(self, monkeypatch):
+        # Without closures_out, nothing breaks (back-compat).
+        monkeypatch.setattr(
+            "domain.species.lookup_regulation", lambda n, s: _open_reg(season="Closed Jan-Apr")
+        )
+        ranking = build_species_ranking(month=2, water_temp=58, coast="east", state="NC")
+        assert isinstance(ranking, list)
