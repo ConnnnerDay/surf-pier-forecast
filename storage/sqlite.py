@@ -601,7 +601,7 @@ def bump_session_version(user_id: int) -> int:
         return row["session_version"] if row else 0
     finally:
         conn.close()
-    _USER_CACHE.pop(user_id, None)
+        _USER_CACHE.pop(user_id, None)
 
 
 def change_password(user_id: int, new_password: str) -> int:
@@ -626,7 +626,7 @@ def change_password(user_id: int, new_password: str) -> int:
         return row["session_version"] if row else 0
     finally:
         conn.close()
-    _USER_CACHE.pop(user_id, None)
+        _USER_CACHE.pop(user_id, None)
 
 
 def get_user_password_hash(user_id: int) -> Optional[str]:
@@ -655,6 +655,7 @@ def delete_user(user_id: int) -> None:
         conn.commit()
     finally:
         conn.close()
+    _USER_CACHE.pop(user_id, None)
 
 
 # Profiles + locations ------------------------------------------------------
