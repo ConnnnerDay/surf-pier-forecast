@@ -109,6 +109,27 @@ class TestSaveAndLoad:
         save_forecast({"generated_at": old.isoformat()}, "stale-loc", user_id=9)
         assert load_cached_forecast("stale-loc", user_id=9) is None
 
+    def test_pre_midnight_data_is_stale(self):
+        """Data from before today's UTC midnight is stale even if < 4 hours old."""
+        today_midnight = datetime.now(timezone.utc).replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
+        # One second before midnight: still yesterday's date in UTC.
+        ts = (today_midnight - timedelta(seconds=1)).isoformat()
+        save_forecast({"generated_at": ts}, "premidnight-loc", user_id=8)
+        assert load_cached_forecast("premidnight-loc", user_id=8) is None
+
+    def test_pre_midnight_data_returned_with_include_stale(self):
+        """include_stale=True should still surface pre-midnight data."""
+        today_midnight = datetime.now(timezone.utc).replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
+        ts = (today_midnight - timedelta(seconds=1)).isoformat()
+        data = {"generated_at": ts, "verdict": "yesterday"}
+        save_forecast(data, "premidnight-include", user_id=8)
+        loaded = load_cached_forecast("premidnight-include", user_id=8, include_stale=True)
+        assert loaded == data
+
     def test_stale_cache_can_be_loaded_for_async_refresh(self):
         old = datetime.now(ZoneInfo("America/New_York")) - timedelta(
             hours=CACHE_MAX_AGE_HOURS + 2
