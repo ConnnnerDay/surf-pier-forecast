@@ -11,6 +11,9 @@ from services.nws import (
     fetch_weather_alerts,
     fetch_state_alerts,
     fetch_current_weather,
+    _try_nws_forecast,
+    _try_nws_gridpoint,
+    _fetch_nws_extended,
 )
 
 
@@ -437,3 +440,206 @@ class TestFetchCurrentWeather:
             result = fetch_current_weather(34.0, -77.0)
         # No air_temp_f → returns None
         assert result is None
+
+    def test_includes_precipitation_data(self):
+        pts = self._make_pts_resp()
+        stations = self._make_stations_resp(["https://api.weather.gov/stations/KORF"])
+        obs = self._make_obs_resp(
+            {
+                "temperature": {"value": 20.0},
+                "relativeHumidity": {"value": 55.0},
+                "textDescription": "Rain",
+                "windChill": {"value": None},
+                "precipitationLast6Hours": {"value": 12.5},
+            }
+        )
+        with patch("services.nws.http_get", side_effect=[pts, stations, obs]):
+            result = fetch_current_weather(34.0, -77.0)
+        assert result is not None
+        assert result["precip_recent_mm"] == 12.5
+        assert result["precip_recent_hours"] == 6
+
+    def test_precip_falls_back_to_3h_then_1h(self):
+        pts = self._make_pts_resp()
+        stations = self._make_stations_resp(["https://api.weather.gov/stations/KORF"])
+        obs = self._make_obs_resp(
+            {
+                "temperature": {"value": 18.0},
+                "relativeHumidity": {"value": 60.0},
+                "textDescription": "Drizzle",
+                "windChill": {"value": None},
+                "precipitationLast3Hours": {"value": 4.0},
+            }
+        )
+        with patch("services.nws.http_get", side_effect=[pts, stations, obs]):
+            result = fetch_current_weather(34.0, -77.0)
+        assert result is not None
+        assert result["precip_recent_hours"] == 3
+
+
+# ---------------------------------------------------------------------------
+# fetch_state_alerts — additional branch coverage
+# ---------------------------------------------------------------------------
+
+
+class TestFetchStateAlertsAdditional:
+    def test_skips_feature_without_event(self):
+        body = {
+            "features": [
+                {"properties": {"event": "", "severity": "", "headline": "", "description": ""}},
+                {"properties": {"event": "Rip Current Statement", "severity": "Minor",
+                                "headline": "Rip currents", "description": ""}},
+            ]
+        }
+        mock_resp = MagicMock()
+        mock_resp.raise_for_status.return_value = None
+        mock_resp.json.return_value = body
+        with patch("services.nws.http_get", return_value=mock_resp):
+            alerts = fetch_state_alerts("NC")
+        assert len(alerts) == 1
+        assert alerts[0]["event"] == "Rip Current Statement"
+
+
+# ---------------------------------------------------------------------------
+# _try_nws_forecast — private, called via domain.forecast pipeline
+# ---------------------------------------------------------------------------
+
+
+class TestTryNwsForecast:
+    def _mock(self, body: dict) -> MagicMock:
+        m = MagicMock()
+        m.raise_for_status.return_value = None
+        m.json.return_value = body
+        return m
+
+    def test_returns_parsed_conditions(self):
+        body = {
+            "properties": {
+                "periods": [{"detailedForecast": "SW wind 10 to 15 kt. Seas 3 to 5 ft."}]
+            }
+        }
+        with patch("services.nws.http_get", return_value=self._mock(body)):
+            wind, wave, direction = _try_nws_forecast("AMZ158")
+        assert wind == (10.0, 15.0)
+        assert wave == (3.0, 5.0)
+        assert direction == "SW"
+
+    def test_uses_default_zone_when_none_given(self):
+        body = {"properties": {"periods": []}}
+        with patch("services.nws.http_get", return_value=self._mock(body)) as mock_get:
+            _try_nws_forecast()
+        url = mock_get.call_args[0][0]
+        assert "AMZ158" in url
+
+    def test_propagates_http_error(self):
+        import requests
+        m = MagicMock()
+        m.raise_for_status.side_effect = requests.HTTPError("403")
+        with patch("services.nws.http_get", return_value=m):
+            with pytest.raises(requests.HTTPError):
+                _try_nws_forecast("AMZ158")
+
+
+# ---------------------------------------------------------------------------
+# _try_nws_gridpoint — private, wind-from-land-gridpoint fallback
+# ---------------------------------------------------------------------------
+
+
+class TestTryNwsGridpoint:
+    def _pts_resp(self, forecast_url: str) -> MagicMock:
+        m = MagicMock()
+        m.raise_for_status.return_value = None
+        m.json.return_value = {"properties": {"forecast": forecast_url}}
+        return m
+
+    def _fc_resp(self, periods: list) -> MagicMock:
+        m = MagicMock()
+        m.raise_for_status.return_value = None
+        m.json.return_value = {"properties": {"periods": periods}}
+        return m
+
+    def test_returns_wind_from_gridpoint(self):
+        pts = self._pts_resp("https://api.weather.gov/gridpoints/MHX/59,36/forecast")
+        periods = [
+            {"windSpeed": "10 to 15 mph", "windDirection": "SW"},
+            {"windSpeed": "15 to 20 mph", "windDirection": "W"},
+        ]
+        fc = self._fc_resp(periods)
+        with patch("services.nws.http_get", side_effect=[pts, fc]):
+            wind, wave, direction = _try_nws_gridpoint(34.0, -77.0)
+        assert wind is not None
+        assert wave is None
+        assert direction == "SW"
+
+    def test_uses_defaults_when_lat_lng_zero(self):
+        pts = self._pts_resp("https://api.weather.gov/gridpoints/MHX/59,36/forecast")
+        fc = self._fc_resp([])
+        with patch("services.nws.http_get", side_effect=[pts, fc]) as mock_get:
+            _try_nws_gridpoint(0, 0)
+        pts_url = mock_get.call_args_list[0][0][0]
+        # Default coords should be embedded in the URL
+        assert "34.2104" in pts_url or "34" in pts_url
+
+    def test_single_speed_wind(self):
+        pts = self._pts_resp("https://api.weather.gov/gridpoints/MHX/59,36/forecast")
+        periods = [{"windSpeed": "10 mph", "windDirection": "N"}]
+        fc = self._fc_resp(periods)
+        with patch("services.nws.http_get", side_effect=[pts, fc]):
+            wind, _wave, direction = _try_nws_gridpoint(34.0, -77.0)
+        import pytest as _pytest
+        assert wind is not None
+        # 10 mph × 0.868976 ≈ 8.7 kt
+        assert wind[0] == _pytest.approx(8.7, abs=0.1)
+        assert direction == "N"
+
+    def test_no_wind_data_returns_none(self):
+        pts = self._pts_resp("https://api.weather.gov/gridpoints/MHX/59,36/forecast")
+        fc = self._fc_resp([{"windSpeed": "", "windDirection": ""}])
+        with patch("services.nws.http_get", side_effect=[pts, fc]):
+            wind, _wave, direction = _try_nws_gridpoint(34.0, -77.0)
+        assert wind is None
+        assert direction is None
+
+
+# ---------------------------------------------------------------------------
+# _fetch_nws_extended — 7-day forecast with gridpoint → marine zone fallback
+# ---------------------------------------------------------------------------
+
+
+class TestFetchNwsExtended:
+    def _pts_resp(self, forecast_url: str) -> MagicMock:
+        m = MagicMock()
+        m.raise_for_status.return_value = None
+        m.json.return_value = {"properties": {"forecast": forecast_url}}
+        return m
+
+    def _fc_resp(self, periods: list) -> MagicMock:
+        m = MagicMock()
+        m.raise_for_status.return_value = None
+        m.json.return_value = {"properties": {"periods": periods}}
+        return m
+
+    def test_success_returns_periods(self):
+        periods = [{"name": "Today", "detailedForecast": "Sunny."}]
+        pts = self._pts_resp("https://api.weather.gov/gridpoints/MHX/59,36/forecast")
+        fc = self._fc_resp(periods)
+        with patch("services.nws.http_get", side_effect=[pts, fc]):
+            result = _fetch_nws_extended(34.0, -77.0)
+        assert result == periods
+
+    def test_gridpoint_failure_falls_back_to_zone(self):
+        zone_periods = [{"name": "Tonight", "detailedForecast": "SE wind 15 kt."}]
+        marine_fc = self._fc_resp(zone_periods)
+        with patch("services.nws.http_get", side_effect=[Exception("network"), marine_fc]):
+            result = _fetch_nws_extended(34.0, -77.0, zone="AMZ158")
+        assert result == zone_periods
+
+    def test_gridpoint_failure_no_zone_returns_empty(self):
+        with patch("services.nws.http_get", side_effect=Exception("offline")):
+            result = _fetch_nws_extended(34.0, -77.0, zone="")
+        assert result == []
+
+    def test_both_failures_returns_empty(self):
+        with patch("services.nws.http_get", side_effect=[Exception("pts"), Exception("zone")]):
+            result = _fetch_nws_extended(34.0, -77.0, zone="AMZ158")
+        assert result == []

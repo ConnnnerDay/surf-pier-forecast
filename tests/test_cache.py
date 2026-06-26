@@ -11,6 +11,7 @@ from storage.cache import (
     _cache_path,
     _forecast_age_minutes,
     _human_age,
+    _is_stale,
     load_cached_forecast,
     save_forecast,
 )
@@ -156,6 +157,34 @@ class TestForecastAge:
 
     def test_bad_format_returns_none(self):
         assert _forecast_age_minutes({"generated_at": "not-a-date"}) is None
+
+
+class TestIsStale:
+    def test_missing_generated_at_not_stale(self):
+        assert _is_stale({}) is False
+
+    def test_naive_datetime_treated_as_utc(self):
+        # A naive timestamp from today (no tzinfo) should NOT be stale.
+        ts = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
+        assert _is_stale({"generated_at": ts}) is False
+
+    def test_unparseable_date_not_stale(self):
+        assert _is_stale({"generated_at": "not-a-date"}) is False
+
+    def test_fresh_today_not_stale(self):
+        ts = (datetime.now(timezone.utc) - timedelta(minutes=10)).isoformat()
+        assert _is_stale({"generated_at": ts}) is False
+
+    def test_over_4h_stale(self):
+        ts = (datetime.now(timezone.utc) - timedelta(hours=CACHE_MAX_AGE_HOURS + 1)).isoformat()
+        assert _is_stale({"generated_at": ts}) is True
+
+    def test_yesterday_stale_regardless_of_age(self):
+        today_midnight = datetime.now(timezone.utc).replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
+        ts = (today_midnight - timedelta(seconds=1)).isoformat()
+        assert _is_stale({"generated_at": ts}) is True
 
 
 class TestHumanAge:
