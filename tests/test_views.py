@@ -117,6 +117,31 @@ class TestSetupSearch:
         assert resp.status_code == 200
         assert b"Your Exact Spot" in resp.data
 
+    def test_exact_suppressed_when_curated_spot_is_close(self, client, monkeypatch):
+        # A curated spot within the redundancy radius should hide the generic
+        # exact-point option (the named spot is the better pick).
+        monkeypatch.setattr("web.views.geocode_zip", lambda zipcode: (34.2, -77.8))
+        monkeypatch.setattr(
+            "web.views.find_nearest_locations",
+            lambda lat, lng, n=6: [
+                {"id": "x", "name": "Test Loc", "state": "NC", "distance_miles": 2.0}
+            ],
+        )
+        called = {"n": 0}
+
+        def _should_not_run(lat, lng):
+            called["n"] += 1
+            return {"id": "pt_x", "name": "Coastal spot", "state": "NC"}
+
+        monkeypatch.setattr("web.views.dynamic_location_for_point", _should_not_run)
+        token = _set_csrf(client)
+        resp = client.post(
+            "/setup/search", data={"csrf_token": token, "zipcode": "28401"}
+        )
+        assert resp.status_code == 200
+        assert b"Your Exact Spot" not in resp.data
+        assert called["n"] == 0  # short-circuited, never resolved an exact point
+
     def test_success_shows_results(self, client, monkeypatch, sample_location_id):
         monkeypatch.setattr("web.views.geocode_zip", lambda zipcode: (34.2, -77.8))
         monkeypatch.setattr(

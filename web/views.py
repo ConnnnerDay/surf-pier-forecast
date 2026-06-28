@@ -585,6 +585,24 @@ def fishing_log() -> Any:
     return render_template("fishing_log.html", location=location)
 
 
+# When a curated spot is within this distance, it covers the searched point, so
+# the generic exact-point option is redundant (and the named spot is preferable).
+_EXACT_REDUNDANT_MILES = 10.0
+
+
+def _exact_option(
+    lat: float, lng: float, nearby: list[dict[str, Any]]
+) -> Optional[dict[str, Any]]:
+    """Return an exact-point location to offer, or None.
+
+    Suppressed when a curated spot already sits essentially on the point, so the
+    results don't show a generic "Coastal spot" next to a better named one.
+    """
+    if nearby and nearby[0].get("distance_miles", 1e9) <= _EXACT_REDUNDANT_MILES:
+        return None
+    return dynamic_location_for_point(lat, lng)
+
+
 @bp.route("/setup")
 def setup() -> str:
     """Show the location setup page (zip code entry or browse)."""
@@ -623,7 +641,7 @@ def setup_search() -> str:
 
     lat, lng = coords
     nearby = find_nearest_locations(lat, lng, n=6)
-    exact = dynamic_location_for_point(lat, lng)
+    exact = _exact_option(lat, lng, nearby)
     if not nearby and not exact:
         return render_template(
             "setup.html",
@@ -672,7 +690,7 @@ def setup_coords() -> Any:
         )
 
     nearby = find_nearest_locations(lat, lon, n=6)
-    exact = dynamic_location_for_point(lat, lon)
+    exact = _exact_option(lat, lon, nearby)
     if not nearby and not exact:
         return render_template(
             "setup.html",
