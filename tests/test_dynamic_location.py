@@ -121,6 +121,105 @@ class TestCoastalGate:
         assert L.dynamic_location_for_point(37.6872, -97.3301) is None
 
 
+def _stub_builder():
+    """A ForecastBuilder whose network services return fixed/empty data.
+
+    Lets generate_forecast run fully offline while exercising the real domain
+    logic (species, scoring, orientation, tips) for a dynamic location.
+    """
+    class _Marine:
+        def get_marine_forecast(self, *_a, **_k):
+            if _k.get("sources_used") is not None:
+                _k["sources_used"].append("stub_marine")
+            return (4.0, 8.0), (1.0, 2.0), "N"
+
+    class _Tides:
+        def get_tide_predictions(self, *_a, **_k):
+            return {}
+
+    class _Buoy:
+        def get_barometric_pressure(self, *_a, **_k):
+            return None
+
+    class _Weather:
+        def get_weather_alerts(self, *_a, **_k):
+            return []
+
+        def get_state_alerts(self, *_a, **_k):
+            return []
+
+        def get_current_weather(self, *_a, **_k):
+            return None
+
+    class _Env:
+        def get_coops_environmental(self, *_a, **_k):
+            return {}
+
+        def get_currents(self, *_a, **_k):
+            return []
+
+        def get_current_observation(self, *_a, **_k):
+            return None
+
+    class _Astro:
+        def get_sun_times(self, now, *_a, **_k):
+            return now, now, "6:00 AM / 6:00 PM"
+
+        def get_solunar_times(self, *_a, **_k):
+            return {}
+
+        def get_twilight_times(self, *_a, **_k):
+            return {}
+
+        def get_lunar_details(self, *_a, **_k):
+            return {}
+
+    class _Builder:
+        def __init__(self):
+            self.marine_service = _Marine()
+            self.tide_service = _Tides()
+            self.buoy_service = _Buoy()
+            self.weather_service = _Weather()
+            self.environment_service = _Env()
+            self.astro_service = _Astro()
+
+    return _Builder
+
+
+class TestDynamicLocationEndToEnd:
+    def test_gulf_dynamic_location_generates_full_forecast(self, monkeypatch):
+        from domain import forecast as fc
+
+        monkeypatch.setattr(fc, "ForecastBuilder", _stub_builder())
+        monkeypatch.setattr(fc, "get_water_temp", lambda *_a, **_k: (74.0, True))
+
+        # A Gulf coastal point near Galveston, TX. Build it directly so the test
+        # doesn't depend on station catalogs (blocked in CI).
+        loc = {
+            "id": "pt_29.3000_-94.8000",
+            "name": "Coastal spot (29.30, -94.80)",
+            "state": "TX",
+            "lat": 29.3,
+            "lng": -94.8,
+            "timezone": "America/Chicago",
+            "coops_station": "8771450",
+            "ndbc_stations": ["42035"],
+            "nws_zone": "",
+            "conditions_region": "gulf",
+            "temp_region": "gulf_west",
+            "fish_region": "gulf",
+            "dynamic": True,
+        }
+        out = fc.generate_forecast(loc)
+        assert out["location_id"] == "pt_29.3000_-94.8000"
+        assert out["forecast_version"] == fc.FORECAST_VERSION
+        # A full forecast was assembled (verdict computed, species present).
+        assert out["conditions"]["verdict"] in {
+            "Excellent", "Good", "Fair", "Challenging", "Poor", "Unknown",
+        }
+        assert isinstance(out["species"], list) and out["species"]
+
+
 class TestWindOrientation:
     def test_region_to_orientation(self):
         assert _wind_orientation({"conditions_region": "atlantic_mid"}) == "east"
