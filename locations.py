@@ -2176,7 +2176,11 @@ def _resolve_dynamic_location(
     """
     # Import locally to avoid a module-load cycle (services.stations is light
     # and only needed when a dynamic location is actually requested).
-    from services.stations import nearest_coops_station, nearest_ndbc_stations
+    from services.stations import (
+        nearest_coops_station,
+        nearest_ndbc_stations,
+        nearest_watertemp_station,
+    )
 
     nearby = find_nearest_locations(lat, lng, n=1, max_miles=1.0e9)
     nearest = nearby[0] if nearby else None
@@ -2186,6 +2190,13 @@ def _resolve_dynamic_location(
     ndbc = nearest_ndbc_stations(lat, lng, n=2)
 
     coops_id = coops["id"] if coops else (nearest or {}).get("coops_station", "")
+    # Water temp often comes from a different (sensor-equipped) station than the
+    # nearest tide station; fall back to the tide station, then to the curated
+    # neighbour's station.
+    wt = nearest_watertemp_station(lat, lng)
+    water_temp_station = (
+        wt["id"] if wt else (coops_id or (nearest or {}).get("coops_station", ""))
+    )
     ndbc_ids = (
         [s["id"] for s in ndbc]
         if ndbc
@@ -2233,6 +2244,7 @@ def _resolve_dynamic_location(
         "lng": lng,
         "timezone": timezone,
         "coops_station": coops_id,
+        "water_temp_station": water_temp_station,
         "ndbc_stations": ndbc_ids,
         "nws_zone": nws_zone,
         "conditions_region": conditions_region,

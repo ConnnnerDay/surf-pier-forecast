@@ -33,7 +33,13 @@ def fake_catalogs(monkeypatch):
         {"id": "41037", "lat": 33.99, "lng": -77.36, "has_met": True},
         {"id": "DRYA1", "lat": 30.0, "lng": -88.0, "has_met": False},
     ]
+    # Water-temp-capable stations (a subset, sited differently from tide gauges).
+    temp = [
+        {"id": "8658163", "name": "Wrightsville Beach", "lat": 34.21, "lng": -77.79, "state": "NC"},
+        {"id": "8775870", "name": "Bob Hall Pier", "lat": 27.58, "lng": -97.22, "state": "TX"},
+    ]
     monkeypatch.setattr(stations, "_load_coops", lambda: coops)
+    monkeypatch.setattr(stations, "_load_coops_temp", lambda: temp)
     monkeypatch.setattr(stations, "_load_ndbc", lambda: ndbc)
     return coops, ndbc
 
@@ -78,10 +84,16 @@ class TestNearestStations:
         assert ids == ["41110", "41037"]
         assert "DRYA1" not in ids
 
+    def test_nearest_watertemp_station(self, fake_catalogs):
+        result = stations.nearest_watertemp_station(_WB_LAT, _WB_LNG)
+        assert result is not None and result["id"] == "8658163"
+
     def test_empty_catalog_returns_none(self, monkeypatch):
         monkeypatch.setattr(stations, "_load_coops", lambda: [])
+        monkeypatch.setattr(stations, "_load_coops_temp", lambda: [])
         monkeypatch.setattr(stations, "_load_ndbc", lambda: [])
         assert stations.nearest_coops_station(_WB_LAT, _WB_LNG) is None
+        assert stations.nearest_watertemp_station(_WB_LAT, _WB_LNG) is None
         assert stations.nearest_ndbc_stations(_WB_LAT, _WB_LNG) == []
 
 
@@ -95,6 +107,7 @@ class TestBuildDynamicLocation:
         ):
             assert key in loc, f"missing {key}"
         assert loc["coops_station"] == "8658163"
+        assert loc["water_temp_station"] == "8658163"
         assert loc["ndbc_stations"] == ["41110", "41037"]
         assert loc["dynamic"] is True
 
@@ -114,9 +127,11 @@ class TestBuildDynamicLocation:
         # No catalog available → dynamic location still works, inheriting the
         # nearest curated location's stations (today's behaviour, never worse).
         monkeypatch.setattr(stations, "_load_coops", lambda: [])
+        monkeypatch.setattr(stations, "_load_coops_temp", lambda: [])
         monkeypatch.setattr(stations, "_load_ndbc", lambda: [])
         loc = L.build_dynamic_location(_WB_LAT, _WB_LNG)
         assert loc["coops_station"]  # non-empty, from a curated neighbour
+        assert loc["water_temp_station"]  # falls back to the tide/curated station
         assert loc["ndbc_stations"]
 
 

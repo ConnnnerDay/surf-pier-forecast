@@ -34,10 +34,9 @@ logger = logging.getLogger(__name__)
 _CATALOG_TTL_S = 24 * 3600
 _TIMEOUT: tuple[float, float] = (3.05, 20)
 
-_COOPS_TIDE_URL = (
-    "https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations.json"
-    "?type=tidepredictions"
-)
+_COOPS_MDAPI = "https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations.json"
+_COOPS_TIDE_URL = _COOPS_MDAPI + "?type=tidepredictions"
+_COOPS_TEMP_URL = _COOPS_MDAPI + "?type=watertemp"
 _NDBC_URL = "https://www.ndbc.noaa.gov/activestations.xml"
 
 _HEADERS = {
@@ -48,6 +47,7 @@ _HEADERS = {
 _lock = threading.Lock()
 # Each cache entry is (fetched_at_epoch, list_of_station_dicts).
 _coops_cache: Optional[tuple[float, list[dict[str, Any]]]] = None
+_coops_temp_cache: Optional[tuple[float, list[dict[str, Any]]]] = None
 _ndbc_cache: Optional[tuple[float, list[dict[str, Any]]]] = None
 
 
@@ -65,24 +65,19 @@ def _haversine_miles(lat1: float, lng1: float, lat2: float, lng2: float) -> floa
     return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
 
-def _fetch_coops_stations() -> list[dict[str, Any]]:
-    """Download the CO-OPS tide-prediction station catalog.
+def _fetch_coops_stations(url: str, endpoint: str, label: str) -> list[dict[str, Any]]:
+    """Download a CO-OPS station catalog (tide-prediction or water-temp).
 
     Returns a list of ``{"id", "name", "lat", "lng", "state"}`` dicts, or an
     empty list on any failure.
     """
     try:
-        resp = http_get(
-            _COOPS_TIDE_URL,
-            endpoint="stations.coops_catalog",
-            headers=_HEADERS,
-            timeout=_TIMEOUT,
-        )
+        resp = http_get(url, endpoint=endpoint, headers=_HEADERS, timeout=_TIMEOUT)
         if resp.status_code != 200:
             return []
         data = resp.json()
     except Exception:
-        logger.warning("CO-OPS station catalog unavailable", exc_info=True)
+        logger.warning("CO-OPS %s catalog unavailable", label, exc_info=True)
         return []
 
     out: list[dict[str, Any]] = []
@@ -99,7 +94,7 @@ def _fetch_coops_stations() -> list[dict[str, Any]]:
             )
         except (KeyError, TypeError, ValueError):
             continue
-    logger.info("Loaded %d CO-OPS tide stations", len(out))
+    logger.info("Loaded %d CO-OPS %s stations", len(out), label)
     return out
 
 
@@ -147,17 +142,37 @@ def _fetch_ndbc_stations() -> list[dict[str, Any]]:
 
 
 def _load_coops() -> list[dict[str, Any]]:
-    """Return the cached CO-OPS catalog, refreshing it past the TTL."""
+    """Return the cached CO-OPS tide-prediction catalog, refreshing past TTL."""
     global _coops_cache
     with _lock:
         if _coops_cache is not None and time.time() - _coops_cache[0] < _CATALOG_TTL_S:
             return _coops_cache[1]
-    stations = _fetch_coops_stations()
+    stations = _fetch_coops_stations(
+        _COOPS_TIDE_URL, "stations.coops_catalog", "tide"
+    )
     # Only cache a non-empty result so a transient outage doesn't pin an empty
     # catalog for the whole TTL window.
     if stations:
         with _lock:
             _coops_cache = (time.time(), stations)
+    return stations
+
+
+def _load_coops_temp() -> list[dict[str, Any]]:
+    """Return the cached CO-OPS water-temperature catalog, refreshing past TTL."""
+    global _coops_temp_cache
+    with _lock:
+        if (
+            _coops_temp_cache is not None
+            and time.time() - _coops_temp_cache[0] < _CATALOG_TTL_S
+        ):
+            return _coops_temp_cache[1]
+    stations = _fetch_coops_stations(
+        _COOPS_TEMP_URL, "stations.coops_temp_catalog", "water-temp"
+    )
+    if stations:
+        with _lock:
+            _coops_temp_cache = (time.time(), stations)
     return stations
 
 
@@ -174,14 +189,10 @@ def _load_ndbc() -> list[dict[str, Any]]:
     return stations
 
 
-def nearest_coops_station(lat: float, lng: float) -> Optional[dict[str, Any]]:
-    """Return the nearest CO-OPS tide station to ``(lat, lng)``.
-
-    The result dict carries ``id``, ``name``, ``state`` and ``distance_miles``.
-    Returns ``None`` when the catalog is unavailable so the caller can fall
-    back to a curated station.
-    """
-    stations = _load_coops()
+def _nearest(
+    stations: list[dict[str, Any]], lat: float, lng: float
+) -> Optional[dict[str, Any]]:
+    """Return the nearest station dict (with distance_miles) or None."""
     if not stations:
         return None
     best: Optional[dict[str, Any]] = None
@@ -199,6 +210,27 @@ def nearest_coops_station(lat: float, lng: float) -> Optional[dict[str, Any]]:
         "state": best["state"],
         "distance_miles": round(best_d, 1),
     }
+
+
+def nearest_coops_station(lat: float, lng: float) -> Optional[dict[str, Any]]:
+    """Return the nearest CO-OPS tide station to ``(lat, lng)``.
+
+    The result dict carries ``id``, ``name``, ``state`` and ``distance_miles``.
+    Returns ``None`` when the catalog is unavailable so the caller can fall
+    back to a curated station.
+    """
+    return _nearest(_load_coops(), lat, lng)
+
+
+def nearest_watertemp_station(lat: float, lng: float) -> Optional[dict[str, Any]]:
+    """Return the nearest CO-OPS station that reports water temperature.
+
+    Tide stations often lack a temperature sensor, so resolving this separately
+    gives dynamic locations a live water-temp reading (the dominant species
+    driver) instead of falling straight back to monthly climatology. Returns
+    ``None`` when the catalog is unavailable.
+    """
+    return _nearest(_load_coops_temp(), lat, lng)
 
 
 def nearest_ndbc_stations(lat: float, lng: float, n: int = 2) -> list[dict[str, Any]]:
