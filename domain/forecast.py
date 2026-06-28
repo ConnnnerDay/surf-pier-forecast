@@ -52,11 +52,8 @@ from services.nws import (
 from services.datagov import get_water_quality_summary as _get_wq
 from services.hdx_fao import get_hdx_fao_enrichment as _get_fao
 from domain.species import (
-    _OFFSHORE_DIRS_EAST,
-    _OFFSHORE_DIRS_WEST,
-    _ONSHORE_DIRS_EAST,
-    _ONSHORE_DIRS_WEST,
     _SPECIES_BY_COAST,
+    onshore_offshore_dirs,
     _build_conditions_modifier,
     _build_profile_filter,
     _get_technique_tip,
@@ -552,6 +549,27 @@ def _derive_coast(location: Optional[dict[str, Any]]) -> Optional[str]:
         return "east"
     return None
 
+def _wind_orientation(location: Optional[dict[str, Any]]) -> str:
+    """Return the coastline orientation used for wind-direction scoring.
+
+    Unlike :func:`_derive_coast` (which folds the Gulf into ``"east"`` for
+    species selection), this keeps the Gulf distinct because a south-facing
+    shore has different onshore/offshore winds than an east-facing one:
+
+        ``"pacific*"``  → ``"west"``   (ocean to the west)
+        ``"gulf*"``     → ``"gulf"``   (ocean to the south)
+        ``"hawaii*"``   → ``"hawaii"`` (omnidirectional; no wind-dir effect)
+        everything else → ``"east"``   (ocean to the east — the safe default)
+    """
+    cr = (location or {}).get("conditions_region", "")
+    if cr.startswith("pacific"):
+        return "west"
+    if cr.startswith("gulf"):
+        return "gulf"
+    if cr.startswith("hawaii"):
+        return "hawaii"
+    return "east"
+
 def score_conditions(
     wind_range: Optional[tuple[float, float]],
     wave_range: Optional[tuple[float, float]],
@@ -644,14 +662,11 @@ def score_conditions(
         score -= 22
         factors.append((-22, f"Heavy surf ({wave_lbl})"))
 
-    # Wind direction heuristic by coast (offshore usually cleaner water).
+    # Wind direction heuristic by coastline orientation (offshore = cleaner
+    # water).  ``coast`` here carries the orientation ("east"/"west"/"gulf"/
+    # "hawaii"); Hawaii's empty sets mean no wind-direction effect.
     if wind_dir:
-        if coast == "west":
-            offshore_dirs = _OFFSHORE_DIRS_WEST
-            onshore_dirs = _ONSHORE_DIRS_WEST
-        else:
-            offshore_dirs = _OFFSHORE_DIRS_EAST
-            onshore_dirs = _ONSHORE_DIRS_EAST
+        onshore_dirs, offshore_dirs = onshore_offshore_dirs(coast)
         if wind_dir in offshore_dirs:
             score += 4
             factors.append((4, f"Clean offshore wind ({wind_dir})"))
@@ -945,7 +960,8 @@ def build_multiday_outlook(
     _coast_species = _SPECIES_BY_COAST.get(coast, []) if coast else []
     outlook_fish_region = (location or {}).get("fish_region", "")
     _monthly_temps = get_monthly_water_temps(location) if location else None
-    wind_coast = "west" if coast == "west" else "east"
+    # Orientation for wind-direction scoring (Gulf faces south, not east).
+    wind_coast = _wind_orientation(location)
 
     days = []
     for offset_days in range(1, 4):  # tomorrow, day after, day 3
@@ -1116,7 +1132,7 @@ def build_multiday_outlook(
                 sunrise=future_sunrise,
                 sunset=future_sunset,
                 solunar=future_solunar,
-                coast=coast or "east",
+                coast=wind_coast,
                 fishing_types=fishing_types,
             )
             verdict = _day_score["verdict"]
@@ -2668,8 +2684,10 @@ def generate_forecast(
         "sunrise_sunset": sun_str,
     }
 
-    # Determine coast for wind direction scoring and species filtering
+    # Coast drives species filtering; orientation drives wind-direction scoring
+    # (the Gulf shares east-coast species but faces south for wind).
     coast = _derive_coast(location) or "east"
+    orientation = _wind_orientation(location)
 
     loc_fish_region = (location or {}).get("fish_region", "")
     profile = profile or {}
@@ -2687,6 +2705,7 @@ def generate_forecast(
         targets=profile.get("targets"),
         fish_region=loc_fish_region,
         closures_out=_closures,
+        wind_orientation=orientation,
     )
     # Tide state isn't resolved yet at this point in assembly, so the base
     # rig tips use wind/wave/temp only; personalize_forecast rebuilds these
@@ -2917,7 +2936,7 @@ def generate_forecast(
         sunset=sunset,
         now=now,
         solunar=solunar,
-        coast=coast or "east",
+        coast=orientation,
     )
     conditions["verdict"] = _fishability["verdict"]
     conditions["fishability_score"] = _fishability["score"]
@@ -3289,6 +3308,7 @@ def personalize_forecast(
             fishing_types=fishing_types,
             targets=targets,
             fish_region=loc_fish_region,
+            wind_orientation=_wind_orientation(location),
         )
     else:
         # Shallow-copy each species dict so we don't mutate cached objects
@@ -3405,9 +3425,12 @@ def personalize_forecast(
             or _conds.get("fishability_score"),
         )
 
-    # Rebuild spot tips with type-specific content
+    # Rebuild spot tips with type-specific content.
+    # NOTE: location dicts have no "coast" key — they carry conditions_region —
+    # so derive the wind-direction orientation properly here.  (Previously this
+    # silently defaulted to "east", scoring Pacific/Gulf winds backwards.)
     tide_state_val = forecast.get("tide_state", "")
-    loc_coast = (location or {}).get("coast", "east")
+    loc_coast = _wind_orientation(location)
     forecast["spot_tips"] = build_spot_tips(
         wind_range=wind_range,
         wave_range=wave_range,

@@ -2159,6 +2159,9 @@ def _resolve_dynamic_location(
     # Coarse regional fields inherited from the nearest curated location.
     conditions_region = (nearest or {}).get("conditions_region", "atlantic_mid")
     temp_region = (nearest or {}).get("temp_region", "nc_south")
+    # Inherit the neighbour's water-temp offset so the temperature curve matches
+    # the curated spot whose temp_region we're borrowing.
+    temp_offset = (nearest or {}).get("temp_offset", 0)
     fish_region = (nearest or {}).get("fish_region", "")
     timezone = (nearest or {}).get("timezone", "America/New_York")
     nws_zone = ""
@@ -2189,6 +2192,7 @@ def _resolve_dynamic_location(
         "nws_zone": nws_zone,
         "conditions_region": conditions_region,
         "temp_region": temp_region,
+        "temp_offset": temp_offset,
         "fish_region": fish_region,
         "dynamic": True,
     }

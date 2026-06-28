@@ -11,6 +11,8 @@ import pytest
 
 import locations as L
 import services.stations as stations
+from domain.forecast import _wind_orientation, score_conditions
+from domain.species import onshore_offshore_dirs
 
 
 # Wrightsville Beach, NC — the project's default reference point.
@@ -117,3 +119,42 @@ class TestCoastalGate:
     def test_inland_point_rejected(self, fake_catalogs):
         # Wichita, KS — hundreds of miles from any station or curated spot.
         assert L.dynamic_location_for_point(37.6872, -97.3301) is None
+
+
+class TestWindOrientation:
+    def test_region_to_orientation(self):
+        assert _wind_orientation({"conditions_region": "atlantic_mid"}) == "east"
+        assert _wind_orientation({"conditions_region": "pacific_south"}) == "west"
+        assert _wind_orientation({"conditions_region": "gulf"}) == "gulf"
+        assert _wind_orientation({"conditions_region": "hawaii_conditions"}) == "hawaii"
+        assert _wind_orientation(None) == "east"
+
+    def test_gulf_faces_south_not_east(self):
+        on_gulf, off_gulf = onshore_offshore_dirs("gulf")
+        # South-facing: northerly wind is offshore, southerly is onshore.
+        assert "N" in off_gulf and "S" in on_gulf
+        # East/west winds are alongshore on the Gulf — neither bonus nor penalty.
+        assert "E" not in on_gulf and "E" not in off_gulf
+
+    def test_hawaii_is_neutral(self):
+        on_hi, off_hi = onshore_offshore_dirs("hawaii")
+        assert on_hi == set() and off_hi == set()
+
+    def test_unknown_orientation_defaults_east(self):
+        assert onshore_offshore_dirs("nonsense") == onshore_offshore_dirs("east")
+
+
+class TestGulfScoringDiffersFromEast:
+    def _score(self, coast, wind_dir):
+        return score_conditions(
+            (5.0, 8.0), (1.0, 2.0), wind_dir=wind_dir, coast=coast
+        )["score"]
+
+    def test_east_wind_penalises_atlantic_but_not_gulf(self):
+        # An easterly is onshore (murkier water) on the Atlantic but merely
+        # alongshore on the south-facing Gulf, so the Gulf shouldn't be docked.
+        assert self._score("east", "E") < self._score("gulf", "E")
+
+    def test_northerly_is_offshore_on_both(self):
+        # A clean northerly is offshore for both an east- and south-facing coast.
+        assert self._score("gulf", "N") == self._score("east", "N")

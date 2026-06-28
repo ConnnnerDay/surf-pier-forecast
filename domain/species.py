@@ -1633,14 +1633,40 @@ _DAYTIME_SPECIES: set = {
     "Kaku (barracuda)",
 }
 
-# Compass directions grouped for onshore/offshore determination.
-# East-facing coasts (Atlantic): onshore = easterly, offshore = westerly
-# West-facing coasts (Pacific): onshore = westerly, offshore = easterly
-# Hawaii / Gulf south: mixed, so use east-facing defaults
+# Compass directions grouped for onshore/offshore determination, keyed by which
+# way the open ocean faces (the coastline's *orientation*):
+#   - East-facing coasts (Atlantic): ocean east → onshore easterly, offshore westerly
+#   - West-facing coasts (Pacific):  ocean west → onshore westerly, offshore easterly
+#   - South-facing coasts (Gulf):    ocean south → onshore southerly, offshore northerly
+# Treating the Gulf as east-facing (the previous behaviour) mislabelled its
+# alongshore E/W winds, so the Gulf gets its own south-facing set.
 _ONSHORE_DIRS_EAST: set = {"S", "SE", "E", "SSE", "ESE", "SSW", "ENE", "NE"}
 _OFFSHORE_DIRS_EAST: set = {"N", "NW", "W", "NNW", "WNW", "NNE"}
 _ONSHORE_DIRS_WEST: set = {"W", "NW", "SW", "WNW", "WSW", "NNW", "SSW"}
 _OFFSHORE_DIRS_WEST: set = {"E", "NE", "SE", "ENE", "ESE", "NNE", "SSE"}
+_ONSHORE_DIRS_GULF: set = {"S", "SSW", "SW", "SSE", "SE", "WSW", "ESE"}
+_OFFSHORE_DIRS_GULF: set = {"N", "NNE", "NE", "NNW", "NW", "ENE", "WNW"}
+
+# Hawaii (and any island/omnidirectional coast): onshore/offshore is
+# ambiguous because the shore faces every direction, so apply no wind-direction
+# bonus or penalty rather than guessing.
+_DIRS_BY_ORIENTATION: dict[str, tuple[set, set]] = {
+    "east": (_ONSHORE_DIRS_EAST, _OFFSHORE_DIRS_EAST),
+    "west": (_ONSHORE_DIRS_WEST, _OFFSHORE_DIRS_WEST),
+    "gulf": (_ONSHORE_DIRS_GULF, _OFFSHORE_DIRS_GULF),
+    "hawaii": (set(), set()),
+}
+
+
+def onshore_offshore_dirs(orientation: str) -> tuple[set, set]:
+    """Return ``(onshore_dirs, offshore_dirs)`` for a coastline orientation.
+
+    ``orientation`` is one of ``"east"``, ``"west"``, ``"gulf"``, ``"hawaii"``.
+    Unknown values fall back to the east-facing (Atlantic) sets so existing
+    callers keep their previous behaviour.
+    """
+    return _DIRS_BY_ORIENTATION.get(orientation, _DIRS_BY_ORIENTATION["east"])
+
 
 # Default for backward compatibility
 _ONSHORE_DIRS = _ONSHORE_DIRS_EAST
@@ -1668,15 +1694,16 @@ def _conditions_modifier(
     wind direction, wind speed, wave height, and time of day match the
     species' preferred conditions.
 
-    ``coast`` should be ``"east"`` for Atlantic/Gulf or ``"west"`` for Pacific.
+    ``coast`` is the coastline orientation used for wind direction — one of
+    ``"east"`` (Atlantic), ``"west"`` (Pacific), ``"gulf"`` (south-facing), or
+    ``"hawaii"`` (omnidirectional, no wind-direction effect).
     """
     modifier = 0.0
     name = sp["name"]
 
     # --- Wind direction modifier (up to +5 / -3) ---
     if wind_dir:
-        onshore_dirs = _ONSHORE_DIRS_WEST if coast == "west" else _ONSHORE_DIRS_EAST
-        offshore_dirs = _OFFSHORE_DIRS_WEST if coast == "west" else _OFFSHORE_DIRS_EAST
+        onshore_dirs, offshore_dirs = onshore_offshore_dirs(coast)
         is_onshore = wind_dir in onshore_dirs
         is_offshore = wind_dir in offshore_dirs
 
@@ -1741,8 +1768,7 @@ def _build_conditions_modifier(
     and boolean flags inside _conditions_modifier for every species) eliminates
     ~5 repeated arithmetic operations × 572 species per build_species_ranking call.
     """
-    onshore_dirs = _ONSHORE_DIRS_WEST if coast == "west" else _ONSHORE_DIRS_EAST
-    offshore_dirs = _OFFSHORE_DIRS_WEST if coast == "west" else _OFFSHORE_DIRS_EAST
+    onshore_dirs, offshore_dirs = onshore_offshore_dirs(coast)
     is_onshore = bool(wind_dir and wind_dir in onshore_dirs)
     is_offshore = bool(wind_dir and wind_dir in offshore_dirs)
     wind_avg: Optional[float] = (
@@ -2028,6 +2054,7 @@ def build_species_ranking(
     targets: Optional[list[str]] = None,
     fish_region: str = "",
     closures_out: Optional[list[dict[str, Any]]] = None,
+    wind_orientation: Optional[str] = None,
 ) -> list[dict[str, Any]]:
     """Dynamically rank species based on conditions and user profile.
 
@@ -2048,9 +2075,15 @@ def build_species_ranking(
     ``coast`` must be one of ``"east"``, ``"west"``, or ``"hawaii"``.
     Passing ``None`` (or omitting the argument) returns an empty list —
     the coast must be known to avoid leaking wrong-region species.
+
+    ``wind_orientation`` overrides the coastline orientation used for the
+    wind-direction modifier (e.g. ``"gulf"`` for south-facing Gulf shores,
+    which the species ``coast`` folds into ``"east"`` for selection).  When
+    omitted it is derived from ``coast``.
     """
-    # For wind scoring, Hawaii uses "east" wind patterns (NE trades)
-    wind_coast = "west" if coast == "west" else "east"
+    # Coastline orientation for wind scoring is independent of the species
+    # coast: the Gulf selects east-coast species but faces south for wind.
+    wind_coast = wind_orientation or ("west" if coast == "west" else "east")
     # Pre-compute per-run constants to avoid repeating the same work per species.
     _profile_filter = _build_profile_filter(fishing_types, targets)
     _cond_modifier = _build_conditions_modifier(
