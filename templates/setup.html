@@ -218,8 +218,12 @@
             var hasCurrentLocation = {{ 'true' if current_location else 'false' }};
             var allLocations = {{ all_locations|tojson }};
 
-            /* Geo suggestion saved so it can be restored if user clears the search field */
+            /* Geo suggestion saved so it can be restored if user clears the search field.
+               geoSuggestion is the nearest curated spot (for the label); geoCoords are the
+               detected coordinates, submitted to /setup/coords so the server can also offer
+               an exact-point forecast for unmapped coastline. */
             var geoSuggestion = null;
+            var geoCoords = null;
 
             function esc2(s) {
                 return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -371,18 +375,25 @@
                 return best;
             }
 
-            /* Render the geo suggestion card in the results area */
-            function showGeoSuggestion(loc) {
+            /* Render the geo suggestion card in the results area.  Submits the
+               detected coordinates to /setup/coords, which returns both the
+               nearest named spots and a forecast built for the exact point. */
+            function showGeoSuggestion() {
+                if (!geoCoords) return;
                 var subtitle = document.getElementById('geo-subtitle');
-                if (subtitle) subtitle.textContent = 'Nearest supported location to you:';
+                if (subtitle) subtitle.textContent = 'Found your location:';
                 var resultsEl = document.getElementById('loc-search-results');
                 if (!resultsEl) return;
-                var html = '<form method="post" action="/setup/select/' + encodeURIComponent(loc.id) + '">';
+                var label = geoSuggestion
+                    ? ('Get my forecast — near ' + esc2(geoSuggestion.name))
+                    : 'Get my forecast for this spot';
+                var html = '<form method="post" action="{{ url_for("views.setup_coords") }}">';
                 html += '<input type="hidden" name="csrf_token" value="{{ csrf_token }}">';
+                html += '<input type="hidden" name="location_lat" value="' + geoCoords.lat + '">';
+                html += '<input type="hidden" name="location_lon" value="' + geoCoords.lon + '">';
                 html += '<button type="submit" class="location-search-result-item location-search-result-item--suggested">';
-                html += '<div><span class="location-search-result-name">' + esc2(loc.name) + '</span>';
+                html += '<div><span class="location-search-result-name">' + label + '</span>';
                 html += '<span class="location-search-result-geo-label"> &mdash; near you</span></div>';
-                html += '<span class="location-search-result-state">' + esc2(loc.state) + '</span>';
                 html += '</button></form>';
                 resultsEl.innerHTML = html;
             }
@@ -407,14 +418,9 @@
 
                     navigator.geolocation.getCurrentPosition(
                         function (pos) {
-                            var nearest = findNearestLocation(pos.coords.latitude, pos.coords.longitude);
-                            if (nearest) {
-                                geoSuggestion = nearest;
-                                showGeoSuggestion(nearest);
-                            } else {
-                                if (resultsEl) resultsEl.innerHTML = '';
-                                if (subtitle) subtitle.textContent = 'Search by city, beach name, or zip code';
-                            }
+                            geoCoords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+                            geoSuggestion = findNearestLocation(pos.coords.latitude, pos.coords.longitude);
+                            showGeoSuggestion();
                         },
                         function () {
                             if (resultsEl) resultsEl.innerHTML = '';
@@ -455,8 +461,8 @@
                     var q = input.value.trim().toLowerCase();
                     if (!q) {
                         /* Restore geo suggestion if the user clears the field */
-                        if (geoSuggestion) {
-                            showGeoSuggestion(geoSuggestion);
+                        if (geoCoords) {
+                            showGeoSuggestion();
                         } else {
                             resultsEl.innerHTML = '<p class="setup-help">Try a city name, beach name, or zip code &mdash; or pick on the map below.</p>';
                         }
@@ -512,7 +518,7 @@
                         if (items.length) { e.preventDefault(); items[0].focus(); }
                     } else if (e.key === 'Escape') {
                         input.value = '';
-                        if (geoSuggestion) { showGeoSuggestion(geoSuggestion); } else { resultsEl.innerHTML = ''; }
+                        if (geoCoords) { showGeoSuggestion(); } else { resultsEl.innerHTML = ''; }
                     } else if (e.key === 'Enter') {
                         clearTimeout(debounceTimer);
                         doSearch();
@@ -531,7 +537,7 @@
                         if (idx <= 0) { input.focus(); } else { items[idx - 1].focus(); }
                     } else if (e.key === 'Escape') {
                         input.value = '';
-                        if (geoSuggestion) { showGeoSuggestion(geoSuggestion); } else { resultsEl.innerHTML = ''; }
+                        if (geoCoords) { showGeoSuggestion(); } else { resultsEl.innerHTML = ''; }
                         input.focus();
                     }
                 });

@@ -133,6 +133,25 @@
         form.submit();
     }
 
+    /* POST clicked coordinates to /setup/coords so the server can offer a
+       forecast for the exact point (plus nearby named spots), not just snap
+       to the nearest curated location. */
+    function submitCoords(lat, lng, csrfToken) {
+        var form = document.createElement('form');
+        form.method = 'post';
+        form.action = '/setup/coords';
+        var fields = { csrf_token: csrfToken, location_lat: lat, location_lon: lng };
+        Object.keys(fields).forEach(function (name) {
+            var input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = name;
+            input.value = fields[name];
+            form.appendChild(input);
+        });
+        document.body.appendChild(form);
+        form.submit();
+    }
+
     function buildMap(mapEl, locations, csrfToken, confirmEl) {
         var map = L.map(mapEl).setView([DEFAULT_LAT, DEFAULT_LNG], DEFAULT_ZOOM);
 
@@ -170,16 +189,18 @@
             });
 
         var pendingLoc = null;
+        var pendingCoords = null;
 
-        /* Show the inline confirm bar below the map when clicking open ocean */
+        /* Show the inline confirm bar below the map when clicking open ocean.
+           ``loc`` (the nearest named spot) may be null for remote coastline. */
         function showConfirm(loc) {
             pendingLoc = loc;
             if (!confirmEl) return;
             confirmEl.hidden = false;
             var nameEl = confirmEl.querySelector('[data-map-confirm-name]');
             var stateEl = confirmEl.querySelector('[data-map-confirm-state]');
-            if (nameEl) nameEl.textContent = loc.name;
-            if (stateEl) stateEl.textContent = loc.state;
+            if (nameEl) nameEl.textContent = loc ? loc.name : 'This spot';
+            if (stateEl) stateEl.textContent = loc ? loc.state : '';
         }
 
         var bounds = [];
@@ -224,17 +245,22 @@
             }).catch(function () {});
         }
 
-        /* Clicking open ocean (not a marker) — find nearest and show a confirm step */
+        /* Clicking open ocean (not a marker) — remember the exact point and show
+           a confirm step, labelled with the nearest named spot for context. */
         map.on('click', function (e) {
-            var nearest = findNearest(locations, e.latlng.lat, e.latlng.lng);
-            if (nearest) showConfirm(nearest);
+            pendingCoords = { lat: e.latlng.lat, lng: e.latlng.lng };
+            showConfirm(findNearest(locations, e.latlng.lat, e.latlng.lng));
         });
 
         if (confirmEl) {
             var confirmBtn = confirmEl.querySelector('[data-map-confirm-btn]');
             if (confirmBtn) {
                 confirmBtn.addEventListener('click', function () {
-                    if (pendingLoc) submitLocation(pendingLoc.id, csrfToken);
+                    if (pendingCoords) {
+                        submitCoords(pendingCoords.lat, pendingCoords.lng, csrfToken);
+                    } else if (pendingLoc) {
+                        submitLocation(pendingLoc.id, csrfToken);
+                    }
                 });
             }
         }
