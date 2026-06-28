@@ -26,6 +26,7 @@ def fake_catalogs(monkeypatch):
         {"id": "8658163", "name": "Wrightsville Beach", "lat": 34.21, "lng": -77.79, "state": "NC"},
         {"id": "8656483", "name": "Beaufort", "lat": 34.72, "lng": -76.67, "state": "NC"},
         {"id": "9410230", "name": "La Jolla", "lat": 32.87, "lng": -117.26, "state": "CA"},
+        {"id": "8771450", "name": "Galveston", "lat": 29.31, "lng": -94.79, "state": "TX"},
     ]
     ndbc = [
         {"id": "41110", "lat": 34.14, "lng": -77.71, "has_met": True},
@@ -110,6 +111,31 @@ class TestBuildDynamicLocation:
         loc = L.build_dynamic_location(_WB_LAT, _WB_LNG)
         assert loc["coops_station"]  # non-empty, from a curated neighbour
         assert loc["ndbc_stations"]
+
+
+class TestTimezoneForPoint:
+    def test_single_timezone_states(self):
+        assert L.timezone_for_point("NC", -77.8) == "America/New_York"
+        assert L.timezone_for_point("TX", -94.8) == "America/Chicago"
+        assert L.timezone_for_point("CA", -117.3) == "America/Los_Angeles"
+        assert L.timezone_for_point("AK", -149.9) == "America/Anchorage"
+        assert L.timezone_for_point("HI", -157.8) == "Pacific/Honolulu"
+
+    def test_florida_split_by_longitude(self):
+        # Panhandle (Pensacola ~ -87.2) is Central; peninsula (Miami ~ -80.2) Eastern.
+        assert L.timezone_for_point("FL", -87.2) == "America/Chicago"
+        assert L.timezone_for_point("FL", -80.2) == "America/New_York"
+
+    def test_unknown_state_returns_none(self):
+        assert L.timezone_for_point("", -90.0) is None
+        assert L.timezone_for_point("ZZ", -90.0) is None
+
+    def test_dynamic_gulf_location_gets_central_time(self, fake_catalogs):
+        # A TX Gulf point resolves to the Galveston station → state TX → Central,
+        # even though regional fields are inherited from a different neighbour.
+        loc = L.build_dynamic_location(29.3, -94.8)
+        assert loc["state"] == "TX"
+        assert loc["timezone"] == "America/Chicago"
 
 
 class TestCoastalGate:

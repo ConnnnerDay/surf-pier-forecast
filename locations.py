@@ -2101,6 +2101,40 @@ _DYN_GATE_MILES = 60.0
 _NWS_ZONE_INHERIT_MILES = 75.0
 
 
+# IANA timezone by coastal state.  Every US coastal state is single-timezone
+# except Florida, whose panhandle (west of the Apalachicola River, ~85°W) is
+# Central while the rest is Eastern — resolved by longitude in
+# :func:`timezone_for_point`.
+_STATE_TIMEZONE: dict[str, str] = {
+    "ME": "America/New_York", "NH": "America/New_York", "MA": "America/New_York",
+    "RI": "America/New_York", "CT": "America/New_York", "NY": "America/New_York",
+    "NJ": "America/New_York", "DE": "America/New_York", "MD": "America/New_York",
+    "VA": "America/New_York", "NC": "America/New_York", "SC": "America/New_York",
+    "GA": "America/New_York",
+    "AL": "America/Chicago", "MS": "America/Chicago", "LA": "America/Chicago",
+    "TX": "America/Chicago",
+    "CA": "America/Los_Angeles", "OR": "America/Los_Angeles",
+    "WA": "America/Los_Angeles",
+    "AK": "America/Anchorage",
+    "HI": "Pacific/Honolulu",
+}
+_FL_TZ_BOUNDARY_LNG = -85.0
+
+
+def timezone_for_point(state: str, lng: float) -> Optional[str]:
+    """Best-effort IANA timezone for a US coastal point from its state.
+
+    Returns ``None`` when the state is unknown so the caller can fall back to
+    another source (e.g. the nearest curated location's timezone).
+    """
+    state = (state or "").upper()
+    if state == "FL":
+        return (
+            "America/Chicago" if lng < _FL_TZ_BOUNDARY_LNG else "America/New_York"
+        )
+    return _STATE_TIMEZONE.get(state)
+
+
 def format_dynamic_id(lat: float, lng: float) -> str:
     """Build the stateless location id that encodes a coastal point."""
     return f"{_DYN_ID_PREFIX}{lat:.4f}_{lng:.4f}"
@@ -2163,7 +2197,12 @@ def _resolve_dynamic_location(
     # the curated spot whose temp_region we're borrowing.
     temp_offset = (nearest or {}).get("temp_offset", 0)
     fish_region = (nearest or {}).get("fish_region", "")
-    timezone = (nearest or {}).get("timezone", "America/New_York")
+    # Derive the timezone from the resolved coastal state (accurate even where
+    # the nearest curated spot sits in a different zone, e.g. the FL panhandle);
+    # fall back to the neighbour's timezone when the state is unknown.
+    timezone = timezone_for_point(state, lng) or (nearest or {}).get(
+        "timezone", "America/New_York"
+    )
     nws_zone = ""
     if nearest and nearest_miles <= _NWS_ZONE_INHERIT_MILES:
         nws_zone = nearest.get("nws_zone", "")
