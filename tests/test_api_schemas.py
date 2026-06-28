@@ -330,3 +330,104 @@ def test_log_size_over_max_len_rejected():
         raise AssertionError("Expected ApiError for oversized size")
     except ApiError as e:
         assert e.code == "invalid_size"
+
+
+# ---------------------------------------------------------------------------
+# Lines 94, 271, 281, 291, 329-334: previously uncovered validation branches
+# ---------------------------------------------------------------------------
+
+
+def test_notification_prefs_rejects_non_dict():
+    """Line 94: notification_prefs that is not a dict raises ApiError."""
+    _raises({"notification_prefs": "enabled"}, "invalid_notification_prefs")
+
+
+def test_profile_payload_rejects_invalid_tide_preference():
+    """Line 271: tide_preference not in valid set raises ApiError."""
+    _raises(
+        {"fishing_profile": {"tide_preference": "high_tide_only"}},
+        "invalid_tide_preference",
+    )
+
+
+def test_profile_payload_rejects_invalid_session_frequency():
+    """Line 281: session_frequency not in valid set raises ApiError."""
+    _raises(
+        {"fishing_profile": {"session_frequency": "always"}},
+        "invalid_session_frequency",
+    )
+
+
+def test_profile_payload_rejects_invalid_catch_release():
+    """Line 291: catch_release not in valid set raises ApiError."""
+    _raises(
+        {"fishing_profile": {"catch_release": "sometimes_maybe"}},
+        "invalid_catch_release",
+    )
+
+
+def test_profile_payload_rejects_non_string_location_id():
+    """Line 329-332: location_id that is not a string raises ApiError."""
+    _raises({"location_id": 12345}, "invalid_location_id")
+
+
+def test_profile_payload_rejects_too_long_location_id():
+    """Lines 333-338: location_id longer than _MAX_LOCATION_ID_LEN raises ApiError."""
+    from web.schemas import _MAX_LOCATION_ID_LEN
+    _raises({"location_id": "x" * (_MAX_LOCATION_ID_LEN + 1)}, "invalid_location_id")
+
+
+# ---------------------------------------------------------------------------
+# Lines 379, 384, 401, 406, 411: LogCreatePayload uncovered validation branches
+# ---------------------------------------------------------------------------
+
+
+def test_log_payload_rejects_non_dict_body():
+    """Line 379: non-dict request body raises ApiError."""
+    try:
+        LogCreatePayload.from_json("not a dict", location_id="loc1")
+        raise AssertionError("Expected ApiError")
+    except ApiError as e:
+        assert e.code == "invalid_payload"
+
+
+def test_log_payload_rejects_empty_species():
+    """Line 384: species that becomes empty after strip() raises ApiError."""
+    try:
+        LogCreatePayload.from_json({"species": "   "}, location_id="loc1")
+        raise AssertionError("Expected ApiError")
+    except ApiError as e:
+        assert e.code == "missing_species"
+
+
+def test_log_payload_rejects_too_long_bait():
+    """Line 401: bait longer than _MAX_BAIT_LEN raises ApiError."""
+    from web.schemas import _MAX_BAIT_LEN
+    try:
+        LogCreatePayload.from_json(
+            {"species": "Bass", "bait": "x" * (_MAX_BAIT_LEN + 1)}, location_id="loc1"
+        )
+        raise AssertionError("Expected ApiError")
+    except ApiError as e:
+        assert e.code == "invalid_bait"
+
+
+def test_log_payload_rejects_too_long_rig():
+    """Line 406: rig longer than _MAX_BAIT_LEN raises ApiError."""
+    from web.schemas import _MAX_BAIT_LEN
+    try:
+        LogCreatePayload.from_json(
+            {"species": "Bass", "rig": "x" * (_MAX_BAIT_LEN + 1)}, location_id="loc1"
+        )
+        raise AssertionError("Expected ApiError")
+    except ApiError as e:
+        assert e.code == "invalid_rig"
+
+
+def test_log_payload_rejects_missing_location():
+    """Line 411: no location_id in body and no fallback raises ApiError."""
+    try:
+        LogCreatePayload.from_json({"species": "Bass"}, location_id="")
+        raise AssertionError("Expected ApiError")
+    except ApiError as e:
+        assert e.code == "missing_location"

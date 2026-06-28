@@ -307,3 +307,223 @@ class TestRunNotificationCheckRealDB:
         )
         assert s2["sent"] == 0
         assert len(sent) == 1
+
+
+# ---------------------------------------------------------------------------
+# _has_upcoming_good_window — additional branches
+# ---------------------------------------------------------------------------
+
+
+class TestHasUpcomingGoodWindow:
+    def test_empty_timeline_returns_false(self):
+        fc = _forecast()
+        fc["activity_timeline"] = []
+        now = datetime(2026, 6, 9, 5, 0, tzinfo=EAST)
+        assert notif._has_upcoming_good_window(fc, now, 4) is False
+
+    def test_none_hour_entry_skipped(self):
+        fc = _forecast()
+        # Add entry with h=None followed by a real prime hour
+        fc["activity_timeline"] = [
+            {"hour": None, "tag": "prime"},
+            {"hour": 7, "tag": "prime"},
+        ]
+        now = datetime(2026, 6, 9, 5, 0, tzinfo=EAST)
+        assert notif._has_upcoming_good_window(fc, now, 4) is True
+
+
+# ---------------------------------------------------------------------------
+# evaluate_forecast — fallback score field
+# ---------------------------------------------------------------------------
+
+
+class TestEvaluateForecastScoreFallback:
+    def test_falls_back_to_fishability_score(self):
+        fc = _forecast()
+        # Remove the angler-specific score; only generic score present
+        fc["conditions"]["fishability_score_for_angler"] = None
+        fc["conditions"]["fishability_score"] = 55
+        now = datetime(2026, 6, 9, 5, 0, tzinfo=EAST)
+        d = notif.evaluate_forecast(fc, {"min_rating": "Good"}, now)
+        assert d is not None
+        assert d["score"] == 55
+
+
+# ---------------------------------------------------------------------------
+# _next_tide — no upcoming tides
+# ---------------------------------------------------------------------------
+
+
+class TestNextTide:
+    def test_no_upcoming_tides_returns_empty_string(self):
+        fc = _forecast()
+        # All tides are in the past relative to 11 PM
+        fc["tides"] = [{"hour": 2.0, "type": "High", "time": "2:00 AM"}]
+        now = datetime(2026, 6, 9, 23, 0, tzinfo=EAST)
+        d = notif.evaluate_forecast(fc, {"min_rating": "Good"}, now)
+        assert d is not None
+        assert d["next_tide"] == ""
+
+    def test_no_tides_returns_empty_string(self):
+        fc = _forecast(tides=[])
+        now = datetime(2026, 6, 9, 5, 0, tzinfo=EAST)
+        d = notif.evaluate_forecast(fc, {"min_rating": "Good"}, now)
+        assert d is not None
+        assert d["next_tide"] == ""
+
+
+# ---------------------------------------------------------------------------
+# _gear_hint — break after 3 items
+# ---------------------------------------------------------------------------
+
+
+class TestGearHint:
+    def test_caps_at_three_items(self):
+        four_items = [
+            {"item": "Rod"},
+            {"item": "Reel"},
+            {"item": "Lure"},
+            {"item": "Net"},
+        ]
+        fc = _forecast(gear=four_items)
+        now = datetime(2026, 6, 9, 5, 0, tzinfo=EAST)
+        d = notif.evaluate_forecast(fc, {"min_rating": "Good"}, now)
+        assert d is not None
+        assert len(d["gear"]) == 3
+
+
+# ---------------------------------------------------------------------------
+# _user_location_ids — default location not in favorites
+# ---------------------------------------------------------------------------
+
+
+class TestUserLocationIds:
+    def test_default_appended_when_not_in_favorites(self):
+        cand = {"favorites": ["loc-a"], "default_location_id": "loc-b"}
+        ids = notif._user_location_ids(cand)
+        assert ids == ["loc-a", "loc-b"]
+
+    def test_default_not_duplicated_if_in_favorites(self):
+        cand = {"favorites": ["loc-a"], "default_location_id": "loc-a"}
+        ids = notif._user_location_ids(cand)
+        assert ids == ["loc-a"]
+
+
+# ---------------------------------------------------------------------------
+# _location_now — naive datetime
+# ---------------------------------------------------------------------------
+
+
+class TestLocationNow:
+    def test_naive_datetime_gets_timezone(self):
+        loc = {"timezone": "America/New_York"}
+        naive = datetime(2026, 6, 9, 5, 0)  # no tzinfo
+        result = notif._location_now(loc, naive)
+        assert result.tzinfo is not None
+
+
+# ---------------------------------------------------------------------------
+# run_notification_check — error paths and default collaborators
+# ---------------------------------------------------------------------------
+
+
+class TestRunNotificationCheckErrorPaths:
+    def _setup(self, monkeypatch, loc="montauk-ny"):
+        monkeypatch.setattr(
+            notif, "get_location",
+            lambda lid: {"id": lid, "name": "Montauk", "timezone": "America/New_York"}
+            if lid == loc else None,
+        )
+        monkeypatch.setattr(notif, "was_notified", lambda *_: False)
+        monkeypatch.setattr(notif, "record_notification", lambda *a, **k: None)
+
+    def _candidate(self, **kwargs):
+        base = {
+            "user_id": 7,
+            "email": "a@b.com",
+            "default_location_id": None,
+            "notification_prefs": {"enabled": True, "email": True, "push": False, "min_rating": "Good"},
+            "fishing_profile": {},
+            "favorites": ["montauk-ny"],
+        }
+        base.update(kwargs)
+        return base
+
+    def test_forecast_loader_exception_continues(self, monkeypatch):
+        self._setup(monkeypatch)
+        monkeypatch.setattr(notif, "iter_notification_candidates", lambda: [self._candidate()])
+
+        def boom(*a):
+            raise RuntimeError("network down")
+
+        emails = []
+        s = notif.run_notification_check(
+            datetime(2026, 6, 9, 5, 0, tzinfo=EAST),
+            forecast_loader=boom,
+            email_sender=lambda *a: emails.append(1) or True,
+            push_sender=lambda *a: False,
+        )
+        assert s["sent"] == 0
+        assert emails == []
+
+    def test_none_forecast_continues(self, monkeypatch):
+        self._setup(monkeypatch)
+        monkeypatch.setattr(notif, "iter_notification_candidates", lambda: [self._candidate()])
+        emails = []
+        s = notif.run_notification_check(
+            datetime(2026, 6, 9, 5, 0, tzinfo=EAST),
+            forecast_loader=lambda *a: None,
+            email_sender=lambda *a: emails.append(1) or True,
+            push_sender=lambda *a: False,
+        )
+        assert s["sent"] == 0
+
+    def test_email_send_exception_does_not_crash(self, monkeypatch):
+        self._setup(monkeypatch)
+        monkeypatch.setattr(notif, "iter_notification_candidates", lambda: [self._candidate()])
+
+        def boom_email(*a):
+            raise RuntimeError("SMTP down")
+
+        s = notif.run_notification_check(
+            datetime(2026, 6, 9, 5, 0, tzinfo=EAST),
+            forecast_loader=lambda *a: _forecast("Good"),
+            email_sender=boom_email,
+            push_sender=lambda *a: False,
+        )
+        assert s["sent"] == 0
+
+    def test_push_send_exception_does_not_crash(self, monkeypatch):
+        self._setup(monkeypatch)
+        cand = self._candidate()
+        cand["notification_prefs"]["push"] = True
+        cand["notification_prefs"]["email"] = False
+        monkeypatch.setattr(notif, "iter_notification_candidates", lambda: [cand])
+        monkeypatch.setattr(
+            notif, "get_push_subscriptions",
+            lambda uid: [{"endpoint": "https://p/ep", "p256dh": "x", "auth": "y"}],
+        )
+
+        def boom_push(*a):
+            raise RuntimeError("push failed")
+
+        s = notif.run_notification_check(
+            datetime(2026, 6, 9, 5, 0, tzinfo=EAST),
+            forecast_loader=lambda *a: _forecast("Good"),
+            email_sender=lambda *a: False,
+            push_sender=boom_push,
+        )
+        assert s["sent"] == 0
+
+    def test_uses_default_email_and_push_senders(self, monkeypatch):
+        """When no senders injected, imports from services.email/push."""
+        self._setup(monkeypatch)
+        monkeypatch.setattr(notif, "iter_notification_candidates", lambda: [])
+        import services.email as email_mod
+        import services.push as push_mod
+        captured = {}
+        monkeypatch.setattr(email_mod, "send_email", lambda *a: captured.setdefault("email", True))
+        monkeypatch.setattr(push_mod, "send_push", lambda *a: False)
+        # No injected senders → should import defaults without error
+        s = notif.run_notification_check(datetime(2026, 6, 9, 5, 0, tzinfo=EAST))
+        assert s["candidates"] == 0

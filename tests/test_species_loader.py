@@ -227,3 +227,38 @@ class TestLoadSpeciesDbErrors:
         p = _write_json(tmp_path, [_minimal_entry(regions="northeast")])
         with pytest.raises(ValueError, match="regions"):
             load_species_db(path=p)
+
+    def test_entry_not_a_dict_raises(self, tmp_path):
+        """Line 44: a non-dict entry in the array raises ValueError."""
+        p = _write_json(tmp_path, ["not a dict"])
+        with pytest.raises(ValueError, match=r"Entry #0 is not a JSON object"):
+            load_species_db(path=p)
+
+    def test_empty_name_raises(self, tmp_path):
+        """Line 55: an entry whose 'name' is an empty string raises ValueError."""
+        entry = _minimal_entry(name="")
+        p = _write_json(tmp_path, [entry])
+        with pytest.raises(ValueError, match="'name' must be a non-empty string"):
+            load_species_db(path=p)
+
+    def test_non_string_name_raises(self, tmp_path):
+        """Line 55: an entry whose 'name' is not a string raises ValueError."""
+        entry = _minimal_entry()
+        entry["name"] = 42
+        p = _write_json(tmp_path, [entry])
+        with pytest.raises(ValueError, match="'name' must be a non-empty string"):
+            load_species_db(path=p)
+
+    def test_categories_not_list_raises(self, tmp_path):
+        """Line 102: 'categories' that is not a list of strings raises ValueError."""
+        entry = _minimal_entry(categories="bottom-fish")
+        p = _write_json(tmp_path, [entry])
+        with pytest.raises(ValueError, match="categories"):
+            load_species_db(path=p)
+
+    def test_categories_with_non_string_item_raises(self, tmp_path):
+        """Line 102: 'categories' containing a non-string item raises ValueError."""
+        entry = _minimal_entry(categories=[1, 2])
+        p = _write_json(tmp_path, [entry])
+        with pytest.raises(ValueError, match="categories"):
+            load_species_db(path=p)

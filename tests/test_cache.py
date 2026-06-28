@@ -6,14 +6,21 @@ from datetime import datetime, timedelta, timezone
 import pytest
 from zoneinfo import ZoneInfo
 
+import storage.cache
 from storage.cache import (
     CACHE_MAX_AGE_HOURS,
     _cache_path,
     _forecast_age_minutes,
     _human_age,
+    _is_stale,
+    _load_json_fallback,
+    _save_json,
     load_cached_forecast,
+    prune_old_forecasts,
     save_forecast,
 )
+from storage.sqlite import save_forecast_cache as sqlite_save_forecast_cache
+from storage.sqlite import save_forecast_to_db
 
 
 def _fresh_ts() -> str:
@@ -109,6 +116,27 @@ class TestSaveAndLoad:
         save_forecast({"generated_at": old.isoformat()}, "stale-loc", user_id=9)
         assert load_cached_forecast("stale-loc", user_id=9) is None
 
+    def test_pre_midnight_data_is_stale(self):
+        """Data from before today's UTC midnight is stale even if < 4 hours old."""
+        today_midnight = datetime.now(timezone.utc).replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
+        # One second before midnight: still yesterday's date in UTC.
+        ts = (today_midnight - timedelta(seconds=1)).isoformat()
+        save_forecast({"generated_at": ts}, "premidnight-loc", user_id=8)
+        assert load_cached_forecast("premidnight-loc", user_id=8) is None
+
+    def test_pre_midnight_data_returned_with_include_stale(self):
+        """include_stale=True should still surface pre-midnight data."""
+        today_midnight = datetime.now(timezone.utc).replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
+        ts = (today_midnight - timedelta(seconds=1)).isoformat()
+        data = {"generated_at": ts, "verdict": "yesterday"}
+        save_forecast(data, "premidnight-include", user_id=8)
+        loaded = load_cached_forecast("premidnight-include", user_id=8, include_stale=True)
+        assert loaded == data
+
     def test_stale_cache_can_be_loaded_for_async_refresh(self):
         old = datetime.now(ZoneInfo("America/New_York")) - timedelta(
             hours=CACHE_MAX_AGE_HOURS + 2
@@ -137,6 +165,34 @@ class TestForecastAge:
         assert _forecast_age_minutes({"generated_at": "not-a-date"}) is None
 
 
+class TestIsStale:
+    def test_missing_generated_at_not_stale(self):
+        assert _is_stale({}) is False
+
+    def test_naive_datetime_treated_as_utc(self):
+        # A naive timestamp from today (no tzinfo) should NOT be stale.
+        ts = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
+        assert _is_stale({"generated_at": ts}) is False
+
+    def test_unparseable_date_not_stale(self):
+        assert _is_stale({"generated_at": "not-a-date"}) is False
+
+    def test_fresh_today_not_stale(self):
+        ts = (datetime.now(timezone.utc) - timedelta(minutes=10)).isoformat()
+        assert _is_stale({"generated_at": ts}) is False
+
+    def test_over_4h_stale(self):
+        ts = (datetime.now(timezone.utc) - timedelta(hours=CACHE_MAX_AGE_HOURS + 1)).isoformat()
+        assert _is_stale({"generated_at": ts}) is True
+
+    def test_yesterday_stale_regardless_of_age(self):
+        today_midnight = datetime.now(timezone.utc).replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
+        ts = (today_midnight - timedelta(seconds=1)).isoformat()
+        assert _is_stale({"generated_at": ts}) is True
+
+
 class TestHumanAge:
     def test_none_returns_empty(self):
         assert _human_age(None) == ""
@@ -158,3 +214,202 @@ class TestHumanAge:
 
     def test_multiple_days(self):
         assert _human_age(4320) == "3 days ago"
+
+
+# ---------------------------------------------------------------------------
+# Lines 74-75: _is_stale exception handler in midnight-staleness check
+# ---------------------------------------------------------------------------
+
+
+class TestIsStaleExceptionPath:
+    def test_age_ok_but_unparseable_generated_at_returns_false(self, monkeypatch):
+        """Lines 74-75: if _forecast_age_minutes returns a non-None age but
+        the subsequent fromisoformat() in the midnight check raises, return False."""
+        monkeypatch.setattr("storage.cache._forecast_age_minutes", lambda f: 5.0)
+        assert _is_stale({"generated_at": "not-a-date"}) is False
+
+
+# ---------------------------------------------------------------------------
+# Lines 112-113: stale SQLite hit with include_stale=True
+# ---------------------------------------------------------------------------
+
+
+class TestStaleSQLiteHitIncludeStale:
+    def test_stale_sqlite_result_returned_when_include_stale(self):
+        """Lines 112-113: stale row in forecast_cache + include_stale=True should be
+        stored in _MEM_CACHE and returned (bypassing the delete+return-None path)."""
+        old_ts = "2020-01-01T00:00:00+00:00"
+        data = {"generated_at": old_ts, "tag": "stale-sqlite"}
+        # Write directly to SQLite so _MEM_CACHE is NOT populated
+        sqlite_save_forecast_cache(7, "stale-sqlite-loc", data)
+        storage.cache._MEM_CACHE.pop(("stale-sqlite-loc", 7), None)
+
+        result = load_cached_forecast("stale-sqlite-loc", user_id=7, include_stale=True)
+        assert result is not None
+        assert result["tag"] == "stale-sqlite"
+        # Must now be in _MEM_CACHE
+        assert ("stale-sqlite-loc", 7) in storage.cache._MEM_CACHE
+
+
+# ---------------------------------------------------------------------------
+# Lines 117-118: fresh SQLite hit populates _MEM_CACHE
+# ---------------------------------------------------------------------------
+
+
+class TestFreshSQLiteHitPopulatesMemCache:
+    def test_fresh_sqlite_result_added_to_mem_cache(self):
+        """Lines 117-118: a non-stale SQLite result should be written into _MEM_CACHE."""
+        ts = _fresh_ts()
+        data = {"generated_at": ts, "tag": "fresh-sqlite"}
+        save_forecast(data, "fresh-sqlite-loc", user_id=11)
+        # Evict from _MEM_CACHE so the SQLite path is exercised
+        storage.cache._MEM_CACHE.pop(("fresh-sqlite-loc", 11), None)
+
+        result = load_cached_forecast("fresh-sqlite-loc", user_id=11)
+        assert result is not None
+        assert result["tag"] == "fresh-sqlite"
+        assert ("fresh-sqlite-loc", 11) in storage.cache._MEM_CACHE
+
+
+# ---------------------------------------------------------------------------
+# Lines 123-125: historical `forecasts` table fallback
+# ---------------------------------------------------------------------------
+
+
+class TestHistoricalForecastsFallback:
+    def test_forecasts_table_fallback_when_cache_empty(self):
+        """Lines 123-125: when forecast_cache has no entry, load_forecast() (historical
+        table) is tried and its result is cached in _MEM_CACHE and returned."""
+        ts = _fresh_ts()
+        data = {"generated_at": ts, "tag": "historical-table"}
+        # Write only to the historical `forecasts` table, not `forecast_cache`
+        save_forecast_to_db("hist-fallback-loc", data)
+        storage.cache._MEM_CACHE.clear()
+
+        result = load_cached_forecast("hist-fallback-loc")
+        assert result is not None
+        assert result["tag"] == "historical-table"
+
+
+# ---------------------------------------------------------------------------
+# Line 131: stale JSON fallback returns None (include_stale=False)
+# ---------------------------------------------------------------------------
+
+
+class TestStaleJsonFallbackReturnsNone:
+    def test_stale_json_file_returns_none(self, isolated_storage):
+        """Line 131: a stale JSON fallback file with include_stale=False returns None."""
+        old_ts = "2020-01-01T00:00:00+00:00"
+        data = {"generated_at": old_ts, "tag": "stale-json"}
+        path = isolated_storage / "forecast_stale-json-loc.json"
+        path.write_text(json.dumps(data))
+        storage.cache._MEM_CACHE.clear()
+
+        result = load_cached_forecast("stale-json-loc")
+        assert result is None
+
+
+# ---------------------------------------------------------------------------
+# Lines 142-143: prune_old_forecasts removes rows and clears _MEM_CACHE
+# Lines 145-147: prune_old_forecasts exception is swallowed
+# ---------------------------------------------------------------------------
+
+
+class TestPruneOldForecasts:
+    def test_prune_removes_rows_and_clears_mem_cache(self):
+        """Lines 142-143: removing stale rows logs and clears _MEM_CACHE."""
+        old_ts = "2020-01-01T00:00:00"
+        sqlite_save_forecast_cache(0, "prune-old-loc", {"generated_at": old_ts, "x": 1})
+        storage.cache._MEM_CACHE[("prune-old-loc", 0)] = {"tag": "should-be-evicted"}
+
+        removed = prune_old_forecasts(max_age_days=7)
+
+        assert removed >= 1
+        assert storage.cache._MEM_CACHE == {}
+
+    def test_prune_exception_returns_zero(self, monkeypatch):
+        """Lines 145-147: if prune_forecast_cache raises, prune_old_forecasts returns 0."""
+
+        def _boom(*_a, **_kw):
+            raise RuntimeError("db error")
+
+        monkeypatch.setattr("storage.cache.prune_forecast_cache", _boom)
+        assert prune_old_forecasts() == 0
+
+
+# ---------------------------------------------------------------------------
+# Line 153: _mem_cache_set evicts oldest entry when cache is full
+# ---------------------------------------------------------------------------
+
+
+class TestMemCacheSetEviction:
+    def test_evicts_oldest_when_full(self, monkeypatch):
+        """Line 153: when _MEM_CACHE is at capacity, the oldest entry is popped."""
+        monkeypatch.setattr("storage.cache._MEM_CACHE_MAX", 1)
+        storage.cache._MEM_CACHE.clear()
+
+        ts = _fresh_ts()
+        save_forecast({"generated_at": ts, "tag": "first"}, "evict-loc-a")
+        save_forecast({"generated_at": ts, "tag": "second"}, "evict-loc-b")
+
+        # Only one entry may remain
+        assert len(storage.cache._MEM_CACHE) == 1
+
+
+# ---------------------------------------------------------------------------
+# Lines 203-204: _load_json_fallback with corrupt JSON file
+# ---------------------------------------------------------------------------
+
+
+class TestLoadJsonFallbackCorrupt:
+    def test_corrupt_json_file_returns_none(self, isolated_storage):
+        """Lines 203-204: a corrupt JSON file in the fallback path returns None."""
+        path = isolated_storage / "forecast_corrupt-loc.json"
+        path.write_text("{not: valid json!!!")
+        storage.cache._MEM_CACHE.clear()
+
+        result = load_cached_forecast("corrupt-loc")
+        assert result is None
+
+
+# ---------------------------------------------------------------------------
+# Lines 214-215: _save_json write error is swallowed
+# ---------------------------------------------------------------------------
+
+
+class TestSaveJsonWriteError:
+    def test_write_error_is_logged_not_raised(self, monkeypatch):
+        """Lines 214-215: if the JSON file can't be written, the exception is caught."""
+        monkeypatch.setattr(
+            "storage.cache._cache_path",
+            lambda loc="": "/nonexistent-parent-dir-xyz/forecast.json",
+        )
+        # Must not raise
+        _save_json({"generated_at": _fresh_ts()})
+
+
+# ---------------------------------------------------------------------------
+# Lines 225-226: _migrate_json_to_db failure is swallowed
+# ---------------------------------------------------------------------------
+
+
+class TestMigrateJsonToDbFailure:
+    def test_migration_failure_is_swallowed_and_data_still_returned(
+        self, isolated_storage, monkeypatch
+    ):
+        """Lines 225-226: save_forecast_cache failure during JSON-to-DB migration is
+        caught; the function returns the JSON data regardless."""
+        ts = _fresh_ts()
+        data = {"generated_at": ts, "tag": "migrate-fail"}
+        path = isolated_storage / "forecast_mig-fail-loc.json"
+        path.write_text(json.dumps(data))
+        storage.cache._MEM_CACHE.clear()
+
+        def _boom(*_a, **_kw):
+            raise RuntimeError("db down")
+
+        monkeypatch.setattr("storage.cache.save_forecast_cache", _boom)
+
+        result = load_cached_forecast("mig-fail-loc")
+        assert result is not None
+        assert result["tag"] == "migrate-fail"

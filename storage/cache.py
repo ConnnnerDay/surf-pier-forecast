@@ -60,7 +60,19 @@ CACHE_FILE = os.path.join(CACHE_DIR, "forecast.json")
 
 def _is_stale(forecast: dict[str, Any]) -> bool:
     age = _forecast_age_minutes(forecast)
-    return bool(age is not None and age > CACHE_MAX_AGE_HOURS * 60)
+    if age is None:
+        return False
+    if age > CACHE_MAX_AGE_HOURS * 60:
+        return True
+    # Stale if generated before today's UTC midnight — yesterday's data is
+    # always useless regardless of how many hours have elapsed.
+    try:
+        generated = datetime.fromisoformat(forecast["generated_at"])
+        if generated.tzinfo is None:
+            generated = generated.replace(tzinfo=timezone.utc)
+        return generated.astimezone(timezone.utc).date() < datetime.now(timezone.utc).date()
+    except Exception:
+        return False
 
 
 def load_cached_forecast(
