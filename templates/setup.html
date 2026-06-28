@@ -121,10 +121,31 @@
         </section>
         {% endif %}
 
+        {% if exact_location %}
+        <section class="setup-section">
+            <h2>Your Exact Spot</h2>
+            <p class="section-sub">A forecast built for these coordinates — tides, surf, and water temp from the nearest stations</p>
+            <div class="location-results">
+                <div class="location-card-row" data-location-name="{{ exact_location.name|lower }}" data-location-state="{{ exact_location.state|lower }}">
+                    <form method="post" action="{{ url_for('views.setup_select', location_id=exact_location.id) }}" class="location-card-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <button type="submit" class="location-card{% if current_location and exact_location.id == current_location.id %} location-card--active{% endif %}">
+                            <div class="location-card-body">
+                                <h3>{{ exact_location.name }}</h3>
+                                <span class="location-state">{{ exact_location.state }}</span>
+                            </div>
+                            <span class="location-distance">Exact</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </section>
+        {% endif %}
+
         {% if results %}
         <section class="setup-section">
             <h2>Nearby Locations</h2>
-            <p class="section-sub">Select a location to get your fishing forecast</p>
+            <p class="section-sub">Or pick a named spot near you</p>
             <div class="location-results">
                 {% for loc in results %}
                     {{ loc_macros.location_result_card(loc, current_location, favorite_ids=favorite_ids, show_star=false, logged_in=g.user) }}

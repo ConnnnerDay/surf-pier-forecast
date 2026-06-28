@@ -195,7 +195,16 @@ def get_marine_conditions(
     Returns (wind_range, wave_range, wind_dir).  Guaranteed to never return
     None for any field -- seasonal averages fill any remaining gaps.
     """
-    nws_zone = (location or {}).get("nws_zone", NWS_MARINE_ZONE)
+    # When a location supplies no marine zone (e.g. a dynamic point far from any
+    # curated spot), fall back to the default zone only if *no* location was
+    # given at all.  A location with an explicit empty zone must NOT fall through
+    # to the NC default — that would report North Carolina conditions for another
+    # coast.  Such locations rely on the nearest NDBC buoy and the point-accurate
+    # NWS gridpoint forecast instead.
+    if location is None:
+        nws_zone = NWS_MARINE_ZONE
+    else:
+        nws_zone = location.get("nws_zone") or ""
     ndbc_list = (location or {}).get("ndbc_stations", [s[0] for s in NDBC_STATIONS])
     coops_id = (location or {}).get("coops_station", WATER_TEMP_STATION)
     loc_lat = (location or {}).get("lat", _LAT)
@@ -205,9 +214,9 @@ def get_marine_conditions(
     wave_range: Optional[tuple[float, float]] = None
     wind_dir: Optional[str] = None
 
-    sources: list[tuple[str, Any]] = [
-        ("NWS zone forecast", lambda: _try_nws_forecast(nws_zone)),
-    ]
+    sources: list[tuple[str, Any]] = []
+    if nws_zone:
+        sources.append(("NWS zone forecast", lambda: _try_nws_forecast(nws_zone)))
     for sid in ndbc_list:
         sources.append((f"NDBC {sid}", lambda s=sid: _try_ndbc_station(s)))
     sources.append(("NOAA CO-OPS wind", lambda: _try_coops_wind(coops_id)))

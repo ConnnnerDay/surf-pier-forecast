@@ -27,6 +27,7 @@ from flask import (
 
 from locations import (
     all_locations_sorted,
+    dynamic_location_for_point,
     find_nearby_live_cams,
     find_nearest_locations,
     geocode_zip,
@@ -334,6 +335,7 @@ def _setup_context(**kwargs: Any) -> dict[str, Any]:
 
     context: dict[str, Any] = {
         "results": None,
+        "exact_location": None,
         "all_locations": all_locations_sorted(),
         "current_location": current_loc,
         "error": None,
@@ -621,17 +623,20 @@ def setup_search() -> str:
 
     lat, lng = coords
     nearby = find_nearest_locations(lat, lng, n=6)
-    if not nearby:
+    exact = dynamic_location_for_point(lat, lng)
+    if not nearby and not exact:
         return render_template(
             "setup.html",
             **_setup_context(
-                error="No supported fishing locations found within 300 miles. Try a coastal zip code.",
+                error="That looks like an inland spot — no coastal waters nearby. "
+                "Try a zip code closer to the coast.",
                 zipcode=zipcode,
             ),
         )
 
     return render_template(
-        "setup.html", **_setup_context(results=nearby, zipcode=zipcode)
+        "setup.html",
+        **_setup_context(results=nearby, exact_location=exact, zipcode=zipcode),
     )
 
 
@@ -667,15 +672,19 @@ def setup_coords() -> Any:
         )
 
     nearby = find_nearest_locations(lat, lon, n=6)
-    if not nearby:
+    exact = dynamic_location_for_point(lat, lon)
+    if not nearby and not exact:
         return render_template(
             "setup.html",
             **_setup_context(
-                error="No supported fishing locations found within 300 miles of that point. Try a coastal area.",
+                error="That point has no coastal waters nearby. "
+                "Click closer to the coast.",
             ),
         )
 
-    return render_template("setup.html", **_setup_context(results=nearby))
+    return render_template(
+        "setup.html", **_setup_context(results=nearby, exact_location=exact)
+    )
 
 
 @bp.route("/setup/select/<location_id>", methods=["POST"])
