@@ -2136,8 +2136,14 @@ def timezone_for_point(state: str, lng: float) -> Optional[str]:
 
 
 def format_dynamic_id(lat: float, lng: float) -> str:
-    """Build the stateless location id that encodes a coastal point."""
-    return f"{_DYN_ID_PREFIX}{lat:.4f}_{lng:.4f}"
+    """Build the stateless location id that encodes a coastal point.
+
+    Coordinates are rounded to 3 decimals (~110 m).  That's far finer than the
+    forecast's own spatial resolution (the nearest station/marine zone is miles
+    away), while coarse enough that GPS jitter on repeated visits maps to the
+    same id — avoiding a fresh forecast fetch and cache entry per pinpoint.
+    """
+    return f"{_DYN_ID_PREFIX}{lat:.3f}_{lng:.3f}"
 
 
 def parse_dynamic_id(location_id: str) -> Optional[tuple[float, float]]:

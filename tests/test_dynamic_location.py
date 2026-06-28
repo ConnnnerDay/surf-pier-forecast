@@ -43,14 +43,21 @@ class TestIdEncoding:
         loc_id = L.format_dynamic_id(_WB_LAT, _WB_LNG)
         assert loc_id.startswith("pt_")
         lat, lng = L.parse_dynamic_id(loc_id)
-        assert lat == pytest.approx(_WB_LAT, abs=1e-4)
-        assert lng == pytest.approx(_WB_LNG, abs=1e-4)
+        # Encoded at 3-decimal (~110 m) precision.
+        assert lat == pytest.approx(_WB_LAT, abs=1e-3)
+        assert lng == pytest.approx(_WB_LNG, abs=1e-3)
+
+    def test_jitter_maps_to_same_id(self):
+        # Two pinpoints ~25 m apart must collapse to one id (one cache entry).
+        assert L.format_dynamic_id(34.2101, -77.7962) == L.format_dynamic_id(
+            34.2103, -77.7961
+        )
 
     def test_negative_longitude_preserved(self):
         # Longitude minus sign must survive the underscore split.
-        lat, lng = L.parse_dynamic_id("pt_47.6062_-122.3321")
-        assert lat == pytest.approx(47.6062)
-        assert lng == pytest.approx(-122.3321)
+        lat, lng = L.parse_dynamic_id("pt_47.606_-122.332")
+        assert lat == pytest.approx(47.606)
+        assert lng == pytest.approx(-122.332)
 
     def test_rejects_curated_and_garbage_ids(self):
         assert L.parse_dynamic_id("wrightsville_beach") is None
