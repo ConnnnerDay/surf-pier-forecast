@@ -215,6 +215,21 @@ class TestSetupCoords:
         assert b"Coord Loc" in resp.data
 
 
+class TestSharedForecast:
+    def test_inland_dynamic_id_returns_404(self, client, monkeypatch):
+        # An arbitrary/inland pt_ id must not trigger forecast generation on the
+        # public /f/ route — the coastal gate rejects it.
+        monkeypatch.setattr(
+            "web.views.dynamic_location_for_point", lambda lat, lng: None
+        )
+        resp = client.get("/f/pt_39.000_-98.000")
+        assert resp.status_code == 404
+
+    def test_unknown_id_returns_404(self, client):
+        resp = client.get("/f/not-a-real-location")
+        assert resp.status_code == 404
+
+
 class TestSetupSelect:
     def test_unknown_location_redirects_to_setup(self, client):
         token = _set_csrf(client)

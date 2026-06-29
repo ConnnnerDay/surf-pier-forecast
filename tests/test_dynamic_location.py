@@ -268,6 +268,38 @@ class TestDynamicLocationEndToEnd:
         assert isinstance(out["species"], list) and out["species"]
 
 
+class TestCatalogCaching:
+    def test_failed_fetch_cached_briefly(self, monkeypatch):
+        # A failing fetch must be cached (empty) so an outage doesn't re-hammer
+        # the endpoint on every dynamic-location lookup.
+        stations._CACHES.clear()
+        calls = {"n": 0}
+
+        def boom():
+            calls["n"] += 1
+            return []
+
+        monkeypatch.setattr(stations, "_fetch_ndbc_stations", boom)
+        assert stations._load_ndbc() == []
+        assert stations._load_ndbc() == []  # served from the negative cache
+        assert calls["n"] == 1
+        stations._CACHES.clear()
+
+    def test_successful_fetch_cached(self, monkeypatch):
+        stations._CACHES.clear()
+        calls = {"n": 0}
+
+        def ok():
+            calls["n"] += 1
+            return [{"id": "X", "lat": 0.0, "lng": 0.0, "has_met": True}]
+
+        monkeypatch.setattr(stations, "_fetch_ndbc_stations", ok)
+        stations._load_ndbc()
+        stations._load_ndbc()
+        assert calls["n"] == 1
+        stations._CACHES.clear()
+
+
 class TestWindOrientation:
     def test_region_to_orientation(self):
         assert _wind_orientation({"conditions_region": "atlantic_mid"}) == "east"

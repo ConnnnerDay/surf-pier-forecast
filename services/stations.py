@@ -23,7 +23,7 @@ import math
 import threading
 import time
 import xml.etree.ElementTree as ET
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 from services.http_client import get as http_get
 
@@ -32,6 +32,11 @@ logger = logging.getLogger(__name__)
 # Catalogs are static metadata; a day-long TTL keeps a long-running process
 # fresh without re-downloading on every dynamic-location resolution.
 _CATALOG_TTL_S = 24 * 3600
+# A failed fetch is cached only briefly so that, during an upstream outage,
+# every dynamic-location resolution doesn't re-hammer the (down) endpoint and
+# block each request on the timeout — while still recovering within a minute or
+# two once the API is healthy again.
+_NEG_CATALOG_TTL_S = 120
 _TIMEOUT: tuple[float, float] = (3.05, 20)
 
 _COOPS_MDAPI = "https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations.json"
@@ -45,10 +50,29 @@ _HEADERS = {
 }
 
 _lock = threading.Lock()
-# Each cache entry is (fetched_at_epoch, list_of_station_dicts).
-_coops_cache: Optional[tuple[float, list[dict[str, Any]]]] = None
-_coops_temp_cache: Optional[tuple[float, list[dict[str, Any]]]] = None
-_ndbc_cache: Optional[tuple[float, list[dict[str, Any]]]] = None
+# Each cache entry is (fetched_at_epoch, list_of_station_dicts); a non-empty
+# list uses the long TTL, an empty list (failed fetch) the short negative TTL.
+_CACHES: dict[str, tuple[float, list[dict[str, Any]]]] = {}
+
+
+def _load_catalog(key: str, fetch: Callable[[], list[dict[str, Any]]]) -> list[dict[str, Any]]:
+    """Return a cached catalog, fetching on miss; caches successes and failures.
+
+    Successful (non-empty) results live for ``_CATALOG_TTL_S``; empty results
+    (a failed fetch) live only for ``_NEG_CATALOG_TTL_S`` so an outage doesn't
+    turn every dynamic-location lookup into a fresh blocking network call.
+    """
+    with _lock:
+        entry = _CACHES.get(key)
+        if entry is not None:
+            ts, data = entry
+            ttl = _CATALOG_TTL_S if data else _NEG_CATALOG_TTL_S
+            if time.time() - ts < ttl:
+                return data
+    data = fetch()
+    with _lock:
+        _CACHES[key] = (time.time(), data)
+    return data
 
 
 def _haversine_miles(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
@@ -142,51 +166,28 @@ def _fetch_ndbc_stations() -> list[dict[str, Any]]:
 
 
 def _load_coops() -> list[dict[str, Any]]:
-    """Return the cached CO-OPS tide-prediction catalog, refreshing past TTL."""
-    global _coops_cache
-    with _lock:
-        if _coops_cache is not None and time.time() - _coops_cache[0] < _CATALOG_TTL_S:
-            return _coops_cache[1]
-    stations = _fetch_coops_stations(
-        _COOPS_TIDE_URL, "stations.coops_catalog", "tide"
+    """Return the cached CO-OPS tide-prediction catalog."""
+    return _load_catalog(
+        "coops_tide",
+        lambda: _fetch_coops_stations(
+            _COOPS_TIDE_URL, "stations.coops_catalog", "tide"
+        ),
     )
-    # Only cache a non-empty result so a transient outage doesn't pin an empty
-    # catalog for the whole TTL window.
-    if stations:
-        with _lock:
-            _coops_cache = (time.time(), stations)
-    return stations
 
 
 def _load_coops_temp() -> list[dict[str, Any]]:
-    """Return the cached CO-OPS water-temperature catalog, refreshing past TTL."""
-    global _coops_temp_cache
-    with _lock:
-        if (
-            _coops_temp_cache is not None
-            and time.time() - _coops_temp_cache[0] < _CATALOG_TTL_S
-        ):
-            return _coops_temp_cache[1]
-    stations = _fetch_coops_stations(
-        _COOPS_TEMP_URL, "stations.coops_temp_catalog", "water-temp"
+    """Return the cached CO-OPS water-temperature catalog."""
+    return _load_catalog(
+        "coops_temp",
+        lambda: _fetch_coops_stations(
+            _COOPS_TEMP_URL, "stations.coops_temp_catalog", "water-temp"
+        ),
     )
-    if stations:
-        with _lock:
-            _coops_temp_cache = (time.time(), stations)
-    return stations
 
 
 def _load_ndbc() -> list[dict[str, Any]]:
-    """Return the cached NDBC catalog, refreshing it past the TTL."""
-    global _ndbc_cache
-    with _lock:
-        if _ndbc_cache is not None and time.time() - _ndbc_cache[0] < _CATALOG_TTL_S:
-            return _ndbc_cache[1]
-    stations = _fetch_ndbc_stations()
-    if stations:
-        with _lock:
-            _ndbc_cache = (time.time(), stations)
-    return stations
+    """Return the cached NDBC catalog."""
+    return _load_catalog("ndbc", _fetch_ndbc_stations)
 
 
 def _nearest(

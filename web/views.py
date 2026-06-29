@@ -32,6 +32,7 @@ from locations import (
     find_nearest_locations,
     geocode_zip,
     get_location,
+    parse_dynamic_id,
 )
 from domain.forecast import (
     generate_forecast,
@@ -769,7 +770,15 @@ def profile() -> Any:
 @bp.route("/f/<location_id>")
 def shared_forecast(location_id: str) -> Any:
     """View a forecast for a specific location via shareable link."""
-    location = get_location(location_id)
+    # This route is public and triggers forecast generation (≈30 upstream API
+    # calls) on a cache miss. For dynamic points, resolve through the coastal
+    # gate so an arbitrary/inland pt_ id can't drive unbounded generation; only
+    # genuine coastal points (which is all the setup flow ever produces) pass.
+    coords = parse_dynamic_id(location_id)
+    if coords is not None:
+        location = dynamic_location_for_point(*coords)
+    else:
+        location = get_location(location_id)
     if location is None:
         return render_template(
             "error.html",
