@@ -2666,6 +2666,49 @@ NATURAL_BAIT_DB: list[dict[str, Any]] = [
         "coast": "west",
         "note": "Beach spawning runs on full/new moon nights — check regulations",
     },
+    # Hawaii
+    {
+        "name": "Squid (ika)",
+        "months": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+        "coast": "hawaii",
+        "note": "All-purpose frozen bait for papio, goatfish, and reef species",
+    },
+    {
+        "name": "ʻOpae (shrimp)",
+        "months": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+        "coast": "hawaii",
+        "note": "Small shrimp on light tackle — deadly for papio and oio (bonefish)",
+    },
+    {
+        "name": "ʻOama (juvenile goatfish)",
+        "months": [6, 7, 8, 9, 10],
+        "coast": "hawaii",
+        "note": "Net in the summer shallows — premier live bait for papio (jacks)",
+    },
+    {
+        "name": "Halalu (juvenile akule)",
+        "months": [7, 8, 9, 10, 11],
+        "coast": "hawaii",
+        "note": "Summer/fall scad run; live-line or cut for ulua and papio",
+    },
+    {
+        "name": "Tako (octopus)",
+        "months": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+        "coast": "hawaii",
+        "note": "Tough cut bait that stays on the hook for ulua and large reef fish",
+    },
+    {
+        "name": "Aku belly (cut bait)",
+        "months": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+        "coast": "hawaii",
+        "note": "Oily strip bait prized for ulua slide-baiting off the rocks",
+    },
+    {
+        "name": "Limu (seaweed)",
+        "months": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+        "coast": "hawaii",
+        "note": "Targets herbivores like manini and nenue (rudderfish)",
+    },
 ]
 
 def build_natural_bait_chart(month: int, coast: str = "east") -> list[dict[str, str]]:

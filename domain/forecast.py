@@ -2971,7 +2971,8 @@ def generate_forecast(
     forecast["seasonality"] = _seasonality_highlights(forecast)
 
     # Natural bait availability (bait DB only has "east"/"west" entries)
-    bait_coast = "west" if coast == "west" else "east"
+    # Hawaii and the Pacific have their own bait sets; Gulf shares the east set.
+    bait_coast = coast if coast in ("west", "hawaii") else "east"
     forecast["natural_bait"] = build_natural_bait_chart(month, bait_coast)
 
     # Spawning report — species currently or nearly spawning based on
