@@ -11,6 +11,8 @@ from storage.sqlite import init_db
 import storage.sqlite as _sqlite
 import storage.cache as _cache
 import domain.forecast as _forecast
+import web.views as _views
+import services.stations as _stations
 
 
 @pytest.fixture(autouse=True)
@@ -37,6 +39,11 @@ def _clear_in_process_caches():
     _sqlite._HABITAT_OVERRIDES_TS = 0.0
     _sqlite._CUSTOM_HABITAT_TYPES_CACHE = None
     _sqlite._CUSTOM_HABITAT_TYPES_TS = 0.0
+    # IP-keyed rate-limit windows and the station-catalog cache are module-level
+    # singletons; reset so counts/catalogs from one test don't bleed into the next.
+    _views._setup_rate_limit_store.clear()
+    _views._gen_rate_limit_store.clear()
+    _stations._CACHES.clear()
     yield
     # Also clear after in case a test leaves behind entries that bleed forward.
     _sqlite._PREFS_CACHE.clear()

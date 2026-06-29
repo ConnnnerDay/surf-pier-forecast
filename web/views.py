@@ -80,6 +80,29 @@ def _setup_is_rate_limited() -> bool:
     return False
 
 
+# Cap how many *new* (cache-miss) dynamic-point forecasts a single anonymous IP
+# can generate. Each generation fans out ~30 upstream API calls, so this stops a
+# scripted client from minting endless coordinate ids to amplify load. Curated
+# locations (bounded set) and logged-in users are exempt; cache hits are never
+# limited.
+_GEN_RATE_LIMIT_MAX = 10
+_GEN_RATE_LIMIT_WINDOW_S = 10 * 60
+_gen_rate_limit_store: dict[str, tuple[float, int]] = {}
+_gen_rate_limit_lock = threading.Lock()
+
+
+def _generation_is_rate_limited() -> bool:
+    if _rl_is_rate_limited(
+        _gen_rate_limit_store, _gen_rate_limit_lock,
+        _GEN_RATE_LIMIT_MAX, _GEN_RATE_LIMIT_WINDOW_S,
+    ):
+        return True
+    _rl_record_attempt(
+        _gen_rate_limit_store, _gen_rate_limit_lock, _GEN_RATE_LIMIT_WINDOW_S
+    )
+    return False
+
+
 # -- Camera status cache -----------------------------------------------------
 _CAM_STATUS_TTL_SECONDS = 30 * 60
 _CAM_STATUS_CACHE_MAX = 500  # prevent unbounded growth with many unique URLs
@@ -418,6 +441,18 @@ def _render_forecast(
                 status_url=status_url,
                 dest_url=dest_url,
             )
+        # Throttle expensive cache-miss generation of dynamic points by
+        # anonymous clients so crafted coordinate ids can't amplify upstream load.
+        if (
+            location.get("dynamic")
+            and g.user is None
+            and _generation_is_rate_limited()
+        ):
+            logger.warning("cache.miss.rate_limited location_id=%s", loc_id)
+            return render_template(
+                "error.html",
+                message="Too many new-location requests. Please wait a few minutes.",
+            ), 429
         logger.info("cache.miss location_id=%s", loc_id)
         try:
             forecast = generate_forecast(location)

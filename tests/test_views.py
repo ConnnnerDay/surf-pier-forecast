@@ -229,6 +229,24 @@ class TestSharedForecast:
         resp = client.get("/f/not-a-real-location")
         assert resp.status_code == 404
 
+    def test_anonymous_dynamic_generation_rate_limited(self, client, monkeypatch):
+        # When the per-IP generation limit is hit, an anonymous cache-miss on a
+        # dynamic point returns 429 instead of generating another forecast.
+        monkeypatch.setattr(
+            "web.views.dynamic_location_for_point",
+            lambda lat, lng: {
+                "id": "pt_41.300_-72.900",
+                "dynamic": True,
+                "name": "Coastal spot",
+                "state": "CT",
+            },
+        )
+        monkeypatch.setattr("web.views.load_cached_forecast", lambda *a, **k: None)
+        monkeypatch.setattr("web.views._is_refreshing", lambda loc_id: False)
+        monkeypatch.setattr("web.views._generation_is_rate_limited", lambda: True)
+        resp = client.get("/f/pt_41.300_-72.900")
+        assert resp.status_code == 429
+
 
 class TestSetupSelect:
     def test_unknown_location_redirects_to_setup(self, client):
