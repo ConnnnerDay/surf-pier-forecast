@@ -233,6 +233,15 @@ class TestBuildNaturalBaitChart:
         chart = build_natural_bait_chart(month=6, coast="west")
         assert len(chart) > 0
 
+    def test_hawaii_has_its_own_baits_not_atlantic(self):
+        chart = build_natural_bait_chart(month=7, coast="hawaii")
+        names = {e["name"] for e in chart}
+        assert chart  # Hawaii anglers get a real bait list
+        # Hawaiian baits present; Atlantic-only baits absent.
+        assert any("ʻOama" in n or "Tako" in n or "Halalu" in n for n in names)
+        assert "Bloodworms" not in names
+        assert "Sand fleas (mole crabs)" not in names
+
 
 class TestBuildBaitRanking:
     def test_no_duplicate_bait_labels_by_canonical_name(self):

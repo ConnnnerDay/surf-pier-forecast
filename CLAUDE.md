@@ -33,7 +33,7 @@ This is a self-hosted Flask fishing forecast app. It fetches live marine data fr
 ### Data flow
 
 1. Request hits `/` (dashboard) or `/f/<location_id>` (shareable link)
-2. `web/views.py` resolves location from session → default → setup wizard redirect
+2. `web/views.py` resolves location from session → default → setup wizard redirect. A `location_id` is either a curated id or a stateless dynamic point `pt_<lat>_<lng>`; `locations.py:get_location()` resolves both. Dynamic points are built by `locations.py:build_dynamic_location()`, which pulls the nearest real NOAA/NDBC stations from `services/stations.py` (cached catalogs, graceful fallback to the nearest curated spot's stations) and inherits coarse regional fields (temp/species region, marine zone) from the nearest curated location.
 3. `domain/forecast.py:generate_forecast()` checks the SQLite cache (4-hour TTL); on miss, fires concurrent fetches via `ThreadPoolExecutor` (30 workers) against:
    - NWS (marine zone text, grid data, alerts)
    - NOAA CO-OPS (water temp, tides/currents)
@@ -55,7 +55,9 @@ This is a self-hosted Flask fishing forecast app. It fetches live marine data fr
 | `storage/sqlite.py` | Full DB schema + all CRUD (users, profiles, forecasts, catch log w/ condition snapshot, push_subscriptions, notification_log, WebAuthn) |
 | `web/api.py` | JSON API v1 blueprint (forecast, profile, log + `/log/patterns`, `/push/*`) |
 | `web/auth.py` | Login, register, email verification, passkeys (WebAuthn), Google/Apple OAuth |
-| `services/` | One file per external API (nws, noaa, ndbc, astro, etc.) |
+| `locations.py` | Curated coastal locations + dynamic any-point resolution (`get_location`, `build_dynamic_location`, `timezone_for_point`, geocoding, nearest-spot search) |
+| `services/stations.py` | Nearest NOAA CO-OPS (tide + water-temp) and NDBC station resolution from cached public catalogs; powers dynamic locations |
+| `services/` | One file per external API (nws, noaa, ndbc, astro, stations, etc.) |
 
 ### Blueprints
 

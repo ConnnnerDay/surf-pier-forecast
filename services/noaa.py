@@ -248,7 +248,14 @@ def get_water_temp(
     Tries the live NOAA reading first.  Falls back to the historical
     monthly average when the API is unreachable.
     """
-    station_id = (location or {}).get("coops_station", WATER_TEMP_STATION)
+    # Prefer a dedicated water-temp station (dynamic locations resolve the
+    # nearest sensor-equipped station separately); fall back to the tide station.
+    loc = location or {}
+    station_id = (
+        loc.get("water_temp_station")
+        or loc.get("coops_station")
+        or WATER_TEMP_STATION
+    )
     live = fetch_water_temperature(station_id)
     if live is not None:
         if sources_used is not None:

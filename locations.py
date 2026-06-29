@@ -2077,9 +2077,215 @@ del _loc, _st
 
 _LOCATION_MAP: dict[str, dict[str, Any]] = {loc["id"]: loc for loc in COASTAL_LOCATIONS}
 
+# ---------------------------------------------------------------------------
+# Dynamic (any-coordinate) locations
+# ---------------------------------------------------------------------------
+# A dynamic location lets the app produce a forecast for an arbitrary US
+# coastal point instead of only the curated spots above.  The point is encoded
+# directly in the location id (``pt_<lat>_<lng>``) so it is stateless: every
+# existing flow that resolves a location through ``get_location`` — dashboard,
+# API, background refresh, notifications, shareable ``/f/<id>`` links — works
+# with no extra storage.  Station IDs (tides/buoys) resolve to the genuine
+# nearest NOAA/NDBC station; the coarse regional fields (water-temp profile,
+# species region, marine zone, timezone) are inherited from the nearest curated
+# location, which is accurate because those regions span hundreds of miles.
+
+_DYN_ID_PREFIX = "pt_"
+# A point only earns a dynamic forecast if it is within this distance of a real
+# coastal anchor (a CO-OPS/NDBC station, or failing that a curated location).
+# Keeps inland zip codes from silently getting nonsensical "nearest" ocean data.
+_DYN_GATE_MILES = 60.0
+# A curated marine zone is only borrowed when the curated spot is genuinely
+# nearby; otherwise the dynamic location runs zone-less and relies on the
+# point-accurate NWS gridpoint forecast and the nearest NDBC buoy.
+_NWS_ZONE_INHERIT_MILES = 75.0
+
+
+# IANA timezone by coastal state.  Every US coastal state is single-timezone
+# except Florida, whose panhandle (west of the Apalachicola River, ~85°W) is
+# Central while the rest is Eastern — resolved by longitude in
+# :func:`timezone_for_point`.
+_STATE_TIMEZONE: dict[str, str] = {
+    "ME": "America/New_York", "NH": "America/New_York", "MA": "America/New_York",
+    "RI": "America/New_York", "CT": "America/New_York", "NY": "America/New_York",
+    "NJ": "America/New_York", "DE": "America/New_York", "MD": "America/New_York",
+    "VA": "America/New_York", "NC": "America/New_York", "SC": "America/New_York",
+    "GA": "America/New_York",
+    "AL": "America/Chicago", "MS": "America/Chicago", "LA": "America/Chicago",
+    "TX": "America/Chicago",
+    "CA": "America/Los_Angeles", "OR": "America/Los_Angeles",
+    "WA": "America/Los_Angeles",
+    "AK": "America/Anchorage",
+    "HI": "Pacific/Honolulu",
+}
+_FL_TZ_BOUNDARY_LNG = -85.0
+
+
+def timezone_for_point(state: str, lng: float) -> Optional[str]:
+    """Best-effort IANA timezone for a US coastal point from its state.
+
+    Returns ``None`` when the state is unknown so the caller can fall back to
+    another source (e.g. the nearest curated location's timezone).
+    """
+    state = (state or "").upper()
+    if state == "FL":
+        return (
+            "America/Chicago" if lng < _FL_TZ_BOUNDARY_LNG else "America/New_York"
+        )
+    return _STATE_TIMEZONE.get(state)
+
+
+def format_dynamic_id(lat: float, lng: float) -> str:
+    """Build the stateless location id that encodes a coastal point.
+
+    Coordinates are rounded to 3 decimals (~110 m).  That's far finer than the
+    forecast's own spatial resolution (the nearest station/marine zone is miles
+    away), while coarse enough that GPS jitter on repeated visits maps to the
+    same id — avoiding a fresh forecast fetch and cache entry per pinpoint.
+    """
+    return f"{_DYN_ID_PREFIX}{lat:.3f}_{lng:.3f}"
+
+
+def parse_dynamic_id(location_id: str) -> Optional[tuple[float, float]]:
+    """Decode ``(lat, lng)`` from a dynamic id, or ``None`` if it isn't one."""
+    if not location_id or not location_id.startswith(_DYN_ID_PREFIX):
+        return None
+    body = location_id[len(_DYN_ID_PREFIX) :]
+    # Longitude is negative across the US, so split on the *last* underscore
+    # to keep the minus sign attached to the longitude.
+    parts = body.rsplit("_", 1)
+    if len(parts) != 2:
+        return None
+    try:
+        lat, lng = float(parts[0]), float(parts[1])
+    except ValueError:
+        return None
+    if not (-90.0 <= lat <= 90.0 and -180.0 <= lng <= 180.0):
+        return None
+    return lat, lng
+
+
+def _resolve_dynamic_location(
+    lat: float, lng: float
+) -> tuple[dict[str, Any], float]:
+    """Assemble a dynamic location dict and report its coastal-anchor distance.
+
+    Returns ``(location, anchor_miles)`` where ``anchor_miles`` is the distance
+    to the closest real coastal reference (nearest tide station, buoy, or
+    curated location) — used by callers to gate inland points.
+    """
+    # Import locally to avoid a module-load cycle (services.stations is light
+    # and only needed when a dynamic location is actually requested).
+    from services.stations import (
+        nearest_coops_station,
+        nearest_ndbc_stations,
+        nearest_watertemp_station,
+    )
+
+    nearby = find_nearest_locations(lat, lng, n=1, max_miles=1.0e9)
+    nearest = nearby[0] if nearby else None
+    nearest_miles = nearest["distance_miles"] if nearest else float("inf")
+
+    coops = nearest_coops_station(lat, lng)
+    ndbc = nearest_ndbc_stations(lat, lng, n=2)
+
+    coops_id = coops["id"] if coops else (nearest or {}).get("coops_station", "")
+    # Water temp often comes from a different (sensor-equipped) station than the
+    # nearest tide station; fall back to the tide station, then to the curated
+    # neighbour's station.
+    wt = nearest_watertemp_station(lat, lng)
+    water_temp_station = (
+        wt["id"] if wt else (coops_id or (nearest or {}).get("coops_station", ""))
+    )
+    ndbc_ids = (
+        [s["id"] for s in ndbc]
+        if ndbc
+        else list((nearest or {}).get("ndbc_stations", []))
+    )
+
+    # Prefer the real station's state (coastal, in-state) for regulations;
+    # fall back to the nearest curated location's state.
+    state = (coops or {}).get("state") or (nearest or {}).get("state", "")
+
+    # Coarse regional fields inherited from the nearest curated location.
+    conditions_region = (nearest or {}).get("conditions_region", "atlantic_mid")
+    temp_region = (nearest or {}).get("temp_region", "nc_south")
+    # Inherit the neighbour's water-temp offset so the temperature curve matches
+    # the curated spot whose temp_region we're borrowing.
+    temp_offset = (nearest or {}).get("temp_offset", 0)
+    fish_region = (nearest or {}).get("fish_region", "")
+    # Derive the timezone from the resolved coastal state (accurate even where
+    # the nearest curated spot sits in a different zone, e.g. the FL panhandle);
+    # fall back to the neighbour's timezone when the state is unknown.
+    timezone = timezone_for_point(state, lng) or (nearest or {}).get(
+        "timezone", "America/New_York"
+    )
+    nws_zone = ""
+    if nearest and nearest_miles <= _NWS_ZONE_INHERIT_MILES:
+        nws_zone = nearest.get("nws_zone", "")
+
+    if nearest and nearest_miles <= 25.0:
+        name = f"Near {nearest['name']}"
+    else:
+        name = f"Coastal spot ({lat:.2f}, {lng:.2f})"
+
+    anchor_candidates = [nearest_miles]
+    if coops:
+        anchor_candidates.append(coops["distance_miles"])
+    if ndbc:
+        anchor_candidates.append(ndbc[0]["distance_miles"])
+    anchor_miles = min(anchor_candidates)
+
+    location = {
+        "id": format_dynamic_id(lat, lng),
+        "name": name,
+        "state": state,
+        "lat": lat,
+        "lng": lng,
+        "timezone": timezone,
+        "coops_station": coops_id,
+        "water_temp_station": water_temp_station,
+        "ndbc_stations": ndbc_ids,
+        "nws_zone": nws_zone,
+        "conditions_region": conditions_region,
+        "temp_region": temp_region,
+        "temp_offset": temp_offset,
+        "fish_region": fish_region,
+        "dynamic": True,
+    }
+    return location, anchor_miles
+
+
+def build_dynamic_location(lat: float, lng: float) -> dict[str, Any]:
+    """Build a forecast-ready location dict for an arbitrary coastal point."""
+    return _resolve_dynamic_location(lat, lng)[0]
+
+
+def dynamic_location_for_point(lat: float, lng: float) -> Optional[dict[str, Any]]:
+    """Return a dynamic location for ``(lat, lng)`` only if it's coastal enough.
+
+    Used at setup time to decide whether to offer an exact-point forecast.
+    Returns ``None`` for inland points with no nearby coastal anchor.
+    """
+    location, anchor_miles = _resolve_dynamic_location(lat, lng)
+    if anchor_miles > _DYN_GATE_MILES:
+        return None
+    return location
+
+
 def get_location(location_id: str) -> Optional[dict[str, Any]]:
-    """Look up a location by its ID string."""
-    return _LOCATION_MAP.get(location_id)
+    """Look up a location by its ID string.
+
+    Resolves both curated locations and stateless dynamic points
+    (``pt_<lat>_<lng>`` ids produced by :func:`format_dynamic_id`).
+    """
+    curated = _LOCATION_MAP.get(location_id)
+    if curated is not None:
+        return curated
+    coords = parse_dynamic_id(location_id)
+    if coords is not None:
+        return build_dynamic_location(coords[0], coords[1])
+    return None
 
 def get_monthly_water_temps(location: dict[str, Any]) -> dict[int, float]:
     """Return the monthly average water temp dict for a location.

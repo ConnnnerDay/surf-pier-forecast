@@ -27,10 +27,12 @@ from flask import (
 
 from locations import (
     all_locations_sorted,
+    dynamic_location_for_point,
     find_nearby_live_cams,
     find_nearest_locations,
     geocode_zip,
     get_location,
+    parse_dynamic_id,
 )
 from domain.forecast import (
     generate_forecast,
@@ -75,6 +77,29 @@ def _setup_is_rate_limited() -> bool:
     ):
         return True
     _rl_record_attempt(_setup_rate_limit_store, _setup_rate_limit_lock, _SETUP_RATE_LIMIT_WINDOW_S)
+    return False
+
+
+# Cap how many *new* (cache-miss) dynamic-point forecasts a single anonymous IP
+# can generate. Each generation fans out ~30 upstream API calls, so this stops a
+# scripted client from minting endless coordinate ids to amplify load. Curated
+# locations (bounded set) and logged-in users are exempt; cache hits are never
+# limited.
+_GEN_RATE_LIMIT_MAX = 10
+_GEN_RATE_LIMIT_WINDOW_S = 10 * 60
+_gen_rate_limit_store: dict[str, tuple[float, int]] = {}
+_gen_rate_limit_lock = threading.Lock()
+
+
+def _generation_is_rate_limited() -> bool:
+    if _rl_is_rate_limited(
+        _gen_rate_limit_store, _gen_rate_limit_lock,
+        _GEN_RATE_LIMIT_MAX, _GEN_RATE_LIMIT_WINDOW_S,
+    ):
+        return True
+    _rl_record_attempt(
+        _gen_rate_limit_store, _gen_rate_limit_lock, _GEN_RATE_LIMIT_WINDOW_S
+    )
     return False
 
 
@@ -334,6 +359,7 @@ def _setup_context(**kwargs: Any) -> dict[str, Any]:
 
     context: dict[str, Any] = {
         "results": None,
+        "exact_location": None,
         "all_locations": all_locations_sorted(),
         "current_location": current_loc,
         "error": None,
@@ -415,6 +441,18 @@ def _render_forecast(
                 status_url=status_url,
                 dest_url=dest_url,
             )
+        # Throttle expensive cache-miss generation of dynamic points by
+        # anonymous clients so crafted coordinate ids can't amplify upstream load.
+        if (
+            location.get("dynamic")
+            and g.user is None
+            and _generation_is_rate_limited()
+        ):
+            logger.warning("cache.miss.rate_limited location_id=%s", loc_id)
+            return render_template(
+                "error.html",
+                message="Too many new-location requests. Please wait a few minutes.",
+            ), 429
         logger.info("cache.miss location_id=%s", loc_id)
         try:
             forecast = generate_forecast(location)
@@ -583,6 +621,24 @@ def fishing_log() -> Any:
     return render_template("fishing_log.html", location=location)
 
 
+# When a curated spot is within this distance, it covers the searched point, so
+# the generic exact-point option is redundant (and the named spot is preferable).
+_EXACT_REDUNDANT_MILES = 10.0
+
+
+def _exact_option(
+    lat: float, lng: float, nearby: list[dict[str, Any]]
+) -> Optional[dict[str, Any]]:
+    """Return an exact-point location to offer, or None.
+
+    Suppressed when a curated spot already sits essentially on the point, so the
+    results don't show a generic "Coastal spot" next to a better named one.
+    """
+    if nearby and nearby[0].get("distance_miles", 1e9) <= _EXACT_REDUNDANT_MILES:
+        return None
+    return dynamic_location_for_point(lat, lng)
+
+
 @bp.route("/setup")
 def setup() -> str:
     """Show the location setup page (zip code entry or browse)."""
@@ -621,17 +677,20 @@ def setup_search() -> str:
 
     lat, lng = coords
     nearby = find_nearest_locations(lat, lng, n=6)
-    if not nearby:
+    exact = _exact_option(lat, lng, nearby)
+    if not nearby and not exact:
         return render_template(
             "setup.html",
             **_setup_context(
-                error="No supported fishing locations found within 300 miles. Try a coastal zip code.",
+                error="That looks like an inland spot — no coastal waters nearby. "
+                "Try a zip code closer to the coast.",
                 zipcode=zipcode,
             ),
         )
 
     return render_template(
-        "setup.html", **_setup_context(results=nearby, zipcode=zipcode)
+        "setup.html",
+        **_setup_context(results=nearby, exact_location=exact, zipcode=zipcode),
     )
 
 
@@ -667,15 +726,19 @@ def setup_coords() -> Any:
         )
 
     nearby = find_nearest_locations(lat, lon, n=6)
-    if not nearby:
+    exact = _exact_option(lat, lon, nearby)
+    if not nearby and not exact:
         return render_template(
             "setup.html",
             **_setup_context(
-                error="No supported fishing locations found within 300 miles of that point. Try a coastal area.",
+                error="That point has no coastal waters nearby. "
+                "Click closer to the coast.",
             ),
         )
 
-    return render_template("setup.html", **_setup_context(results=nearby))
+    return render_template(
+        "setup.html", **_setup_context(results=nearby, exact_location=exact)
+    )
 
 
 @bp.route("/setup/select/<location_id>", methods=["POST"])
@@ -742,7 +805,15 @@ def profile() -> Any:
 @bp.route("/f/<location_id>")
 def shared_forecast(location_id: str) -> Any:
     """View a forecast for a specific location via shareable link."""
-    location = get_location(location_id)
+    # This route is public and triggers forecast generation (≈30 upstream API
+    # calls) on a cache miss. For dynamic points, resolve through the coastal
+    # gate so an arbitrary/inland pt_ id can't drive unbounded generation; only
+    # genuine coastal points (which is all the setup flow ever produces) pass.
+    coords = parse_dynamic_id(location_id)
+    if coords is not None:
+        location = dynamic_location_for_point(*coords)
+    else:
+        location = get_location(location_id)
     if location is None:
         return render_template(
             "error.html",

@@ -86,14 +86,61 @@ class TestSetupSearch:
         assert b"Could not find zip code" in resp.data
 
     def test_no_nearby_locations(self, client, monkeypatch):
+        # Inland zip: no curated spot and no coastal anchor → graceful error.
         monkeypatch.setattr("web.views.geocode_zip", lambda zipcode: (0.0, 0.0))
         monkeypatch.setattr("web.views.find_nearest_locations", lambda lat, lng, n=6: [])
+        monkeypatch.setattr("web.views.dynamic_location_for_point", lambda lat, lng: None)
         token = _set_csrf(client)
         resp = client.post(
             "/setup/search", data={"csrf_token": token, "zipcode": "12345"}
         )
         assert resp.status_code == 200
-        assert b"No supported fishing locations" in resp.data
+        assert b"closer to the coast" in resp.data
+
+    def test_coastal_point_offers_exact_spot(self, client, monkeypatch):
+        # No curated spot nearby, but the point is coastal → offer an exact
+        # forecast instead of dead-ending.
+        monkeypatch.setattr("web.views.geocode_zip", lambda zipcode: (41.3, -72.9))
+        monkeypatch.setattr("web.views.find_nearest_locations", lambda lat, lng, n=6: [])
+        monkeypatch.setattr(
+            "web.views.dynamic_location_for_point",
+            lambda lat, lng: {
+                "id": "pt_41.3000_-72.9000",
+                "name": "Coastal spot (41.30, -72.90)",
+                "state": "CT",
+            },
+        )
+        token = _set_csrf(client)
+        resp = client.post(
+            "/setup/search", data={"csrf_token": token, "zipcode": "06510"}
+        )
+        assert resp.status_code == 200
+        assert b"Your Exact Spot" in resp.data
+
+    def test_exact_suppressed_when_curated_spot_is_close(self, client, monkeypatch):
+        # A curated spot within the redundancy radius should hide the generic
+        # exact-point option (the named spot is the better pick).
+        monkeypatch.setattr("web.views.geocode_zip", lambda zipcode: (34.2, -77.8))
+        monkeypatch.setattr(
+            "web.views.find_nearest_locations",
+            lambda lat, lng, n=6: [
+                {"id": "x", "name": "Test Loc", "state": "NC", "distance_miles": 2.0}
+            ],
+        )
+        called = {"n": 0}
+
+        def _should_not_run(lat, lng):
+            called["n"] += 1
+            return {"id": "pt_x", "name": "Coastal spot", "state": "NC"}
+
+        monkeypatch.setattr("web.views.dynamic_location_for_point", _should_not_run)
+        token = _set_csrf(client)
+        resp = client.post(
+            "/setup/search", data={"csrf_token": token, "zipcode": "28401"}
+        )
+        assert resp.status_code == 200
+        assert b"Your Exact Spot" not in resp.data
+        assert called["n"] == 0  # short-circuited, never resolved an exact point
 
     def test_success_shows_results(self, client, monkeypatch, sample_location_id):
         monkeypatch.setattr("web.views.geocode_zip", lambda zipcode: (34.2, -77.8))
@@ -143,14 +190,16 @@ class TestSetupCoords:
         assert b"Coordinates out of range" in resp.data
 
     def test_no_nearby_locations(self, client, monkeypatch):
+        # Inland point: no curated spot and no coastal anchor → graceful error.
         monkeypatch.setattr("web.views.find_nearest_locations", lambda lat, lng, n=6: [])
+        monkeypatch.setattr("web.views.dynamic_location_for_point", lambda lat, lng: None)
         token = _set_csrf(client)
         resp = client.post(
             "/setup/coords",
-            data={"csrf_token": token, "location_lat": "34.2", "location_lon": "-77.8"},
+            data={"csrf_token": token, "location_lat": "39.0", "location_lon": "-98.0"},
         )
         assert resp.status_code == 200
-        assert b"No supported fishing locations" in resp.data
+        assert b"closer to the coast" in resp.data
 
     def test_success_shows_results(self, client, monkeypatch, sample_location_id):
         monkeypatch.setattr(
@@ -164,6 +213,39 @@ class TestSetupCoords:
         )
         assert resp.status_code == 200
         assert b"Coord Loc" in resp.data
+
+
+class TestSharedForecast:
+    def test_inland_dynamic_id_returns_404(self, client, monkeypatch):
+        # An arbitrary/inland pt_ id must not trigger forecast generation on the
+        # public /f/ route — the coastal gate rejects it.
+        monkeypatch.setattr(
+            "web.views.dynamic_location_for_point", lambda lat, lng: None
+        )
+        resp = client.get("/f/pt_39.000_-98.000")
+        assert resp.status_code == 404
+
+    def test_unknown_id_returns_404(self, client):
+        resp = client.get("/f/not-a-real-location")
+        assert resp.status_code == 404
+
+    def test_anonymous_dynamic_generation_rate_limited(self, client, monkeypatch):
+        # When the per-IP generation limit is hit, an anonymous cache-miss on a
+        # dynamic point returns 429 instead of generating another forecast.
+        monkeypatch.setattr(
+            "web.views.dynamic_location_for_point",
+            lambda lat, lng: {
+                "id": "pt_41.300_-72.900",
+                "dynamic": True,
+                "name": "Coastal spot",
+                "state": "CT",
+            },
+        )
+        monkeypatch.setattr("web.views.load_cached_forecast", lambda *a, **k: None)
+        monkeypatch.setattr("web.views._is_refreshing", lambda loc_id: False)
+        monkeypatch.setattr("web.views._generation_is_rate_limited", lambda: True)
+        resp = client.get("/f/pt_41.300_-72.900")
+        assert resp.status_code == 429
 
 
 class TestSetupSelect:
