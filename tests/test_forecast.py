@@ -146,6 +146,46 @@ class TestScoreConditions:
         )
         assert ok["exceeds"] == []
 
+    def test_hab_danger_penalises_and_warns(self):
+        base = score_conditions((4, 8), (1, 1.5), wind_dir="NW", water_temp_f=68)
+        wq = {"available": True, "hab_risk": "danger"}
+        result = score_conditions(
+            (4, 8), (1, 1.5), wind_dir="NW", water_temp_f=68, water_quality=wq
+        )
+        assert result["score"] < base["score"]
+        assert any("algal bloom" in w.lower() for w in result["exceeds"])
+        assert any("algal bloom" in f.lower() for f in result["factors"])
+
+    def test_hab_watch_penalises_less_than_danger(self):
+        base_watch = score_conditions(
+            (4, 8), (1, 1.5), wind_dir="NW", water_temp_f=68,
+            water_quality={"available": True, "hab_risk": "watch"},
+        )
+        base_danger = score_conditions(
+            (4, 8), (1, 1.5), wind_dir="NW", water_temp_f=68,
+            water_quality={"available": True, "hab_risk": "danger"},
+        )
+        assert base_watch["score"] > base_danger["score"]
+        # A watch-level risk is a factor but not a hard "exceeds" warning.
+        assert not base_watch["exceeds"]
+
+    def test_low_dissolved_oxygen_penalises_and_notes_factor(self):
+        base = score_conditions((4, 8), (1, 1.5), wind_dir="NW", water_temp_f=68)
+        result = score_conditions(
+            (4, 8), (1, 1.5), wind_dir="NW", water_temp_f=68,
+            water_quality={"available": True, "do_mg_l": "3.5"},
+        )
+        assert result["score"] < base["score"]
+        assert any("oxygen" in f.lower() for f in result["factors"])
+
+    def test_unavailable_water_quality_has_no_effect(self):
+        base = score_conditions((4, 8), (1, 1.5), wind_dir="NW", water_temp_f=68)
+        result = score_conditions(
+            (4, 8), (1, 1.5), wind_dir="NW", water_temp_f=68,
+            water_quality={"available": False, "hab_risk": "danger"},
+        )
+        assert result["score"] == base["score"]
+
 
 class TestActivityTimelineOverlays:
     def _forecast(self):
@@ -444,6 +484,94 @@ def test_generate_forecast_wires_river_and_bathymetry(monkeypatch):
     assert out["bathymetry"] == bathy_summary
     assert "USGS NWIS river discharge" in out["sources_used"]
     assert "NOAA NCEI bathymetric DEM" in out["sources_used"]
+
+
+def test_generate_forecast_surfaces_hab_danger_without_a_profile(monkeypatch):
+    """A HAB-danger reading must reach conditions.exceeds_thresholds even for
+    anglers with no saved profile/thresholds -- that path never runs the
+    personalized rebuild that would otherwise carry it."""
+    from domain import forecast as fc
+
+    class _Marine:
+        def get_marine_forecast(self, *_args, **_kwargs):
+            return (5.0, 8.0), (1.0, 2.0), "NW"
+
+    class _Tides:
+        def get_tide_predictions(self, *_args, **_kwargs):
+            return {}
+
+    class _Buoy:
+        def get_barometric_pressure(self, *_args, **_kwargs):
+            return None
+
+    class _Weather:
+        def get_weather_alerts(self, *_args, **_kwargs):
+            return []
+
+        def get_state_alerts(self, *_args, **_kwargs):
+            return []
+
+        def get_current_weather(self, *_args, **_kwargs):
+            return None
+
+    class _Env:
+        def get_coops_environmental(self, *_args, **_kwargs):
+            return {}
+
+        def get_currents(self, *_args, **_kwargs):
+            return []
+
+        def get_current_observation(self, *_args, **_kwargs):
+            return None
+
+    class _Astro:
+        def get_sun_times(self, now, *_args, **_kwargs):
+            return now, now, "6:00 AM / 6:00 PM"
+
+        def get_solunar_times(self, *_args, **_kwargs):
+            return {}
+
+        def get_twilight_times(self, *_args, **_kwargs):
+            return {}
+
+        def get_lunar_details(self, *_args, **_kwargs):
+            return {}
+
+    class _Builder:
+        def __init__(self):
+            self.marine_service = _Marine()
+            self.tide_service = _Tides()
+            self.buoy_service = _Buoy()
+            self.weather_service = _Weather()
+            self.environment_service = _Env()
+            self.astro_service = _Astro()
+
+    wq_danger = {"available": True, "hab_risk": "danger", "hab_message": "Toxin danger"}
+
+    monkeypatch.setattr(fc, "ForecastBuilder", _Builder)
+    monkeypatch.setattr(fc, "get_water_temp", lambda *_args, **_kwargs: (70.0, True))
+    monkeypatch.setattr(fc, "build_species_ranking", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_rig_recommendations", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_bait_ranking", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_species_calendar", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_natural_bait_chart", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_spot_tips", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_conditions_explainer", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_bite_alerts", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_gear_checklist", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_safety_checklist", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_best_times", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_activity_timeline", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_multiday_outlook", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "_get_wq", lambda *_args, **_kwargs: wq_danger)
+    monkeypatch.setattr(fc, "_get_river", lambda *_args, **_kwargs: {"available": False})
+    monkeypatch.setattr(fc, "_get_bathy", lambda *_args, **_kwargs: {"available": False})
+
+    out = fc.generate_forecast({"id": "test-loc", "name": "Test", "state": "NC"})
+    assert out["water_quality"]["hab_risk"] == "danger"
+    assert any(
+        "algal bloom" in w.lower() for w in out["conditions"]["exceeds_thresholds"]
+    )
 
 
 def test_generate_forecast_uv_reflects_selected_location(monkeypatch):
@@ -1225,3 +1353,75 @@ class TestHabRiskTips:
         wq = {"available": False, "hab_risk": "danger"}
         tips = build_spot_tips(water_quality=wq, coast="east")
         assert not any("Harmful Algal Bloom" in t for t in self._titles(tips))
+
+
+class TestBathymetryTips:
+    def _titles(self, tips):
+        return [t["title"] for t in tips]
+
+    def test_shallow_point_depth_adds_shallow_tip(self):
+        bathy = {"available": True, "point_depth_ft": -4.0, "profile": []}
+        tips = build_spot_tips(bathymetry=bathy, coast="east")
+        assert any("Shallow Water" in t for t in self._titles(tips))
+
+    def test_deep_drop_off_adds_structure_tip(self):
+        bathy = {
+            "available": True,
+            "point_depth_ft": -10.0,
+            "profile": [{"distance_nm": 1.0, "depth_ft": -30.0}],
+        }
+        tips = build_spot_tips(bathymetry=bathy, coast="east")
+        assert any("Drop-Off" in t for t in self._titles(tips))
+
+    def test_gradual_slope_adds_no_structure_tip(self):
+        bathy = {
+            "available": True,
+            "point_depth_ft": -10.0,
+            "profile": [{"distance_nm": 1.0, "depth_ft": -12.0}],
+        }
+        tips = build_spot_tips(bathymetry=bathy, coast="east")
+        assert not any(
+            "Drop-Off" in t or "Shallow Water" in t for t in self._titles(tips)
+        )
+
+    def test_land_point_adds_no_tip(self):
+        bathy = {"available": True, "point_depth_ft": 5.0, "profile": []}
+        tips = build_spot_tips(bathymetry=bathy, coast="east")
+        assert not any(
+            "Drop-Off" in t or "Shallow Water" in t for t in self._titles(tips)
+        )
+
+    def test_unavailable_bathymetry_adds_no_tip(self):
+        tips = build_spot_tips(bathymetry={"available": False}, coast="east")
+        assert not any(
+            "Drop-Off" in t or "Shallow Water" in t for t in self._titles(tips)
+        )
+
+
+class TestRiverDischargeTip:
+    def test_nearby_gauge_appends_flow_to_rain_tip(self):
+        river = {
+            "available": True,
+            "nearest": {"name": "Test Creek", "distance_mi": 2.0, "flow_cfs": 150.0},
+        }
+        tips = build_spot_tips(recent_rain_in=1.2, river_discharge=river, coast="east")
+        rain_tip = next(t for t in tips if t["title"] == "Muddy Water After Heavy Rain")
+        assert "Test Creek" in rain_tip["detail"]
+        assert "150 cfs" in rain_tip["detail"]
+
+    def test_distant_gauge_does_not_append(self):
+        river = {
+            "available": True,
+            "nearest": {"name": "Far Creek", "distance_mi": 40.0, "flow_cfs": 150.0},
+        }
+        tips = build_spot_tips(recent_rain_in=1.2, river_discharge=river, coast="east")
+        rain_tip = next(t for t in tips if t["title"] == "Muddy Water After Heavy Rain")
+        assert "Far Creek" not in rain_tip["detail"]
+
+    def test_no_rain_tip_means_no_gauge_append(self):
+        river = {
+            "available": True,
+            "nearest": {"name": "Test Creek", "distance_mi": 2.0, "flow_cfs": 150.0},
+        }
+        tips = build_spot_tips(river_discharge=river, coast="east")
+        assert not any("Test Creek" in t.get("detail", "") for t in tips)
