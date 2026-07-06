@@ -1304,6 +1304,47 @@ class TestSafetyChecklistPFD:
         assert sum("inflatable PFD" in i["text"] for i in items) == 0
 
 
+class TestSafetyChecklistHab:
+    def _texts(self, items):
+        return [i["text"] for i in items]
+
+    def test_hab_danger_adds_warning(self):
+        from domain.forecast import build_safety_checklist
+        wq = {"available": True, "hab_risk": "danger", "hab_message": "Danger msg"}
+        items = build_safety_checklist(water_quality=wq)
+        assert any("Danger msg" == t for t in self._texts(items))
+
+    def test_hab_danger_adds_extra_item_for_wade_anglers(self):
+        from domain.forecast import build_safety_checklist
+        wq = {"available": True, "hab_risk": "danger"}
+        items = build_safety_checklist(water_quality=wq, fishing_types=["wade"])
+        assert any("Skip wading" in t for t in self._texts(items))
+
+    def test_hab_danger_no_wade_item_for_non_wade_anglers(self):
+        from domain.forecast import build_safety_checklist
+        wq = {"available": True, "hab_risk": "danger"}
+        items = build_safety_checklist(water_quality=wq, fishing_types=["surf"])
+        assert not any("Skip wading" in t for t in self._texts(items))
+
+    def test_hab_watch_adds_caution_item(self):
+        from domain.forecast import build_safety_checklist
+        wq = {"available": True, "hab_risk": "watch"}
+        items = build_safety_checklist(water_quality=wq)
+        assert any("rinse hands" in t.lower() for t in self._texts(items))
+
+    def test_hab_low_risk_adds_nothing(self):
+        from domain.forecast import build_safety_checklist
+        wq = {"available": True, "hab_risk": "low"}
+        items = build_safety_checklist(water_quality=wq)
+        assert not any("algal bloom" in t.lower() for t in self._texts(items))
+
+    def test_unavailable_water_quality_adds_nothing(self):
+        from domain.forecast import build_safety_checklist
+        wq = {"available": False, "hab_risk": "danger"}
+        items = build_safety_checklist(water_quality=wq)
+        assert not any("algal bloom" in t.lower() for t in self._texts(items))
+
+
 class TestRecentRainTips:
     def _titles(self, tips):
         return [t["title"] for t in tips]

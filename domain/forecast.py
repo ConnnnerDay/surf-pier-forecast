@@ -2145,8 +2145,15 @@ def build_safety_checklist(
     alerts: Optional[list[dict[str, str]]] = None,
     fishing_types: Optional[list[str]] = None,
     water_temp: Optional[float] = None,
+    water_quality: Optional[dict[str, Any]] = None,
 ) -> list[dict[str, str]]:
-    """Build a conditions-aware safety checklist for surf/pier fishing."""
+    """Build a conditions-aware safety checklist for surf/pier fishing.
+
+    When *water_quality* is supplied (from EPA WQP via services/datagov.py)
+    an active harmful-algal-bloom reading adds a dedicated warning -- direct
+    water contact (rinsing hands, bait, or wading) is the real exposure risk,
+    so wade anglers get an extra, more specific item.
+    """
     items: list[dict[str, str]] = []
     ft = set(fishing_types or [])
 
@@ -2157,6 +2164,35 @@ def build_safety_checklist(
             "icon": "info",
         }
     )
+
+    # --- Harmful algal bloom safety ---
+    if water_quality and water_quality.get("available"):
+        hab_level = water_quality.get("hab_risk", "")
+        if hab_level == "danger":
+            items.append(
+                {
+                    "text": water_quality.get("hab_message")
+                    or "Harmful algal bloom danger nearby — avoid contact with the water entirely",
+                    "icon": "warning",
+                }
+            )
+            if "wade" in ft:
+                items.append(
+                    {
+                        "text": "Skip wading today — direct contact with bloom-affected water "
+                        "risks skin/eye irritation and illness",
+                        "icon": "warning",
+                    }
+                )
+        elif hab_level == "watch":
+            items.append(
+                {
+                    "text": water_quality.get("hab_message")
+                    or "Algal bloom watch nearby — rinse hands and gear before eating, "
+                    "and keep pets out of the water",
+                    "icon": "caution",
+                }
+            )
 
     max_wave = (
         (wave_range[1] if isinstance(wave_range, tuple) else 3) if wave_range else 0
@@ -3202,6 +3238,7 @@ def generate_forecast(
         hour=now.hour,
         alerts=forecast.get("alerts"),
         water_temp=water_temp,
+        water_quality=forecast.get("water_quality"),
     )
 
     # Best fishing times (synthesize solunar + tides + sunrise/sunset)
@@ -3554,6 +3591,7 @@ def personalize_forecast(
         alerts=forecast.get("alerts"),
         fishing_types=fishing_types,
         water_temp=water_temp,
+        water_quality=forecast.get("water_quality"),
     )
 
     # Rebuild 3-day outlook with profile-filtered species
