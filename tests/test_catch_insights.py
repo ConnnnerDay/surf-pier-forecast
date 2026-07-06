@@ -9,7 +9,7 @@ from storage.sqlite import (
 
 
 def _catch(species="Red drum", tide="Rising", wind="NE", temp=66.0, moon="Full Moon",
-           bait="Live shrimp", rig="Hi-lo"):
+           bait="Live shrimp", rig="Hi-lo", hab_risk=None, river_discharge_cfs=None):
     return {
         "species": species,
         "tide_state": tide,
@@ -18,6 +18,8 @@ def _catch(species="Red drum", tide="Rising", wind="NE", temp=66.0, moon="Full M
         "moon_phase": moon,
         "bait": bait,
         "rig": rig,
+        "hab_risk": hab_risk,
+        "river_discharge_cfs": river_discharge_cfs,
     }
 
 
@@ -107,6 +109,35 @@ class TestAnalyzeCatchPatterns:
         out = analyze_catch_patterns(catches)
         assert out["with_conditions"] == 1
 
+    def test_hab_events_flagged(self):
+        catches = (
+            [_catch(hab_risk="danger") for _ in range(2)]
+            + [_catch(hab_risk="watch")]
+            + [_catch(hab_risk=None) for _ in range(2)]
+        )
+        out = analyze_catch_patterns(catches)
+        assert out["factors"]["hab_events"]["count"] == 3
+        assert any("algal bloom advisory" in i.lower() for i in out["insights"])
+
+    def test_no_hab_events_no_flag(self):
+        catches = [_catch(hab_risk="low") for _ in range(5)]
+        out = analyze_catch_patterns(catches)
+        assert "hab_events" not in out["factors"]
+        assert not any("algal bloom" in i.lower() for i in out["insights"])
+
+    def test_river_discharge_band(self):
+        catches = [_catch(river_discharge_cfs=cfs) for cfs in (80, 100, 120, 140, 160, 180)]
+        out = analyze_catch_patterns(catches)
+        assert "river_discharge_cfs" in out["factors"]
+        band = out["factors"]["river_discharge_cfs"]
+        assert band["low"] <= band["high"]
+        assert any("cfs" in i for i in out["insights"])
+
+    def test_no_river_discharge_no_band(self):
+        catches = [_catch() for _ in range(5)]
+        out = analyze_catch_patterns(catches)
+        assert "river_discharge_cfs" not in out["factors"]
+
 
 class TestConditionSnapshotStorage:
     def test_add_and_read_back_conditions(self, app):
@@ -124,6 +155,8 @@ class TestConditionSnapshotStorage:
                 "wind_dir": "NW",
                 "water_temp_f": 58.5,
                 "moon_phase": "Waning Crescent",
+                "hab_risk": "watch",
+                "river_discharge_cfs": 210.5,
             },
         )
         rows = get_catch_conditions(uid, "montauk-ny")
@@ -134,6 +167,8 @@ class TestConditionSnapshotStorage:
         assert rows[0]["moon_phase"] == "Waning Crescent"
         assert rows[0]["bait"] == "Live eel"
         assert rows[0]["rig"] == "Fish-finder"
+        assert rows[0]["hab_risk"] == "watch"
+        assert rows[0]["river_discharge_cfs"] == 210.5
 
     def test_missing_conditions_are_null(self, app):
         uid = create_user("catchuser2", "pass1234")
@@ -141,6 +176,8 @@ class TestConditionSnapshotStorage:
         rows = get_catch_conditions(uid, "montauk-ny")
         assert rows[0]["tide_state"] is None
         assert rows[0]["water_temp_f"] is None
+        assert rows[0]["hab_risk"] is None
+        assert rows[0]["river_discharge_cfs"] is None
 
 
 class TestCommunityActivity:

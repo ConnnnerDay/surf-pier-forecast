@@ -543,11 +543,15 @@ def _catch_conditions_snapshot(location_id: str) -> dict[str, Any]:
         return {}
     conditions = forecast.get("conditions", {}) or {}
     solunar = forecast.get("solunar", {}) or {}
+    water_quality = forecast.get("water_quality", {}) or {}
+    river_discharge = forecast.get("river_discharge", {}) or {}
     return {
         "tide_state": forecast.get("tide_state", ""),
         "wind_dir": conditions.get("wind_dir", ""),
         "water_temp_f": conditions.get("water_temp_f"),
         "moon_phase": solunar.get("moon_phase", ""),
+        "hab_risk": water_quality.get("hab_risk", ""),
+        "river_discharge_cfs": (river_discharge.get("nearest") or {}).get("flow_cfs"),
     }
 
 

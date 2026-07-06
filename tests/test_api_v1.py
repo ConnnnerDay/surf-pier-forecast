@@ -167,6 +167,8 @@ def test_v1_log_captures_conditions_and_patterns(client, monkeypatch):
         "tide_state": "Rising",
         "conditions": {"wind_dir": "NE", "water_temp_f": 64.0},
         "solunar": {"moon_phase": "Full Moon"},
+        "water_quality": {"available": True, "hab_risk": "watch"},
+        "river_discharge": {"available": True, "nearest": {"flow_cfs": 120.0}},
     }
     monkeypatch.setattr(
         "web.api.load_cached_forecast",
@@ -185,12 +187,15 @@ def test_v1_log_captures_conditions_and_patterns(client, monkeypatch):
     rows = get_catch_conditions(uid, "wrightsville-beach-nc")
     assert rows and rows[0]["tide_state"] == "Rising"
     assert rows[0]["moon_phase"] == "Full Moon"
+    assert rows[0]["hab_risk"] == "watch"
+    assert rows[0]["river_discharge_cfs"] == 120.0
 
     pat = client.get("/api/v1/log/patterns?location_id=wrightsville-beach-nc")
     assert pat.status_code == 200
     data = pat.get_json()["data"]
     assert data["total"] == 5
     assert any("rising tide" in i.lower() for i in data["insights"])
+    assert any("algal bloom advisory" in i.lower() for i in data["insights"])
 
 
 def test_v1_log_patterns_requires_login(client):

@@ -251,6 +251,27 @@ class TestMigrations:
         assert "fill_opacity" in ho_cols
         assert "stroke_weight" in ho_cols
 
+    def test_catch_log_column_migrations(self, tmp_path, monkeypatch):
+        """catch_log condition-snapshot columns, including hab_risk/river_discharge_cfs."""
+        self._make_old_db(tmp_path, monkeypatch)
+        init_db()
+        conn = get_db()
+        try:
+            cols = _column_names(conn, "catch_log")
+        finally:
+            conn.close()
+        for col in (
+            "bait",
+            "rig",
+            "tide_state",
+            "wind_dir",
+            "water_temp_f",
+            "moon_phase",
+            "hab_risk",
+            "river_discharge_cfs",
+        ):
+            assert col in cols, f"Migration should have added '{col}'"
+
 
 # ---------------------------------------------------------------------------
 # Legacy forecasts rename — line 270
