@@ -272,6 +272,39 @@ class TestGetWaterQualitySummary:
         assert result["available"] is False
         assert result["temp_f"] is None
 
+    def test_microcystin_above_danger_threshold(self):
+        raw = {"summary": {"microcystin_ug_l": 25.0}, "stations": [{"id": "1"}]}
+        with patch.object(datagov, "fetch_water_quality", return_value=raw):
+            result = datagov.get_water_quality_summary(34.2, -77.8)
+        assert result["hab_risk"] == "danger"
+        assert "20.0" in result["hab_message"] or "25.0" in result["hab_message"]
+        assert result["microcystin_ug_l"] == "25.0"
+
+    def test_microcystin_above_watch_threshold(self):
+        raw = {"summary": {"microcystin_ug_l": 10.0}, "stations": []}
+        with patch.object(datagov, "fetch_water_quality", return_value=raw):
+            result = datagov.get_water_quality_summary(34.2, -77.8)
+        assert result["hab_risk"] == "watch"
+
+    def test_microcystin_below_thresholds_is_low_risk(self):
+        raw = {"summary": {"microcystin_ug_l": 1.0}, "stations": []}
+        with patch.object(datagov, "fetch_water_quality", return_value=raw):
+            result = datagov.get_water_quality_summary(34.2, -77.8)
+        assert result["hab_risk"] == "low"
+
+    def test_elevated_chlorophyll_without_toxin_reading_is_watch(self):
+        raw = {"summary": {"chlorophyll_a": 30.0}, "stations": []}
+        with patch.object(datagov, "fetch_water_quality", return_value=raw):
+            result = datagov.get_water_quality_summary(34.2, -77.8)
+        assert result["hab_risk"] == "watch"
+
+    def test_no_bloom_indicators_is_unknown_risk(self):
+        raw = {"summary": {}, "stations": []}
+        with patch.object(datagov, "fetch_water_quality", return_value=raw):
+            result = datagov.get_water_quality_summary(34.2, -77.8)
+        assert result["hab_risk"] == "unknown"
+        assert result["hab_message"] == ""
+
 
 class TestHelpers:
     def test_safe_float_handles_invalid_values(self):

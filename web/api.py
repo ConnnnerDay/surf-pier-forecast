@@ -45,7 +45,9 @@ from services.arcgis_live_feeds import (
     fetch_tropical_outlook,
     fetch_wildfire_incidents,
     fetch_wind_forecast,
+    get_nearest_river_discharge,
 )
+from services.bathymetry import fetch_depth_at_point
 from storage.sqlite import (
     add_log_entry,
     add_push_subscription,
@@ -541,11 +543,15 @@ def _catch_conditions_snapshot(location_id: str) -> dict[str, Any]:
         return {}
     conditions = forecast.get("conditions", {}) or {}
     solunar = forecast.get("solunar", {}) or {}
+    water_quality = forecast.get("water_quality", {}) or {}
+    river_discharge = forecast.get("river_discharge", {}) or {}
     return {
         "tide_state": forecast.get("tide_state", ""),
         "wind_dir": conditions.get("wind_dir", ""),
         "water_temp_f": conditions.get("water_temp_f"),
         "moon_phase": solunar.get("moon_phase", ""),
+        "hab_risk": water_quality.get("hab_risk", ""),
+        "river_discharge_cfs": (river_discharge.get("nearest") or {}).get("flow_cfs"),
     }
 
 
@@ -1082,11 +1088,23 @@ def geo_environmental() -> Any:
         except Exception:
             beach_closures = []
 
+    try:
+        river_discharge = get_nearest_river_discharge(lat, lng)
+    except Exception:
+        river_discharge = {"available": False}
+
+    try:
+        point_depth_ft = fetch_depth_at_point(lat, lng)
+    except Exception:
+        point_depth_ft = None
+
     resp = jsonify({
         "ok": True,
         "data": {
             "water_quality": wq_summary,
             "beach_closures": beach_closures,
+            "river_discharge": river_discharge,
+            "bathymetry": {"available": point_depth_ft is not None, "point_depth_ft": point_depth_ft},
             "location": {"lat": lat, "lng": lng},
         },
     })

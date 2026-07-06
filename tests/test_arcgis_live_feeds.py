@@ -761,6 +761,64 @@ class TestFetchStreamGauges:
         assert feeds.fetch_stream_gauges(33.0, -79.0, 35.0, -77.0) == []
 
 
+class TestGetNearestRiverDischarge:
+    def _gauge_body(self, site_id, lat, lng, flow=None, stage=None):
+        series = []
+        if flow is not None:
+            series.append(
+                {
+                    "sourceInfo": {
+                        "siteCode": [{"value": site_id}],
+                        "siteName": f"Gauge {site_id}",
+                        "geoLocation": {"geogLocation": {"latitude": lat, "longitude": lng}},
+                    },
+                    "variable": {"variableCode": [{"value": "00060"}]},
+                    "values": [{"value": [{"value": str(flow), "dateTime": "2024-01-01T00:00:00Z"}]}],
+                }
+            )
+        if stage is not None:
+            series.append(
+                {
+                    "sourceInfo": {
+                        "siteCode": [{"value": site_id}],
+                        "siteName": f"Gauge {site_id}",
+                        "geoLocation": {"geogLocation": {"latitude": lat, "longitude": lng}},
+                    },
+                    "variable": {"variableCode": [{"value": "00065"}]},
+                    "values": [{"value": [{"value": str(stage), "dateTime": "2024-01-01T00:00:00Z"}]}],
+                }
+            )
+        return {"value": {"timeSeries": series}}
+
+    def test_returns_nearest_gauge_sorted_by_distance(self, monkeypatch):
+        body = self._gauge_body("A", 34.25, -77.85, flow=50.0)
+        monkeypatch.setattr(feeds._HTTP, "get", Mock(return_value=_resp(body)))
+        out = feeds.get_nearest_river_discharge(34.2104, -77.7964)
+        assert out["available"] is True
+        assert out["nearest"]["id"] == "A"
+        assert out["nearest"]["flow_cfs"] == 50.0
+        assert out["nearest"]["distance_mi"] > 0
+
+    def test_no_gauges_widens_search_then_reports_unavailable(self, monkeypatch):
+        monkeypatch.setattr(
+            feeds._HTTP, "get", Mock(return_value=_resp({"value": {"timeSeries": []}}))
+        )
+        out = feeds.get_nearest_river_discharge(34.2104, -77.7964)
+        assert out["available"] is False
+        assert out["gauges"] == []
+        assert out["nearest"] is None
+
+    def test_does_not_mutate_cached_gauge_dicts_across_points(self, monkeypatch):
+        """Distance is computed per-call; it must not leak into the shared cache."""
+        body = self._gauge_body("A", 34.25, -77.85, flow=50.0)
+        monkeypatch.setattr(feeds._HTTP, "get", Mock(return_value=_resp(body)))
+        feeds.get_nearest_river_discharge(34.2104, -77.7964)
+        cached = feeds.fetch_stream_gauges(
+            34.2104 - 0.35, -77.7964 - 0.35, 34.2104 + 0.35, -77.7964 + 0.35
+        )
+        assert "distance_mi" not in cached[0]
+
+
 class TestFetchStormReports:
     def test_combines_all_three_layers(self, monkeypatch):
         hail = {

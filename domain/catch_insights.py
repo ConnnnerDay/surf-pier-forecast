@@ -39,8 +39,9 @@ def analyze_catch_patterns(
     """Summarize productive patterns from a list of catch dicts.
 
     Each catch may carry: species, tide_state, wind_dir, water_temp_f,
-    moon_phase. Returns a dict with the catch counts, a list of human-readable
-    ``insights`` strings, and the structured ``factors`` behind them.
+    moon_phase, hab_risk, river_discharge_cfs. Returns a dict with the catch
+    counts, a list of human-readable ``insights`` strings, and the structured
+    ``factors`` behind them.
 
     When *current* (the forecast conditions right now: tide_state, wind_dir,
     moon_phase) is supplied, any dominant factor that matches today's
@@ -50,6 +51,19 @@ def analyze_catch_patterns(
     total = len(catches)
     factors: dict[str, Any] = {}
     insights: list[str] = []
+
+    # Food-safety flag — surfaced first since it's a warning, not a "what
+    # works" pattern. Counts catches logged while an EPA WQP harmful-algal-
+    # bloom watch/danger reading was active at that spot.
+    hab_events = sum(
+        1 for c in catches if (c.get("hab_risk") or "").lower() in ("watch", "danger")
+    )
+    if hab_events:
+        factors["hab_events"] = {"count": hab_events, "sample": total}
+        insights.append(
+            f"{hab_events} of your logged catches happened during an active "
+            "algal bloom advisory — those fish may not have been safe to eat."
+        )
 
     tide = _dominant([c.get("tide_state") or "" for c in catches])
     if tide:
@@ -87,6 +101,29 @@ def analyze_catch_patterns(
             )
         else:
             insights.append(f"Your catches cluster around {round(lo)}°F water.")
+
+    # River discharge sweet spot — only meaningful for catches near an inlet
+    # or river mouth where a USGS gauge reported a reading at catch time.
+    flows = sorted(
+        c["river_discharge_cfs"]
+        for c in catches
+        if isinstance(c.get("river_discharge_cfs"), (int, float))
+    )
+    if len(flows) >= _MIN_SAMPLES:
+        lo = flows[len(flows) // 4]
+        hi = flows[(len(flows) * 3) // 4]
+        factors["river_discharge_cfs"] = {
+            "low": round(lo), "high": round(hi), "sample": len(flows)
+        }
+        if round(hi) > round(lo):
+            insights.append(
+                f"Most of your catches came with nearby river flow between "
+                f"{round(lo)}-{round(hi)} cfs."
+            )
+        else:
+            insights.append(
+                f"Your catches cluster around {round(lo)} cfs of nearby river flow."
+            )
 
     # Top species (always useful, even without condition snapshots).
     species = Counter(c.get("species", "").strip() for c in catches if c.get("species"))

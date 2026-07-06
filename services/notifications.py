@@ -121,6 +121,7 @@ def evaluate_forecast(
 
     best_times = forecast.get("best_times") or []
     headline = best_times[0] if best_times else {}
+    water_quality = forecast.get("water_quality") or {}
 
     return {
         "verdict": verdict,
@@ -131,6 +132,11 @@ def evaluate_forecast(
         "best_times": best_times[:3],
         "next_tide": _next_tide(forecast, now),
         "gear": _gear_hint(forecast),
+        # Surfaced even when the verdict still clears min_rating -- a "watch"
+        # only costs a few score points, so a decent day can still qualify
+        # while an active bloom is worth calling out in the alert itself.
+        "hab_risk": water_quality.get("hab_risk", ""),
+        "hab_message": water_quality.get("hab_message", ""),
     }
 
 
@@ -180,6 +186,12 @@ def build_email(
     subject = f"{verdict} fishing at {location_name} today"
 
     lines = [f"{verdict}{score_str} fishing conditions at {location_name} today."]
+    hab_risk = decision.get("hab_risk", "")
+    if hab_risk in ("watch", "danger"):
+        lines.append("")
+        lines.append(
+            "⚠ " + (decision.get("hab_message") or "Harmful algal bloom risk nearby.")
+        )
     if decision.get("summary"):
         lines.append("")
         lines.append(decision["summary"])
@@ -224,8 +236,15 @@ def build_email(
         if manage_url
         else ""
     )
+    hab_html = (
+        f'<p style="color:#b45309"><strong>⚠ '
+        f'{decision.get("hab_message") or "Harmful algal bloom risk nearby."}</strong></p>'
+        if hab_risk in ("watch", "danger")
+        else ""
+    )
     html_body = (
         f"<h2>{verdict}{score_str} fishing at {location_name} today</h2>"
+        + hab_html
         + (f"<p>{decision['summary']}</p>" if decision.get("summary") else "")
         + next_tide_html
         + (f"<p><strong>Best windows:</strong></p><ul>{wins_html}</ul>" if wins_html else "")
@@ -254,11 +273,17 @@ def build_digest_email(
     for name, decision in items:
         score = decision.get("score")
         score_str = f" ({score}/100)" if score is not None else ""
-        lines.append(f"- {name}: {decision['verdict']}{score_str}")
+        hab_flag = " ⚠ algal bloom risk" if decision.get("hab_risk") in ("watch", "danger") else ""
+        lines.append(f"- {name}: {decision['verdict']}{score_str}{hab_flag}")
         if decision.get("window"):
             lines.append(f"    Best window: {decision['window']}")
         blocks_html.append(
             f"<li><strong>{name}</strong>: {decision['verdict']}{score_str}"
+            + (
+                ' <strong style="color:#b45309">⚠ algal bloom risk</strong>'
+                if decision.get("hab_risk") in ("watch", "danger")
+                else ""
+            )
             + (
                 f"<br><small>Best window: {decision['window']}</small>"
                 if decision.get("window")
@@ -429,6 +454,8 @@ def run_notification_check(
             if subs:
                 title = f"{decision['verdict']} fishing at {loc_name}"
                 body = decision.get("window") or decision.get("summary") or ""
+                if decision.get("hab_risk") in ("watch", "danger"):
+                    body = "⚠ Algal bloom risk nearby. " + body
                 url = f"{site_url}/f/{loc_id}" if site_url else f"/f/{loc_id}"
                 pushed_any = False
                 for sub in subs:

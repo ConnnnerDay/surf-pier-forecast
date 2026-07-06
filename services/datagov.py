@@ -70,7 +70,16 @@ _CHARACTERISTICS = [
     "Chlorophyll a",
     "Fecal Coliform",
     "Enterococcus",  # beach closure indicator
+    "Microcystin",  # harmful-algal-bloom toxin
+    "Cyanobacteria",  # harmful-algal-bloom cell counts
 ]
+
+# EPA's 2019 recreational-water health advisory thresholds for microcystin (µg/L)
+_MICROCYSTIN_WATCH_UG_L = 8.0
+_MICROCYSTIN_DANGER_UG_L = 20.0
+# Elevated chlorophyll-a is a weaker secondary bloom indicator, used only when
+# no direct toxin reading is available.
+_CHLOROPHYLL_BLOOM_UG_L = 20.0
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Public API
@@ -253,6 +262,41 @@ def fetch_beach_closures(state_code: str) -> list[dict[str, Any]]:
     _cache_set(cache_key, closures)
     return closures[:50]  # cap at 50
 
+def _hab_risk(summary: dict[str, Any]) -> tuple[str, str]:
+    """Classify harmful-algal-bloom risk from available WQP indicators.
+
+    Returns (risk_level, message).  risk_level is one of "unknown", "low",
+    "watch", "danger".  Prefers a direct microcystin toxin reading (EPA's
+    2019 recreational health advisory thresholds); falls back to elevated
+    chlorophyll-a as a weaker bloom indicator when no toxin reading exists.
+    """
+    microcystin = summary.get("microcystin_ug_l")
+    if microcystin is not None:
+        if microcystin >= _MICROCYSTIN_DANGER_UG_L:
+            return (
+                "danger",
+                f"Microcystin at {microcystin:.1f} µg/L exceeds EPA's recreational "
+                "danger threshold — avoid contact with the water and don't eat fish "
+                "caught here.",
+            )
+        if microcystin >= _MICROCYSTIN_WATCH_UG_L:
+            return (
+                "watch",
+                f"Microcystin at {microcystin:.1f} µg/L exceeds EPA's recreational "
+                "watch threshold — avoid swallowing water or handling algal scum.",
+            )
+        return "low", f"Microcystin at {microcystin:.1f} µg/L is below EPA advisory thresholds."
+
+    chlorophyll = summary.get("chlorophyll_a")
+    if chlorophyll is not None and chlorophyll >= _CHLOROPHYLL_BLOOM_UG_L:
+        return (
+            "watch",
+            f"Chlorophyll-a at {chlorophyll:.1f} µg/L suggests an active algal "
+            "bloom — no direct toxin reading is available nearby.",
+        )
+
+    return "unknown", ""
+
 def get_water_quality_summary(lat: float, lng: float) -> dict[str, Any]:
     """Return a simplified water-quality summary for template rendering.
 
@@ -283,6 +327,8 @@ def get_water_quality_summary(lat: float, lng: float) -> dict[str, Any]:
     if entero is not None:
         entero_flag = "advisory" if entero > 104 else "ok"
 
+    hab_level, hab_message = _hab_risk(summary)
+
     return {
         "available": bool(summary),
         "do_mg_l": _fmt(do_val, 1),
@@ -293,6 +339,9 @@ def get_water_quality_summary(lat: float, lng: float) -> dict[str, Any]:
         "turbidity_ntu": _fmt(turb_val, 1),
         "enterococcus_cfu_100ml": _fmt(entero, 0),
         "enterococcus_flag": entero_flag,
+        "microcystin_ug_l": _fmt(summary.get("microcystin_ug_l"), 1),
+        "hab_risk": hab_level,
+        "hab_message": hab_message,
         "source": raw.get("source", "EPA Water Quality Portal"),
         "source_url": raw.get("source_url", "https://www.waterqualitydata.us/"),
         "fetched_at": raw.get("fetched_at"),
@@ -316,6 +365,8 @@ def _build_summary(stations: list[dict[str, Any]]) -> dict[str, Any]:
         "Chlorophyll a": "chlorophyll_a",
         "Fecal Coliform": "fecal_coliform_cfu_100ml",
         "Enterococcus": "enterococcus_cfu_100ml",
+        "Microcystin": "microcystin_ug_l",
+        "Cyanobacteria": "cyanobacteria_cells_ml",
     }
 
     for station in stations:

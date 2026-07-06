@@ -15,12 +15,15 @@ import services.notifications as notif
 EAST = ZoneInfo("America/New_York")
 
 
-def _forecast(verdict="Good", score=72, tags=None, best_times=None, tides=None, gear=None):
+def _forecast(
+    verdict="Good", score=72, tags=None, best_times=None, tides=None, gear=None,
+    water_quality=None,
+):
     timeline = []
     for h in range(24):
         tag = (tags or {}).get(h, "low")
         timeline.append({"hour": h, "tag": tag, "level": 80 if tag in ("high", "prime") else 20})
-    return {
+    fc = {
         "conditions": {
             "verdict": verdict,
             "verdict_for_angler": verdict,
@@ -40,6 +43,9 @@ def _forecast(verdict="Good", score=72, tags=None, best_times=None, tides=None, 
             {"category": "Bait", "item": "Fresh shrimp"},
         ],
     }
+    if water_quality is not None:
+        fc["water_quality"] = water_quality
+    return fc
 
 
 class TestEvaluateForecast:
@@ -71,6 +77,21 @@ class TestEvaluateForecast:
     def test_unknown_verdict_skipped(self):
         now = datetime(2026, 6, 9, 5, 0, tzinfo=EAST)
         assert notif.evaluate_forecast(_forecast(""), {"min_rating": "Good"}, now) is None
+
+    def test_hab_risk_passed_through_when_present(self):
+        now = datetime(2026, 6, 9, 5, 0, tzinfo=EAST)
+        wq = {"available": True, "hab_risk": "danger", "hab_message": "Toxin danger"}
+        d = notif.evaluate_forecast(
+            _forecast("Good", water_quality=wq), {"min_rating": "Good"}, now
+        )
+        assert d["hab_risk"] == "danger"
+        assert d["hab_message"] == "Toxin danger"
+
+    def test_hab_risk_defaults_empty_when_no_water_quality(self):
+        now = datetime(2026, 6, 9, 5, 0, tzinfo=EAST)
+        d = notif.evaluate_forecast(_forecast("Good"), {"min_rating": "Good"}, now)
+        assert d["hab_risk"] == ""
+        assert d["hab_message"] == ""
 
 
 class TestBuildEmail:
@@ -108,6 +129,25 @@ class TestBuildEmail:
         # Omitted when no URL is supplied.
         _s2, text2, html2 = notif.build_email("Montauk", d)
         assert "Manage or turn off" not in text2
+
+    def test_hab_danger_adds_caveat_to_email(self):
+        wq = {"available": True, "hab_risk": "danger", "hab_message": "Toxin danger"}
+        d = notif.evaluate_forecast(
+            _forecast("Good", water_quality=wq), {"min_rating": "Good"},
+            datetime(2026, 6, 9, 5, 0, tzinfo=EAST),
+        )
+        _s, text, html = notif.build_email("Montauk", d)
+        assert "Toxin danger" in text
+        assert "Toxin danger" in html
+
+    def test_no_hab_risk_no_caveat_in_email(self):
+        d = notif.evaluate_forecast(
+            _forecast("Good"), {"min_rating": "Good"},
+            datetime(2026, 6, 9, 5, 0, tzinfo=EAST),
+        )
+        _s, text, html = notif.build_email("Montauk", d)
+        assert "algal bloom" not in text.lower()
+        assert "algal bloom" not in html.lower()
 
 
 class TestRunNotificationCheck:
@@ -195,6 +235,27 @@ class TestRunNotificationCheck:
         assert s["sent"] == 1
         assert sent_push and sent_push[0][0] == "https://p/ep"
 
+    def test_push_body_prefixed_with_hab_warning(self, monkeypatch, patched):
+        _se, _sp, fake_email, _fp = patched
+        pushed = []
+
+        def capturing_push(sub, title, body, url):
+            pushed.append((title, body))
+            return True
+
+        monkeypatch.setattr(notif, "iter_notification_candidates", lambda: [self._candidate(email=False, push=True)])
+        monkeypatch.setattr(notif, "was_notified", lambda *_: False)
+        monkeypatch.setattr(notif, "record_notification", lambda *a, **k: None)
+        monkeypatch.setattr(notif, "get_push_subscriptions", lambda uid: [{"endpoint": "https://p/ep", "p256dh": "x", "auth": "y"}])
+        wq = {"available": True, "hab_risk": "danger", "hab_message": "Toxin danger"}
+        s = notif.run_notification_check(
+            datetime(2026, 6, 9, 5, 0, tzinfo=EAST),
+            forecast_loader=lambda *a: _forecast("Good", water_quality=wq),
+            email_sender=fake_email, push_sender=capturing_push,
+        )
+        assert s["sent"] == 1
+        assert pushed and pushed[0][1].startswith("⚠ Algal bloom risk nearby.")
+
     def test_no_location_match_no_send(self, monkeypatch, patched):
         sent_emails, _sp, fake_email, fake_push = patched
         cand = self._candidate()
@@ -231,6 +292,24 @@ class TestBuildDigestEmail:
         assert "Montauk" in text and "Cape May" in text
         assert "Montauk" in html and "Cape May" in html
         assert "https://x/account" in text
+
+    def test_hab_risk_flagged_per_location(self):
+        wq = {"available": True, "hab_risk": "watch", "hab_message": "Bloom watch"}
+        clean = notif.evaluate_forecast(
+            _forecast("Good", 80), {"min_rating": "Good"},
+            datetime(2026, 6, 9, 5, 0, tzinfo=EAST),
+        )
+        risky = notif.evaluate_forecast(
+            _forecast("Good", 80, water_quality=wq), {"min_rating": "Good"},
+            datetime(2026, 6, 9, 5, 0, tzinfo=EAST),
+        )
+        _subject, text, html = notif.build_digest_email(
+            [("Montauk", clean), ("Cape May", risky)]
+        )
+        assert "algal bloom risk" in text.lower()
+        montauk_line = next(line for line in text.splitlines() if "Montauk" in line)
+        assert "algal bloom" not in montauk_line.lower()
+        assert "algal bloom risk" in html.lower()
 
 
 class TestDigestBatching:

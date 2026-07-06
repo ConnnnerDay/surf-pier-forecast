@@ -51,6 +51,8 @@ from services.nws import (
 )
 from services.datagov import get_water_quality_summary as _get_wq
 from services.hdx_fao import get_hdx_fao_enrichment as _get_fao
+from services.arcgis_live_feeds import get_nearest_river_discharge as _get_river
+from services.bathymetry import get_depth_profile as _get_bathy
 from domain.species import (
     _SPECIES_BY_COAST,
     onshore_offshore_dirs,
@@ -586,6 +588,7 @@ def score_conditions(
     fishing_types: Optional[list[str]] = None,
     max_wind_kt: Optional[float] = None,
     max_wave_ft: Optional[float] = None,
+    water_quality: Optional[dict[str, Any]] = None,
 ) -> dict[str, Any]:
     """Score fishability from all available marine + astronomical signals.
 
@@ -605,6 +608,12 @@ def score_conditions(
     get a partial offset on the open-ocean wave penalty.  When *max_wind_kt*
     or *max_wave_ft* are supplied, exceeding them applies an extra penalty so
     the verdict reflects the angler's stated tolerance.
+
+    When *water_quality* is supplied (from EPA WQP via services/datagov.py)
+    an active harmful-algal-bloom reading or low dissolved oxygen both push
+    the score down and surface as factors — both are direct, well-grounded
+    signals that fish are stressed/absent or the water is unsafe to fish in,
+    not just uncomfortable conditions.
     """
     if wind_range is None or wave_range is None:
         return {
@@ -852,6 +861,31 @@ def score_conditions(
         exceeds.append(warning)
         factors.append((-12, warning))
 
+    # --- Water-quality safety signals ---
+    # A confirmed harmful-algal-bloom reading or badly oxygen-depleted water
+    # both mean fish are stressed, scattered, or the water itself is unsafe
+    # to be around -- a real go/no-go signal, not just a comfort factor.
+    if water_quality and water_quality.get("available"):
+        hab_level = water_quality.get("hab_risk", "")
+        if hab_level == "danger":
+            score -= 20
+            warning = "Harmful algal bloom danger — avoid contact with the water"
+            exceeds.append(warning)
+            factors.append((-20, warning))
+        elif hab_level == "watch":
+            score -= 8
+            factors.append((-8, "Harmful algal bloom watch nearby"))
+
+        do_num: Optional[float] = None
+        try:
+            do_raw = water_quality.get("do_mg_l")
+            do_num = float(do_raw) if do_raw is not None else None
+        except (TypeError, ValueError):
+            do_num = None
+        if do_num is not None and do_num < 5.0:
+            score -= 6
+            factors.append((-6, f"Low dissolved oxygen ({do_num:.1f} mg/L) — fish stressed"))
+
     score = max(0, min(100, score))
     if score >= _VERDICT_EXCELLENT:
         verdict = "Excellent"
@@ -894,6 +928,7 @@ def classify_conditions(
     fishing_types: Optional[list[str]] = None,
     max_wind_kt: Optional[float] = None,
     max_wave_ft: Optional[float] = None,
+    water_quality: Optional[dict[str, Any]] = None,
 ) -> str:
     """Return just the 5-tier fishability verdict label.
 
@@ -916,6 +951,7 @@ def classify_conditions(
         fishing_types=fishing_types,
         max_wind_kt=max_wind_kt,
         max_wave_ft=max_wave_ft,
+        water_quality=water_quality,
     )["verdict"]
 
 def build_multiday_outlook(
@@ -1195,6 +1231,8 @@ def build_spot_tips(
     experience: str = "",
     water_quality: Optional[dict[str, Any]] = None,
     recent_rain_in: Optional[float] = None,
+    bathymetry: Optional[dict[str, Any]] = None,
+    river_discharge: Optional[dict[str, Any]] = None,
 ) -> list[dict[str, str]]:
     """Generate 3-5 actionable fishing tips based on current conditions.
 
@@ -1204,7 +1242,11 @@ def build_spot_tips(
 
     If *water_quality* is supplied (from EPA WQP via services/datagov.py),
     dissolved-oxygen and enterococcus warnings are injected when thresholds
-    are breached.
+    are breached.  If *bathymetry* is supplied (from services/bathymetry.py)
+    a structure tip is added when the pier sits in shallow water or a sharp
+    drop-off is nearby.  If *river_discharge* is supplied (from
+    services/arcgis_live_feeds.py) its reading supports the rain-driven
+    turbidity tip with a live gauge number, when one applies.
     """
     tips: list[dict[str, str]] = []
 
@@ -1239,6 +1281,27 @@ def build_spot_tips(
                 }
             )
 
+    # Back up the rain-driven turbidity tip with a live nearby gauge reading
+    # when one's available — a bare discharge number has no fixed "high"
+    # threshold across different rivers, so it only adds context to a tip
+    # that rain data already triggered rather than standing on its own.
+    if river_discharge and river_discharge.get("available") and tips:
+        nearest = river_discharge.get("nearest") or {}
+        dist = nearest.get("distance_mi")
+        flow = nearest.get("flow_cfs")
+        if dist is not None and flow is not None and dist <= 5:
+            for tip in tips:
+                if tip["title"] in (
+                    "Muddy Water After Heavy Rain",
+                    "Some Runoff From Recent Rain",
+                ):
+                    gauge_name = (nearest.get("name") or "").strip() or "the nearest"
+                    tip["detail"] += (
+                        f" {gauge_name} gauge {dist:.1f} mi away is currently "
+                        f"reporting {flow:.0f} cfs."
+                    )
+                    break
+
     # Water quality warnings — injected first so they appear prominently.
     if water_quality and water_quality.get("available"):
         do_val = water_quality.get("do_mg_l")
@@ -1269,6 +1332,62 @@ def build_spot_tips(
                     ),
                 }
             )
+        hab_level = water_quality.get("hab_risk", "")
+        if hab_level in ("watch", "danger"):
+            tips.append(
+                {
+                    "icon": "warning",
+                    "title": "Harmful Algal Bloom Danger"
+                    if hab_level == "danger"
+                    else "Harmful Algal Bloom Watch",
+                    "detail": water_quality.get("hab_message")
+                    or (
+                        "Elevated algal bloom indicators detected nearby — avoid contact "
+                        "with discolored or scummy water and don't eat fish caught in it."
+                    ),
+                }
+            )
+
+    # Structure tip from the NOAA NCEI depth profile — shallow water calls for
+    # lighter tackle, while a sharp seaward drop-off is worth fishing directly.
+    if bathymetry and bathymetry.get("available"):
+        pt_depth = bathymetry.get("point_depth_ft")
+        if pt_depth is not None and pt_depth < 0:
+            depth_ft = abs(pt_depth)
+            if depth_ft < 8:
+                tips.append(
+                    {
+                        "icon": "structure",
+                        "title": "Shallow Water Off This Pier",
+                        "detail": (
+                            f"Charted depth here is only about {depth_ft:.0f} ft. Favor "
+                            "lighter tackle and finesse presentations, and work the end "
+                            "of the pier or a channel edge where it's deeper."
+                        ),
+                    }
+                )
+            else:
+                profile = bathymetry.get("profile") or []
+                deepest = max(
+                    (p for p in profile if p.get("depth_ft") is not None),
+                    key=lambda p: abs(p["depth_ft"]),
+                    default=None,
+                )
+                if deepest is not None:
+                    deepest_depth = abs(deepest["depth_ft"])
+                    if deepest_depth - depth_ft >= 15:
+                        tips.append(
+                            {
+                                "icon": "structure",
+                                "title": "Sharp Drop-Off Nearby",
+                                "detail": (
+                                    f"Depth increases from about {depth_ft:.0f} ft here to "
+                                    f"{deepest_depth:.0f} ft within {deepest['distance_nm']} nm — "
+                                    "a ledge like that holds bait and gamefish. Fish bottom "
+                                    "rigs from the end of the pier, closest to the drop."
+                                ),
+                            }
+                        )
     ft = set(fishing_types or [])
 
     # Wind-based tips
@@ -2026,8 +2145,15 @@ def build_safety_checklist(
     alerts: Optional[list[dict[str, str]]] = None,
     fishing_types: Optional[list[str]] = None,
     water_temp: Optional[float] = None,
+    water_quality: Optional[dict[str, Any]] = None,
 ) -> list[dict[str, str]]:
-    """Build a conditions-aware safety checklist for surf/pier fishing."""
+    """Build a conditions-aware safety checklist for surf/pier fishing.
+
+    When *water_quality* is supplied (from EPA WQP via services/datagov.py)
+    an active harmful-algal-bloom reading adds a dedicated warning -- direct
+    water contact (rinsing hands, bait, or wading) is the real exposure risk,
+    so wade anglers get an extra, more specific item.
+    """
     items: list[dict[str, str]] = []
     ft = set(fishing_types or [])
 
@@ -2038,6 +2164,35 @@ def build_safety_checklist(
             "icon": "info",
         }
     )
+
+    # --- Harmful algal bloom safety ---
+    if water_quality and water_quality.get("available"):
+        hab_level = water_quality.get("hab_risk", "")
+        if hab_level == "danger":
+            items.append(
+                {
+                    "text": water_quality.get("hab_message")
+                    or "Harmful algal bloom danger nearby — avoid contact with the water entirely",
+                    "icon": "warning",
+                }
+            )
+            if "wade" in ft:
+                items.append(
+                    {
+                        "text": "Skip wading today — direct contact with bloom-affected water "
+                        "risks skin/eye irritation and illness",
+                        "icon": "warning",
+                    }
+                )
+        elif hab_level == "watch":
+            items.append(
+                {
+                    "text": water_quality.get("hab_message")
+                    or "Algal bloom watch nearby — rinse hands and gear before eating, "
+                    "and keep pets out of the water",
+                    "icon": "caution",
+                }
+            )
 
     max_wave = (
         (wave_range[1] if isinstance(wave_range, tuple) else 3) if wave_range else 0
@@ -2605,6 +2760,10 @@ def generate_forecast(
     )
     _wq_fut = _FORECAST_POOL.submit(_get_wq, loc_lat, loc_lng)
     _fao_fut = _FORECAST_POOL.submit(_get_fao, loc_lat, loc_lng, [])
+    _river_fut = _FORECAST_POOL.submit(_get_river, loc_lat, loc_lng)
+    _bathy_fut = _FORECAST_POOL.submit(
+        _get_bathy, loc_lat, loc_lng, _wind_orientation(location)
+    )
 
     # Resolve marine + water_temp first — they gate species ranking.
     try:
@@ -2824,6 +2983,22 @@ def generate_forecast(
         forecast["fao_enrichment"] = _fao
         sources_used.append("FAO GeoNetwork")
 
+    try:
+        _river = _river_fut.result(timeout=10)
+    except Exception:
+        _river = {"available": False}
+    if _river.get("available"):
+        forecast["river_discharge"] = _river
+        sources_used.append("USGS NWIS river discharge")
+
+    try:
+        _bathy = _bathy_fut.result(timeout=15)
+    except Exception:
+        _bathy = {"available": False}
+    if _bathy.get("available"):
+        forecast["bathymetry"] = _bathy
+        sources_used.append("NOAA NCEI bathymetric DEM")
+
     # Propagate humidity into conditions so the template always has a single
     # reliable place to look, regardless of which data source provided it.
     _humidity = (forecast.get("environment") or {}).get("humidity_pct") or (
@@ -2937,11 +3112,17 @@ def generate_forecast(
         now=now,
         solunar=solunar,
         coast=orientation,
+        water_quality=forecast.get("water_quality"),
     )
     conditions["verdict"] = _fishability["verdict"]
     conditions["fishability_score"] = _fishability["score"]
     conditions["fishability_factors"] = _fishability["factors"]
     conditions["summary"] = _fishability["summary"]
+    # Populated here so safety warnings (e.g. an active HAB danger reading)
+    # reach the template even for anglers with no saved profile -- the
+    # personalized rebuild below overwrites this with the same key once a
+    # profile/threshold preference exists.
+    conditions["exceeds_thresholds"] = _fishability["exceeds"]
 
     # Multi-day outlook (3 days)
     try:
@@ -3017,6 +3198,8 @@ def generate_forecast(
         tide_state=forecast.get("tide_state", ""),
         water_quality=forecast.get("water_quality"),
         recent_rain_in=(forecast.get("weather") or {}).get("precip_recent_in"),
+        bathymetry=forecast.get("bathymetry"),
+        river_discharge=forecast.get("river_discharge"),
     )
 
     # Conditions explainer
@@ -3055,6 +3238,7 @@ def generate_forecast(
         hour=now.hour,
         alerts=forecast.get("alerts"),
         water_temp=water_temp,
+        water_quality=forecast.get("water_quality"),
     )
 
     # Best fishing times (synthesize solunar + tides + sunrise/sunset)
@@ -3407,6 +3591,7 @@ def personalize_forecast(
         alerts=forecast.get("alerts"),
         fishing_types=fishing_types,
         water_temp=water_temp,
+        water_quality=forecast.get("water_quality"),
     )
 
     # Rebuild 3-day outlook with profile-filtered species
@@ -3444,6 +3629,8 @@ def personalize_forecast(
         experience=experience,
         water_quality=forecast.get("water_quality"),
         recent_rain_in=(forecast.get("weather") or {}).get("precip_recent_in"),
+        bathymetry=forecast.get("bathymetry"),
+        river_discharge=forecast.get("river_discharge"),
     )
 
     # Rebuild best fishing times with type-specific windows, boosting
@@ -3473,6 +3660,7 @@ def personalize_forecast(
             fishing_types=fishing_types,
             max_wind_kt=max_wind_kt,
             max_wave_ft=max_wave_ft,
+            water_quality=forecast.get("water_quality"),
         )
         # Store as separate fields so the template can show both the generic
         # verdict and the method-specific one without breaking cached data.

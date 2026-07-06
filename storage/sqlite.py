@@ -128,6 +128,8 @@ CREATE TABLE IF NOT EXISTS catch_log (
     wind_dir      TEXT,
     water_temp_f  REAL,
     moon_phase    TEXT,
+    hab_risk      TEXT,
+    river_discharge_cfs REAL,
     caught_at   TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_catch_log_user_loc_time
@@ -309,6 +311,8 @@ def _run_migrations(conn: sqlite3.Connection) -> None:
             ("wind_dir", "TEXT"),
             ("water_temp_f", "REAL"),
             ("moon_phase", "TEXT"),
+            ("hab_risk", "TEXT"),
+            ("river_discharge_cfs", "REAL"),
         ):
             if col not in catch_cols:
                 conn.execute(f"ALTER TABLE catch_log ADD COLUMN {col} {decl}")
@@ -1002,6 +1006,7 @@ def get_catch_conditions(
         if location_id:
             rows = conn.execute(
                 "SELECT species, bait, rig, tide_state, wind_dir, water_temp_f, moon_phase, "
+                "hab_risk, river_discharge_cfs, "
                 "caught_at FROM catch_log WHERE user_id = ? AND location_id = ? "
                 "ORDER BY caught_at DESC, id DESC LIMIT ?",
                 (user_id, location_id, limit),
@@ -1009,6 +1014,7 @@ def get_catch_conditions(
         else:
             rows = conn.execute(
                 "SELECT species, bait, rig, tide_state, wind_dir, water_temp_f, moon_phase, "
+                "hab_risk, river_discharge_cfs, "
                 "caught_at FROM catch_log WHERE user_id = ? "
                 "ORDER BY caught_at DESC, id DESC LIMIT ?",
                 (user_id, limit),
@@ -1024,6 +1030,8 @@ def get_catch_conditions(
             "wind_dir": r["wind_dir"],
             "water_temp_f": r["water_temp_f"],
             "moon_phase": r["moon_phase"],
+            "hab_risk": r["hab_risk"],
+            "river_discharge_cfs": r["river_discharge_cfs"],
             "date": r["caught_at"],
         }
         for r in rows
@@ -1097,12 +1105,14 @@ def add_log_entry(
 
     *conditions* (when supplied) captures the forecast at catch time so the
     pattern-analysis can later correlate catches with tide/wind/temp/moon.
-    Recognized keys: tide_state, wind_dir, water_temp_f, moon_phase.
+    Recognized keys: tide_state, wind_dir, water_temp_f, moon_phase, hab_risk,
+    river_discharge_cfs.
     """
     c = conditions or {}
     tide_state = (str(c.get("tide_state") or "")[:20]) or None
     wind_dir = (str(c.get("wind_dir") or "")[:8]) or None
     moon_phase = (str(c.get("moon_phase") or "")[:32]) or None
+    hab_risk = (str(c.get("hab_risk") or "")[:16]) or None
     bait_val = (bait.strip()[:_CATCH_LOG_BAIT_MAX]) or None
     rig_val = (rig.strip()[:_CATCH_LOG_BAIT_MAX]) or None
     try:
@@ -1111,14 +1121,22 @@ def add_log_entry(
         )
     except (TypeError, ValueError):
         water_temp_f = None
+    try:
+        river_discharge_cfs = (
+            float(c["river_discharge_cfs"])
+            if c.get("river_discharge_cfs") is not None
+            else None
+        )
+    except (TypeError, ValueError):
+        river_discharge_cfs = None
 
     conn = get_db()
     try:
         cur = conn.execute(
             "INSERT INTO catch_log "
             "(user_id, location_id, species, size, notes, bait, rig, tide_state, "
-            "wind_dir, water_temp_f, moon_phase) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "wind_dir, water_temp_f, moon_phase, hab_risk, river_discharge_cfs) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 user_id,
                 location_id,
@@ -1131,6 +1149,8 @@ def add_log_entry(
                 wind_dir,
                 water_temp_f,
                 moon_phase,
+                hab_risk,
+                river_discharge_cfs,
             ),
         )
         conn.commit()

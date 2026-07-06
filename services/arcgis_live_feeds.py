@@ -28,6 +28,7 @@ Public API
 from __future__ import annotations
 
 import logging
+import math
 import threading as _threading
 import time
 from collections import defaultdict
@@ -1795,6 +1796,63 @@ def fetch_stream_gauges(
     data = list(sites.values())
     _GAUGE_CACHE[k] = {"ts": now, "data": data}
     return data
+
+def _haversine_miles(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
+    """Great-circle distance in miles (kept local to avoid an import cycle)."""
+    R = 3958.8
+    dlat = math.radians(lat2 - lat1)
+    dlng = math.radians(lng2 - lng1)
+    a = (
+        math.sin(dlat / 2) ** 2
+        + math.cos(math.radians(lat1))
+        * math.cos(math.radians(lat2))
+        * math.sin(dlng / 2) ** 2
+    )
+    return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+def get_nearest_river_discharge(
+    lat: float, lng: float, radius_deg: float = 0.35
+) -> dict[str, Any]:
+    """Return the nearest USGS streamgauge readings to a coordinate.
+
+    Wraps :func:`fetch_stream_gauges` (which takes a bounding box) with
+    distance sorting so a single pier/inlet coordinate can surface nearby
+    river discharge and stage.  Freshwater outflow after rain changes
+    salinity and turbidity near inlets and estuary piers, which affects
+    where and how fish feed.  Widens the search once if nothing is found
+    nearby, since rivers are sparse along open-coast piers.
+
+    Returns {available, gauges (nearest 5, each with distance_mi), nearest,
+    source, source_url}.
+    """
+    def _search(radius: float) -> list[dict[str, Any]]:
+        raw = fetch_stream_gauges(lat - radius, lng - radius, lat + radius, lng + radius)
+        gauges = []
+        for g in raw:
+            if g.get("flow_cfs") is None and g.get("stage_ft") is None:
+                continue
+            # Copy rather than mutate — fetch_stream_gauges returns cached
+            # dicts shared across every caller in the same bbox bucket.
+            entry = dict(g)
+            entry["distance_mi"] = round(
+                _haversine_miles(lat, lng, g["lat"], g["lng"]), 1
+            )
+            gauges.append(entry)
+        gauges.sort(key=lambda g: g["distance_mi"])
+        return gauges
+
+    gauges = _search(radius_deg)
+    if not gauges:
+        gauges = _search(radius_deg * 2)
+
+    nearest = gauges[0] if gauges else None
+    return {
+        "available": nearest is not None,
+        "gauges": gauges[:5],
+        "nearest": nearest,
+        "source": "USGS NWIS streamgauges",
+        "source_url": "https://waterdata.usgs.gov/nwis/rt",
+    }
 
 # ── NOAA Storm Reports (past 24 h) ────────────────────────────────────────────
 
