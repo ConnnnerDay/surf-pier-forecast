@@ -51,6 +51,8 @@ from services.nws import (
 )
 from services.datagov import get_water_quality_summary as _get_wq
 from services.hdx_fao import get_hdx_fao_enrichment as _get_fao
+from services.arcgis_live_feeds import get_nearest_river_discharge as _get_river
+from services.bathymetry import get_depth_profile as _get_bathy
 from domain.species import (
     _SPECIES_BY_COAST,
     onshore_offshore_dirs,
@@ -1266,6 +1268,21 @@ def build_spot_tips(
                         "(>104 CFU/100 mL) at nearby monitoring stations. Check local health "
                         "department advisories before wading or swimming. Fish consumption "
                         "advisories may also be in effect — verify with your state agency."
+                    ),
+                }
+            )
+        hab_level = water_quality.get("hab_risk", "")
+        if hab_level in ("watch", "danger"):
+            tips.append(
+                {
+                    "icon": "warning",
+                    "title": "Harmful Algal Bloom Danger"
+                    if hab_level == "danger"
+                    else "Harmful Algal Bloom Watch",
+                    "detail": water_quality.get("hab_message")
+                    or (
+                        "Elevated algal bloom indicators detected nearby — avoid contact "
+                        "with discolored or scummy water and don't eat fish caught in it."
                     ),
                 }
             )
@@ -2605,6 +2622,10 @@ def generate_forecast(
     )
     _wq_fut = _FORECAST_POOL.submit(_get_wq, loc_lat, loc_lng)
     _fao_fut = _FORECAST_POOL.submit(_get_fao, loc_lat, loc_lng, [])
+    _river_fut = _FORECAST_POOL.submit(_get_river, loc_lat, loc_lng)
+    _bathy_fut = _FORECAST_POOL.submit(
+        _get_bathy, loc_lat, loc_lng, _wind_orientation(location)
+    )
 
     # Resolve marine + water_temp first — they gate species ranking.
     try:
@@ -2823,6 +2844,22 @@ def generate_forecast(
     if _fao.get("fao_zone"):
         forecast["fao_enrichment"] = _fao
         sources_used.append("FAO GeoNetwork")
+
+    try:
+        _river = _river_fut.result(timeout=10)
+    except Exception:
+        _river = {"available": False}
+    if _river.get("available"):
+        forecast["river_discharge"] = _river
+        sources_used.append("USGS NWIS river discharge")
+
+    try:
+        _bathy = _bathy_fut.result(timeout=15)
+    except Exception:
+        _bathy = {"available": False}
+    if _bathy.get("available"):
+        forecast["bathymetry"] = _bathy
+        sources_used.append("NOAA NCEI bathymetric DEM")
 
     # Propagate humidity into conditions so the template always has a single
     # reliable place to look, regardless of which data source provided it.

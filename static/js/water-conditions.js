@@ -24,7 +24,9 @@
     fetch(url)
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (d) {
-            var wq = d && d.data && d.data.water_quality;
+            var wq    = d && d.data && d.data.water_quality;
+            var river = d && d.data && d.data.river_discharge;
+            var bathy = d && d.data && d.data.bathymetry;
             var metrics = [];
             if (wq) {
                 if (wq.temp_f        != null) metrics.push({ label: 'Water Temp', value: wq.temp_f + '°F' });
@@ -32,6 +34,12 @@
                 if (wq.do_mg_l       != null) metrics.push({ label: 'Oxygen',     value: wq.do_mg_l + ' mg/L' });
                 if (wq.salinity_ppt  != null) metrics.push({ label: 'Salinity',   value: wq.salinity_ppt + ' ppt' });
                 if (wq.ph            != null) metrics.push({ label: 'pH',         value: wq.ph });
+            }
+            if (river && river.available && river.nearest && river.nearest.flow_cfs != null) {
+                metrics.push({ label: 'River Flow', value: river.nearest.flow_cfs + ' cfs' });
+            }
+            if (bathy && bathy.available && bathy.point_depth_ft != null && bathy.point_depth_ft < 0) {
+                metrics.push({ label: 'Depth', value: Math.abs(bathy.point_depth_ft) + ' ft' });
             }
             if (!metrics.length) { hideSection(); return; }
 
@@ -45,10 +53,17 @@
                 metricsEl.hidden = false;
             }
 
-            if (wq && wq.enterococcus_flag === 'advisory' && advisoryEl && advisoryTx) {
-                advisoryTx.textContent = 'Beach advisory — enterococcus ' +
-                    (wq.enterococcus_cfu_100ml != null ? wq.enterococcus_cfu_100ml + ' CFU/100 mL' : 'elevated') +
-                    ' (EPA limit: 104)';
+            var advisories = [];
+            if (wq && wq.enterococcus_flag === 'advisory') {
+                advisories.push('Beach advisory — enterococcus ' +
+                    (wq.enterococcus_cfu_100ml != null ? wq.enterococcus_cfu_100ml + ' CFU/100 mL' : 'elevated') +
+                    ' (EPA limit: 104)');
+            }
+            if (wq && (wq.hab_risk === 'watch' || wq.hab_risk === 'danger')) {
+                advisories.push(wq.hab_message || 'Harmful algal bloom risk detected nearby');
+            }
+            if (advisories.length && advisoryEl && advisoryTx) {
+                advisoryTx.textContent = advisories.join(' · ');
                 advisoryEl.hidden = false;
             }
 

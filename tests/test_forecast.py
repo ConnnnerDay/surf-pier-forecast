@@ -22,6 +22,7 @@ from domain.forecast import (
     MONTHLY_AVG_WAVES,
     MONTHLY_AVG_WIND_DIR,
     build_multiday_outlook,
+    build_spot_tips,
 )
 
 
@@ -346,6 +347,103 @@ def test_generate_forecast_includes_metadata(monkeypatch):
     assert out["forecast_version"] == fc.FORECAST_VERSION
     assert isinstance(out["sources_used"], list)
     assert isinstance(out["fallbacks_triggered"], list)
+
+
+def test_generate_forecast_wires_river_and_bathymetry(monkeypatch):
+    """River discharge and bathymetry should surface in the forecast dict
+    and sources_used when their services report data."""
+    from domain import forecast as fc
+
+    class _Marine:
+        def get_marine_forecast(self, *_args, **_kwargs):
+            return (5.0, 8.0), (1.0, 2.0), "NW"
+
+    class _Tides:
+        def get_tide_predictions(self, *_args, **_kwargs):
+            return {}
+
+    class _Buoy:
+        def get_barometric_pressure(self, *_args, **_kwargs):
+            return None
+
+    class _Weather:
+        def get_weather_alerts(self, *_args, **_kwargs):
+            return []
+
+        def get_state_alerts(self, *_args, **_kwargs):
+            return []
+
+        def get_current_weather(self, *_args, **_kwargs):
+            return None
+
+    class _Env:
+        def get_coops_environmental(self, *_args, **_kwargs):
+            return {}
+
+        def get_currents(self, *_args, **_kwargs):
+            return []
+
+        def get_current_observation(self, *_args, **_kwargs):
+            return None
+
+    class _Astro:
+        def get_sun_times(self, now, *_args, **_kwargs):
+            return now, now, "6:00 AM / 6:00 PM"
+
+        def get_solunar_times(self, *_args, **_kwargs):
+            return {}
+
+        def get_twilight_times(self, *_args, **_kwargs):
+            return {}
+
+        def get_lunar_details(self, *_args, **_kwargs):
+            return {}
+
+    class _Builder:
+        def __init__(self):
+            self.marine_service = _Marine()
+            self.tide_service = _Tides()
+            self.buoy_service = _Buoy()
+            self.weather_service = _Weather()
+            self.environment_service = _Env()
+            self.astro_service = _Astro()
+
+    river_summary = {
+        "available": True,
+        "gauges": [{"id": "A", "flow_cfs": 100.0, "distance_mi": 2.0}],
+        "nearest": {"id": "A", "flow_cfs": 100.0, "distance_mi": 2.0},
+        "source": "USGS NWIS streamgauges",
+    }
+    bathy_summary = {
+        "available": True,
+        "point_depth_ft": -15.0,
+        "profile": [{"distance_nm": 0.5, "depth_ft": -20.0}],
+        "source": "NOAA NCEI Coastal Digital Elevation Models",
+    }
+
+    monkeypatch.setattr(fc, "ForecastBuilder", _Builder)
+    monkeypatch.setattr(fc, "get_water_temp", lambda *_args, **_kwargs: (70.0, True))
+    monkeypatch.setattr(fc, "build_species_ranking", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_rig_recommendations", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_bait_ranking", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_species_calendar", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_natural_bait_chart", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_spot_tips", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_conditions_explainer", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_bite_alerts", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_gear_checklist", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_safety_checklist", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_best_times", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_activity_timeline", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_multiday_outlook", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "_get_river", lambda *_args, **_kwargs: river_summary)
+    monkeypatch.setattr(fc, "_get_bathy", lambda *_args, **_kwargs: bathy_summary)
+
+    out = fc.generate_forecast({"id": "test-loc", "name": "Test", "state": "NC"})
+    assert out["river_discharge"] == river_summary
+    assert out["bathymetry"] == bathy_summary
+    assert "USGS NWIS river discharge" in out["sources_used"]
+    assert "NOAA NCEI bathymetric DEM" in out["sources_used"]
 
 
 def test_generate_forecast_uv_reflects_selected_location(monkeypatch):
@@ -1100,3 +1198,30 @@ class TestRecentRainTips:
     def test_none_rain_safe(self):
         from domain.forecast import build_spot_tips
         assert isinstance(build_spot_tips(recent_rain_in=None, coast="east"), list)
+
+
+class TestHabRiskTips:
+    def _titles(self, tips):
+        return [t["title"] for t in tips]
+
+    def test_hab_watch_adds_warning_tip(self):
+        wq = {"available": True, "hab_risk": "watch", "hab_message": "Elevated bloom risk"}
+        tips = build_spot_tips(water_quality=wq, coast="east")
+        assert any("Harmful Algal Bloom Watch" in t for t in self._titles(tips))
+        detail = next(t["detail"] for t in tips if t["title"] == "Harmful Algal Bloom Watch")
+        assert detail == "Elevated bloom risk"
+
+    def test_hab_danger_adds_danger_tip(self):
+        wq = {"available": True, "hab_risk": "danger", "hab_message": "Toxin danger"}
+        tips = build_spot_tips(water_quality=wq, coast="east")
+        assert any("Harmful Algal Bloom Danger" in t for t in self._titles(tips))
+
+    def test_hab_low_risk_adds_no_tip(self):
+        wq = {"available": True, "hab_risk": "low", "hab_message": ""}
+        tips = build_spot_tips(water_quality=wq, coast="east")
+        assert not any("Harmful Algal Bloom" in t for t in self._titles(tips))
+
+    def test_unavailable_water_quality_adds_no_tip(self):
+        wq = {"available": False, "hab_risk": "danger"}
+        tips = build_spot_tips(water_quality=wq, coast="east")
+        assert not any("Harmful Algal Bloom" in t for t in self._titles(tips))
