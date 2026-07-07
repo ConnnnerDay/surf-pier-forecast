@@ -932,6 +932,7 @@ h2::before {
 
 .timeline-bar-col {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -9133,7 +9134,7 @@ body.has-app-header main {
 }
 
 .location-bar-inner {
-  max-width: 960px;
+  max-width: min(1600px, 94vw);
   margin: 0 auto;
   display: flex;
   align-items: center;
@@ -9577,9 +9578,13 @@ main {
 }
 
 .forecast-page main {
-  max-width: 960px;
+  max-width: min(1600px, 94vw);
   margin-left: auto;
   margin-right: auto;
+}
+
+.forecast-page .app-header-inner {
+  max-width: min(1600px, 94vw);
 }
 
 /* ---- IMPROVED TYPOGRAPHY SCALE ---- */
