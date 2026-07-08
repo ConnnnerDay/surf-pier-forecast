@@ -677,10 +677,8 @@ var SHARE_TEXT_URL = {{ url_for('api.share_text')|tojson }};
 })();
 {% endif %}
 
-// ── Solunar + tide data (logic in solunar.min.js) ─────────────────────────
-window._SOL_MAJOR = {{ (forecast.solunar.major_periods if forecast.solunar else []) | tojson }};
-window._SOL_MINOR = {{ (forecast.solunar.minor_periods if forecast.solunar else []) | tojson }};
-window._TIDES     = {{ (forecast.tides if forecast.tides else []) | tojson }};
+// ── Tide data (logic in solunar.min.js) ───────────────────────────────────
+window._TIDES = {{ (forecast.tides if forecast.tides else []) | tojson }};
 
 // ── Refreshing poll — must run immediately when IS_REFRESHING is true ──────
 if (IS_REFRESHING && CURRENT_LOC_ID) {
