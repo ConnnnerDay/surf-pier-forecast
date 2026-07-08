@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 320" font-family="Arial, sans-serif">
+  <text x="250" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a3a5c">Light Spinning/Casting Rig</text>
+
+  <!-- Rod tip and spinning reel -->
+  <g transform="translate(30, 60)">
+    <line x1="0" y1="20" x2="90" y2="10" stroke="#5a4a3a" stroke-width="3" stroke-linecap="round"/>
+    <ellipse cx="8" cy="24" rx="12" ry="8" fill="#666" stroke="#444" stroke-width="1.5"/>
+    <text x="45" y="0" text-anchor="middle" font-size="10" fill="#555">Spinning / baitcasting rod</text>
+  </g>
+
+  <!-- Cast arc -->
+  <path d="M100 65 Q220 10 340 90" fill="none" stroke="#4a9eda" stroke-width="1.5" stroke-dasharray="4,4" opacity="0.7"/>
+  <path d="M330 82 L340 90 L328 96" fill="none" stroke="#4a9eda" stroke-width="1.5"/>
+  <text x="220" y="30" text-anchor="middle" font-size="10" fill="#4a9eda">cast toward schooling fish / mangrove edge</text>
+
+  <!-- Line straight to leader, no float or bottom weight -->
+  <line x1="120" y1="70" x2="240" y2="100" stroke="#2a6" stroke-width="2.5" stroke-dasharray="8,4"/>
+  <text x="175" y="60" text-anchor="middle" font-size="11" fill="#555">Braid (10-20 lb)</text>
+
+  <line x1="240" y1="100" x2="300" y2="150" stroke="#5da" stroke-width="2"/>
+  <text x="290" y="120" text-anchor="middle" font-size="11" fill="#555" transform="rotate(50, 290, 120)">Fluoro leader, 18-24 in</text>
+
+  <!-- Jig head with soft plastic, unweighted presentation -->
+  <g transform="translate(292, 150)">
+    <path d="M8 0 Q18 0 18 10 Q18 17 8 17 Q0 17 0 8 Q0 0 8 0" fill="#e74c3c" stroke="#b03a2e" stroke-width="1.5"/>
+    <circle cx="6" cy="6" r="1.2" fill="#fff"/>
+    <path d="M16 10 Q34 15 47 26 Q36 28 26 34 Q24 22 16 15" fill="#88c" stroke="#557" stroke-width="1" opacity="0.85"/>
+    <text x="58" y="14" font-size="11" fill="#555">Jig head + soft plastic</text>
+    <text x="58" y="28" font-size="10" fill="#888">or lightly-weighted live bait</text>
+  </g>
+
+  <!-- Surface schooling fish -->
+  <g transform="translate(390, 60)" opacity="0.7">
+    <path d="M0 8 Q10 -4 24 8 Q10 20 0 8" fill="#7ba3c4" stroke="#5a83a4" stroke-width="1"/>
+    <path d="M18 10 Q28 0 38 10 Q28 20 18 10" fill="#7ba3c4" stroke="#5a83a4" stroke-width="1"/>
+    <text x="20" y="30" text-anchor="middle" font-size="9" fill="#5a83a4">surface-schooling fish</text>
+  </g>
+
+  <!-- Legend box -->
+  <rect x="15" y="240" width="470" height="55" rx="6" fill="#f7f9fc" stroke="#ccd" stroke-width="1"/>
+  <text x="30" y="260" font-size="11" fill="#333" font-weight="bold">Presentation:</text>
+  <text x="30" y="278" font-size="10.5" fill="#555">No float or sinker — cast directly to visible fish, current seams, or structure and work the</text>
+  <text x="30" y="290" font-size="10.5" fill="#555">lure or bait back with a natural swimming action.</text>
+</svg>

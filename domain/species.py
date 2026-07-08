@@ -753,12 +753,89 @@ RIG_CATEGORIES: dict[str, dict[str, Any]] = {
         "leader": "2-4 ft of 25-40 lb fluorocarbon",
         "image": "images/rigs/kayak-live-bait.svg",
     },
+    "light_bottom_reef": {
+        "name": "Light Bottom Rig (Reef & Structure)",
+        "description": (
+            "A single or double dropper-loop hook on a light fluorocarbon "
+            "leader above a small egg or bank sinker — just enough weight "
+            "to hold near sandy, muddy, or rocky bottom without spooking "
+            "line-shy reef and structure feeders. The everyday setup for "
+            "grunts, small snapper, porgies, flatfish, and nearshore "
+            "rockfish over natural bottom, wrecks, and grass edges."
+        ),
+        "mainline": "10-20 lb mono or braid",
+        "leader": "12-24 in of 15-25 lb fluorocarbon",
+        "image": "images/rigs/light-bottom-reef.svg",
+    },
+    "ultralight_panfish": {
+        "name": "Ultralight Panfish Rig",
+        "description": (
+            "A tiny #6-#2 hook tied straight to a light leader with just a "
+            "split shot or two for weight — no swivel or heavy hardware to "
+            "spook small-mouthed fish. Built for pinfish, silver perch, "
+            "gobies, blennies, and other bite-sized bait-stealers around "
+            "docks, jetties, and grass flats where finesse beats power."
+        ),
+        "mainline": "6-10 lb mono or braid",
+        "leader": "12-18 in of 8-12 lb fluorocarbon",
+        "image": "images/rigs/ultralight-panfish.svg",
+    },
+    "dropper_loop_deep": {
+        "name": "Deep Dropper Loop Rig",
+        "description": (
+            "Two to three circle hooks on stiff dropper loops spaced above "
+            "a heavy bank or torpedo sinker, dropped straight down to "
+            "offshore rocky banks and reefs in 100-500+ ft. Weight is sized "
+            "to reach bottom fast and hold in current. The standard setup "
+            "for schooling rockfish, deepwater snapper, and other bank "
+            "structure fish located on sonar and jigged straight down."
+        ),
+        "mainline": "50-80 lb braid",
+        "leader": "40-60 lb mono with 2-3 dropper loops",
+        "image": "images/rigs/dropper-loop-deep.svg",
+    },
+    "drift_bottom": {
+        "name": "Drift Rig (Slip Sinker)",
+        "description": (
+            "A slip or torpedo sinker above a barrel swivel and 3-5 ft "
+            "fluorocarbon leader to a circle hook, drifted slowly over "
+            "sand, gravel, or mud bottom with the boat instead of anchored. "
+            "Covers ground to find scattered flatfish and bottom feeders — "
+            "the standard halibut- and flounder-style presentation."
+        ),
+        "mainline": "30-50 lb braid",
+        "leader": "3-5 ft of 30-50 lb fluorocarbon",
+        "image": "images/rigs/drift-bottom.svg",
+    },
+    "light_spin_cast": {
+        "name": "Light Spinning/Casting Rig",
+        "description": (
+            "A jig head, soft plastic, or live bait fished weightless or "
+            "on a light leader straight off spinning or baitcasting gear — "
+            "no float or bottom weight. Cast to surface-schooling fish, "
+            "mangrove edges, and inlet current for snook, tarpon, jacks, "
+            "and other fish that key on a natural, unweighted presentation."
+        ),
+        "mainline": "10-20 lb braid",
+        "leader": "18-24 in of 20-30 lb fluorocarbon",
+        "image": "images/rigs/light-spin-cast.svg",
+    },
 }
 
 def _classify_rig(rig_text: str) -> str:
     """Map a species' rig description to a canonical rig category key."""
     text = rig_text.lower()
-    if "n/a" in text or "observe" in text or "protected" in text:
+    if (
+        "n/a" in text
+        or "observe" in text
+        or "protected" in text
+        or "not a hook-and-line" in text
+        or "not applicable" in text
+        or "too small for hook and line" in text
+        or "hoop net" in text
+        or "snorkel" in text
+        or "scuba" in text
+    ):
         return ""
     if "deep-drop" in text or "deep drop" in text or "electric reel" in text:
         return "deep-drop"
@@ -826,6 +903,43 @@ def _classify_rig(rig_text: str) -> str:
         or "sliding" in text
     ):
         return "fishfinder"
+    # Ultralight panfish — tiny hooks, no room for heavier hardware.
+    if (
+        "ultra-light" in text
+        or "ultralight" in text
+        or "tiny hook" in text
+        or "very small hook" in text
+        or "micro hook" in text
+    ):
+        return "ultralight_panfish"
+    # Deep dropper loop — offshore banks/reefs, jigged straight down.
+    if "dropper loop" in text and (
+        "offshore" in text
+        or "bank" in text
+        or "deep" in text
+        or re.search(r"\b([2-9]\d\d|1[5-9]\d)\s*ft", text)
+    ):
+        return "dropper_loop_deep"
+    # Drift rig — covered ground over sand/gravel/mud instead of anchored.
+    if "drift" in text:
+        return "drift_bottom"
+    # Light/medium bottom rig near reef, rock, sand, mud or grass structure.
+    if "bottom rig" in text or (
+        "bottom" in text
+        and (
+            "reef" in text
+            or "rocky" in text
+            or "sandy" in text
+            or "sand" in text
+            or "mud" in text
+            or "grass" in text
+            or "hard bottom" in text
+        )
+    ):
+        return "light_bottom_reef"
+    # Light spinning/casting — unweighted lure or live bait, no float/bottom rig.
+    if "spinning" in text or "baitcasting" in text:
+        return "light_spin_cast"
     return "fishfinder"
 
 # Maps rig keys to their primary gear style ("bait", "lure", or "mixed").
@@ -847,11 +961,24 @@ _RIG_GEAR_TYPE: dict[str, str] = {
     "current_jig": "lure",
     "wade_light": "mixed",
     "kayak_live_bait": "bait",
+    "light_bottom_reef": "bait",
+    "ultralight_panfish": "bait",
+    "dropper_loop_deep": "bait",
+    "drift_bottom": "bait",
+    "light_spin_cast": "mixed",
 }
 
 # Rigs that work well as a first introduction — simple setup, forgiving tackle.
 _BEGINNER_FRIENDLY_RIGS = frozenset(
-    {"fishfinder", "hi-lo", "pompano", "float", "popping-cork"}
+    {
+        "fishfinder",
+        "hi-lo",
+        "pompano",
+        "float",
+        "popping-cork",
+        "light_bottom_reef",
+        "ultralight_panfish",
+    }
 )
 
 def _condition_rig_tip(
@@ -1190,6 +1317,15 @@ _RIG_KNOTS: dict[str, list[str]] = {
     "deep-drop": ["dropper_loop", "fg_knot"],
     "tandem-jig": ["palomar", "uni_to_uni"],
     "trolling": ["improved_clinch", "fg_knot"],
+    "fly_pattern": ["uni_to_uni", "surgeons_loop"],
+    "current_jig": ["palomar", "fg_knot"],
+    "wade_light": ["palomar", "uni_knot"],
+    "kayak_live_bait": ["uni_knot", "uni_to_uni"],
+    "light_bottom_reef": ["dropper_loop", "improved_clinch"],
+    "ultralight_panfish": ["improved_clinch", "uni_knot"],
+    "dropper_loop_deep": ["dropper_loop", "fg_knot"],
+    "drift_bottom": ["improved_clinch", "uni_to_uni"],
+    "light_spin_cast": ["palomar", "uni_to_uni"],
 }
 
 def get_knots_for_rig(rig_key: str) -> list[dict[str, str]]:
