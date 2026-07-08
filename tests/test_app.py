@@ -82,7 +82,7 @@ class TestBasicRoutes:
 
         assert resp.status_code == 200
         assert b"When to Fish" in resp.data
-        assert b"3-Day Outlook" in resp.data
+        assert b"Today's Tides" in resp.data
         assert b"Surf &amp; Pier Fishing Outlook" in resp.data
 
     def test_setup_select_requires_csrf(self, client):

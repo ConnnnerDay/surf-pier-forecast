@@ -185,17 +185,13 @@
         })();
     }
 
-    // ── NDFD Wind + Precipitation + Temperature Forecast (single combined request) ──
-    var windBlock = document.getElementById('wind-outlook-block');
-    var windGrid  = document.getElementById('wind-outlook-grid');
+    // ── NDFD Temperature Forecast (combined request also carries wind/precip, unused here) ──
     var tempBlock = document.getElementById('temp-forecast-block');
     var tempGrid  = document.getElementById('temp-forecast-grid');
     if (lat && lng) fetch('/api/weather/combined-forecast?lat=' + lat + '&lng=' + lng)
     .then(function (r) { return r.ok ? r.json() : null; })
     .then(function (combined) {
         if (!combined) { combined = {}; }
-        var windData   = combined.wind;
-        var precipData = combined.precip;
         var tempData   = combined.temp;
 
         // ── Render temperature strip ────────────────────────────────────────
@@ -231,90 +227,6 @@
         } else {
             if (tempBlock) tempBlock.style.display = 'none';
         }
-
-        // ── Render wind + precip grid ────────────────────────────────────────
-        if (!windData || !windData.periods || !windData.periods.length) {
-            if (windBlock) windBlock.style.display = 'none';
-            return;
-        }
-
-        var block = windBlock;
-        var grid  = windGrid;
-        if (!block || !grid) return;
-
-        var COMPASS_ARROWS = {
-            N:'↓', NE:'↙', E:'←', SE:'↖', S:'↑', SW:'↗', W:'→', NW:'↘'
-        };
-
-        // Build a lookup of precipitation by approximate start hour
-        var precipByHour = {};
-        if (precipData && precipData.periods) {
-            precipData.periods.forEach(function (pp) {
-                if (pp.from_time) {
-                    try {
-                        var h = new Date(pp.from_time).getTime();
-                        precipByHour[h] = pp;
-                    } catch (e) {}
-                }
-            });
-        }
-
-        // Find the closest precip period (6-h) for each wind period (3-h)
-        function nearestPrecip(isoTime) {
-            if (!isoTime || !Object.keys(precipByHour).length) return null;
-            try {
-                var t   = new Date(isoTime).getTime();
-                var best = null, bestDiff = Infinity;
-                Object.keys(precipByHour).forEach(function (h) {
-                    var diff = Math.abs(t - Number(h));
-                    if (diff < bestDiff) { bestDiff = diff; best = precipByHour[h]; }
-                });
-                // Only associate if within 6 hours
-                return bestDiff <= 6 * 3600 * 1000 ? best : null;
-            } catch (e) { return null; }
-        }
-
-        var html = '';
-        windData.periods.forEach(function (p) {
-            var arrow = COMPASS_ARROWS[p.wind_dir] || '·';
-            var timeStr = '';
-            if (p.interval_start) {
-                try {
-                    var d = new Date(p.interval_start);
-                    timeStr = d.toLocaleString([], { weekday:'short', hour:'numeric' });
-                } catch (e) {}
-            }
-            var speedClass = p.wind_speed >= 25 ? 'wind-fc--gale'
-                           : p.wind_speed >= 15 ? 'wind-fc--strong'
-                           : p.wind_speed >= 8  ? 'wind-fc--moderate'
-                           : 'wind-fc--light';
-            var pp = nearestPrecip(p.interval_start);
-            var rainHtml = pp && pp.rain
-                ? '<span class="wind-fc-rain" title="' + (pp.label || '') + '">🌧</span>'
-                : '';
-            html +=
-                '<div class="wind-fc-cell ' + speedClass + '">' +
-                '<span class="wind-fc-time">' + timeStr + '</span>' +
-                '<span class="wind-fc-arrow" title="' + (p.wind_dir || '') + '">' + arrow + '</span>' +
-                '<span class="wind-fc-dir">' + (p.wind_dir || '–') + '</span>' +
-                '<span class="wind-fc-speed">' + p.wind_speed + ' kt</span>' +
-                (p.wind_gust ? '<span class="wind-fc-gust">G ' + p.wind_gust + '</span>' : '') +
-                rainHtml +
-                '</div>';
-        });
-        grid.innerHTML = html;
-
-        // Update subtitle with first period summary
-        var sub = document.getElementById('wind-outlook-sub');
-        if (sub && windData.periods[0]) {
-            var p0 = windData.periods[0];
-            sub.textContent = (p0.wind_dir || '') + ' ' + p0.wind_speed + ' kt'
-                + (p0.wind_gust ? ' G' + p0.wind_gust : '');
-        }
-
-        block.style.display = '';
     })
-    .catch(function () {
-        if (windGrid) windGrid.innerHTML = '<p class="section-unavailable">Wind forecast unavailable</p>';
-    });
+    .catch(function () {});
 })();

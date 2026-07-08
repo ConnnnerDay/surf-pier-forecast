@@ -338,40 +338,6 @@
          6. SECONDARY DATA — COLLAPSIBLE SECTIONS
          ============================================================ -->
 
-    <!-- 3-Day Outlook -->
-    <div class="section-block" data-section-id="next-3-days" data-section-label="Next 3 Days">
-    <details class="collapsible-module">
-        <summary>
-            <span class="collapsible-module-title">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                Next 3 Days
-            </span>
-            <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-        </summary>
-        <div class="collapsible-module-body">
-            {% include 'partials/_outlook.html' %}
-        </div>
-    </details>
-    </div><!-- /.section-block next-3-days -->
-
-    <!-- NDFD Wind Forecast (ArcGIS Live Feed) — populated client-side -->
-    <div class="section-block" data-section-id="wind-outlook" data-section-label="Wind Outlook" id="wind-outlook-block">
-    <details class="collapsible-module" id="wind-outlook-details">
-        <summary>
-            <span class="collapsible-module-title">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg>
-                Wind Outlook
-            </span>
-            <span class="collapsible-module-sub" id="wind-outlook-sub">NDFD forecast</span>
-            <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-        </summary>
-        <div class="collapsible-module-body">
-            <p class="wind-outlook-source">Source: NOAA National Digital Forecast Database via ArcGIS Living Atlas &middot; 3-hour intervals</p>
-            <div id="wind-outlook-grid" class="wind-outlook-grid"><div class="skeleton-grid"><div class="skeleton-row"></div><div class="skeleton-row"></div><div class="skeleton-row"></div><div class="skeleton-row"></div><div class="skeleton-row"></div></div></div>
-        </div>
-    </details>
-    </div><!-- /.section-block wind-outlook -->
-
     <!-- NDFD Daily Temperature 5-day strip (ArcGIS Live Feed) — populated client-side -->
     <div class="section-block" data-section-id="temp-forecast" data-section-label="5-Day Temperatures" id="temp-forecast-block">
     <details class="collapsible-module" id="temp-forecast-details">
@@ -389,22 +355,6 @@
         </div>
     </details>
     </div><!-- /.section-block temp-forecast -->
-
-    <!-- Solunar Times -->
-    <div class="section-block" data-section-id="peak-feeding" data-section-label="Peak Feeding Times">
-    <details class="collapsible-module">
-        <summary>
-            <span class="collapsible-module-title">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
-                Peak Feeding Times
-            </span>
-            <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-        </summary>
-        <div class="collapsible-module-body">
-            {% include 'partials/_solunar.html' %}
-        </div>
-    </details>
-    </div><!-- /.section-block peak-feeding -->
 
     <!-- Tides -->
     <div class="section-block" data-section-id="todays-tides" data-section-label="Today's Tides">
@@ -548,22 +498,6 @@
     </details>
     </div><!-- /.section-block lure-guide -->
     {% endif %}
-
-    <!-- Gear & Safety -->
-    <div class="section-block" data-section-id="what-to-bring" data-section-label="What to Bring">
-    <details class="collapsible-module">
-        <summary>
-            <span class="collapsible-module-title">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                What to Bring
-            </span>
-            <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-        </summary>
-        <div class="collapsible-module-body">
-            {% include 'partials/_checklists.html' %}
-        </div>
-    </details>
-    </div><!-- /.section-block what-to-bring -->
 
     <!-- Additional Data (spawning, calendar, forage) -->
     <div class="section-block" data-section-id="species-calendar" data-section-label="Species Calendar">
