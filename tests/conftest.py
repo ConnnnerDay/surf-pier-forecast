@@ -30,15 +30,6 @@ def _clear_in_process_caches():
     _sqlite._LOG_STATS_CACHE.clear()
     _cache._MEM_CACHE.clear()
     _forecast._PERSONALIZE_CACHE.clear()
-    # Custom habitat caches — module-level singletons that must be reset when
-    # each test gets a fresh isolated SQLite DB so cached data from a previous
-    # test's DB doesn't bleed into the next test.
-    _sqlite._CUSTOM_HABITATS_CACHE = None
-    _sqlite._CUSTOM_HABITATS_TS = 0.0
-    _sqlite._HABITAT_OVERRIDES_CACHE = None
-    _sqlite._HABITAT_OVERRIDES_TS = 0.0
-    _sqlite._CUSTOM_HABITAT_TYPES_CACHE = None
-    _sqlite._CUSTOM_HABITAT_TYPES_TS = 0.0
     # IP-keyed rate-limit windows and the station-catalog cache are module-level
     # singletons; reset so counts/catalogs from one test don't bleed into the next.
     _views._setup_rate_limit_store.clear()
@@ -51,12 +42,6 @@ def _clear_in_process_caches():
     _sqlite._LOG_STATS_CACHE.clear()
     _cache._MEM_CACHE.clear()
     _forecast._PERSONALIZE_CACHE.clear()
-    _sqlite._CUSTOM_HABITATS_CACHE = None
-    _sqlite._CUSTOM_HABITATS_TS = 0.0
-    _sqlite._HABITAT_OVERRIDES_CACHE = None
-    _sqlite._HABITAT_OVERRIDES_TS = 0.0
-    _sqlite._CUSTOM_HABITAT_TYPES_CACHE = None
-    _sqlite._CUSTOM_HABITAT_TYPES_TS = 0.0
 
 
 @pytest.fixture
