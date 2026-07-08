@@ -32,9 +32,6 @@ from storage.sqlite import (
     save_forecast_to_db,
     save_page_layout,
     save_preferences,
-    upsert_habitat_override,
-    update_custom_habitat,
-    create_custom_habitat,
 )
 
 
@@ -92,39 +89,6 @@ CREATE TABLE reg_scrape_cache (
     reg_json TEXT NOT NULL,
     scraped_at TEXT NOT NULL DEFAULT (datetime('now')),
     PRIMARY KEY (species_key, state)
-);
-CREATE TABLE habitat_overrides (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    feature_key TEXT NOT NULL UNIQUE,
-    name TEXT,
-    description TEXT,
-    fill_color TEXT,
-    created_by INTEGER,
-    is_deleted INTEGER NOT NULL DEFAULT 0,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
-CREATE TABLE custom_habitats (
-    id TEXT PRIMARY KEY,
-    habitat_type TEXT NOT NULL DEFAULT 'general',
-    name TEXT NOT NULL DEFAULT '',
-    description TEXT NOT NULL DEFAULT '',
-    fill_color TEXT NOT NULL DEFAULT '',
-    lat REAL,
-    lng REAL,
-    created_by INTEGER,
-    is_deleted INTEGER NOT NULL DEFAULT 0,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
-CREATE TABLE custom_habitat_types (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    slug TEXT NOT NULL UNIQUE,
-    default_color TEXT NOT NULL DEFAULT '#8b5cf6',
-    created_by INTEGER,
-    is_deleted INTEGER NOT NULL DEFAULT 0,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE TABLE push_subscriptions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -235,21 +199,6 @@ class TestMigrations:
             conn.close()
         for col in ("wind_units", "temp_units", "notification_prefs", "favorites"):
             assert col in cols, f"Migration should have added '{col}'"
-
-    def test_habitat_column_migrations(self, tmp_path, monkeypatch):
-        """Lines 395, 399, 403, 405."""
-        self._make_old_db(tmp_path, monkeypatch)
-        init_db()
-        conn = get_db()
-        try:
-            ch_cols = _column_names(conn, "custom_habitats")
-            ho_cols = _column_names(conn, "habitat_overrides")
-        finally:
-            conn.close()
-        assert "fill_opacity" in ch_cols
-        assert "stroke_weight" in ch_cols
-        assert "fill_opacity" in ho_cols
-        assert "stroke_weight" in ho_cols
 
     def test_catch_log_column_migrations(self, tmp_path, monkeypatch):
         """catch_log condition-snapshot columns, including hab_risk/river_discharge_cfs."""
@@ -837,157 +786,3 @@ class TestLoadForecastBadJson:
         conn.close()
         assert load_forecast("bad-forecast") is None
 
-
-# ---------------------------------------------------------------------------
-# _habitat_row_to_dict bad geometry_json — lines 1451-1452
-# ---------------------------------------------------------------------------
-
-
-class TestHabitatRowBadGeometry:
-    def test_invalid_geometry_json_becomes_empty_dict(self, isolated_db):
-        """Lines 1451-1452: ValueError/TypeError → geom stays {}."""
-        uid = create_user("geomuser", "Password1!")
-        # Bypass create_custom_habitat to store invalid geometry_json directly
-        conn = get_db()
-        conn.execute(
-            "INSERT INTO custom_habitats "
-            "(id, habitat_type, name, description, fill_color, geometry_json, lat, lng, created_by) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            ("bad-geom", "reef", "Bad", "", "#000", "not-valid-json", 34.2, -77.8, uid),
-        )
-        conn.commit()
-        conn.close()
-
-        from storage.sqlite import get_all_custom_habitats
-        sq._CUSTOM_HABITATS_CACHE = None
-        sq._CUSTOM_HABITATS_TS = 0.0
-        habitats = get_all_custom_habitats()
-        bad = next((h for h in habitats if h["id"] == "bad-geom"), None)
-        assert bad is not None
-        assert bad["geometry"] == {}
-
-
-# ---------------------------------------------------------------------------
-# update_custom_habitat — optional field branches (lines 1600-1625)
-# ---------------------------------------------------------------------------
-
-
-_GEOM = {"type": "Polygon", "coordinates": [[[0, 0], [0, 1], [1, 1], [1, 0], [0, 0]]]}
-
-
-class TestUpdateCustomHabitatAllFields:
-    @pytest.fixture(autouse=True)
-    def _habitat(self, isolated_db):
-        uid = create_user("hab_admin", "Password1!")
-        create_custom_habitat(
-            "h-all", "reef", "Original", "Orig desc", "#111",
-            _GEOM, 10.0, 20.0, uid,
-        )
-
-    def test_update_habitat_type(self):
-        """Line 1600-1601."""
-        result = update_custom_habitat("h-all", habitat_type="surf")
-        assert result["habitat_type"] == "surf"
-
-    def test_update_description(self):
-        """Lines 1606-1607."""
-        result = update_custom_habitat("h-all", description="New desc")
-        assert result["description"] == "New desc"
-
-    def test_update_fill_color(self):
-        """Lines 1609-1610."""
-        result = update_custom_habitat("h-all", fill_color="#abcdef")
-        assert result["fill_color"] == "#abcdef"
-
-    def test_update_fill_opacity(self):
-        """Lines 1612-1613."""
-        result = update_custom_habitat("h-all", fill_opacity=0.75)
-        assert result["fill_opacity"] == pytest.approx(0.75)
-
-    def test_update_stroke_weight(self):
-        """Lines 1615-1616."""
-        result = update_custom_habitat("h-all", stroke_weight=5.0)
-        assert result["stroke_weight"] == pytest.approx(5.0)
-
-    def test_update_lat(self):
-        """Lines 1621-1622."""
-        result = update_custom_habitat("h-all", lat=35.0)
-        assert result["lat"] == pytest.approx(35.0)
-
-    def test_update_lng(self):
-        """Lines 1624-1625."""
-        result = update_custom_habitat("h-all", lng=-78.0)
-        assert result["lng"] == pytest.approx(-78.0)
-
-    def test_update_multiple_fields_at_once(self):
-        """Combines all optional fields in one call."""
-        result = update_custom_habitat(
-            "h-all",
-            habitat_type="kelp",
-            description="Updated",
-            fill_color="#222",
-            fill_opacity=0.5,
-            stroke_weight=3.0,
-            lat=36.0,
-            lng=-79.0,
-        )
-        assert result["habitat_type"] == "kelp"
-        assert result["description"] == "Updated"
-        assert result["fill_color"] == "#222"
-        assert result["fill_opacity"] == pytest.approx(0.5)
-        assert result["stroke_weight"] == pytest.approx(3.0)
-        assert result["lat"] == pytest.approx(36.0)
-        assert result["lng"] == pytest.approx(-79.0)
-
-
-# ---------------------------------------------------------------------------
-# upsert_habitat_override — update-path optional fields (lines 1770-1785)
-# ---------------------------------------------------------------------------
-
-
-class TestUpsertHabitatOverrideUpdateFields:
-    @pytest.fixture(autouse=True)
-    def _override(self, isolated_db):
-        uid = create_user("ho_admin", "Password1!")
-        upsert_habitat_override(
-            "feat-upd", "Name", "Desc", "#aaa", uid,
-            fill_opacity=0.3, stroke_weight=1.5,
-            geometry='{"type":"Point","coordinates":[0,0]}',
-        )
-
-    def test_update_description(self, isolated_db):
-        """Lines 1770-1771."""
-        uid = create_user("ho_admin2", "Password1!")
-        result = upsert_habitat_override("feat-upd", None, "New desc", None, uid)
-        assert result["description"] == "New desc"
-
-    def test_update_fill_color(self, isolated_db):
-        """Lines 1773-1774."""
-        uid = create_user("ho_admin3", "Password1!")
-        result = upsert_habitat_override("feat-upd", None, None, "#bbb", uid)
-        assert result["fill_color"] == "#bbb"
-
-    def test_update_fill_opacity(self, isolated_db):
-        """Lines 1776-1777."""
-        uid = create_user("ho_admin4", "Password1!")
-        result = upsert_habitat_override(
-            "feat-upd", None, None, None, uid, fill_opacity=0.9
-        )
-        assert result["fill_opacity"] == pytest.approx(0.9)
-
-    def test_update_stroke_weight(self, isolated_db):
-        """Lines 1779-1780."""
-        uid = create_user("ho_admin5", "Password1!")
-        result = upsert_habitat_override(
-            "feat-upd", None, None, None, uid, stroke_weight=4.0
-        )
-        assert result["stroke_weight"] == pytest.approx(4.0)
-
-    def test_update_geometry_not_clear(self, isolated_db):
-        """Lines 1784-1785: geometry != None and not geometry_clear."""
-        uid = create_user("ho_admin6", "Password1!")
-        new_geom = '{"type":"Polygon","coordinates":[[0,0]]}'
-        result = upsert_habitat_override(
-            "feat-upd", None, None, None, uid, geometry=new_geom
-        )
-        assert result["geometry_json"] == new_geom
