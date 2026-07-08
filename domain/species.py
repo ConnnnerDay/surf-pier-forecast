@@ -832,12 +832,29 @@ def _classify_rig(rig_text: str) -> str:
         or "not a hook-and-line" in text
         or "not applicable" in text
         or "too small for hook and line" in text
+        or "not a rod-and-reel fishery" in text
+        or "release immediately" in text
+        or "used as bait" in text
+        or "tined spear" in text
         or "hoop net" in text
         or "snorkel" in text
         or "scuba" in text
+        or "free-diving" in text
+        or "trap" in text
+        or "crab pot" in text
+        or "crab ring" in text
+        or (
+            "cast net" in text
+            and not any(k in text for k in ("hook", "sabiki", "rig", "rod"))
+        )
     ):
         return ""
-    if "deep-drop" in text or "deep drop" in text or "electric reel" in text:
+    if (
+        "deep-drop" in text
+        or "deep drop" in text
+        or "deepdrop" in text
+        or "electric reel" in text
+    ):
         return "deep-drop"
     if "trolling" in text and "slow" not in text:
         return "trolling"
@@ -853,6 +870,7 @@ def _classify_rig(rig_text: str) -> str:
         or "deceiver" in text
         or "fly line" in text
         or "tippet" in text
+        or "spey" in text
         or ("fly" in text and "rod" in text)
     ):
         return "fly_pattern"
@@ -884,13 +902,26 @@ def _classify_rig(rig_text: str) -> str:
         or "very heavy wire" in text
         or "stand-up" in text
         or "heavy wire leader and heavy" in text
+        or "steel cable leader" in text
+        or ("wire leader" in text and ("heavy conventional" in text or "offshore" in text))
     ):
         return "shark"
     if "knocker" in text:
         return "knocker"
     if "pier" in text or "structure" in text or "vertical" in text:
         return "knocker"
-    if "pompano" in text or "float bead" in text or ("floats above" in text):
+    if (
+        "pompano" in text
+        or "float bead" in text
+        or "floats above" in text
+        or (
+            "surf" in text
+            and "light" in text
+            and any(
+                s in text for s in ("trough", "sandbar", "first bar", "swash", "inlet")
+            )
+        )
+    ):
         return "pompano"
     if "double-dropper" in text or "hi-lo" in text or "two-hook" in text:
         return "hi-lo"
@@ -903,42 +934,79 @@ def _classify_rig(rig_text: str) -> str:
         or "sliding" in text
     ):
         return "fishfinder"
-    # Ultralight panfish — tiny hooks, no room for heavier hardware.
+    # Ultralight panfish — tiny hooks, or light tackle worked tight to
+    # reef/dock structure for small bait-stealing bycatch.
     if (
         "ultra-light" in text
         or "ultralight" in text
         or "tiny hook" in text
         or "very small hook" in text
         or "micro hook" in text
+        or "very light" in text
+        or (
+            "light rig" in text
+            and any(
+                s in text
+                for s in (
+                    "reef",
+                    "kelp",
+                    "rubble",
+                    "piling",
+                    "wreck",
+                    "seagrass",
+                    "sargassum",
+                    "dock",
+                )
+            )
+        )
     ):
         return "ultralight_panfish"
-    # Deep dropper loop — offshore banks/reefs, jigged straight down.
-    if "dropper loop" in text and (
-        "offshore" in text
-        or "bank" in text
-        or "deep" in text
-        or re.search(r"\b([2-9]\d\d|1[5-9]\d)\s*ft", text)
+    # Deep dropper loop — offshore banks/reefs or mid-water suspended jigging.
+    if (
+        (
+            "dropper loop" in text
+            and (
+                "offshore" in text
+                or "bank" in text
+                or "deep" in text
+                or re.search(r"\b([2-9]\d\d|1[5-9]\d)\s*ft", text)
+            )
+        )
+        or "mid-water rig" in text
+        or "also caught jigging" in text
     ):
         return "dropper_loop_deep"
     # Drift rig — covered ground over sand/gravel/mud instead of anchored.
     if "drift" in text:
         return "drift_bottom"
-    # Light/medium bottom rig near reef, rock, sand, mud or grass structure.
-    if "bottom rig" in text or (
-        "bottom" in text
-        and (
-            "reef" in text
-            or "rocky" in text
-            or "sandy" in text
-            or "sand" in text
-            or "mud" in text
-            or "grass" in text
-            or "hard bottom" in text
+    # Light/medium bottom rig near reef, rock, sand, mud, grass, mangrove,
+    # or dock structure.
+    if (
+        "bottom rig" in text
+        or (
+            "bottom" in text
+            and any(
+                s in text
+                for s in ("reef", "rocky", "sandy", "sand", "mud", "grass", "hard bottom")
+            )
+        )
+        or "mangrove" in text
+        or "dock" in text
+        or ("live-bait rig" in text and ("reef" in text or "wreck" in text))
+        or (
+            "single hook" in text
+            and any(
+                s in text for s in ("reef", "rocky", "kelp", "structure", "ledge", "wreck")
+            )
         )
     ):
         return "light_bottom_reef"
     # Light spinning/casting — unweighted lure or live bait, no float/bottom rig.
-    if "spinning" in text or "baitcasting" in text:
+    if (
+        "spinning" in text
+        or "baitcasting" in text
+        or ("live-bait rig" in text and "surface" in text)
+    ):
         return "light_spin_cast"
     return "fishfinder"
 
