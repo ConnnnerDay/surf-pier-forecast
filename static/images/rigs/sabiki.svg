@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 420" font-family="Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 435" font-family="Arial, sans-serif">
   <text x="250" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a3a5c">Sabiki Rig (Bait Catcher)</text>
 
   <!-- Main line from rod -->
@@ -76,7 +76,7 @@
   </g>
 
   <!-- Hook size label -->
-  <text x="130" y="97" text-anchor="end" font-size="10" fill="#888">Size #6-#10</text>
+  <text x="145" y="115" font-size="10" fill="#888">Size #6-#10</text>
 
   <!-- Weight at bottom -->
   <g transform="translate(207, 370)">

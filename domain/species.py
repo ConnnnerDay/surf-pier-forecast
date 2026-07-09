@@ -753,15 +753,142 @@ RIG_CATEGORIES: dict[str, dict[str, Any]] = {
         "leader": "2-4 ft of 25-40 lb fluorocarbon",
         "image": "images/rigs/kayak-live-bait.svg",
     },
+    "light_bottom_reef": {
+        "name": "Light Bottom Rig (Reef & Structure)",
+        "description": (
+            "A single or double dropper-loop hook on a light fluorocarbon "
+            "leader above a small egg or bank sinker — just enough weight "
+            "to hold near sandy, muddy, or rocky bottom without spooking "
+            "line-shy reef and structure feeders. The everyday setup for "
+            "grunts, small snapper, porgies, flatfish, and nearshore "
+            "rockfish over natural bottom, wrecks, and grass edges."
+        ),
+        "mainline": "10-20 lb mono or braid",
+        "leader": "12-24 in of 15-25 lb fluorocarbon",
+        "image": "images/rigs/light-bottom-reef.svg",
+    },
+    "ultralight_panfish": {
+        "name": "Ultralight Panfish Rig",
+        "description": (
+            "A tiny #6-#2 hook tied straight to a light leader with just a "
+            "split shot or two for weight — no swivel or heavy hardware to "
+            "spook small-mouthed fish. Built for pinfish, silver perch, "
+            "gobies, blennies, and other bite-sized bait-stealers around "
+            "docks, jetties, and grass flats where finesse beats power."
+        ),
+        "mainline": "6-10 lb mono or braid",
+        "leader": "12-18 in of 8-12 lb fluorocarbon",
+        "image": "images/rigs/ultralight-panfish.svg",
+    },
+    "dropper_loop_deep": {
+        "name": "Deep Dropper Loop Rig",
+        "description": (
+            "Two to three circle hooks on stiff dropper loops spaced above "
+            "a heavy bank or torpedo sinker, dropped straight down to "
+            "offshore rocky banks and reefs in 100-500+ ft. Weight is sized "
+            "to reach bottom fast and hold in current. The standard setup "
+            "for schooling rockfish, deepwater snapper, and other bank "
+            "structure fish located on sonar and jigged straight down."
+        ),
+        "mainline": "50-80 lb braid",
+        "leader": "40-60 lb mono with 2-3 dropper loops",
+        "image": "images/rigs/dropper-loop-deep.svg",
+    },
+    "drift_bottom": {
+        "name": "Drift Rig (Slip Sinker)",
+        "description": (
+            "A slip or torpedo sinker above a barrel swivel and 3-5 ft "
+            "fluorocarbon leader to a circle hook, drifted slowly over "
+            "sand, gravel, or mud bottom with the boat instead of anchored. "
+            "Covers ground to find scattered flatfish and bottom feeders — "
+            "the standard halibut- and flounder-style presentation."
+        ),
+        "mainline": "30-50 lb braid",
+        "leader": "3-5 ft of 30-50 lb fluorocarbon",
+        "image": "images/rigs/drift-bottom.svg",
+    },
+    "light_spin_cast": {
+        "name": "Light Spinning/Casting Rig",
+        "description": (
+            "A jig head, soft plastic, or live bait fished weightless or "
+            "on a light leader straight off spinning or baitcasting gear — "
+            "no float or bottom weight. Cast to surface-schooling fish, "
+            "mangrove edges, and inlet current for snook, tarpon, jacks, "
+            "and other fish that key on a natural, unweighted presentation."
+        ),
+        "mainline": "10-20 lb braid",
+        "leader": "18-24 in of 20-30 lb fluorocarbon",
+        "image": "images/rigs/light-spin-cast.svg",
+    },
+    "vertical_jig_offshore": {
+        "name": "Offshore Vertical Jig (Speed/Butterfly Jig)",
+        "description": (
+            "A knife-style or butterfly metal jig (100-400g) dropped to "
+            "structure or a marked school and worked with a rapid, "
+            "continuous yo-yo stroke — short, fast lifts of the rod tip "
+            "paired with matching reel cranks — instead of a slow lift-drop. "
+            "The speed and flash trigger reaction strikes from fish that "
+            "won't commit to a bait sitting still. Standard for amberjack, "
+            "jack crevalle, wahoo, and tuna over reefs, wrecks, and "
+            "offshore structure."
+        ),
+        "mainline": "50-65 lb braid",
+        "leader": "4-6 ft of 60-100 lb fluorocarbon via a solid ring or short splice",
+        "image": "images/rigs/vertical-jig-offshore.svg",
+    },
+    "salmon_mooching": {
+        "name": "Salmon Mooching Rig",
+        "description": (
+            "A whole or cut-plug herring rigged on a two-hook harness below "
+            "a banana-shaped mooching sinker, fished on a controlled drift "
+            "or slow idle-troll — not a fast troll — so the bait rolls and "
+            "spins naturally as it falls. Depth is held with sinker weight "
+            "alone or a light downrigger. The classic Pacific Northwest "
+            "presentation for king and coho salmon near river mouths, tide "
+            "rips, and current lines."
+        ),
+        "mainline": "20-30 lb mono or braid on a mooching/levelwind reel",
+        "leader": "4-6 ft of 15-20 lb mono to a 2-hook herring harness",
+        "image": "images/rigs/salmon-mooching.svg",
+    },
 }
 
 def _classify_rig(rig_text: str) -> str:
     """Map a species' rig description to a canonical rig category key."""
     text = rig_text.lower()
-    if "n/a" in text or "observe" in text or "protected" in text:
+    if (
+        "n/a" in text
+        or "observe" in text
+        or "protected" in text
+        or "not a hook-and-line" in text
+        or "not applicable" in text
+        or "too small for hook and line" in text
+        or "not a rod-and-reel fishery" in text
+        or "release immediately" in text
+        or "used as bait" in text
+        or "tined spear" in text
+        or "hoop net" in text
+        or "snorkel" in text
+        or "scuba" in text
+        or "free-diving" in text
+        or "trap" in text
+        or "crab pot" in text
+        or "crab ring" in text
+        or (
+            "cast net" in text
+            and not any(k in text for k in ("hook", "sabiki", "rig", "rod"))
+        )
+    ):
         return ""
-    if "deep-drop" in text or "deep drop" in text or "electric reel" in text:
+    if (
+        "deep-drop" in text
+        or "deep drop" in text
+        or "deepdrop" in text
+        or "electric reel" in text
+    ):
         return "deep-drop"
+    if "mooching" in text:
+        return "salmon_mooching"
     if "trolling" in text and "slow" not in text:
         return "trolling"
     if "sabiki" in text or "bait catcher" in text or "gold-hook bait" in text:
@@ -776,9 +903,20 @@ def _classify_rig(rig_text: str) -> str:
         or "deceiver" in text
         or "fly line" in text
         or "tippet" in text
+        or "spey" in text
         or ("fly" in text and "rod" in text)
     ):
         return "fly_pattern"
+    # Offshore vertical/speed jig — knife or butterfly jig worked with a
+    # rapid yo-yo stroke over structure, not a piling-tight bottom rig.
+    if (
+        "vertical jig" in text
+        or "yo-yo jig" in text
+        or "yo-yo iron jig" in text
+        or "speed jig" in text
+        or "butterfly jig" in text
+    ):
+        return "vertical_jig_offshore"
     # Wade / flats light tackle
     if (
         "jig head" in text
@@ -807,13 +945,26 @@ def _classify_rig(rig_text: str) -> str:
         or "very heavy wire" in text
         or "stand-up" in text
         or "heavy wire leader and heavy" in text
+        or "steel cable leader" in text
+        or ("wire leader" in text and ("heavy conventional" in text or "offshore" in text))
     ):
         return "shark"
     if "knocker" in text:
         return "knocker"
-    if "pier" in text or "structure" in text or "vertical" in text:
+    if "pier" in text or "structure" in text:
         return "knocker"
-    if "pompano" in text or "float bead" in text or ("floats above" in text):
+    if (
+        "pompano" in text
+        or "float bead" in text
+        or "floats above" in text
+        or (
+            "surf" in text
+            and "light" in text
+            and any(
+                s in text for s in ("trough", "sandbar", "first bar", "swash", "inlet")
+            )
+        )
+    ):
         return "pompano"
     if "double-dropper" in text or "hi-lo" in text or "two-hook" in text:
         return "hi-lo"
@@ -826,6 +977,85 @@ def _classify_rig(rig_text: str) -> str:
         or "sliding" in text
     ):
         return "fishfinder"
+    # Ultralight panfish — tiny hooks, or light tackle worked tight to
+    # reef/dock structure for small bait-stealing bycatch.
+    if (
+        "ultra-light" in text
+        or "ultralight" in text
+        or "tiny hook" in text
+        or "very small hook" in text
+        or "micro hook" in text
+        or "very light" in text
+        or (
+            "light rig" in text
+            and any(
+                s in text
+                for s in (
+                    "reef",
+                    "kelp",
+                    "rubble",
+                    "piling",
+                    "wreck",
+                    "seagrass",
+                    "sargassum",
+                    "dock",
+                )
+            )
+        )
+    ):
+        return "ultralight_panfish"
+    # Deep dropper loop — offshore banks/reefs or mid-water suspended jigging.
+    if (
+        (
+            "dropper loop" in text
+            and (
+                "offshore" in text
+                or "bank" in text
+                or "deep" in text
+                or re.search(r"\b([2-9]\d\d|1[5-9]\d)\s*ft", text)
+            )
+        )
+        or "mid-water rig" in text
+        or "also caught jigging" in text
+    ):
+        return "dropper_loop_deep"
+    # Drift rig — covered ground over sand/gravel/mud instead of anchored.
+    if "drift" in text:
+        return "drift_bottom"
+    # Light/medium bottom rig near reef, rock, sand, mud, grass, mangrove,
+    # or dock structure.
+    if (
+        "bottom rig" in text
+        or (
+            "bottom" in text
+            and any(
+                s in text
+                for s in ("reef", "rocky", "sandy", "sand", "mud", "grass", "hard bottom")
+            )
+        )
+        or "mangrove" in text
+        or "dock" in text
+        or ("live-bait rig" in text and ("reef" in text or "wreck" in text))
+        or (
+            ("sinker" in text or "dropper loop" in text)
+            and ("near rocks" in text or "rocky" in text)
+        )
+        or (
+            "single hook" in text
+            and any(
+                s in text for s in ("reef", "rocky", "kelp", "structure", "ledge", "wreck")
+            )
+        )
+    ):
+        return "light_bottom_reef"
+    # Light spinning/casting — unweighted lure or live bait, no float/bottom rig.
+    if (
+        "spinning" in text
+        or "baitcasting" in text
+        or "casting" in text
+        or ("live-bait rig" in text and "surface" in text)
+    ):
+        return "light_spin_cast"
     return "fishfinder"
 
 # Maps rig keys to their primary gear style ("bait", "lure", or "mixed").
@@ -847,11 +1077,26 @@ _RIG_GEAR_TYPE: dict[str, str] = {
     "current_jig": "lure",
     "wade_light": "mixed",
     "kayak_live_bait": "bait",
+    "light_bottom_reef": "bait",
+    "ultralight_panfish": "bait",
+    "dropper_loop_deep": "bait",
+    "drift_bottom": "bait",
+    "light_spin_cast": "mixed",
+    "vertical_jig_offshore": "lure",
+    "salmon_mooching": "bait",
 }
 
 # Rigs that work well as a first introduction — simple setup, forgiving tackle.
 _BEGINNER_FRIENDLY_RIGS = frozenset(
-    {"fishfinder", "hi-lo", "pompano", "float", "popping-cork"}
+    {
+        "fishfinder",
+        "hi-lo",
+        "pompano",
+        "float",
+        "popping-cork",
+        "light_bottom_reef",
+        "ultralight_panfish",
+    }
 )
 
 def _condition_rig_tip(
@@ -986,6 +1231,14 @@ def build_rig_recommendations(
         type_rig_keys.append("wade_light")
     if "kayak" in ft and "kayak_live_bait" not in rig_order:
         type_rig_keys.append("kayak_live_bait")
+    if "surf" in ft and "pompano" not in rig_order:
+        type_rig_keys.append("pompano")
+    if "pier" in ft and "float" not in rig_order:
+        type_rig_keys.append("float")
+    if "inshore" in ft and "popping-cork" not in rig_order:
+        type_rig_keys.append("popping-cork")
+    if "offshore" in ft and "trolling" not in rig_order:
+        type_rig_keys.append("trolling")
 
     def _make_rec(
         key: str, group: Optional[list[dict[str, Any]]] = None
@@ -1174,22 +1427,57 @@ KNOTS_DB: dict[str, dict[str, str]] = {
             "4. Bend tag end into a handle, crank to break clean."
         ),
     },
+    "snell_knot": {
+        "name": "Snell Knot",
+        "use": "Attach a hook in-line with the leader for stronger hooksets on bait rigs",
+        "strength": "95%",
+        "steps": (
+            "1. Pass 6-8 in of leader through the hook eye, lay it alongside the shank. "
+            "2. Form a loop back through the eye toward the point. "
+            "3. Wrap the tag end around the shank and standing leader 5-7 times, working "
+            "down toward the bend. "
+            "4. Moisten and pull the standing leader to cinch the wraps tight. Trim tag."
+        ),
+    },
+    "albright_knot": {
+        "name": "Albright Knot",
+        "use": "Join mono or braid mainline to single-strand or cable wire leader",
+        "strength": "90%",
+        "steps": (
+            "1. Form a loop in the wire, hold it firm. "
+            "2. Pass 10-12 in of mono/braid through the loop. "
+            "3. Wrap the tag end back over both wire strands and itself 10-12 times, "
+            "working toward the loop's closed end. "
+            "4. Pass the tag back through the loop where it entered. Moisten, pull tight, trim."
+        ),
+    },
 }
 
 # Map rig types to their recommended knots
 _RIG_KNOTS: dict[str, list[str]] = {
     "fishfinder": ["improved_clinch", "uni_to_uni"],
-    "hi-lo": ["dropper_loop", "improved_clinch"],
+    "hi-lo": ["dropper_loop", "snell_knot", "improved_clinch"],
     "knocker": ["palomar", "uni_to_uni"],
-    "pompano": ["dropper_loop", "surgeons_loop"],
+    "pompano": ["dropper_loop", "snell_knot", "surgeons_loop"],
     "float": ["improved_clinch", "uni_knot"],
     "popping-cork": ["uni_knot", "uni_to_uni"],
-    "kingfish-stinger": ["haywire_twist", "improved_clinch"],
-    "shark": ["haywire_twist", "fg_knot"],
+    "kingfish-stinger": ["haywire_twist", "albright_knot"],
+    "shark": ["haywire_twist", "albright_knot", "fg_knot"],
     "sabiki": ["uni_knot"],
-    "deep-drop": ["dropper_loop", "fg_knot"],
+    "deep-drop": ["dropper_loop", "snell_knot", "fg_knot"],
     "tandem-jig": ["palomar", "uni_to_uni"],
     "trolling": ["improved_clinch", "fg_knot"],
+    "fly_pattern": ["uni_to_uni", "surgeons_loop"],
+    "current_jig": ["palomar", "fg_knot"],
+    "wade_light": ["palomar", "uni_knot"],
+    "kayak_live_bait": ["uni_knot", "uni_to_uni"],
+    "light_bottom_reef": ["dropper_loop", "snell_knot", "improved_clinch"],
+    "ultralight_panfish": ["improved_clinch", "snell_knot", "uni_knot"],
+    "dropper_loop_deep": ["dropper_loop", "snell_knot", "fg_knot"],
+    "drift_bottom": ["improved_clinch", "uni_to_uni"],
+    "light_spin_cast": ["palomar", "uni_to_uni"],
+    "vertical_jig_offshore": ["fg_knot", "palomar"],
+    "salmon_mooching": ["uni_to_uni", "improved_clinch"],
 }
 
 def get_knots_for_rig(rig_key: str) -> list[dict[str, str]]:
@@ -1244,8 +1532,23 @@ BAIT_DB: list[dict[str, Any]] = [
     {
         "bait": "Squid strips",
         "available_months": list(range(1, 13)),
-        "notes": "Durable on the hook; attract black sea bass, whiting and puffer fish. Available frozen year-round at any bait shop.",
-        "targets": ["Black sea bass", "Whiting", "Northern puffer", "Triggerfish"],
+        "notes": "Durable on the hook; attracts black sea bass, whiting, and puffer fish on the East Coast, and rockfish, lingcod, and halibut on the West Coast. Available frozen year-round at any bait shop.",
+        "targets": [
+            "Black sea bass",
+            "Whiting",
+            "Northern puffer",
+            "Triggerfish",
+            "Rockfish",
+            "Black rockfish",
+            "Blue rockfish",
+            "Vermilion rockfish",
+            "Copper rockfish",
+            "Grass rockfish",
+            "Lingcod",
+            "Cabezon",
+            "Pacific halibut",
+            "California halibut",
+        ],
     },
     {
         "bait": "Fiddler crabs",
@@ -1409,6 +1712,47 @@ BAIT_DB: list[dict[str, Any]] = [
             "winter": "Fishbites are the go-to winter bait when live options are scarce; Sand Flea and Shrimp flavors work best.",
         },
         "targets": ["Whiting", "Pompano", "Spot", "Atlantic croaker", "Black drum"],
+    },
+    {
+        "bait": "Live or frozen anchovy",
+        "available_months": list(range(1, 13)),
+        "notes": "The West Coast's all-purpose live bait; fish it under a float, freelined, or on a sliding sinker rig. Available at nearly every Southern California bait barge.",
+        "targets": [
+            "California halibut",
+            "Yellowtail",
+            "Pacific yellowtail",
+            "White seabass",
+            "Striped bass",
+            "Kelp bass",
+            "Sand bass",
+            "Barred sand bass",
+            "Spotted sand bass",
+            "Pacific bonito",
+        ],
+    },
+    {
+        "bait": "Live sardine",
+        "available_months": [4, 5, 6, 7, 8, 9, 10],
+        "notes": "Premium West Coast live bait when anchovies are scarce; more expensive but often outfishes anchovy for bigger yellowtail and seabass.",
+        "targets": ["Yellowtail", "Pacific yellowtail", "White seabass", "Pacific bonito", "Kelp bass"],
+    },
+    {
+        "bait": "Ghost shrimp / mud shrimp",
+        "available_months": list(range(1, 13)),
+        "notes": "Pumped from sand or mud flats at low tide; the top bait for corbina and surfperch working the wash.",
+        "targets": [
+            "Corbina",
+            "California corbina",
+            "Barred surfperch",
+            "Redtail surfperch",
+            "Spotted sand bass",
+        ],
+    },
+    {
+        "bait": "Live opelu or squid (ika)",
+        "available_months": list(range(1, 13)),
+        "notes": "Classic Hawaii live-bait for ulua and papio; slow-troll or float-fish it along reef edges and channels.",
+        "targets": ["Giant trevally", "Papio", "Aholehole", "Moano"],
     },
 ]
 
@@ -2312,7 +2656,7 @@ LURE_DB: list[dict[str, Any]] = [
         "sizes": "1/2-3 oz",
         "colors": "Silver, chrome, blue/white",
         "retrieve": "Fast jerk-and-fall or speed retrieve through the water column",
-        "notes": "Deadly for pelagic species when fish are busting bait on the surface. Also vertical-jig from piers.",
+        "notes": "Deadly for pelagic species when fish are busting bait on the surface. Also vertical-jig from piers or over reef and wreck structure for amberjack and jacks.",
         "image": "images/lures/metal-jig.svg",
         "available_months": list(range(1, 13)),
         "targets": [
@@ -2324,6 +2668,16 @@ LURE_DB: list[dict[str, Any]] = [
             "Striped bass",
             "Pacific bonito",
             "Yellowtail",
+            "Almaco jack",
+            "African pompano",
+            "Greater amberjack",
+            "Kaku",
+            "Little tunny",
+            "Pacific barracuda",
+            "Omilu",
+            "Bluefin trevally",
+            "Dorado",
+            "Pacific yellowtail",
         ],
     },
     {
@@ -2454,6 +2808,11 @@ LURE_DB: list[dict[str, Any]] = [
             "Giant trevally",
             "Bluefin trevally",
             "Snook",
+            "Roosterfish",
+            "Crevalle jack",
+            "Pacific crevalle jack",
+            "Queenfish",
+            "Tripletail",
         ],
     },
     {
@@ -2466,12 +2825,29 @@ LURE_DB: list[dict[str, Any]] = [
         "available_months": [4, 5, 6, 7, 8, 9, 10, 11],
         "targets": [
             "Mahi-mahi",
+            "Dorado",
             "Wahoo",
             "Yellowfin tuna",
             "Blackfin tuna",
             "Sailfish",
             "Blue marlin",
             "White marlin",
+            "Black marlin",
+            "Striped marlin",
+            "Atlantic blue marlin",
+            "Nairagi",
+            "Shortbill spearfish",
+            "Longbill spearfish",
+            "Mako shark",
+            "Shortfin mako shark",
+            "Blue shark",
+            "Albacore tuna",
+            "Albacore",
+            "Longfin albacore",
+            "Skipjack tuna",
+            "Skipjack",
+            "Rainbow runner",
+            "Frigate mackerel",
         ],
     },
     {
@@ -2483,6 +2859,28 @@ LURE_DB: list[dict[str, Any]] = [
         "image": "images/lures/clarkspoon.svg",
         "available_months": [3, 4, 5, 6, 7, 8, 9, 10, 11],
         "targets": ["King mackerel", "Spanish mackerel", "False albacore"],
+    },
+    {
+        "lure": "Salmon spoon / spinner",
+        "sizes": "3/8-1 oz spoon or #4-#6 spinner",
+        "colors": "Nickel/chrome, brass, pink, chartreuse",
+        "retrieve": "Cast and retrieve with erratic rod-tip sweeps, or troll slowly behind a flasher",
+        "notes": "A lighter-tackle casting alternative to mooching or full trolling gear — effective at river mouths, tide rips, and estuaries where salmon stage.",
+        "image": "images/lures/salmon-spoon.svg",
+        "available_months": [3, 4, 5, 6, 7, 8, 9, 10, 11],
+        "targets": [
+            "Chinook salmon",
+            "Coho salmon",
+            "Pink salmon",
+            "Chum salmon",
+            "Sockeye salmon",
+            "Steelhead trout",
+            "Steelhead",
+            "Puget Sound king salmon",
+            "Olympic Peninsula steelhead",
+            "Skeena steelhead",
+            "Atlantic salmon",
+        ],
     },
 ]
 

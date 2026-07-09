@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 320" font-family="Arial, sans-serif">
+  <text x="250" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a3a5c">Drift Rig (Slip Sinker)</text>
+
+  <!-- Water surface -->
+  <path d="M20 60 Q80 52 140 60 Q200 68 260 60 Q320 52 380 60 Q440 68 480 60" fill="none" stroke="#4a9eda" stroke-width="2" opacity="0.5"/>
+
+  <!-- Boat with drift arrow -->
+  <g transform="translate(330, 30)">
+    <path d="M0 12 Q10 -2 55 -2 Q95 -2 105 12 L95 20 L10 20 Z" fill="#c9701f" stroke="#966" stroke-width="1.5"/>
+    <path d="M115 12 L140 6 M133 2 L140 6 L133 10" fill="none" stroke="#c44" stroke-width="1.75"/>
+    <text x="52" y="-8" text-anchor="middle" font-size="10" fill="#966">Drifting boat</text>
+  </g>
+
+  <!-- Main line -->
+  <line x1="30" y1="80" x2="170" y2="80" stroke="#2a6" stroke-width="3" stroke-dasharray="8,4"/>
+  <text x="98" y="70" text-anchor="middle" font-size="11" fill="#555">Main line (30-50 lb braid)</text>
+
+  <!-- Slip / torpedo sinker -->
+  <path d="M175 80 L200 68 L225 80 L200 92 Z" fill="#999" stroke="#666" stroke-width="1.5"/>
+  <text x="200" y="112" text-anchor="middle" font-size="10" fill="#555">Slip / torpedo sinker</text>
+  <path d="M180 60 L195 60 M190 55 L195 60 L190 65" fill="none" stroke="#c44" stroke-width="1.5"/>
+  <text x="187" y="50" text-anchor="middle" font-size="9" fill="#c44">slides freely</text>
+
+  <!-- Barrel swivel -->
+  <rect x="235" y="73" width="28" height="14" rx="7" fill="#666" stroke="#444" stroke-width="1.5"/>
+  <text x="249" y="102" text-anchor="middle" font-size="10" fill="#555">Swivel</text>
+
+  <!-- Leader -->
+  <line x1="263" y1="80" x2="360" y2="150" stroke="#5da" stroke-width="2.5"/>
+  <text x="315" y="105" text-anchor="middle" font-size="11" fill="#555" transform="rotate(35, 315, 105)">Fluoro leader, 3-5 ft</text>
+
+  <!-- Circle hook -->
+  <g transform="translate(352, 150)">
+    <path d="M8 0 L8 20 Q8 34 20 34 Q30 34 30 22 Q30 14 22 10" fill="none" stroke="#444" stroke-width="2.5"/>
+    <circle cx="21" cy="9" r="2" fill="#444"/>
+    <text x="40" y="16" font-size="11" fill="#555">Circle hook</text>
+  </g>
+
+  <!-- Sand/gravel bottom sweeping under the drift -->
+  <path d="M20 220 Q100 210 180 218 Q260 226 340 216 Q400 210 480 220 L480 260 L20 260 Z" fill="#d9c9a3" stroke="#b8a67e" stroke-width="1.5"/>
+  <text x="250" y="245" text-anchor="middle" font-size="10" fill="#7a6a4a">Sand / gravel / mud bottom</text>
+  <path d="M110 205 L200 205 M180 199 L200 205 L180 211" fill="none" stroke="#4a9eda" stroke-width="1.5" opacity="0.7"/>
+  <text x="150" y="195" text-anchor="middle" font-size="9" fill="#4a9eda">drift direction</text>
+
+  <!-- Legend box -->
+  <rect x="15" y="270" width="470" height="35" rx="6" fill="#f7f9fc" stroke="#ccd" stroke-width="1"/>
+  <text x="30" y="292" font-size="10.5" fill="#555">Slowly drifted instead of anchored to cover ground and find scattered flatfish and bottom feeders.</text>
+</svg>
