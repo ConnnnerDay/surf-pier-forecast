@@ -5,7 +5,13 @@
 //     cached dynamically on first use via the fetch handler below.
 //     Navigate requests fall back to a branded offline page on network failure.
 //     HTML pages are never cached — they embed session-specific CSRF tokens.
-var CACHE_NAME = 'fishforecast-v9';
+// v10: Static assets (CSS/JS/icons/fonts) switched from cache-first to
+//      network-first — cache-first was serving stale JS/CSS after a deploy
+//      with no way for a returning user to self-heal short of manually
+//      clearing site data. The cache is now only an offline fallback.
+//      Bumping CACHE_NAME here also purges any old cache-first entries an
+//      already-installed service worker was still holding onto.
+var CACHE_NAME = 'fishforecast-v10';
 var OFFLINE_URL = '/static/offline.html';
 var PRECACHE = [
   '/static/icons/icon-192.svg',
@@ -145,20 +151,25 @@ self.addEventListener('fetch', function(event) {
   // Never intercept other API requests — always hit the network.
   if (event.request.url.includes('/api/')) return;
 
-  // Cache-first for static assets (CSS, JS, icons, fonts).
+  // Network-first for static assets (CSS, JS, icons, fonts). A stale cached
+  // script/stylesheet after a deploy is worse than a slightly slower repeat
+  // load, so the network is always tried first; the cache is only a
+  // fallback for when the network is unavailable (offline support), not a
+  // way to skip fetching current content.
   // Only successful responses (2xx) are written to the cache so that error
   // pages are never served from cache on subsequent offline visits.
   event.respondWith(
-    caches.match(event.request).then(function(cached) {
-      return cached || fetch(event.request).then(function(response) {
-        if (response.ok) {
-          var clone = response.clone();
-          caches.open(CACHE_NAME).then(function(cache) {
-            cache.put(event.request, clone);
-          });
-        }
-        return response;
-      }).catch(function() {
+    fetch(event.request).then(function(response) {
+      if (response.ok) {
+        var clone = response.clone();
+        caches.open(CACHE_NAME).then(function(cache) {
+          cache.put(event.request, clone);
+        });
+      }
+      return response;
+    }).catch(function() {
+      return caches.match(event.request).then(function(cached) {
+        if (cached) return cached;
         // Network failure and no cache hit — return an empty offline response
         // for sub-resources so the page degrades gracefully instead of throwing.
         return new Response('', { status: 503, statusText: 'Offline' });
