@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 340" font-family="Arial, sans-serif">
+  <text x="250" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a3a5c">Salmon Mooching Rig</text>
+
+  <!-- Boat drifting -->
+  <g transform="translate(340, 45)">
+    <path d="M0 12 Q10 -2 55 -2 Q95 -2 105 12 L95 20 L10 20 Z" fill="#c9701f" stroke="#966" stroke-width="1.5"/>
+    <text x="52" y="-8" text-anchor="middle" font-size="10" fill="#966">Controlled drift / slow idle</text>
+  </g>
+  <path d="M300 60 L330 66 M320 60 L330 66 L320 72" fill="none" stroke="#c44" stroke-width="1.5" opacity="0.7"/>
+
+  <!-- Main line -->
+  <line x1="30" y1="75" x2="150" y2="75" stroke="#2a6" stroke-width="3" stroke-dasharray="8,4"/>
+  <text x="90" y="65" text-anchor="middle" font-size="11" fill="#555">Mono or braid (20-30 lb)</text>
+  <line x1="150" y1="75" x2="190" y2="110" stroke="#2a6" stroke-width="3" stroke-dasharray="8,4"/>
+
+  <!-- Mooching (banana) sinker -->
+  <g transform="translate(178, 110)">
+    <path d="M0 8 Q10 -6 24 8 Q10 20 0 8" fill="#a0a0a0" stroke="#666" stroke-width="1.5"/>
+    <text x="34" y="6" font-size="10" fill="#555">Banana / crescent</text>
+    <text x="34" y="19" font-size="10" fill="#555">mooching sinker</text>
+  </g>
+
+  <!-- Leader to herring harness -->
+  <line x1="190" y1="118" x2="215" y2="180" stroke="#5da" stroke-width="2"/>
+  <text x="235" y="150" font-size="11" fill="#555">Leader, 4-6 ft</text>
+  <text x="235" y="164" font-size="10" fill="#888">15-20 lb mono</text>
+
+  <!-- Two-hook herring harness -->
+  <g transform="translate(195, 180)">
+    <path d="M8 5 Q28 -5 48 8 Q58 15 52 24 Q46 32 38 28 L18 32 Q6 30 4 20 Q2 12 8 5" fill="#c8d8e4" stroke="#8aa3b8" stroke-width="1.5"/>
+    <line x1="20" y1="15" x2="20" y2="30" stroke="#444" stroke-width="1.5"/>
+    <circle cx="20" cy="14" r="1.5" fill="#444"/>
+    <line x1="40" y1="20" x2="42" y2="36" stroke="#444" stroke-width="1.5"/>
+    <circle cx="40" cy="19" r="1.5" fill="#444"/>
+  </g>
+  <text x="270" y="205" font-size="11" fill="#555">Cut-plug or whole</text>
+  <text x="270" y="219" font-size="11" fill="#555">herring, 2-hook harness</text>
+  <text x="270" y="233" font-size="10" fill="#888">rolls and spins as it falls</text>
+
+  <!-- Roll/spin motion arrows -->
+  <g transform="translate(150, 225)" opacity="0.8">
+    <path d="M0 0 Q10 -8 20 0 Q10 8 0 0" fill="none" stroke="#c44" stroke-width="1.5"/>
+    <path d="M17 -2 L20 0 L17 3" fill="none" stroke="#c44" stroke-width="1.5"/>
+    <text x="10" y="20" text-anchor="middle" font-size="9" fill="#c44">spin</text>
+  </g>
+
+  <!-- Legend box -->
+  <rect x="15" y="270" width="470" height="55" rx="6" fill="#f7f9fc" stroke="#ccd" stroke-width="1"/>
+  <text x="30" y="288" font-size="11" fill="#333" font-weight="bold">Technique:</text>
+  <text x="100" y="288" font-size="10.5" fill="#555">Drift or idle slowly — not a fast troll — so the harness spins</text>
+  <text x="30" y="304" font-size="10.5" fill="#555">naturally. Hold depth with sinker weight or a light downrigger near</text>
+  <text x="30" y="318" font-size="10.5" fill="#555">river mouths and tide rips for king and coho salmon.</text>
+</svg>

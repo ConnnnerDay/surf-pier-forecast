@@ -836,6 +836,21 @@ RIG_CATEGORIES: dict[str, dict[str, Any]] = {
         "leader": "4-6 ft of 60-100 lb fluorocarbon via a solid ring or short splice",
         "image": "images/rigs/vertical-jig-offshore.svg",
     },
+    "salmon_mooching": {
+        "name": "Salmon Mooching Rig",
+        "description": (
+            "A whole or cut-plug herring rigged on a two-hook harness below "
+            "a banana-shaped mooching sinker, fished on a controlled drift "
+            "or slow idle-troll — not a fast troll — so the bait rolls and "
+            "spins naturally as it falls. Depth is held with sinker weight "
+            "alone or a light downrigger. The classic Pacific Northwest "
+            "presentation for king and coho salmon near river mouths, tide "
+            "rips, and current lines."
+        ),
+        "mainline": "20-30 lb mono or braid on a mooching/levelwind reel",
+        "leader": "4-6 ft of 15-20 lb mono to a 2-hook herring harness",
+        "image": "images/rigs/salmon-mooching.svg",
+    },
 }
 
 def _classify_rig(rig_text: str) -> str:
@@ -872,6 +887,8 @@ def _classify_rig(rig_text: str) -> str:
         or "electric reel" in text
     ):
         return "deep-drop"
+    if "mooching" in text:
+        return "salmon_mooching"
     if "trolling" in text and "slow" not in text:
         return "trolling"
     if "sabiki" in text or "bait catcher" in text or "gold-hook bait" in text:
@@ -1066,6 +1083,7 @@ _RIG_GEAR_TYPE: dict[str, str] = {
     "drift_bottom": "bait",
     "light_spin_cast": "mixed",
     "vertical_jig_offshore": "lure",
+    "salmon_mooching": "bait",
 }
 
 # Rigs that work well as a first introduction — simple setup, forgiving tackle.
@@ -1435,6 +1453,7 @@ _RIG_KNOTS: dict[str, list[str]] = {
     "drift_bottom": ["improved_clinch", "uni_to_uni"],
     "light_spin_cast": ["palomar", "uni_to_uni"],
     "vertical_jig_offshore": ["fg_knot", "palomar"],
+    "salmon_mooching": ["uni_to_uni", "improved_clinch"],
 }
 
 def get_knots_for_rig(rig_key: str) -> list[dict[str, str]]:
