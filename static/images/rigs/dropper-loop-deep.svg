@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 360" font-family="Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 400" font-family="Arial, sans-serif">
   <text x="250" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a3a5c">Deep Dropper Loop Rig</text>
 
   <!-- Depth gradient background -->
@@ -40,15 +40,17 @@
 
   <!-- Heavy sinker at the bottom -->
   <ellipse cx="60" cy="270" rx="14" ry="28" fill="#888" stroke="#555" stroke-width="1.5"/>
-  <text x="60" y="315" text-anchor="middle" font-size="10" fill="#555">Heavy bank / torpedo</text>
-  <text x="60" y="328" text-anchor="middle" font-size="10" fill="#555">sinker — reaches bottom</text>
-  <text x="60" y="341" text-anchor="middle" font-size="10" fill="#555">fast and holds in current</text>
 
   <!-- Rocky bank -->
   <path d="M180 275 Q220 250 260 272 Q300 245 340 270 Q380 250 420 272 Q450 258 480 272 L480 280 L180 280 Z" fill="#7a8a9a" stroke="#5a6a7a" stroke-width="1.5"/>
-  <text x="330" y="300" text-anchor="middle" font-size="10" fill="#555">Offshore rocky bank / reef</text>
+
+  <!-- Captions below the water column -->
+  <text x="60" y="305" text-anchor="middle" font-size="10" fill="#555">Heavy bank / torpedo</text>
+  <text x="60" y="317" text-anchor="middle" font-size="10" fill="#555">sinker — reaches bottom</text>
+  <text x="60" y="329" text-anchor="middle" font-size="10" fill="#555">fast and holds in current</text>
+  <text x="330" y="305" text-anchor="middle" font-size="10" fill="#555">Offshore rocky bank / reef</text>
 
   <!-- Legend box -->
-  <rect x="15" y="315" width="470" height="35" rx="6" fill="#f7f9fc" stroke="#ccd" stroke-width="1"/>
-  <text x="30" y="337" font-size="10.5" fill="#555">Dropped straight down to schooling rockfish and reef fish spotted on sonar; jig with a slow lift.</text>
+  <rect x="15" y="355" width="470" height="35" rx="6" fill="#f7f9fc" stroke="#ccd" stroke-width="1"/>
+  <text x="30" y="377" font-size="10.5" fill="#555">Dropped straight down to schooling rockfish and reef fish spotted on sonar; jig with a slow lift.</text>
 </svg>

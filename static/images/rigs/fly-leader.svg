@@ -6,35 +6,33 @@
   <text x="85" y="72" text-anchor="middle" font-size="11" fill="#555">Weight-forward fly line</text>
 
   <!-- Tapered leader (butt to tippet, drawn as a narrowing wedge) -->
-  <path d="M150 90 L270 90 L300 92" fill="none" stroke="#666" stroke-width="4"/>
-  <path d="M270 90 L300 92" fill="none" stroke="#666" stroke-width="2"/>
-  <text x="210" y="78" text-anchor="middle" font-size="11" fill="#555">Tapered leader</text>
-  <text x="210" y="112" text-anchor="middle" font-size="10" fill="#888">7-12 ft, butt to mid-taper</text>
+  <path d="M150 90 L250 90 L280 92" fill="none" stroke="#666" stroke-width="4"/>
+  <path d="M250 90 L280 92" fill="none" stroke="#666" stroke-width="2"/>
+  <text x="200" y="78" text-anchor="middle" font-size="11" fill="#555">Tapered leader</text>
+  <text x="200" y="112" text-anchor="middle" font-size="10" fill="#888">7-12 ft, butt to mid-taper</text>
 
   <!-- Tippet -->
-  <line x1="300" y1="92" x2="380" y2="150" stroke="#5da" stroke-width="1.5"/>
-  <text x="355" y="110" text-anchor="middle" font-size="11" fill="#555" transform="rotate(35, 355, 110)">Fluorocarbon tippet</text>
-  <text x="368" y="128" text-anchor="middle" font-size="10" fill="#888" transform="rotate(35, 368, 128)">12-30 lb</text>
+  <line x1="280" y1="92" x2="310" y2="130" stroke="#5da" stroke-width="1.5"/>
+  <text x="335" y="100" text-anchor="middle" font-size="11" fill="#555">Fluorocarbon</text>
+  <text x="335" y="114" text-anchor="middle" font-size="10" fill="#888">tippet, 12-30 lb</text>
 
   <!-- Non-slip loop knot -->
-  <circle cx="380" cy="150" r="5" fill="none" stroke="#444" stroke-width="1.5"/>
-  <text x="405" y="145" font-size="10" fill="#888">Non-slip loop knot</text>
+  <circle cx="310" cy="130" r="5" fill="none" stroke="#444" stroke-width="1.5"/>
 
   <!-- Fly (Clouser-style) -->
-  <g transform="translate(365, 155)">
+  <g transform="translate(295, 135)">
     <path d="M0 0 L28 22" stroke="#444" stroke-width="2"/>
     <circle cx="4" cy="2" r="4" fill="#d4d4d4" stroke="#999" stroke-width="1"/>
     <path d="M4 6 Q0 24 -4 34 Q6 28 12 30 Q10 18 8 8" fill="#e0e0e0" stroke="#aaa" stroke-width="1" opacity="0.85"/>
     <path d="M4 6 Q8 22 14 32 Q4 28 -2 32 Q0 18 2 8" fill="#f0c14b" stroke="#c99a2e" stroke-width="1" opacity="0.7"/>
     <path d="M28 20 L28 46 Q28 60 40 60 Q50 60 50 48 Q50 40 44 36" fill="none" stroke="#444" stroke-width="2"/>
-    <text x="60" y="30" font-size="11" fill="#555">Clouser Minnow</text>
-    <text x="60" y="44" font-size="10" fill="#888">(swap for Deceiver, EP</text>
-    <text x="60" y="56" font-size="10" fill="#888">Crab, Toad, etc.)</text>
   </g>
+  <text x="360" y="165" font-size="11" fill="#555">Clouser Minnow</text>
+  <text x="360" y="179" font-size="9.5" fill="#888">(or Deceiver, Crab, Toad)</text>
 
   <!-- Legend box -->
   <rect x="15" y="240" width="470" height="65" rx="6" fill="#f7f9fc" stroke="#ccd" stroke-width="1"/>
   <text x="30" y="260" font-size="11" fill="#333" font-weight="bold">How it works:</text>
-  <text x="30" y="278" font-size="10.5" fill="#555">Fly line loads the rod and turns over the leader. Leader length and tippet weight are matched</text>
-  <text x="30" y="292" font-size="10.5" fill="#555">to the target — longer/lighter for spooky flats fish, shorter/heavier for wind and bigger species.</text>
+  <text x="30" y="278" font-size="10.5" fill="#555">Fly line loads the rod and turns over the leader, tied to the fly with a non-slip loop knot for</text>
+  <text x="30" y="292" font-size="10.5" fill="#555">action. Leader/tippet: longer &amp; lighter for spooky flats fish, shorter &amp; heavier for wind.</text>
 </svg>
