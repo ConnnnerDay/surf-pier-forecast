@@ -92,7 +92,7 @@
   </g>
 
   <!-- Legend -->
-  <rect x="290" y="200" width="195" height="80" rx="6" fill="#f7f9fc" stroke="#ccd" stroke-width="1"/>
+  <rect x="290" y="200" width="195" height="95" rx="6" fill="#f7f9fc" stroke="#ccd" stroke-width="1"/>
   <text x="305" y="220" font-size="11" fill="#333" font-weight="bold">Target species:</text>
   <text x="305" y="237" font-size="10.5" fill="#555">Tilefish, snowy grouper,</text>
   <text x="305" y="252" font-size="10.5" fill="#555">barrelfish, swordfish</text>

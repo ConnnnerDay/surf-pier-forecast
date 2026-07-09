@@ -56,9 +56,9 @@
   </g>
 
   <!-- Legend -->
-  <rect x="310" y="120" width="175" height="75" rx="6" fill="#f7f9fc" stroke="#ccd" stroke-width="1"/>
-  <text x="325" y="140" font-size="11" fill="#333" font-weight="bold">Best for:</text>
-  <text x="325" y="157" font-size="10.5" fill="#555">Whiting, spot, croaker,</text>
-  <text x="325" y="172" font-size="10.5" fill="#555">sea bass, pompano,</text>
-  <text x="325" y="187" font-size="10.5" fill="#555">and other panfish</text>
+  <rect x="310" y="230" width="175" height="75" rx="6" fill="#f7f9fc" stroke="#ccd" stroke-width="1"/>
+  <text x="325" y="250" font-size="11" fill="#333" font-weight="bold">Best for:</text>
+  <text x="325" y="267" font-size="10.5" fill="#555">Whiting, spot, croaker,</text>
+  <text x="325" y="282" font-size="10.5" fill="#555">sea bass, pompano,</text>
+  <text x="325" y="297" font-size="10.5" fill="#555">and other panfish</text>
 </svg>

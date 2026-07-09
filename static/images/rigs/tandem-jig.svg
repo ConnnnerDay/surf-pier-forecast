@@ -61,7 +61,8 @@
   </g>
 
   <!-- Legend -->
-  <rect x="30" y="278" width="440" height="35" rx="6" fill="#f7f9fc" stroke="#ccd" stroke-width="1"/>
-  <text x="45" y="298" font-size="11" fill="#333" font-weight="bold">Technique:</text>
-  <text x="120" y="298" font-size="10.5" fill="#555">Cast upstream and retrieve through current, or jig vertically. Standard for spring shad runs.</text>
+  <rect x="15" y="268" width="470" height="42" rx="6" fill="#f7f9fc" stroke="#ccd" stroke-width="1"/>
+  <text x="30" y="286" font-size="11" fill="#333" font-weight="bold">Technique:</text>
+  <text x="100" y="286" font-size="10.5" fill="#555">Cast upstream and retrieve through current, or jig</text>
+  <text x="30" y="301" font-size="10.5" fill="#555">vertically. Standard for spring shad and herring runs.</text>
 </svg>

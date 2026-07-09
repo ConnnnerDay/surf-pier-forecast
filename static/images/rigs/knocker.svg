@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 340" font-family="Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 350" font-family="Arial, sans-serif">
   <text x="250" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a3a5c">Knocker Rig</text>
 
   <!-- Main line -->
@@ -25,8 +25,8 @@
 
   <!-- Arrow showing sinker rests against hook -->
   <path d="M250 210 L250 222" stroke="#c44" stroke-width="1.5"/>
-  <text x="310" y="218" font-size="10" fill="#c44">Sinker rests against</text>
-  <text x="310" y="230" font-size="10" fill="#c44">hook eye (key feature)</text>
+  <text x="300" y="218" font-size="10" fill="#c44">Sinker rests</text>
+  <text x="300" y="230" font-size="10" fill="#c44">on hook eye</text>
 
   <!-- Hook -->
   <g transform="translate(237, 222)">
@@ -51,7 +51,8 @@
   <circle cx="408" cy="200" r="3" fill="#9a9" stroke="#686" stroke-width="1"/>
 
   <!-- Legend -->
-  <rect x="15" y="290" width="470" height="40" rx="6" fill="#f7f9fc" stroke="#ccd" stroke-width="1"/>
-  <text x="30" y="308" font-size="11" fill="#333" font-weight="bold">Key:</text>
-  <text x="68" y="308" font-size="10.5" fill="#555">Sinker at the hook keeps bait tight to structure. Fish vertically alongside pilings for sheepshead and tautog.</text>
+  <rect x="15" y="288" width="470" height="55" rx="6" fill="#f7f9fc" stroke="#ccd" stroke-width="1"/>
+  <text x="30" y="305" font-size="11" fill="#333" font-weight="bold">Key:</text>
+  <text x="90" y="305" font-size="10.5" fill="#555">Sinker at the hook keeps bait tight to structure.</text>
+  <text x="30" y="322" font-size="10.5" fill="#555">Fish vertically alongside pilings for sheepshead and tautog.</text>
 </svg>

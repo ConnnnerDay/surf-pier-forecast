@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 380" font-family="Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 395" font-family="Arial, sans-serif">
   <text x="250" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a3a5c">Popping Cork Rig</text>
 
   <!-- Water surface -->
@@ -57,13 +57,14 @@
   </g>
 
   <!-- Action arrows showing popping motion -->
-  <g transform="translate(140, 55)">
+  <g transform="translate(270, 42)">
     <path d="M0 15 L10 0 L20 15" fill="none" stroke="#c44" stroke-width="2"/>
     <text x="10" y="28" text-anchor="middle" font-size="9" fill="#c44">Pop!</text>
   </g>
 
   <!-- Legend -->
-  <rect x="15" y="340" width="470" height="35" rx="6" fill="#f7f9fc" stroke="#ccd" stroke-width="1"/>
-  <text x="30" y="362" font-size="11" fill="#333" font-weight="bold">Technique:</text>
-  <text x="110" y="362" font-size="10.5" fill="#555">Twitch rod tip to pop the cork — splash imitates feeding fish and attracts trout and redfish.</text>
+  <rect x="15" y="333" width="470" height="52" rx="6" fill="#f7f9fc" stroke="#ccd" stroke-width="1"/>
+  <text x="30" y="352" font-size="11" fill="#333" font-weight="bold">Technique:</text>
+  <text x="110" y="352" font-size="10.5" fill="#555">Twitch rod tip to pop the cork — splash imitates feeding fish.</text>
+  <text x="30" y="369" font-size="10.5" fill="#555">Attracts speckled trout, redfish, and flounder keying on the commotion.</text>
 </svg>
