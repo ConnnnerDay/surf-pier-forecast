@@ -116,11 +116,14 @@ def create_app() -> Flask:
     app.config["MAX_CONTENT_LENGTH"] = (
         16 * 1024 * 1024
     )  # 16 MB hard limit for file uploads
-    # Static files are served with mtime-versioned URLs (via surl() template
-    # helper) so browsers can cache them for 1 year without worrying about
-    # stale assets after a deploy.  The ?v=<mtime> query parameter changes
-    # whenever a file is modified, busting the cache automatically.
-    app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 365 * 24 * 3600
+    # Static files (JS/CSS/images) get a short cache window only — long-lived
+    # "immutable" caching here has repeatedly served stale JS/CSS after a
+    # deploy (a mismatch anywhere in the chain — a proxy, an old service
+    # worker, a stale in-process surl() cache — means users are stuck with
+    # broken assets for up to a year with no way to self-heal). Weather/NOAA
+    # data has its own dedicated caching (forecast_cache table, service
+    # worker stale-while-revalidate for the weather API) and is unaffected.
+    app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 300
 
     # Session cookie hardening.
     # SECURE: only transmit the cookie over HTTPS.  Guarded by is_secure check
@@ -148,7 +151,7 @@ def create_app() -> Flask:
 
     # -- Request hooks -----------------------------------------------------
 
-    _STATIC_MAX_AGE = 365 * 24 * 3600
+    _STATIC_MAX_AGE = 300
 
     @app.before_request
     def _serve_precompressed_static() -> Any:
@@ -173,22 +176,8 @@ def create_app() -> Flask:
         resp = send_from_directory(app.static_folder or "static", rel + ".gz", mimetype=mime)
         resp.headers["Content-Encoding"] = "gzip"
         resp.headers["Vary"] = "Accept-Encoding"
-        resp.headers["Cache-Control"] = f"public, max-age={_STATIC_MAX_AGE}, immutable"
+        resp.headers["Cache-Control"] = f"public, max-age={_STATIC_MAX_AGE}"
         return resp
-
-    @app.after_request
-    def _static_immutable(response: Any) -> Any:
-        """Add immutable to Cache-Control for versioned static files.
-
-        surl() appends ?v=<mtime> so the URL changes whenever the file changes,
-        making immutable safe: the browser will never re-validate during the 1-year
-        window, eliminating conditional GET round-trips on repeat visits.
-        """
-        if request.endpoint == "static" and response.status_code == 200:
-            cc = response.headers.get("Cache-Control", "")
-            if "max-age" in cc and "immutable" not in cc:
-                response.headers["Cache-Control"] = cc.rstrip(", ") + ", immutable"
-        return response
 
     @app.before_request
     def _load_user() -> None:
@@ -322,10 +311,11 @@ def create_app() -> Flask:
     def _surl(filename: str) -> str:
         """Return a versioned static URL for cache busting.
 
-        Appends ``?v=<mtime>`` to the URL so that browsers cache the file for
-        up to 1 year (SEND_FILE_MAX_AGE_DEFAULT).  When the file on disk
-        changes, its mtime changes and the new URL busts the old cache entry.
-        Falls back to a plain ``url_for`` URL if the file cannot be stat'd.
+        Appends ``?v=<mtime>`` to the URL so that a browser reusing its short
+        cache window (SEND_FILE_MAX_AGE_DEFAULT, a few minutes) still gets
+        the new file immediately after a deploy instead of waiting out the
+        window. Falls back to a plain ``url_for`` URL if the file cannot be
+        stat'd.
 
         Results are cached in-process so repeated calls (one per page render)
         don't stat the filesystem every time.

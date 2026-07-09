@@ -25,4 +25,4 @@ def test_service_worker_precaches_offline_page():
     sw = Path("static/sw.js").read_text(encoding="utf-8")
     assert "offline.html" in sw
     # Cache version was bumped so the updated offline page is picked up.
-    assert "fishforecast-v9" in sw
+    assert "fishforecast-v10" in sw
