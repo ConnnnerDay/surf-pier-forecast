@@ -394,7 +394,9 @@
                     <div class="rig-card">
                         <h3>{{ rig.name }}</h3>
                         {% if rig.image %}
-                        <div class="rig-diagram"><img src="{{ url_for('static', filename=rig.image) }}" alt="{{ rig.name }} diagram" loading="lazy"></div>
+                        <button type="button" class="rig-diagram" data-open-rig-img data-rig-img-src="{{ url_for('static', filename=rig.image) }}" data-rig-img-name="{{ rig.name }}" aria-label="View larger diagram of {{ rig.name }}">
+                            <img src="{{ url_for('static', filename=rig.image) }}" alt="{{ rig.name }} diagram" loading="lazy">
+                        </button>
                         {% endif %}
                         <p class="rig-desc">{{ rig.description }}</p>
                         <div class="rig-targets">
@@ -634,6 +636,19 @@
                 <button class="reg-modal__close" id="reg-modal-close" aria-label="Close regulations">&times;</button>
             </div>
             <div class="reg-modal__body" id="reg-modal-body"></div>
+        </div>
+    </div>
+
+    <!-- Rig Diagram Lightbox -->
+    <div class="rig-img-modal" id="rig-img-modal" role="dialog" aria-modal="true" aria-labelledby="rig-img-modal-title" aria-hidden="true" hidden>
+        <div class="rig-img-modal__card">
+            <div class="rig-img-modal__hdr">
+                <h3 id="rig-img-modal-title" class="rig-img-modal__title">Rig diagram</h3>
+                <button type="button" class="rig-img-modal__close" id="rig-img-modal-close" aria-label="Close">&times;</button>
+            </div>
+            <div class="rig-img-modal__body">
+                <img id="rig-img-modal-img" src="" alt="">
+            </div>
         </div>
     </div>
 

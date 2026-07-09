@@ -555,6 +555,60 @@ if ('serviceWorker' in navigator) {
     });
 })();
 
+/* ---- Rig Diagram Lightbox ---- */
+(function() {
+    var modal = document.getElementById('rig-img-modal');
+    var img = document.getElementById('rig-img-modal-img');
+    var title = document.getElementById('rig-img-modal-title');
+    var closeBtn = document.getElementById('rig-img-modal-close');
+    if (!modal || !img || !title || !closeBtn) return;
+
+    var _prevFocus = null;
+    function openRigImg(btn) {
+        var src = btn.getAttribute('data-rig-img-src');
+        var name = btn.getAttribute('data-rig-img-name') || 'Rig diagram';
+        if (!src) return;
+        _prevFocus = document.activeElement || null;
+        img.src = src;
+        img.alt = name + ' diagram';
+        title.textContent = name;
+        modal.hidden = false;
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        closeBtn.focus();
+    }
+
+    function closeRigImg() {
+        modal.hidden = true;
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+        img.src = '';
+        if (_prevFocus && typeof _prevFocus.focus === 'function') {
+            _prevFocus.focus({ preventScroll: true });
+            _prevFocus = null;
+        }
+    }
+
+    closeBtn.addEventListener('click', closeRigImg);
+    modal.addEventListener('click', function(e) { if (e.target === modal) closeRigImg(); });
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && !modal.hidden) { closeRigImg(); return; }
+        if (e.key === 'Tab' && !modal.hidden) {
+            var card = modal.querySelector('.rig-img-modal__card');
+            if (!card) return;
+            var focusable = Array.prototype.slice.call(card.querySelectorAll('button,a,[tabindex="0"]'));
+            if (!focusable.length) return;
+            var first = focusable[0], last = focusable[focusable.length - 1];
+            if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+            else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        }
+    });
+    document.addEventListener('click', function(e) {
+        var btn = e.target.closest('[data-open-rig-img]');
+        if (btn) { e.preventDefault(); openRigImg(btn); }
+    });
+})();
+
 
 // Render favorites bar now that DOM is ready
 renderFavorites();
