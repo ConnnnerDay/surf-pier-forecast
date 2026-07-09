@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 110" fill="none">
+  <!-- Line tie -->
+  <circle cx="100" cy="8" r="5" stroke="#94a3b8" stroke-width="2"/>
+  <line x1="100" y1="13" x2="100" y2="19" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Narrow tapered wobbling spoon body (Krocodile/Kastmaster style) -->
+  <path d="M100 19 C107 19 114 33 114 53 C114 73 107 91 100 95 C93 91 86 73 86 53 C86 33 93 19 100 19 Z" fill="#e2e8f0" stroke="#64748b" stroke-width="2"/>
+
+  <!-- Chrome shine down the convex side -->
+  <path d="M100 19 C94 19 89 31 88 50 C90 37 95 26 100 23 Z" fill="white" opacity="0.55"/>
+
+  <!-- Pink accent stripe (classic salmon spoon color) -->
+  <path d="M100 38 C102 46 103 60 100 73 L99 73 C97 60 98 46 100 38 Z" fill="#f472b6" opacity="0.75"/>
+
+  <!-- Hook -->
+  <line x1="100" y1="95" x2="100" y2="99" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="100" cy="101.5" r="2.5" stroke="#94a3b8" stroke-width="1.6"/>
+  <path d="M100 101.5 Q93 102 91 107" stroke="#94a3b8" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+</svg>
