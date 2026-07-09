@@ -820,6 +820,22 @@ RIG_CATEGORIES: dict[str, dict[str, Any]] = {
         "leader": "18-24 in of 20-30 lb fluorocarbon",
         "image": "images/rigs/light-spin-cast.svg",
     },
+    "vertical_jig_offshore": {
+        "name": "Offshore Vertical Jig (Speed/Butterfly Jig)",
+        "description": (
+            "A knife-style or butterfly metal jig (100-400g) dropped to "
+            "structure or a marked school and worked with a rapid, "
+            "continuous yo-yo stroke — short, fast lifts of the rod tip "
+            "paired with matching reel cranks — instead of a slow lift-drop. "
+            "The speed and flash trigger reaction strikes from fish that "
+            "won't commit to a bait sitting still. Standard for amberjack, "
+            "jack crevalle, wahoo, and tuna over reefs, wrecks, and "
+            "offshore structure."
+        ),
+        "mainline": "50-65 lb braid",
+        "leader": "4-6 ft of 60-100 lb fluorocarbon via a solid ring or short splice",
+        "image": "images/rigs/vertical-jig-offshore.svg",
+    },
 }
 
 def _classify_rig(rig_text: str) -> str:
@@ -874,6 +890,16 @@ def _classify_rig(rig_text: str) -> str:
         or ("fly" in text and "rod" in text)
     ):
         return "fly_pattern"
+    # Offshore vertical/speed jig — knife or butterfly jig worked with a
+    # rapid yo-yo stroke over structure, not a piling-tight bottom rig.
+    if (
+        "vertical jig" in text
+        or "yo-yo jig" in text
+        or "yo-yo iron jig" in text
+        or "speed jig" in text
+        or "butterfly jig" in text
+    ):
+        return "vertical_jig_offshore"
     # Wade / flats light tackle
     if (
         "jig head" in text
@@ -908,7 +934,7 @@ def _classify_rig(rig_text: str) -> str:
         return "shark"
     if "knocker" in text:
         return "knocker"
-    if "pier" in text or "structure" in text or "vertical" in text:
+    if "pier" in text or "structure" in text:
         return "knocker"
     if (
         "pompano" in text
@@ -1039,6 +1065,7 @@ _RIG_GEAR_TYPE: dict[str, str] = {
     "dropper_loop_deep": "bait",
     "drift_bottom": "bait",
     "light_spin_cast": "mixed",
+    "vertical_jig_offshore": "lure",
 }
 
 # Rigs that work well as a first introduction — simple setup, forgiving tackle.
@@ -1186,6 +1213,14 @@ def build_rig_recommendations(
         type_rig_keys.append("wade_light")
     if "kayak" in ft and "kayak_live_bait" not in rig_order:
         type_rig_keys.append("kayak_live_bait")
+    if "surf" in ft and "pompano" not in rig_order:
+        type_rig_keys.append("pompano")
+    if "pier" in ft and "float" not in rig_order:
+        type_rig_keys.append("float")
+    if "inshore" in ft and "popping-cork" not in rig_order:
+        type_rig_keys.append("popping-cork")
+    if "offshore" in ft and "trolling" not in rig_order:
+        type_rig_keys.append("trolling")
 
     def _make_rec(
         key: str, group: Optional[list[dict[str, Any]]] = None
@@ -1399,6 +1434,7 @@ _RIG_KNOTS: dict[str, list[str]] = {
     "dropper_loop_deep": ["dropper_loop", "fg_knot"],
     "drift_bottom": ["improved_clinch", "uni_to_uni"],
     "light_spin_cast": ["palomar", "uni_to_uni"],
+    "vertical_jig_offshore": ["fg_knot", "palomar"],
 }
 
 def get_knots_for_rig(rig_key: str) -> list[dict[str, str]]:
