@@ -1427,29 +1427,53 @@ KNOTS_DB: dict[str, dict[str, str]] = {
             "4. Bend tag end into a handle, crank to break clean."
         ),
     },
+    "snell_knot": {
+        "name": "Snell Knot",
+        "use": "Attach a hook in-line with the leader for stronger hooksets on bait rigs",
+        "strength": "95%",
+        "steps": (
+            "1. Pass 6-8 in of leader through the hook eye, lay it alongside the shank. "
+            "2. Form a loop back through the eye toward the point. "
+            "3. Wrap the tag end around the shank and standing leader 5-7 times, working "
+            "down toward the bend. "
+            "4. Moisten and pull the standing leader to cinch the wraps tight. Trim tag."
+        ),
+    },
+    "albright_knot": {
+        "name": "Albright Knot",
+        "use": "Join mono or braid mainline to single-strand or cable wire leader",
+        "strength": "90%",
+        "steps": (
+            "1. Form a loop in the wire, hold it firm. "
+            "2. Pass 10-12 in of mono/braid through the loop. "
+            "3. Wrap the tag end back over both wire strands and itself 10-12 times, "
+            "working toward the loop's closed end. "
+            "4. Pass the tag back through the loop where it entered. Moisten, pull tight, trim."
+        ),
+    },
 }
 
 # Map rig types to their recommended knots
 _RIG_KNOTS: dict[str, list[str]] = {
     "fishfinder": ["improved_clinch", "uni_to_uni"],
-    "hi-lo": ["dropper_loop", "improved_clinch"],
+    "hi-lo": ["dropper_loop", "snell_knot", "improved_clinch"],
     "knocker": ["palomar", "uni_to_uni"],
-    "pompano": ["dropper_loop", "surgeons_loop"],
+    "pompano": ["dropper_loop", "snell_knot", "surgeons_loop"],
     "float": ["improved_clinch", "uni_knot"],
     "popping-cork": ["uni_knot", "uni_to_uni"],
-    "kingfish-stinger": ["haywire_twist", "improved_clinch"],
-    "shark": ["haywire_twist", "fg_knot"],
+    "kingfish-stinger": ["haywire_twist", "albright_knot"],
+    "shark": ["haywire_twist", "albright_knot", "fg_knot"],
     "sabiki": ["uni_knot"],
-    "deep-drop": ["dropper_loop", "fg_knot"],
+    "deep-drop": ["dropper_loop", "snell_knot", "fg_knot"],
     "tandem-jig": ["palomar", "uni_to_uni"],
     "trolling": ["improved_clinch", "fg_knot"],
     "fly_pattern": ["uni_to_uni", "surgeons_loop"],
     "current_jig": ["palomar", "fg_knot"],
     "wade_light": ["palomar", "uni_knot"],
     "kayak_live_bait": ["uni_knot", "uni_to_uni"],
-    "light_bottom_reef": ["dropper_loop", "improved_clinch"],
-    "ultralight_panfish": ["improved_clinch", "uni_knot"],
-    "dropper_loop_deep": ["dropper_loop", "fg_knot"],
+    "light_bottom_reef": ["dropper_loop", "snell_knot", "improved_clinch"],
+    "ultralight_panfish": ["improved_clinch", "snell_knot", "uni_knot"],
+    "dropper_loop_deep": ["dropper_loop", "snell_knot", "fg_knot"],
     "drift_bottom": ["improved_clinch", "uni_to_uni"],
     "light_spin_cast": ["palomar", "uni_to_uni"],
     "vertical_jig_offshore": ["fg_knot", "palomar"],
