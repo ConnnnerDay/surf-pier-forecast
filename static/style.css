@@ -5662,9 +5662,9 @@ footer p {
   background: var(--card-bg);
   border-radius: var(--radius);
   box-shadow: var(--shadow-lg);
-  max-width: min(720px, 94vw);
-  max-height: 90vh;
-  max-height: 90dvh;
+  width: min(920px, 96vw);
+  max-height: 94vh;
+  max-height: 94dvh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -5710,8 +5710,8 @@ footer p {
   display: block;
   width: 100%;
   height: auto;
-  max-height: calc(90vh - 4rem);
-  max-height: calc(90dvh - 4rem);
+  max-height: calc(94vh - 4rem);
+  max-height: calc(94dvh - 4rem);
   object-fit: contain;
 }
 
