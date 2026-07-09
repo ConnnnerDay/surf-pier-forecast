@@ -994,6 +994,10 @@ def _classify_rig(rig_text: str) -> str:
         or "dock" in text
         or ("live-bait rig" in text and ("reef" in text or "wreck" in text))
         or (
+            ("sinker" in text or "dropper loop" in text)
+            and ("near rocks" in text or "rocky" in text)
+        )
+        or (
             "single hook" in text
             and any(
                 s in text for s in ("reef", "rocky", "kelp", "structure", "ledge", "wreck")
@@ -1005,6 +1009,7 @@ def _classify_rig(rig_text: str) -> str:
     if (
         "spinning" in text
         or "baitcasting" in text
+        or "casting" in text
         or ("live-bait rig" in text and "surface" in text)
     ):
         return "light_spin_cast"
