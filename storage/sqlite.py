@@ -228,8 +228,12 @@ def _run_migrations(conn: sqlite3.Connection) -> None:
 
     user_cols = set(_column_names(conn, "users"))
     if "email_confirmed" not in user_cols:
+        # Registration always auto-confirms (no email-verification flow exists
+        # to unblock an account otherwise), so default existing rows to
+        # confirmed too — matching the fresh-schema default below — rather
+        # than stranding pre-existing accounts behind a route that doesn't exist.
         conn.execute(
-            "ALTER TABLE users ADD COLUMN email_confirmed INTEGER NOT NULL DEFAULT 0"
+            "ALTER TABLE users ADD COLUMN email_confirmed INTEGER NOT NULL DEFAULT 1"
         )
     if "password_reset_token" not in user_cols:
         conn.execute("ALTER TABLE users ADD COLUMN password_reset_token TEXT")

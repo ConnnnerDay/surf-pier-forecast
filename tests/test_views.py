@@ -31,34 +31,64 @@ def sample_location_id():
 
 
 class TestLiveCams:
+    def test_anon_redirects_to_login_gate(self, client):
+        resp = client.get("/live-cams")
+        assert resp.status_code == 302
+        assert resp.headers["Location"].endswith("/welcome")
+
     def test_redirects_when_no_location(self, client):
+        uid = create_user("livecams_no_loc", "pass1234")
+        _login_session(client, uid)
         resp = client.get("/live-cams")
         assert resp.status_code == 302
         assert "/setup" in resp.headers["Location"]
 
     def test_renders_with_location(self, client, sample_location_id, monkeypatch):
-        with client.session_transaction() as sess:
-            sess["location_id"] = sample_location_id
+        uid = create_user("livecams_user", "pass1234")
+        save_preferences(
+            uid, fishing_profile={"fishing_types": ["pier"], "completed": True}
+        )
+        _login_session(client, uid, location_id=sample_location_id)
         monkeypatch.setattr("web.views.find_nearby_live_cams", lambda *a, **kw: [])
         resp = client.get("/live-cams")
         assert resp.status_code == 200
 
 
 class TestFishingLog:
+    def test_anon_redirects_to_login_gate(self, client):
+        resp = client.get("/fishing-log")
+        assert resp.status_code == 302
+        assert resp.headers["Location"].endswith("/welcome")
+
     def test_redirects_when_no_location(self, client):
+        uid = create_user("fishinglog_no_loc", "pass1234")
+        _login_session(client, uid)
         resp = client.get("/fishing-log")
         assert resp.status_code == 302
         assert "/setup" in resp.headers["Location"]
 
     def test_renders_with_location(self, client, sample_location_id):
-        with client.session_transaction() as sess:
-            sess["location_id"] = sample_location_id
+        uid = create_user("fishinglog_user", "pass1234")
+        save_preferences(
+            uid, fishing_profile={"fishing_types": ["pier"], "completed": True}
+        )
+        _login_session(client, uid, location_id=sample_location_id)
         resp = client.get("/fishing-log")
         assert resp.status_code == 200
 
 
 class TestSetupSearch:
+    def test_anon_redirects_to_login_gate(self, client):
+        token = _set_csrf(client)
+        resp = client.post(
+            "/setup/search", data={"csrf_token": token, "zipcode": "00000"}
+        )
+        assert resp.status_code == 302
+        assert resp.headers["Location"].endswith("/welcome")
+
     def test_rate_limited(self, client, monkeypatch):
+        uid = create_user("setupsearch_ratelimit", "pass1234")
+        _login_session(client, uid)
         monkeypatch.setattr("web.views._SETUP_RATE_LIMIT_MAX", 1)
         token = _set_csrf(client)
         client.post("/setup/search", data={"csrf_token": token, "zipcode": "00000"})
@@ -69,6 +99,8 @@ class TestSetupSearch:
         assert b"Too many searches" in resp.data
 
     def test_invalid_zipcode_format(self, client):
+        uid = create_user("setupsearch_badzip", "pass1234")
+        _login_session(client, uid)
         token = _set_csrf(client)
         resp = client.post(
             "/setup/search", data={"csrf_token": token, "zipcode": "abc"}
@@ -77,6 +109,8 @@ class TestSetupSearch:
         assert b"valid 5-digit" in resp.data
 
     def test_geocode_failure(self, client, monkeypatch):
+        uid = create_user("setupsearch_geofail", "pass1234")
+        _login_session(client, uid)
         monkeypatch.setattr("web.views.geocode_zip", lambda zipcode: None)
         token = _set_csrf(client)
         resp = client.post(
@@ -87,6 +121,8 @@ class TestSetupSearch:
 
     def test_no_nearby_locations(self, client, monkeypatch):
         # Inland zip: no curated spot and no coastal anchor → graceful error.
+        uid = create_user("setupsearch_noresults", "pass1234")
+        _login_session(client, uid)
         monkeypatch.setattr("web.views.geocode_zip", lambda zipcode: (0.0, 0.0))
         monkeypatch.setattr("web.views.find_nearest_locations", lambda lat, lng, n=6: [])
         monkeypatch.setattr("web.views.dynamic_location_for_point", lambda lat, lng: None)
@@ -100,6 +136,8 @@ class TestSetupSearch:
     def test_coastal_point_offers_exact_spot(self, client, monkeypatch):
         # No curated spot nearby, but the point is coastal → offer an exact
         # forecast instead of dead-ending.
+        uid = create_user("setupsearch_exact", "pass1234")
+        _login_session(client, uid)
         monkeypatch.setattr("web.views.geocode_zip", lambda zipcode: (41.3, -72.9))
         monkeypatch.setattr("web.views.find_nearest_locations", lambda lat, lng, n=6: [])
         monkeypatch.setattr(
@@ -120,6 +158,8 @@ class TestSetupSearch:
     def test_exact_suppressed_when_curated_spot_is_close(self, client, monkeypatch):
         # A curated spot within the redundancy radius should hide the generic
         # exact-point option (the named spot is the better pick).
+        uid = create_user("setupsearch_suppressed", "pass1234")
+        _login_session(client, uid)
         monkeypatch.setattr("web.views.geocode_zip", lambda zipcode: (34.2, -77.8))
         monkeypatch.setattr(
             "web.views.find_nearest_locations",
@@ -143,6 +183,8 @@ class TestSetupSearch:
         assert called["n"] == 0  # short-circuited, never resolved an exact point
 
     def test_success_shows_results(self, client, monkeypatch, sample_location_id):
+        uid = create_user("setupsearch_success", "pass1234")
+        _login_session(client, uid)
         monkeypatch.setattr("web.views.geocode_zip", lambda zipcode: (34.2, -77.8))
         monkeypatch.setattr(
             "web.views.find_nearest_locations",
@@ -157,7 +199,18 @@ class TestSetupSearch:
 
 
 class TestSetupCoords:
+    def test_anon_redirects_to_login_gate(self, client):
+        token = _set_csrf(client)
+        resp = client.post(
+            "/setup/coords",
+            data={"csrf_token": token, "location_lat": "34.2", "location_lon": "-77.8"},
+        )
+        assert resp.status_code == 302
+        assert resp.headers["Location"].endswith("/welcome")
+
     def test_rate_limited(self, client, monkeypatch):
+        uid = create_user("setupcoords_ratelimit", "pass1234")
+        _login_session(client, uid)
         monkeypatch.setattr("web.views._SETUP_RATE_LIMIT_MAX", 1)
         token = _set_csrf(client)
         client.post(
@@ -172,6 +225,8 @@ class TestSetupCoords:
         assert b"Too many searches" in resp.data
 
     def test_invalid_coords(self, client):
+        uid = create_user("setupcoords_invalid", "pass1234")
+        _login_session(client, uid)
         token = _set_csrf(client)
         resp = client.post(
             "/setup/coords",
@@ -181,6 +236,8 @@ class TestSetupCoords:
         assert b"Invalid coordinates" in resp.data
 
     def test_out_of_range_coords(self, client):
+        uid = create_user("setupcoords_outofrange", "pass1234")
+        _login_session(client, uid)
         token = _set_csrf(client)
         resp = client.post(
             "/setup/coords",
@@ -191,6 +248,8 @@ class TestSetupCoords:
 
     def test_no_nearby_locations(self, client, monkeypatch):
         # Inland point: no curated spot and no coastal anchor → graceful error.
+        uid = create_user("setupcoords_noresults", "pass1234")
+        _login_session(client, uid)
         monkeypatch.setattr("web.views.find_nearest_locations", lambda lat, lng, n=6: [])
         monkeypatch.setattr("web.views.dynamic_location_for_point", lambda lat, lng: None)
         token = _set_csrf(client)
@@ -202,6 +261,8 @@ class TestSetupCoords:
         assert b"closer to the coast" in resp.data
 
     def test_success_shows_results(self, client, monkeypatch, sample_location_id):
+        uid = create_user("setupcoords_success", "pass1234")
+        _login_session(client, uid)
         monkeypatch.setattr(
             "web.views.find_nearest_locations",
             lambda lat, lng, n=6: [{"id": sample_location_id, "name": "Coord Loc"}],
@@ -249,24 +310,23 @@ class TestSharedForecast:
 
 
 class TestSetupSelect:
+    def test_anon_redirects_to_login_gate(self, client, sample_location_id):
+        token = _set_csrf(client)
+        resp = client.post(
+            f"/setup/select/{sample_location_id}", data={"csrf_token": token}
+        )
+        assert resp.status_code == 302
+        assert resp.headers["Location"].endswith("/welcome")
+
     def test_unknown_location_redirects_to_setup(self, client):
+        uid = create_user("setupselect_unknown", "pass1234")
+        _login_session(client, uid)
         token = _set_csrf(client)
         resp = client.post(
             "/setup/select/not-a-real-location", data={"csrf_token": token}
         )
         assert resp.status_code == 302
         assert resp.headers["Location"].endswith("/setup")
-
-    def test_anon_user_selects_location(self, client, sample_location_id, monkeypatch):
-        monkeypatch.setattr("web.views.enqueue_forecast_refresh", lambda *a, **kw: None)
-        token = _set_csrf(client)
-        resp = client.post(
-            f"/setup/select/{sample_location_id}", data={"csrf_token": token}
-        )
-        assert resp.status_code == 302
-        assert resp.headers["Location"].endswith("/")
-        with client.session_transaction() as sess:
-            assert sess["location_id"] == sample_location_id
 
     def test_logged_in_user_needing_profile_redirects_to_profile(
         self, client, sample_location_id, monkeypatch
@@ -399,21 +459,46 @@ class TestIndexRedirects:
         assert resp.status_code == 302
         assert resp.headers["Location"].endswith("/welcome")
 
+    def test_anon_with_location_still_redirects_to_landing(
+        self, client, sample_location_id
+    ):
+        # Even with a location already in the session, index() requires login.
+        with client.session_transaction() as sess:
+            sess["location_id"] = sample_location_id
+        resp = client.get("/", follow_redirects=False)
+        assert resp.status_code == 302
+        assert resp.headers["Location"].endswith("/welcome")
+
+
+def _login_with_completed_profile(client, username, location_id):
+    uid = create_user(username, "pass1234")
+    save_preferences(
+        uid,
+        location_id=location_id,
+        fishing_profile={"fishing_types": ["pier"], "completed": True},
+    )
+    _login_session(client, uid, location_id=location_id)
+    return uid
+
 
 class TestRenderForecastBranches:
     def test_background_refresh_shows_loading_page(
         self, client, sample_location_id, monkeypatch
     ):
+        _login_with_completed_profile(
+            client, "render_loading_user", sample_location_id
+        )
         monkeypatch.setattr("web.views.load_cached_forecast", lambda *a, **kw: None)
         monkeypatch.setattr("web.views._is_refreshing", lambda loc_id: True)
-        with client.session_transaction() as sess:
-            sess["location_id"] = sample_location_id
         resp = client.get("/")
         assert resp.status_code == 200
 
     def test_generate_failure_renders_error_page(
         self, client, sample_location_id, monkeypatch
     ):
+        _login_with_completed_profile(
+            client, "render_failure_user", sample_location_id
+        )
         monkeypatch.setattr("web.views.load_cached_forecast", lambda *a, **kw: None)
         monkeypatch.setattr("web.views._is_refreshing", lambda loc_id: False)
 
@@ -421,8 +506,6 @@ class TestRenderForecastBranches:
             raise RuntimeError("forecast generation failed")
 
         monkeypatch.setattr("web.views.generate_forecast", _boom)
-        with client.session_transaction() as sess:
-            sess["location_id"] = sample_location_id
         resp = client.get("/")
         assert resp.status_code == 500
         assert b"Could not load forecast" in resp.data
@@ -433,8 +516,9 @@ class TestRenderForecastBranches:
         # Populate the cache via the real cache-miss -> generate_forecast path
         # first (proven to work offline elsewhere, e.g. test_app.py), then
         # re-request with the age check forced over the staleness threshold.
-        with client.session_transaction() as sess:
-            sess["location_id"] = sample_location_id
+        _login_with_completed_profile(
+            client, "render_stale_user", sample_location_id
+        )
         first = client.get("/")
         assert first.status_code == 200
 

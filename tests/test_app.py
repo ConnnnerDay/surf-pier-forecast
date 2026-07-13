@@ -47,12 +47,24 @@ class TestAppFactory:
 
 class TestBasicRoutes:
     def test_index_loads_for_anon(self, client):
-        """Unauthenticated users can visit / and get the setup flow."""
+        """Unauthenticated users visiting / land on the login/register page."""
         resp = client.get("/", follow_redirects=True)
         assert resp.status_code == 200
+        assert resp.request.path == "/welcome"
 
-    def test_setup_loads_for_anon(self, client):
-        """Unauthenticated users can visit /setup without being redirected."""
+    def test_setup_redirects_for_anon(self, client):
+        """Unauthenticated users are sent to login/register before /setup."""
+        resp = client.get("/setup", follow_redirects=False)
+        assert resp.status_code == 302
+        assert resp.headers["Location"].endswith("/welcome")
+
+    def test_setup_loads_for_logged_in_user(self, client):
+        from storage.sqlite import create_user
+
+        uid = create_user("basicroutes_setup_user", "Aa123456")
+        with client.session_transaction() as sess:
+            sess["user_id"] = uid
+            sess["session_version"] = 0
         resp = client.get("/setup", follow_redirects=False)
         assert resp.status_code == 200
 
