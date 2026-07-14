@@ -24,7 +24,6 @@
     <noscript><link rel="stylesheet" href="{{ surl('style.min.css') }}"></noscript>
     <link rel="preload" as="script" href="{{ surl('js/page.min.js') }}" fetchpriority="high">
     <link rel="preload" as="script" href="{{ surl('js/stat-cards.min.js') }}">
-    <link rel="preload" as="script" href="{{ surl('js/water-conditions.min.js') }}">
     <link rel="preload" as="script" href="{{ surl('js/solunar.min.js') }}">
     <link rel="preload" as="script" href="{{ surl('js/collapsibles.min.js') }}">
     <link rel="preload" as="script" href="{{ surl('js/layout-editor.min.js') }}">
@@ -568,24 +567,6 @@
     </div><!-- /.section-block species-calendar -->
 
 
-    <!-- ============================================================
-         WATER QUALITY & ENVIRONMENTAL DATA  (EPA WQP, FAO, HDX)
-         ============================================================ -->
-    <div class="section-block" data-section-id="water-quality" data-section-label="Water Quality">
-    <details class="collapsible-module" id="water-quality-details">
-        <summary>
-            <span class="collapsible-module-title">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22a8 8 0 0 1-8-8c0-3.5 2.5-7 5-10l3-4 3 4c2.5 3 5 6.5 5 10a8 8 0 0 1-8 8z"/></svg>
-                Water Conditions
-            </span>
-            <span class="collapsible-module-sub">Clarity &middot; Dissolved Oxygen &middot; Beach Status</span>
-            <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-        </summary>
-        <div class="collapsible-module-body">
-            {% include 'partials/_water_quality.html' %}
-        </div>
-    </details>
-    </div><!-- /.section-block water-quality -->
 
 
     </div><!-- /#sections-container -->
@@ -812,7 +793,6 @@ if (IS_REFRESHING && CURRENT_LOC_ID) {
 </script>
 
 <script src="{{ surl('js/stat-cards.min.js') }}" defer></script>
-<script src="{{ surl('js/water-conditions.min.js') }}" defer></script>
 <script src="{{ surl('js/solunar.min.js') }}" defer></script>
 <script src="{{ surl('js/page.min.js') }}" defer></script>
 </html>
