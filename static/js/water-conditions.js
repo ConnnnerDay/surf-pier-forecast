@@ -29,7 +29,6 @@
             var bathy = d && d.data && d.data.bathymetry;
             var metrics = [];
             if (wq) {
-                if (wq.temp_f        != null) metrics.push({ label: 'Water Temp', value: wq.temp_f + '°F' });
                 if (wq.turbidity_ntu != null) metrics.push({ label: 'Clarity',    value: wq.turbidity_ntu + ' NTU' });
                 if (wq.do_mg_l       != null) metrics.push({ label: 'Oxygen',     value: wq.do_mg_l + ' mg/L' });
                 if (wq.salinity_ppt  != null) metrics.push({ label: 'Salinity',   value: wq.salinity_ppt + ' ppt' });

@@ -1418,32 +1418,32 @@ h2::before {
 }
 
 .species-why {
-  margin: 0.25rem 0 0.35rem;
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  line-height: 1.4;
+  margin: 0.3rem 0 0.4rem;
+  font-size: 0.88rem;
+  color: var(--text);
+  line-height: 1.5;
   font-family: 'Instrument Serif', Georgia, serif;
-  font-style: italic;
+  font-style: normal;
 }
 
 .species-tip {
   display: flex;
   align-items: flex-start;
-  gap: 0.3rem;
-  margin: 0 0 0.35rem;
-  padding: 0.2rem 0.5rem 0.2rem 0.6rem;
-  font-size: 0.68rem;
-  color: #78350F;
-  background: rgba(217,119,6,0.06);
+  gap: 0.35rem;
+  margin: 0 0 0.4rem;
+  padding: 0.3rem 0.55rem 0.3rem 0.6rem;
+  font-size: 0.8rem;
+  color: #5c2a0b;
+  background: rgba(217,119,6,0.08);
   border-radius: 0 6px 6px 0;
   border-left: 2px solid #D97706;
-  line-height: 1.35;
-  font-style: italic;
+  line-height: 1.45;
+  font-style: normal;
   font-family: 'Instrument Serif', Georgia, serif;
 }
 [data-theme="dark"] .species-tip {
-  color: #F0C285;
-  background: rgba(217,119,6,0.08);
+  color: #F5D19C;
+  background: rgba(217,119,6,0.1);
 }
 .species-tip svg { flex-shrink: 0; }
 
