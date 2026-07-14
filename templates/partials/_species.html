@@ -31,7 +31,6 @@
                     <div class="species-body">
                         <div class="species-name-row">
                             <h3>{{ sp.name }}</h3>
-                            <span class="activity-badge activity-{{ sp.activity|lower }}">{{ sp.activity }}</span>
                             {% if caught_species and sp.name|lower in caught_species %}
                             <span class="caught-here-badge" title="You've caught this species at this location before">Caught here</span>
                             {% endif %}
@@ -47,12 +46,6 @@
                             {{ sp.tip }}
                         </p>
                         {% endif %}
-                        <div class="species-score-bar">
-                            <div class="score-track" role="progressbar" aria-valuenow="{{ sp.score }}" aria-valuemin="0" aria-valuemax="100" aria-label="{{ sp.name }} activity score: {{ sp.score }} out of 100">
-                                <div class="score-fill score-fill--{{ sp.activity|lower }}" style="width: {{ sp.score }}%"></div>
-                            </div>
-                            <span class="score-label">{{ sp.score }}/100</span>
-                        </div>
                         <div class="species-meta">
                             {# Bait and rig — hidden for lure-only anglers #}
                             {% if not lures_only %}

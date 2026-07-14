@@ -143,6 +143,8 @@ function applyBaitFilters() {
         var baitText = card.getAttribute('data-species-bait') || '';
         var metaBait = card.querySelector('.meta-item--bait');
         if (!metaBait) return;
+        var existingLabel = metaBait.querySelector('.personalized-label');
+        if (existingLabel) existingLabel.remove();
         var hasLive = liveKeywords.some(function(k) { return baitText.indexOf(k) >= 0; });
         var hasLure = lureKeywords.some(function(k) { return baitText.indexOf(k) >= 0; });
         var hasCut  = cutKeywords.some(function(k)  { return baitText.indexOf(k) >= 0; });
@@ -153,8 +155,9 @@ function applyBaitFilters() {
         if (tips.length > 0) {
             var badge = document.createElement('span');
             badge.className = 'personalized-label';
-            badge.textContent = 'Your methods: ' + tips.join(', ');
-            metaBait.appendChild(badge);
+            badge.textContent = 'Matches: ' + tips.join(', ');
+            var label = metaBait.querySelector('.meta-label');
+            (label || metaBait).appendChild(badge);
         }
     });
 }

@@ -1341,9 +1341,9 @@ h2::before {
 
 .species-card {
   display: flex;
-  gap: 0.5rem;
-  padding: 0.55rem 0.7rem;
-  border-radius: var(--radius-sm);
+  gap: 0.6rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: var(--radius);
   border: 1px solid #E8D9B8;
   border-left: 3px solid #E8D9B8;
   background: rgba(255,255,255,0.65);
@@ -1404,36 +1404,6 @@ h2::before {
   background: rgba(194, 119, 59, 0.2);
 }
 
-/* Activity badges */
-
-.activity-badge {
-  font-size: 0.58rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  padding: 0.18rem 0.55rem;
-  border-radius: 4px;
-  white-space: nowrap;
-  font-family: 'Manrope', sans-serif;
-}
-
-.activity-badge.activity-hot {
-  background: #DC2626;
-  color: #fff;
-  box-shadow: 0 1px 4px rgba(220,38,38,0.35);
-}
-
-.activity-badge.activity-active {
-  background: #059669;
-  color: #fff;
-  box-shadow: 0 1px 4px rgba(5,150,105,0.3);
-}
-
-.activity-badge.activity-possible {
-  background: #92400E;
-  color: #FDE68A;
-}
-
 .species-body {
   flex: 1;
   min-width: 0;
@@ -1448,7 +1418,7 @@ h2::before {
 }
 
 .species-why {
-  margin: 0.1rem 0 0.2rem;
+  margin: 0.25rem 0 0.35rem;
   font-size: 0.75rem;
   color: var(--text-muted);
   line-height: 1.4;
@@ -1459,24 +1429,31 @@ h2::before {
 .species-tip {
   display: flex;
   align-items: flex-start;
-  gap: 0.15rem;
-  margin: 0 0 0.25rem;
-  padding: 0.15rem 0 0.15rem 0.6rem;
+  gap: 0.3rem;
+  margin: 0 0 0.35rem;
+  padding: 0.2rem 0.5rem 0.2rem 0.6rem;
   font-size: 0.68rem;
   color: #78350F;
-  background: none;
-  border-radius: 0;
+  background: rgba(217,119,6,0.06);
+  border-radius: 0 6px 6px 0;
   border-left: 2px solid #D97706;
   line-height: 1.35;
   font-style: italic;
   font-family: 'Instrument Serif', Georgia, serif;
+}
+[data-theme="dark"] .species-tip {
+  color: #F0C285;
+  background: rgba(217,119,6,0.08);
 }
 .species-tip svg { flex-shrink: 0; }
 
 .species-meta {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.25rem 0.75rem;
+  gap: 0.35rem 0.75rem;
+  margin-top: 0.6rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--border-light);
 }
 
 @media (max-width: 480px) {
@@ -1488,68 +1465,45 @@ h2::before {
 .meta-item {
   display: flex;
   flex-direction: column;
+  padding-top: 0.15rem;
 }
 
 .meta-label {
-  font-size: 0.68rem;
+  font-size: 0.66rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--text-muted);
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.4rem;
+  margin-bottom: 0.15rem;
+}
+
+.meta-label svg {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  padding: 3.5px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  background: rgba(14, 95, 120, 0.1);
+  color: var(--ocean);
+}
+
+[data-theme="dark"] .meta-label svg {
+  background: rgba(56, 192, 255, 0.12);
 }
 
 .meta-value {
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   color: var(--text);
+  line-height: 1.35;
 }
 
 /* Bait spans full width since descriptions are long */
 .meta-item--bait {
   grid-column: 1 / -1;
-}
-
-/* Score bar */
-.species-score-bar {
-  margin: 0.35rem 0 0;
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-}
-
-.score-track {
-  flex: 1;
-  height: 7px;
-  background: var(--border-light);
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.score-fill {
-  height: 100%;
-  transition: width 0.3s ease-out;
-}
-
-.score-fill--hot {
-  background: #DC2626;
-}
-
-.score-fill--active {
-  background: #059669;
-}
-
-.score-fill--possible {
-  background: #D97706;
-}
-
-.score-label {
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: var(--text-muted);
-  letter-spacing: 0.02em;
-  white-space: nowrap;
 }
 
 /* ---------- Regulation info ---------- */
@@ -4994,15 +4948,15 @@ footer p {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  font-size: 0.65rem;
-  font-weight: 600;
+  font-size: 0.62rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-muted);
-  background: rgba(0,0,0,0.05);
-  padding: 0.15rem 0.5rem;
+  letter-spacing: 0.04em;
+  color: var(--sea-green);
+  background: rgba(5,150,105,0.1);
+  padding: 0.1rem 0.4rem;
   border-radius: 3px;
-  margin-left: 0.5rem;
+  margin-left: 0.4rem;
   vertical-align: middle;
 }
 
@@ -5047,8 +5001,8 @@ footer p {
 }
 
 [data-theme="dark"] .personalized-label {
-  background: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.5);
+  background: rgba(52,211,153,0.12);
+  color: var(--sea-green);
 }
 
 /* ---------- Responsive ---------- */
@@ -6057,8 +6011,15 @@ footer p {
 .species-reg {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 0.35rem;
-  margin-top: 0.55rem;
+  margin-top: 0.6rem;
+  padding: 0.5rem 0.6rem;
+  background: rgba(0,0,0,0.03);
+  border-radius: 8px;
+}
+[data-theme="dark"] .species-reg {
+  background: rgba(255,255,255,0.03);
 }
 .reg-chip {
   display: inline-flex;
@@ -6066,10 +6027,10 @@ footer p {
   gap: 0.28rem;
   padding: 0.18rem 0.45rem;
   border-radius: 999px;
-  background: rgba(14, 95, 120, 0.08);
+  background: var(--card-bg);
   border: 1px solid rgba(14, 95, 120, 0.18);
   color: var(--text);
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-weight: 600;
   line-height: 1.3;
   white-space: nowrap;
@@ -6514,67 +6475,6 @@ footer p {
     min-width: calc(50% - 0.5rem);
     max-width: none;
   }
-}
-
-/* ---------- Enhanced Activity Badges (Excellent/Good/Fair/Slow) ---------- */
-
-.activity-badge.activity-excellent {
-  background: #059669;
-  color: #fff;
-}
-
-.activity-badge.activity-good {
-  background: #0891b2;
-  color: #fff;
-}
-
-.activity-badge.activity-fair {
-  background: #D97706;
-  color: #fff;
-}
-
-.activity-badge.activity-slow {
-  background: #e5e7eb;
-  color: #6b7280;
-}
-
-/* Score bar fills for new activity level names */
-.score-fill--excellent {
-  background: #059669;
-}
-
-.score-fill--good {
-  background: #0891b2;
-}
-
-.score-fill--fair {
-  background: #D97706;
-}
-
-.score-fill--slow {
-  background: #9ca3af;
-}
-
-/* Slightly taller score bar for mobile readability */
-.score-track {
-  height: 6px;
-}
-
-/* Species card accent border by activity */
-.species-card[data-activity="excellent"] {
-  border-left: 3px solid #059669;
-}
-
-.species-card[data-activity="good"] {
-  border-left: 3px solid #0891b2;
-}
-
-.species-card[data-activity="fair"] {
-  border-left: 3px solid #d97706;
-}
-
-.species-card[data-activity="slow"] {
-  border-left: 3px solid #9ca3af;
 }
 
 /* ---------- Section header row (title + context badge) ---------- */
