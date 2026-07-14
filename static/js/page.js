@@ -488,7 +488,7 @@ if ('serviceWorker' in navigator) {
     var _regPrevFocus = null;
     function openRegs(btn) {
         _regPrevFocus = document.activeElement || null;
-        var card = btn.closest('[data-reg-min-size], [data-reg-bag-limit], [data-reg-season]');
+        var card = btn.closest('[data-species-name]');
         if (!card) return;
         var species = card.getAttribute('data-species-name') || 'Species';
         var minSize = card.getAttribute('data-reg-min-size') || '';
@@ -497,13 +497,15 @@ if ('serviceWorker' in navigator) {
         var notes = card.getAttribute('data-reg-notes') || '';
         var gear = card.getAttribute('data-reg-gear') || '';
         var slot = card.getAttribute('data-reg-slot') || '';
-        var regOfficialSource = card.getAttribute('data-reg-official-source') || '';
-        var isStale = card.getAttribute('data-reg-is-stale') === 'true';
+        var regOfficialSource = card.getAttribute('data-reg-official-source') || card.getAttribute('data-reg-fallback-source') || '';
+        var confidence = card.getAttribute('data-reg-confidence') || 'none';
         var lastUpdated = card.getAttribute('data-reg-last-updated') || '';
 
         var html = '';
-        if (isStale) {
+        if (confidence === 'stale') {
             html += '<div class="reg-stale-alert"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Regulation data may be outdated. Verify before fishing.</div>';
+        } else if (confidence === 'unverified' || confidence === 'unverified_unknown') {
+            html += '<div class="reg-stale-alert"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Regulations unverified. Please check the official source before fishing.</div>';
         }
         html += '<div class="reg-modal__grid">';
         if (minSize) html += '<div><span class="reg-label">Min. Size</span><span class="reg-value">' + esc(minSize) + '</span></div>';
@@ -513,6 +515,9 @@ if ('serviceWorker' in navigator) {
         if (gear) html += '<div class="reg-modal__grid-full"><span class="reg-label">Gear Restrictions</span><span class="reg-value">' + esc(gear) + '</span></div>';
         if (notes) html += '<div class="reg-modal__grid-full"><span class="reg-label">Notes</span><span class="reg-value">' + esc(notes) + '</span></div>';
         html += '</div>';
+        if (!minSize && !slot && !bagLimit && !season && !gear && !notes) {
+            html += '<p class="reg-updated">No specific regulation data on file for this species yet.</p>';
+        }
         if (regOfficialSource) {
             html += '<div class="reg-source"><a href="' + esc(regOfficialSource) + '" target="_blank" rel="noopener noreferrer">Official Source &#x2197;</a></div>';
         }
