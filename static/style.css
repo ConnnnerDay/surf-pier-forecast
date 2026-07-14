@@ -6008,18 +6008,22 @@ footer p {
 }
 
 /* At-a-glance regulation chips on species cards */
-.species-reg {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.35rem;
+/* Shelf grouping the chip row and the confidence note into one card zone */
+.species-reg-block {
   margin-top: 0.6rem;
   padding: 0.5rem 0.6rem;
   background: rgba(0,0,0,0.03);
   border-radius: 8px;
 }
-[data-theme="dark"] .species-reg {
+[data-theme="dark"] .species-reg-block {
   background: rgba(255,255,255,0.03);
+}
+
+.species-reg {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
 }
 .reg-chip {
   display: inline-flex;
@@ -6068,6 +6072,9 @@ footer p {
 }
 .reg-inline-stale svg {
   flex-shrink: 0;
+}
+.species-reg-block > .reg-inline-stale:first-child {
+  margin-top: 0;
 }
 .reg-inline-stale__link {
   color: inherit;
