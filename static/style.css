@@ -8389,20 +8389,15 @@ body.has-app-header main {
   flex: 0 0 150px;
   display: flex;
   flex-direction: column;
-  padding: 0.65rem 0.65rem 0.7rem;
+  padding: 0.65rem 0.7rem 0.7rem;
   border-radius: 12px;
-  border: 1px solid rgba(220, 38, 38, 0.22);
-  background: linear-gradient(160deg, rgba(220, 38, 38, 0.12), var(--card-bg) 60%);
+  border: 1px solid #E8D9B8;
+  background: rgba(255,255,255,0.65);
 }
 
-.tsr-card--active {
-  border-color: rgba(5, 150, 105, 0.25);
-  background: linear-gradient(160deg, rgba(5, 150, 105, 0.12), var(--card-bg) 60%);
-}
-
-.tsr-card--possible {
-  border-color: rgba(146, 64, 14, 0.3);
-  background: linear-gradient(160deg, rgba(146, 64, 14, 0.14), var(--card-bg) 60%);
+[data-theme="dark"] .tsr-card {
+  background: rgba(255,255,255,0.04);
+  border-color: rgba(217,119,6,0.15);
 }
 
 .tsr-card-rank {
@@ -8422,7 +8417,7 @@ body.has-app-header main {
 }
 
 .tsr-card-name {
-  margin-top: 0.55rem;
+  padding-right: 1.3rem;
   font-size: 0.88rem;
   font-weight: 800;
   color: var(--text);
@@ -8442,36 +8437,6 @@ body.has-app-header main {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-}
-
-.tsr-badge {
-  align-self: flex-start;
-  font-size: 0.58rem;
-  font-weight: 700;
-  padding: 0.18rem 0.55rem;
-  border-radius: 4px;
-  white-space: nowrap;
-  flex-shrink: 0;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  font-family: 'Manrope', sans-serif;
-}
-
-.tsr-badge--hot {
-  background: #DC2626;
-  color: #fff;
-  box-shadow: 0 1px 4px rgba(220,38,38,0.35);
-}
-
-.tsr-badge--active {
-  background: #059669;
-  color: #fff;
-  box-shadow: 0 1px 4px rgba(5,150,105,0.3);
-}
-
-.tsr-badge--possible {
-  background: #92400E;
-  color: #FDE68A;
 }
 
 .top-species-expand-btn {

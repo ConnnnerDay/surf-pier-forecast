@@ -141,10 +141,8 @@
 
         <div class="top-species-scroller" id="top-species-grid">
             {% for sp in forecast.species[:5] %}
-            {% set activity_lower = sp.activity|lower %}
-            <div class="tsr-card tsr-card--{{ activity_lower }}">
+            <div class="tsr-card">
                 <span class="tsr-card-rank">{{ loop.index }}</span>
-                <span class="tsr-badge tsr-badge--{{ activity_lower }}">{{ sp.activity }}</span>
                 <span class="tsr-card-name">{{ sp.name }}</span>
                 <span class="tsr-card-bait">
                     {% if sp.bait %}{{ sp.bait[:60] }}{% if sp.bait|length > 60 %}&hellip;{% endif %}{% else %}&mdash;{% endif %}
