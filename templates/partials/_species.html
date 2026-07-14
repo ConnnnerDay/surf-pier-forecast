@@ -26,12 +26,22 @@
             {% endif %}
             <div class="species-cards">
                 {% for sp in forecast.species %}
-                <div class="species-card" data-species-name="{{ sp.name }}" data-species-bait="{{ sp.bait|lower }}" data-species-rig="{{ sp.rig|lower }}" data-activity="{{ sp.activity|lower }}"{% if sp.regulation %} data-reg-min-size="{{ sp.regulation.min_size }}" data-reg-bag-limit="{{ sp.regulation.bag_limit }}" data-reg-season="{{ sp.regulation.season }}" data-reg-notes="{{ sp.regulation.notes }}" data-reg-gear="{{ sp.regulation.gear or '' }}" data-reg-slot="{{ sp.regulation.slot or '' }}" data-reg-official-source="{{ sp.regulation.official_source or '' }}" data-reg-data-status="{{ sp.regulation.data_status or '' }}" data-reg-last-updated="{{ sp.regulation.last_updated or '' }}" data-reg-is-stale="{{ sp.regulation.is_stale|lower }}" data-reg-fetched-at="{{ sp.regulation.fetched_at or '' }}"{% endif %}>
+                {# Single normalized confidence flag for this species' regulation data —
+                   drives the one warning banner shown inside the Regs modal, so the
+                   card face doesn't repeat the same "unverified/outdated" message
+                   the modal already covers. #}
+                {% set _warn_kind = 'none' %}
+                {% if sp.regulation and sp.regulation.data_status != 'live' %}
+                    {% if sp.regulation.is_stale %}{% set _warn_kind = 'stale' %}
+                    {% elif sp.regulation.data_status in ('snapshot', 'official_reference') %}{% set _warn_kind = 'unverified' %}
+                    {% endif %}
+                {% elif sp.regulation_status == 'unknown' and forecast.location_state %}{% set _warn_kind = 'unverified_unknown' %}
+                {% endif %}
+                <div class="species-card" data-species-name="{{ sp.name }}" data-species-bait="{{ sp.bait|lower }}" data-species-rig="{{ sp.rig|lower }}" data-activity="{{ sp.activity|lower }}" data-reg-confidence="{{ _warn_kind }}" data-reg-fallback-source="{{ forecast.official_regulations_url or '' }}"{% if sp.regulation %} data-reg-min-size="{{ sp.regulation.min_size }}" data-reg-bag-limit="{{ sp.regulation.bag_limit }}" data-reg-season="{{ sp.regulation.season }}" data-reg-notes="{{ sp.regulation.notes }}" data-reg-gear="{{ sp.regulation.gear or '' }}" data-reg-slot="{{ sp.regulation.slot or '' }}" data-reg-official-source="{{ sp.regulation.official_source or '' }}" data-reg-data-status="{{ sp.regulation.data_status or '' }}" data-reg-last-updated="{{ sp.regulation.last_updated or '' }}" data-reg-is-stale="{{ sp.regulation.is_stale|lower }}" data-reg-fetched-at="{{ sp.regulation.fetched_at or '' }}"{% endif %}>
                     <div class="species-rank">{{ sp.rank }}</div>
                     <div class="species-body">
                         <div class="species-name-row">
                             <h3>{{ sp.name }}</h3>
-                            <span class="activity-badge activity-{{ sp.activity|lower }}">{{ sp.activity }}</span>
                             {% if caught_species and sp.name|lower in caught_species %}
                             <span class="caught-here-badge" title="You've caught this species at this location before">Caught here</span>
                             {% endif %}
@@ -47,12 +57,6 @@
                             {{ sp.tip }}
                         </p>
                         {% endif %}
-                        <div class="species-score-bar">
-                            <div class="score-track" role="progressbar" aria-valuenow="{{ sp.score }}" aria-valuemin="0" aria-valuemax="100" aria-label="{{ sp.name }} activity score: {{ sp.score }} out of 100">
-                                <div class="score-fill score-fill--{{ sp.activity|lower }}" style="width: {{ sp.score }}%"></div>
-                            </div>
-                            <span class="score-label">{{ sp.score }}/100</span>
-                        </div>
                         <div class="species-meta">
                             {# Bait and rig — hidden for lure-only anglers #}
                             {% if not lures_only %}
@@ -81,73 +85,8 @@
                             </div>
                             {% endif %}
                         </div>
-                        {# At-a-glance regulation summary — size / bag / season / slot / gear #}
-                        {% if sp.regulation and (sp.regulation.min_size or sp.regulation.bag_limit or sp.regulation.season or sp.regulation.gear) %}
-                        {% set _season_lc = (sp.regulation.season or '')|lower %}
-                        {# Only warn on the season text when the closure is active *now*;
-                           an inactive "Closed Jan-Apr" on a species shown in June is informational. #}
-                        {% set _season_warn = (sp.season_status == 'closed') %}
-                        <div class="species-reg" aria-label="Regulations for {{ sp.name }}">
-                            {% if sp.season_status == 'open' %}
-                            <span class="reg-chip reg-chip--open" title="In season right now">
-                                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
-                                In season
-                            </span>
-                            {% endif %}
-                            {% if sp.regulation.min_size %}
-                            <span class="reg-chip" title="Minimum size">
-                                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 12h18"/><path d="M6 9v6M18 9v6"/></svg>
-                                Min {{ sp.regulation.min_size }}
-                            </span>
-                            {% endif %}
-                            {% if sp.regulation.bag_limit %}
-                            <span class="reg-chip" title="Daily bag limit">
-                                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2l1.5 3h9L18 2"/><path d="M5 7h14l-1 13a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 7z"/></svg>
-                                Bag {{ sp.regulation.bag_limit }}
-                            </span>
-                            {% endif %}
-                            {% if sp.regulation.season %}
-                            <span class="reg-chip{% if _season_warn %} reg-chip--warn{% endif %}" title="Season">
-                                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                                {{ sp.regulation.season }}
-                            </span>
-                            {% endif %}
-                            {% if sp.regulation.slot or (sp.regulation.notes and 'slot' in sp.regulation.notes|lower) %}
-                            <span class="reg-chip reg-chip--slot" title="{{ sp.regulation.notes }}">
-                                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
-                                {% if sp.regulation.slot %}Slot {{ sp.regulation.slot }}{% else %}Slot limit{% endif %}
-                            </span>
-                            {% endif %}
-                            {% if sp.regulation.gear %}
-                            <span class="reg-chip reg-chip--gear" title="Gear restriction: {{ sp.regulation.gear }}">
-                                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v10a4 4 0 0 1-4 4H6"/><path d="M4 14l2 2-2 2"/></svg>
-                                {{ sp.regulation.gear }}
-                            </span>
-                            {% endif %}
-                        </div>
-                        {% endif %}
-                        {# Unified regulation warning — one message per species, prioritising staleness #}
-                        {% if sp.regulation and sp.regulation.data_status != 'live' %}
-                            {% if sp.regulation.is_stale %}
-                        <div class="reg-inline-stale">
-                            <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                            Regulations may be outdated &ndash;
-                            {% if sp.regulation.official_source %}<a href="{{ sp.regulation.official_source }}" target="_blank" rel="noopener noreferrer" class="reg-inline-stale__link">verify with the official source ↗</a>{% else %}verify with the official source{% endif %}
-                        </div>
-                            {% elif sp.regulation.data_status in ('snapshot', 'official_reference') %}
-                        <div class="reg-inline-stale">
-                            <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                            Regulations unverified &ndash;
-                            {% if sp.regulation.official_source %}<a href="{{ sp.regulation.official_source }}" target="_blank" rel="noopener noreferrer" class="reg-inline-stale__link">please check the official source ↗</a>{% else %}please check the official source{% endif %}
-                        </div>
-                            {% endif %}
-                        {% elif sp.regulation_status == 'unknown' and forecast.location_state %}
-                        <div class="reg-inline-stale">
-                            <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                            Regulations unverified &ndash;
-                            {% if forecast.official_regulations_url %}<a href="{{ forecast.official_regulations_url }}" target="_blank" rel="noopener noreferrer" class="reg-inline-stale__link">please check the official source ↗</a>{% else %}please check the official source{% endif %}
-                        </div>
-                        {% endif %}
+                        {# Regulations live in exactly one place: the "Regs" button above,
+                           which opens the modal with the full detail and confidence note. #}
                     </div>
                 </div>
                 {% endfor %}
