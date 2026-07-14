@@ -308,6 +308,18 @@ class TestSharedForecast:
         resp = client.get("/f/pt_41.300_-72.900")
         assert resp.status_code == 429
 
+    def test_logged_in_user_with_incomplete_profile_can_view_shared_link(
+        self, client, sample_location_id
+    ):
+        # A shared /f/<id> link must render for a logged-in user even if they
+        # have a location but haven't finished their own fishing profile —
+        # they're viewing someone else's shared forecast, not their own.
+        uid = create_user("shared_link_incomplete_profile", "pass1234")
+        save_preferences(uid, location_id=sample_location_id)
+        _login_session(client, uid)
+        resp = client.get(f"/f/{sample_location_id}", follow_redirects=False)
+        assert resp.status_code == 200
+
 
 class TestSetupSelect:
     def test_anon_redirects_to_login_gate(self, client, sample_location_id):
