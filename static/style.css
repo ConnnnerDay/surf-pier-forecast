@@ -6007,52 +6007,6 @@ footer p {
   color: var(--text);
 }
 
-/* At-a-glance regulation chips on species cards */
-.species-reg {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.35rem;
-  margin-top: 0.6rem;
-  padding: 0.5rem 0.6rem;
-  background: rgba(0,0,0,0.03);
-  border-radius: 8px;
-}
-[data-theme="dark"] .species-reg {
-  background: rgba(255,255,255,0.03);
-}
-.reg-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.28rem;
-  padding: 0.18rem 0.45rem;
-  border-radius: 999px;
-  background: var(--card-bg);
-  border: 1px solid rgba(14, 95, 120, 0.18);
-  color: var(--text);
-  font-size: 0.68rem;
-  font-weight: 600;
-  line-height: 1.3;
-  white-space: nowrap;
-}
-.reg-chip svg { flex: 0 0 auto; opacity: 0.8; }
-.reg-chip--warn {
-  background: rgba(217, 119, 6, 0.12);
-  border-color: rgba(217, 119, 6, 0.35);
-  color: #9a6200;
-}
-[data-theme="dark"] .reg-chip--warn { color: #e6a52b; }
-.reg-chip--slot {
-  background: rgba(124, 58, 237, 0.10);
-  border-color: rgba(124, 58, 237, 0.28);
-}
-.reg-chip--open {
-  background: rgba(34, 197, 94, 0.12);
-  border-color: rgba(34, 197, 94, 0.35);
-  color: #15803d;
-}
-[data-theme="dark"] .reg-chip--open { color: #4ade80; }
-
 /* Inline stale-data warning on species / spawning cards */
 .reg-inline-stale {
   display: flex;
@@ -10201,13 +10155,6 @@ details[open] .collapsible-module-body {
   }
 }
 
-
-.reg-chip--gear {
-  background: rgba(180, 83, 9, 0.10);
-  border-color: rgba(180, 83, 9, 0.30);
-  color: #9a4a09;
-}
-[data-theme="dark"] .reg-chip--gear { color: #f0a868; }
 
 /* Closure advisory — species off-limits this month */
 .closure-advisory {
