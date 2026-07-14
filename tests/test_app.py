@@ -47,14 +47,22 @@ class TestAppFactory:
 
 class TestBasicRoutes:
     def test_index_loads_for_anon(self, client):
-        """Unauthenticated users can visit / and get the setup flow."""
+        """Unauthenticated users visiting / land on the login/register page."""
         resp = client.get("/", follow_redirects=True)
         assert resp.status_code == 200
+        assert resp.request.path == "/welcome"
 
-    def test_setup_loads_for_anon(self, client):
-        """Unauthenticated users can visit /setup without being redirected."""
+    def test_setup_redirects_for_anon(self, client):
+        """Unauthenticated users are sent to login/register before /setup.
+
+        See tests/test_auth_security.py::test_setup_shows_favorites_for_logged_in_user
+        for the logged-in-renders-200 case — this file's app/client fixtures
+        point at the real data/app.db (not an isolated per-test DB), so tests
+        here should avoid writing users/preferences.
+        """
         resp = client.get("/setup", follow_redirects=False)
-        assert resp.status_code == 200
+        assert resp.status_code == 302
+        assert resp.headers["Location"].endswith("/welcome")
 
     def test_login_page_loads(self, client):
         resp = client.get("/login")

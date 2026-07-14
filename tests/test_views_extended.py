@@ -183,8 +183,13 @@ class TestCachedFlagReset:
         _patch_cam_and_uv(monkeypatch)
         _patch_render(monkeypatch)
 
-        with client.session_transaction() as sess:
-            sess["location_id"] = loc_id
+        uid = create_user("cachedflag_user", "pass1234")
+        save_preferences(
+            uid,
+            location_id=loc_id,
+            fishing_profile={"fishing_types": ["pier"], "completed": True},
+        )
+        _login(client, uid, location_id=loc_id)
         resp = client.get("/?cached=refreshing")
         assert resp.status_code == 200
 
@@ -232,8 +237,13 @@ class TestForecastFieldBackfill:
         _patch_cam_and_uv(monkeypatch)
         _patch_render(monkeypatch)
 
-        with client.session_transaction() as sess:
-            sess["location_id"] = loc_id
+        uid = create_user("backfill_user", "pass1234")
+        save_preferences(
+            uid,
+            location_id=loc_id,
+            fishing_profile={"fishing_types": ["pier"], "completed": True},
+        )
+        _login(client, uid, location_id=loc_id)
         resp = client.get("/")
         assert resp.status_code == 200
 
@@ -253,8 +263,13 @@ class TestTideChartStringParsing:
         _patch_cam_and_uv(monkeypatch)
         _patch_render(monkeypatch)
 
-        with client.session_transaction() as sess:
-            sess["location_id"] = loc_id
+        uid = create_user("tidechart_user", "pass1234")
+        save_preferences(
+            uid,
+            location_id=loc_id,
+            fishing_profile={"fishing_types": ["pier"], "completed": True},
+        )
+        _login(client, uid, location_id=loc_id)
         resp = client.get("/")
         assert resp.status_code == 200
 
@@ -266,8 +281,13 @@ class TestTideChartStringParsing:
         _patch_cam_and_uv(monkeypatch)
         _patch_render(monkeypatch)
 
-        with client.session_transaction() as sess:
-            sess["location_id"] = loc_id
+        uid = create_user("tidechart_invalid_user", "pass1234")
+        save_preferences(
+            uid,
+            location_id=loc_id,
+            fishing_profile={"fishing_types": ["pier"], "completed": True},
+        )
+        _login(client, uid, location_id=loc_id)
         resp = client.get("/")
         assert resp.status_code == 200
 

@@ -267,16 +267,11 @@ def _build_live_cam_context(
 
 
 # Routes that are accessible without authentication.
-# Keep the core forecast flow public so visitors can select a location and use
-# the app without creating an account.
+# Only the shareable forecast link stays public — it must work for recipients
+# who don't have (or aren't logged into) an account. Everything else in the
+# core flow (location setup, dashboard, live cams, fishing log) requires
+# login so a visitor is always routed through login/register first.
 _PUBLIC_ENDPOINTS = {
-    "views.index",
-    "views.setup",
-    "views.setup_search",
-    "views.setup_coords",
-    "views.setup_select",
-    "views.live_cams",
-    "views.fishing_log",
     "views.shared_forecast",
 }
 _PROFILE_SETUP_EXEMPT_ENDPOINTS = {
@@ -286,6 +281,7 @@ _PROFILE_SETUP_EXEMPT_ENDPOINTS = {
     "views.setup_coords",
     "views.setup_select",
     "views.setup_favorite",
+    "views.shared_forecast",
     "auth.logout",
     "auth.account",
     "auth.account_settings",
@@ -582,10 +578,8 @@ def index() -> Any:
     """Render the dashboard with the current forecast."""
     location = get_session_location()
     if location is None:
-        # Send unauthenticated visitors to login/register first,
-        # not directly to location setup.
-        if g.user is None:
-            return redirect(url_for("auth.landing"))
+        # Reachable only for logged-in users — the before_request login gate
+        # already sent anonymous visitors to auth.landing.
         return redirect(url_for("views.setup"))
 
     # Whitelist the cached= flag to its only known values so arbitrary strings
