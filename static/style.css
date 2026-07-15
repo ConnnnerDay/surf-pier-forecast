@@ -5429,6 +5429,30 @@ footer p {
   text-align: center;
 }
 
+.tide-chart-hint--legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  margin-top: 0.15rem;
+}
+
+.tide-daynight-swatch {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  background: var(--coral);
+  opacity: 0.28;
+  flex-shrink: 0;
+}
+
+.tide-daynight-band {
+  fill: var(--coral);
+  opacity: 0.1;
+  pointer-events: none;
+}
+
 .tide-live-height {
   font-weight: 700;
   margin-left: auto;

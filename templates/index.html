@@ -673,6 +673,7 @@ var SHARE_TEXT_URL = {{ url_for('api.share_text')|tojson }};
 // ── Tide data (logic in solunar.min.js + tides.min.js) ─────────────────────
 window._TIDES = {{ (forecast.tides if forecast.tides else []) | tojson }};
 window._TIDE_CURVE = {{ (forecast.tide_chart.curve if forecast.tide_chart else []) | tojson }};
+window._SUN_TIMES = {{ (forecast.conditions.sunrise_sunset if forecast.conditions else '') | tojson }};
 
 // ── Refreshing poll — must run immediately when IS_REFRESHING is true ──────
 if (IS_REFRESHING && CURRENT_LOC_ID) {
