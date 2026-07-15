@@ -4089,23 +4089,19 @@ def _format_spawn_window(spawn_months: list[int]) -> str:
     # Multiple gaps — list months individually
     return ", ".join(_MA[m] for m in sm)
 
-_SPAWN_STATUS_ORDER: dict[str, int] = {
-    "spawning": 0, "pre_spawn": 1, "post_spawn": 2
-}
-
 def build_spawning_report(
     month: int,
     water_temp: float,
     coast: Optional[str] = None,
     state: str = "",
 ) -> list[dict[str, Any]]:
-    """Return species that are currently spawning or approaching their spawn window.
+    """Return species that are spawning right now (in-window AND at spawn temp).
 
     Each entry is a dict::
 
         {
             "name": str,          # species common name
-            "status": str,        # "spawning" | "pre_spawn" | "post_spawn"
+            "status": str,        # always "spawning"
             "temp_ok": bool,      # True if water temp is within spawn range
             "temp_delta": int,    # degrees outside the spawn temp range (0 = in range)
             "spawn_note": str,    # behaviour / fishing tip
@@ -4115,22 +4111,14 @@ def build_spawning_report(
             "regulation": dict|None,  # full regulation payload for this state, or None
         }
 
-    Status meanings:
-      spawning     — month is in spawn window AND temp is within range
-      pre_spawn    — spawn window starts next month (fish are staging)
-      post_spawn   — spawn window ended last month (fish may be recovering / feeding up)
-
-    Species that are in their spawn window but haven't reached spawn temp yet
-    are omitted entirely — not actionable for anglers.
+    Species outside their spawn window, or in-window but not yet at spawn
+    temp, are omitted entirely — not actionable for anglers.
 
     Legal status meanings:
       catch_release — harvest prohibited (closed season, C&R only, bag limit 0)
       restricted    — seasonal rules apply; always verify before keeping fish
       open          — currently open per regulation data; size/bag limits shown
       unknown       — no regulation data found for this state/species combination
-
-    Only species within ±1 month of the spawn window are included so the
-    list stays immediately actionable.
 
     ``coast`` must be one of ``"east"``, ``"west"``, or ``"hawaii"``.
     Passing ``None`` returns an empty list — the coast must be known to
@@ -4160,27 +4148,9 @@ def build_spawning_report(
         else:
             temp_delta = 0
 
-        in_window = month in spawn_months
-        prev_month = 12 if month == 1 else month - 1
-        next_month = 1 if month == 12 else month + 1
-
-        # Determine direction of adjacency
-        after_window = (not in_window) and (prev_month in spawn_months)  # just ended
-        before_window = (not in_window) and (
-            next_month in spawn_months
-        )  # about to start
-
-        if not in_window and not after_window and not before_window:
-            continue  # too far away to be actionable
-
-        if in_window and temp_ok:
-            status = "spawning"
-        elif in_window and not temp_ok:
-            continue  # water hasn't reached spawn temp yet — not actionable
-        elif before_window:
-            status = "pre_spawn"
-        else:
-            status = "post_spawn"
+        if month not in spawn_months or not temp_ok:
+            continue  # not actively spawning right now — not actionable
+        status = "spawning"
 
         # Regulation lookup — only query when a state is known.
         reg: Optional[dict[str, str]] = None
@@ -4228,7 +4198,7 @@ def build_spawning_report(
             }
         )
 
-    results.sort(key=lambda x: (_SPAWN_STATUS_ORDER.get(x["status"], 9), x["name"]))
+    results.sort(key=lambda x: x["name"])
     return results
 
 _MONTH_ABBR = [
