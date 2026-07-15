@@ -51,10 +51,16 @@ _GAMEFISH_SPECIES: frozenset = frozenset(_tc["gamefish"])
 _INSHORE_SLAM_SPECIES: frozenset = frozenset(_tc["inshore_slam"])
 
 _NUISANCE_SPECIES: frozenset = frozenset(_CLASSIFICATIONS["nuisance"])
+# Protected / encounter-only species (whale shark, manta ray, etc.) are not
+# real fishing targets and must never appear in a forecast, regardless of
+# fishing profile.
+_EXCLUDED_SPECIES: frozenset = frozenset(_CLASSIFICATIONS["excluded"])
 _SPECIES_CATEGORIES: dict[str, list[str]] = _CLASSIFICATIONS["species_categories"]
 
 _SPECIES_BY_COAST: dict[str, list[dict[str, Any]]] = {
-    coast: [sp for sp in sps if sp["name"] not in _NUISANCE_SPECIES]
+    coast: [
+        sp for sp in sps if sp["name"] not in _NUISANCE_SPECIES and sp["name"] not in _EXCLUDED_SPECIES
+    ]
     for coast, sps in SPECIES_DB_BY_COAST.items()
 }
 

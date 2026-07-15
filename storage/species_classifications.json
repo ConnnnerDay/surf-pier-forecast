@@ -651,6 +651,14 @@
     "Ribbonfish (Atlantic cutlassfish)",
     "Spottail pinfish"
   ],
+  "excluded": [
+    "Goliath grouper (encounter)",
+    "Manta ray (encounter)",
+    "Whale shark (encounter)",
+    "Sawfish (encounter)",
+    "Pacific white shark (encounter)",
+    "Horseshoe crab (encounter)"
+  ],
   "species_categories": {
     "Red drum (puppy drum)": [
       "game_fish"
