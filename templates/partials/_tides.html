@@ -15,11 +15,12 @@
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 <strong>Slack Tide</strong> &mdash; Minimal current, good window to reposition and change rigs
                 {% endif %}
+                <span class="tide-live-height" id="tide-live-height" hidden></span>
             </div>
             {% endif %}
             <div class="tide-timeline">
                 {% for tide in forecast.tides %}
-                <div class="tide-point tide-{{ tide.type|lower }}">
+                <button type="button" class="tide-point tide-{{ tide.type|lower }}" data-hour="{{ tide.hour }}">
                     <div class="tide-type-icon">
                         {% if tide.type == 'High' %}
                         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
@@ -37,14 +38,14 @@
                         <span class="tide-time">{{ tide.time }}</span>
                     </div>
                     <span class="tide-height">{% if tide.height_ft is not none and tide.height_ft != '' %}{{ tide.height_ft }} ft{% else %}&mdash;{% endif %}</span>
-                </div>
+                </button>
                 {% endfor %}
             </div>
 
             {% if forecast.tide_chart %}
             {% set tc = forecast.tide_chart %}
-            <div class="tide-svg-wrap">
-                <svg viewBox="{{ tc.viewBox }}" width="100%" aria-label="Tide height chart for today" role="img">
+            <div class="tide-svg-wrap" id="tide-svg-wrap">
+                <svg viewBox="{{ tc.viewBox }}" width="100%" aria-label="Tide height chart for today — drag or tap to inspect" role="img" id="tide-chart-svg">
                     <defs>
                         <linearGradient id="tide-area-gradient" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="0%" stop-color="#0077B6" stop-opacity="0.22"/>
@@ -54,7 +55,7 @@
                     <path d="{{ tc.fill_path }}" fill="url(#tide-area-gradient)" stroke="none"/>
                     <path class="tide-chart-line" d="{{ tc.path }}" fill="none" stroke="#0077B6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
                     {% for m in tc.markers %}
-                    <circle cx="{{ m.cx }}" cy="{{ m.cy }}" r="5.5"
+                    <circle class="tide-chart-marker" data-hour="{{ m.hour }}" cx="{{ m.cx }}" cy="{{ m.cy }}" r="5.5"
                         fill="{{ '#059669' if m.type == 'High' else '#D97706' }}"
                         stroke="white" stroke-width="2"/>
                     <text class="tide-chart-label" x="{{ m.cx }}" y="{{ (m.cy|float - 11)|round(1) }}"
@@ -62,21 +63,28 @@
                     <text class="tide-chart-sublabel" x="{{ m.cx }}" y="{{ tc.height - 4 }}"
                         text-anchor="middle" font-size="10" fill="#5B7285">{{ m.time }}</text>
                     {% endfor %}
+                    <line class="tide-scrub-line" x1="0" y1="0" x2="0" y2="{{ tc.height - 30 }}" stroke="#0077B6" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.6" style="display:none"/>
+                    <circle class="tide-scrub-dot" cx="0" cy="0" r="6" fill="#0077B6" stroke="white" stroke-width="2.5" style="display:none"/>
                     {% if tc.now_marker %}
                     {% set nm = tc.now_marker %}
-                    <line x1="{{ nm.cx }}" y1="0" x2="{{ nm.cx }}" y2="{{ tc.height - 30 }}"
+                    <line class="tide-now-line" x1="{{ nm.cx }}" y1="0" x2="{{ nm.cx }}" y2="{{ tc.height - 30 }}"
                         stroke="#F4543B" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.65"/>
-                    <circle cx="{{ nm.cx }}" cy="{{ nm.cy }}" r="7"
+                    <circle class="tide-now-halo" cx="{{ nm.cx }}" cy="{{ nm.cy }}" r="7" fill="#F4543B"/>
+                    <circle class="tide-now-dot" cx="{{ nm.cx }}" cy="{{ nm.cy }}" r="7"
                         fill="#F4543B" stroke="white" stroke-width="2.5" opacity="0.95"/>
-                    <circle cx="{{ nm.cx }}" cy="{{ nm.cy }}" r="3"
+                    <circle class="tide-now-dot-center" cx="{{ nm.cx }}" cy="{{ nm.cy }}" r="3"
                         fill="white"/>
                     {% endif %}
                 </svg>
+                <div class="tide-scrub-tooltip" id="tide-scrub-tooltip" hidden>
+                    <span class="tide-scrub-tooltip-time" id="tide-scrub-time"></span>
+                    <span class="tide-scrub-tooltip-height" id="tide-scrub-height"></span>
+                </div>
             </div>
+            <p class="tide-chart-hint">Drag or tap the chart to see tide height at any time &middot; tap a card above to jump to it</p>
             {% endif %}
 
         </section>
         {% else %}
         <p class="section-no-data">Tide data is temporarily unavailable for this location. <a href="?force_refresh=1">Try refreshing.</a></p>
         {% endif %}
-

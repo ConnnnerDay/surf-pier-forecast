@@ -25,6 +25,7 @@
     <link rel="preload" as="script" href="{{ surl('js/page.min.js') }}" fetchpriority="high">
     <link rel="preload" as="script" href="{{ surl('js/stat-cards.min.js') }}">
     <link rel="preload" as="script" href="{{ surl('js/solunar.min.js') }}">
+    <link rel="preload" as="script" href="{{ surl('js/tides.min.js') }}">
     <link rel="preload" as="script" href="{{ surl('js/collapsibles.min.js') }}">
     <link rel="preload" as="script" href="{{ surl('js/layout-editor.min.js') }}">
     <link rel="manifest" href="{{ surl('manifest.json') }}">
@@ -669,8 +670,9 @@ var SHARE_TEXT_URL = {{ url_for('api.share_text')|tojson }};
 })();
 {% endif %}
 
-// ── Tide data (logic in solunar.min.js) ───────────────────────────────────
+// ── Tide data (logic in solunar.min.js + tides.min.js) ─────────────────────
 window._TIDES = {{ (forecast.tides if forecast.tides else []) | tojson }};
+window._TIDE_CURVE = {{ (forecast.tide_chart.curve if forecast.tide_chart else []) | tojson }};
 
 // ── Refreshing poll — must run immediately when IS_REFRESHING is true ──────
 if (IS_REFRESHING && CURRENT_LOC_ID) {
@@ -794,5 +796,6 @@ if (IS_REFRESHING && CURRENT_LOC_ID) {
 
 <script src="{{ surl('js/stat-cards.min.js') }}" defer></script>
 <script src="{{ surl('js/solunar.min.js') }}" defer></script>
+<script src="{{ surl('js/tides.min.js') }}" defer></script>
 <script src="{{ surl('js/page.min.js') }}" defer></script>
 </html>
