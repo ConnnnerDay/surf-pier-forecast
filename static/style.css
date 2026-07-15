@@ -3016,8 +3016,8 @@ h2::before {
 }
 
 .cal-dot--peak {
-  background: #0D2240;
-  box-shadow: 0 1px 3px rgba(14, 95, 120, 0.35);
+  background: var(--coral);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 
 .cal-dot--good {

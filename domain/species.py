@@ -4090,7 +4090,7 @@ def _format_spawn_window(spawn_months: list[int]) -> str:
     return ", ".join(_MA[m] for m in sm)
 
 _SPAWN_STATUS_ORDER: dict[str, int] = {
-    "spawning": 0, "pre_spawn": 1, "temp_pending": 2, "post_spawn": 3
+    "spawning": 0, "pre_spawn": 1, "post_spawn": 2
 }
 
 def build_spawning_report(
@@ -4105,7 +4105,7 @@ def build_spawning_report(
 
         {
             "name": str,          # species common name
-            "status": str,        # "spawning" | "pre_spawn" | "post_spawn" | "temp_pending"
+            "status": str,        # "spawning" | "pre_spawn" | "post_spawn"
             "temp_ok": bool,      # True if water temp is within spawn range
             "temp_delta": int,    # degrees outside the spawn temp range (0 = in range)
             "spawn_note": str,    # behaviour / fishing tip
@@ -4117,9 +4117,11 @@ def build_spawning_report(
 
     Status meanings:
       spawning     — month is in spawn window AND temp is within range
-      temp_pending — month is in spawn window but water hasn't reached spawn temp
       pre_spawn    — spawn window starts next month (fish are staging)
       post_spawn   — spawn window ended last month (fish may be recovering / feeding up)
+
+    Species that are in their spawn window but haven't reached spawn temp yet
+    are omitted entirely — not actionable for anglers.
 
     Legal status meanings:
       catch_release — harvest prohibited (closed season, C&R only, bag limit 0)
@@ -4174,7 +4176,7 @@ def build_spawning_report(
         if in_window and temp_ok:
             status = "spawning"
         elif in_window and not temp_ok:
-            status = "temp_pending"
+            continue  # water hasn't reached spawn temp yet — not actionable
         elif before_window:
             status = "pre_spawn"
         else:
