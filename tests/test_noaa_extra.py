@@ -263,6 +263,44 @@ class TestBuildTideChartSvg:
         assert result["path"].startswith("M")
         assert result["now_marker"] is None
 
+    def test_markers_carry_hour_for_frontend_matching(self):
+        tides = [
+            {"hour": 2.0, "height_num": 1.0, "type": "Low", "time": "2:00 AM", "height_ft": "1.0"},
+            {"hour": 8.0, "height_num": 5.0, "type": "High", "time": "8:00 AM", "height_ft": "5.0"},
+        ]
+        result = noaa.build_tide_chart_svg(tides)
+        hours = [m["hour"] for m in result["markers"]]
+        assert hours == [2.0, 8.0]
+
+    def test_curve_is_dense_monotonic_and_spans_the_full_range(self):
+        tides = [
+            {"hour": 2.0, "height_num": 1.0, "type": "Low", "time": "2:00 AM", "height_ft": "1.0"},
+            {"hour": 8.0, "height_num": 5.0, "type": "High", "time": "8:00 AM", "height_ft": "5.0"},
+            {"hour": 14.0, "height_num": 1.5, "type": "Low", "time": "2:00 PM", "height_ft": "1.5"},
+        ]
+        result = noaa.build_tide_chart_svg(tides)
+        curve = result["curve"]
+        # Roughly 6 samples/hour over a 12h span
+        assert len(curve) > 60
+        assert curve[0]["hour"] == 2.0
+        assert curve[-1]["hour"] == 14.0
+        hours = [c["hour"] for c in curve]
+        assert hours == sorted(hours)
+        xs = [c["x"] for c in curve]
+        assert xs == sorted(xs)
+        # Cosine interpolation stays within the bracketing extrema
+        assert all(1.0 <= c["height"] <= 5.0 for c in curve)
+
+    def test_curve_used_for_now_marker_matches_height_interpolation(self):
+        tides = [
+            {"hour": 2.0, "height_num": 1.0, "type": "Low", "time": "2:00 AM", "height_ft": "1.0"},
+            {"hour": 8.0, "height_num": 5.0, "type": "High", "time": "8:00 AM", "height_ft": "5.0"},
+        ]
+        result = noaa.build_tide_chart_svg(tides, now_hour=5.0)
+        # Midpoint of a half-cosine ramp is exactly the midpoint height.
+        mid_sample = min(result["curve"], key=lambda c: abs(c["hour"] - 5.0))
+        assert mid_sample["height"] == pytest.approx(3.0, abs=0.1)
+
     def test_includes_now_marker_when_now_hour_in_range(self):
         tides = [
             {"hour": 2.0, "height_num": 1.0, "type": "Low", "time": "2:00 AM", "height_ft": "1.0"},

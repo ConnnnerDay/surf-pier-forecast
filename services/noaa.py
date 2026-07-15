@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import concurrent.futures as _cf
 import logging
+import math
 from datetime import datetime, timedelta
 from typing import Any, Optional
 
@@ -370,11 +371,18 @@ def build_tide_chart_svg(
 ) -> Optional[dict[str, Any]]:
     """Build a tide chart data dict for SVG rendering.
 
-    Returns a dict with 'path' (SVG path d attribute), 'points' (list of
-    {cx, cy, label, height} for the markers), 'viewBox', 'fill_path', and
-    optionally 'now_marker' with the current-time dot position.
-    Returns None when there is insufficient tide data to draw a chart.
-    Only considers tides within a 24-hour window.
+    Returns a dict with 'path' (SVG path d attribute), 'markers' (list of
+    {cx, cy, hour, type, time, height} for the high/low points), 'viewBox',
+    'fill_path', 'curve' (dense {hour, height, x, y} samples for client-side
+    scrubbing), and optionally 'now_marker' with the current-time dot
+    position. Returns None when there is insufficient tide data to draw a
+    chart. Only considers tides within a 24-hour window.
+
+    The curve between consecutive highs/lows is a half-cosine interpolation
+    (the standard tide approximation: slowest near the extrema, steepest at
+    mid-swing), which is both a more realistic tide shape than a generic
+    bezier and lets ``curve`` double as the exact lookup table the frontend
+    uses to answer "what's the height at this time" while scrubbing.
     """
     if len(tides) < 2:
         return None
@@ -407,53 +415,68 @@ def build_tide_chart_svg(
     def to_y(ht: float) -> float:
         return PAD_TOP + (1 - (ht - min_h) / h_range) * (H - PAD_TOP - PAD_BOT)
 
-    # Build smooth curve using cubic bezier through points
-    coords = [(to_x(p[0]), to_y(p[1])) for p in pts]
-    path_parts = [f"M{coords[0][0]:.1f},{coords[0][1]:.1f}"]
-    for i in range(1, len(coords)):
-        # Simple smooth curve: control points at 1/3 intervals
-        x0, y0 = coords[i - 1]
-        x1, y1 = coords[i]
-        cx1 = x0 + (x1 - x0) * 0.4
-        cx2 = x1 - (x1 - x0) * 0.4
-        path_parts.append(f"C{cx1:.1f},{y0:.1f} {cx2:.1f},{y1:.1f} {x1:.1f},{y1:.1f}")
+    def height_at(hr: float) -> float:
+        """Half-cosine interpolated height between the bracketing tide points."""
+        if hr <= pts[0][0]:
+            return pts[0][1]
+        if hr >= pts[-1][0]:
+            return pts[-1][1]
+        for i in range(len(pts) - 1):
+            h0, ht0 = pts[i][0], pts[i][1]
+            h1, ht1 = pts[i + 1][0], pts[i + 1][1]
+            if h0 <= hr <= h1:
+                frac = (hr - h0) / (h1 - h0) if h1 != h0 else 0.0
+                return ht0 + (ht1 - ht0) * (1 - math.cos(math.pi * frac)) / 2
+        return pts[-1][1]
 
+    # Dense samples (every 10 min) — drives both the smooth path and the
+    # frontend's scrub-to-inspect lookup table.
+    samples_per_hour = 6
+    n_samples = max(2, round(hour_range * samples_per_hour))
+    curve = []
+    for i in range(n_samples + 1):
+        hr = min_hour + hour_range * i / n_samples
+        ht = height_at(hr)
+        curve.append(
+            {
+                "hour": round(hr, 3),
+                "height": round(ht, 2),
+                "x": round(to_x(hr), 1),
+                "y": round(to_y(ht), 1),
+            }
+        )
+
+    path_parts = [f"M{curve[0]['x']:.1f},{curve[0]['y']:.1f}"]
+    for c in curve[1:]:
+        path_parts.append(f"L{c['x']:.1f},{c['y']:.1f}")
     path_d = " ".join(path_parts)
 
     # Fill path (close to bottom)
     fill_d = (
         path_d
-        + f" L{coords[-1][0]:.1f},{H - PAD_BOT:.1f} L{coords[0][0]:.1f},{H - PAD_BOT:.1f} Z"
+        + f" L{curve[-1]['x']:.1f},{H - PAD_BOT:.1f} L{curve[0]['x']:.1f},{H - PAD_BOT:.1f} Z"
     )
 
-    # Build point markers
+    # Build point markers (the actual high/low extrema, not the dense curve)
     markers = []
-    for i, p in enumerate(pts):
+    for p in pts:
         markers.append(
             {
-                "cx": f"{coords[i][0]:.1f}",
-                "cy": f"{coords[i][1]:.1f}",
+                "cx": f"{to_x(p[0]):.1f}",
+                "cy": f"{to_y(p[1]):.1f}",
+                "hour": round(p[0], 3),
                 "type": p[2],
                 "time": p[3],
                 "height": p[4],
             }
         )
 
-    # Current-time "now" marker — interpolate height between surrounding pts
+    # Current-time "now" marker
     now_marker = None
     if now_hour is not None and min_hour <= now_hour <= max_hour:
-        # Find surrounding tide points and linearly interpolate height
-        now_ht = pts[0][1]
-        for i in range(len(pts) - 1):
-            h0, ht0 = pts[i][0], pts[i][1]
-            h1, ht1 = pts[i + 1][0], pts[i + 1][1]
-            if h0 <= now_hour <= h1:
-                frac = (now_hour - h0) / (h1 - h0) if h1 != h0 else 0.0
-                now_ht = ht0 + frac * (ht1 - ht0)
-                break
         now_marker = {
             "cx": f"{to_x(now_hour):.1f}",
-            "cy": f"{to_y(now_ht):.1f}",
+            "cy": f"{to_y(height_at(now_hour)):.1f}",
         }
 
     return {
@@ -461,6 +484,7 @@ def build_tide_chart_svg(
         "path": path_d,
         "fill_path": fill_d,
         "markers": markers,
+        "curve": curve,
         "width": W,
         "height": H,
         "now_marker": now_marker,
