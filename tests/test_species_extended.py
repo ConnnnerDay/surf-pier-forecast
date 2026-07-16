@@ -425,6 +425,25 @@ class TestClassifyRig:
             == "shark"
         )
 
+    def test_spinning_near_mangroves_is_not_a_bottom_rig(self):
+        # "mangroves"/"docks" are locations, not techniques — a species cast
+        # to on spinning gear near mangroves shouldn't be swept into the
+        # bottom rig bucket just because the location word matched.
+        assert (
+            _classify_rig("Light to medium spinning near mangroves and freshwater canals")
+            == "light_spin_cast"
+        )
+        assert (
+            _classify_rig("Light spinning near grass flats, docks, and channel edges")
+            == "light_spin_cast"
+        )
+
+    def test_bottom_rig_near_mangroves_still_classifies_as_bottom_reef(self):
+        assert (
+            _classify_rig("Light bottom rig near mangroves and muddy bottom")
+            == "light_bottom_reef"
+        )
+
 
 # ---------------------------------------------------------------------------
 # _condition_rig_tip — moderate wave path, pier gaff path

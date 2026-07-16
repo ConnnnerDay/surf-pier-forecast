@@ -1144,8 +1144,10 @@ def _classify_rig(rig_text: str, species_name: str = "") -> str:
                 for s in ("reef", "rocky", "sandy", "sand", "mud", "grass", "hard bottom")
             )
         )
-        or "mangrove" in text
-        or "dock" in text
+        or (
+            ("mangrove" in text or "dock" in text)
+            and not any(k in text for k in ("spinning", "baitcasting", "casting"))
+        )
         or ("live-bait rig" in text and ("reef" in text or "wreck" in text))
         or (
             ("sinker" in text or "dropper loop" in text)
