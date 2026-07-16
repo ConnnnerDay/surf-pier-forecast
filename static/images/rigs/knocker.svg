@@ -43,7 +43,7 @@
   </g>
 
   <!-- Pier piling illustration -->
-  <rect x="400" y="40" width="30" height="260" rx="4" fill="#8B7355" stroke="#6B5335" stroke-width="2"/>
+  <rect x="400" y="40" width="30" height="240" rx="4" fill="#8B7355" stroke="#6B5335" stroke-width="2"/>
   <text x="415" y="35" text-anchor="middle" font-size="10" fill="#6B5335">Piling</text>
   <!-- Barnacles -->
   <circle cx="405" cy="120" r="3" fill="#9a9" stroke="#686" stroke-width="1"/>
@@ -52,7 +52,7 @@
 
   <!-- Legend -->
   <rect x="15" y="288" width="470" height="55" rx="6" fill="#f7f9fc" stroke="#ccd" stroke-width="1"/>
-  <text x="30" y="305" font-size="11" fill="#333" font-weight="bold">Key:</text>
-  <text x="90" y="305" font-size="10.5" fill="#555">Sinker at the hook keeps bait tight to structure.</text>
-  <text x="30" y="322" font-size="10.5" fill="#555">Fish vertically alongside pilings for sheepshead and tautog.</text>
+  <text x="30" y="305" font-size="11" fill="#333" font-weight="bold">How it works:</text>
+  <text x="30" y="322" font-size="10.5" fill="#555">The sinker rests right at the hook eye instead of sliding freely, so there's no slack</text>
+  <text x="30" y="336" font-size="10.5" fill="#555">line to let bait drift into a snag. Drop it straight down beside pilings and rocks.</text>
 </svg>

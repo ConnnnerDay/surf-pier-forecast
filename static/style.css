@@ -1709,43 +1709,6 @@ h2::before {
   white-space: nowrap;
 }
 
-.rig-specs {
-  margin: 0;
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 0.25rem 0.5rem;
-  font-size: 0.8rem;
-}
-
-.rig-specs dt {
-  font-weight: 600;
-  color: var(--text-muted);
-}
-
-.rig-specs dd {
-  margin: 0;
-  color: var(--text);
-}
-
-/* Condition-aware gear tweak shown under a rig's specs */
-.rig-cond-tip {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.4rem;
-  margin: 0.6rem 0 0;
-  padding: 0.5rem 0.6rem;
-  border-radius: 6px;
-  background: rgba(14, 95, 120, 0.08);
-  border-left: 3px solid var(--ocean, #0e5f78);
-  font-size: 0.8rem;
-  line-height: 1.45;
-  color: var(--text);
-}
-.rig-cond-tip svg {
-  flex: 0 0 auto;
-  margin-top: 2px;
-  color: var(--ocean, #0e5f78);
-}
 .rig-cr-tip {
   margin: 0.4rem 0 0;
   font-size: 0.78rem;

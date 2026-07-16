@@ -826,6 +826,21 @@ RIG_CATEGORIES: dict[str, dict[str, Any]] = {
         "leader": "18-24 in of 20-30 lb fluorocarbon",
         "image": "images/rigs/light-spin-cast.svg",
     },
+    "heavy_spin_cast": {
+        "name": "Heavy Spinning/Casting Rig (Big Gamefish)",
+        "description": (
+            "The same weightless, direct-cast presentation as the light "
+            "version above, scaled up for open-water bruisers — cobia, "
+            "amberjack, big jack crevalle, tarpon, tuna — that show up "
+            "cruising the surface, stacked at buoys and pilings, or "
+            "busting bait offshore. Live bait or a big popper/jig is cast "
+            "or pitched directly at the fish on stout spinning or "
+            "conventional gear built to stop a hard first run."
+        ),
+        "mainline": "30-50 lb braid",
+        "leader": "3-5 ft of 50-80 lb fluorocarbon",
+        "image": "images/rigs/heavy-spin-cast.svg",
+    },
     "vertical_jig_offshore": {
         "name": "Offshore Vertical Jig (Speed/Butterfly Jig)",
         "description": (
@@ -857,11 +872,58 @@ RIG_CATEGORIES: dict[str, dict[str, Any]] = {
         "leader": "4-6 ft of 15-20 lb mono to a 2-hook herring harness",
         "image": "images/rigs/salmon-mooching.svg",
     },
+    "heavy_conventional": {
+        "name": "Heavy Conventional Bottom Rig",
+        "description": (
+            "A single large circle hook on a heavy leader above a 16-32 oz "
+            "ball or torpedo sinker, fished straight down on stout "
+            "conventional tackle. Built for oversized bottom fish — big "
+            "halibut, goliath grouper, and other bruisers — where the "
+            "challenge is horsepower and hook-pull, not finesse. A "
+            "fighting harness and a rod holder or gimbal belt are standard."
+        ),
+        "mainline": "65-100 lb braid on a conventional or electric-assist reel",
+        "leader": "4-6 ft of 80-150 lb mono or fluorocarbon",
+        "image": "images/rigs/heavy-conventional.svg",
+    },
+    "steelhead_drift": {
+        "name": "River Drift & Float Rig (Steelhead & Salmon)",
+        "description": (
+            "A river technique, not an ocean one: a small amount of pencil "
+            "lead or split shot bounced along bottom, or a float set to hold "
+            "bait or a jig just off bottom in the current seam. Bait is "
+            "typically cured roe, sand shrimp, or a small yarn/jig combo "
+            "drifted at walking pace through a run. Standard for steelhead "
+            "and river-run salmon in Pacific coast rivers."
+        ),
+        "mainline": "10-15 lb mono or braid on a drift or centerpin reel",
+        "leader": "18-24 in of 8-12 lb fluorocarbon to a small hook or jig",
+        "image": "images/rigs/steelhead-drift.svg",
+    },
 }
 
-def _classify_rig(rig_text: str) -> str:
-    """Map a species' rig description to a canonical rig category key."""
+def _depth_range_ft(text: str) -> Optional[tuple[int, int]]:
+    """Extract a (min, max) depth-in-feet range from rig description text."""
+    match = re.search(r"(\d{1,4})\s*[-–]\s*(\d{1,4})\s*ft", text)
+    if match:
+        return int(match.group(1)), int(match.group(2))
+    match = re.search(r"(\d{1,4})\s*ft", text)
+    if match:
+        depth = int(match.group(1))
+        return depth, depth
+    return None
+
+
+def _classify_rig(rig_text: str, species_name: str = "") -> str:
+    """Map a species' rig description to a canonical rig category key.
+
+    *species_name* is an optional hint used for the handful of species whose
+    rig text alone is too generic to disambiguate (river-run steelhead/salmon
+    described only as "drift or float rig", or smaller sharks whose rig text
+    never says the word "wire").
+    """
     text = rig_text.lower()
+    name = species_name.lower()
     if (
         "n/a" in text
         or "observe" in text
@@ -886,6 +948,24 @@ def _classify_rig(rig_text: str) -> str:
         )
     ):
         return ""
+    # River-run steelhead/salmon — a distinct drift/float technique from both
+    # the ocean-going float rig and the boat-trolled mooching rig below. Rig
+    # text for these entries is often too generic ("drift or float rig") to
+    # tell apart from a surf float rig without the species name as a hint.
+    if "steelhead" in name and (
+        "drift" in text or "float" in text or "bobber" in text
+    ):
+        return "steelhead_drift"
+    if (
+        "pencil lead" in text
+        or "bobber-and-jig" in text
+        or (
+            "river mouth" in text
+            and "drift" in text
+            and "fly rod" not in text
+        )
+    ):
+        return "steelhead_drift"
     if (
         "deep-drop" in text
         or "deep drop" in text
@@ -895,7 +975,7 @@ def _classify_rig(rig_text: str) -> str:
         return "deep-drop"
     if "mooching" in text:
         return "salmon_mooching"
-    if "trolling" in text and "slow" not in text:
+    if "trolling" in text:
         return "trolling"
     if "sabiki" in text or "bait catcher" in text or "gold-hook bait" in text:
         return "sabiki"
@@ -947,7 +1027,8 @@ def _classify_rig(rig_text: str) -> str:
     if "stinger" in text or ("king" in text and "wire" in text):
         return "kingfish-stinger"
     if (
-        "shark" in text
+        re.search(r"\bshark\b", text)
+        or re.search(r"\bshark\b", name)
         or "very heavy wire" in text
         or "stand-up" in text
         or "heavy wire leader and heavy" in text
@@ -955,14 +1036,23 @@ def _classify_rig(rig_text: str) -> str:
         or ("wire leader" in text and ("heavy conventional" in text or "offshore" in text))
     ):
         return "shark"
+    # Heavy conventional bottom tackle for oversized bottom fish (big halibut,
+    # goliath grouper) — stout gear but no wire, so it doesn't belong in the
+    # shark bucket above.
+    if "heavy conventional" in text or ("heavy tackle" in text and "incidental" in text):
+        return "heavy_conventional"
+    # Note: earlier revisions also caught any mention of "pier" or
+    # "structure" here, which stole ~70 species whose text goes on to
+    # describe a completely different technique (spinning, hi-lo, a bottom
+    # rig, a float) just because it named the location. Removed in favor of
+    # letting those species fall through to the more specific checks below.
     if "knocker" in text:
-        return "knocker"
-    if "pier" in text or "structure" in text:
         return "knocker"
     if (
         "pompano" in text
         or "float bead" in text
         or "floats above" in text
+        or "light surf rig" in text
         or (
             "surf" in text
             and "light" in text
@@ -974,17 +1064,11 @@ def _classify_rig(rig_text: str) -> str:
         return "pompano"
     if "double-dropper" in text or "hi-lo" in text or "two-hook" in text:
         return "hi-lo"
-    if "float" in text or "free-line" in text or "balloon" in text:
-        return "float"
-    if (
-        "carolina" in text
-        or "fishfinder" in text
-        or "fish finder" in text
-        or "sliding" in text
-    ):
-        return "fishfinder"
     # Ultralight panfish — tiny hooks, or light tackle worked tight to
-    # reef/dock structure for small bait-stealing bycatch.
+    # reef/dock structure for small bait-stealing bycatch. Checked ahead of
+    # the generic float/fishfinder branches so a phrase like "ultra-light
+    # float rig" resolves to the more specific finesse setup instead of the
+    # catch-all bobber rig.
     if (
         "ultra-light" in text
         or "ultralight" in text
@@ -1010,6 +1094,15 @@ def _classify_rig(rig_text: str) -> str:
         )
     ):
         return "ultralight_panfish"
+    if "float" in text or "free-line" in text or "balloon" in text:
+        return "float"
+    if (
+        "carolina" in text
+        or "fishfinder" in text
+        or "fish finder" in text
+        or "sliding" in text
+    ):
+        return "fishfinder"
     # Deep dropper loop — offshore banks/reefs or mid-water suspended jigging.
     if (
         (
@@ -1025,6 +1118,25 @@ def _classify_rig(rig_text: str) -> str:
         or "also caught jigging" in text
     ):
         return "dropper_loop_deep"
+    # Depth-based bottom rig split — a species whose deepest listed range is
+    # genuinely offshore-bank or deep-reef territory needs the heavier
+    # dropper-loop/deep-drop tackle, not the everyday light bottom rig below,
+    # even when its own text never says "dropper loop" or "electric reel".
+    if "bottom" in text:
+        depth = _depth_range_ft(text)
+        if depth is not None:
+            _, max_ft = depth
+            if max_ft >= 700:
+                return "deep-drop"
+            if max_ft >= 300 or ("heavy" in text and max_ft >= 150):
+                return "dropper_loop_deep"
+    # River-run chinook named for their home river (Columbia, Klamath, etc.)
+    # drift-fished the same way as steelhead — back-bouncing/plugging in
+    # current — not the boat slip-sinker drift below, which is an ocean/bay
+    # bottom-fish presentation. Species already resolved as trolling above
+    # (e.g. Sacramento River fall chinook) are unaffected.
+    if "river" in name and "drift" in text:
+        return "steelhead_drift"
     # Drift rig — covered ground over sand/gravel/mud instead of anchored.
     if "drift" in text:
         return "drift_bottom"
@@ -1039,8 +1151,10 @@ def _classify_rig(rig_text: str) -> str:
                 for s in ("reef", "rocky", "sandy", "sand", "mud", "grass", "hard bottom")
             )
         )
-        or "mangrove" in text
-        or "dock" in text
+        or (
+            ("mangrove" in text or "dock" in text)
+            and not any(k in text for k in ("spinning", "baitcasting", "casting"))
+        )
         or ("live-bait rig" in text and ("reef" in text or "wreck" in text))
         or (
             ("sinker" in text or "dropper loop" in text)
@@ -1054,13 +1168,18 @@ def _classify_rig(rig_text: str) -> str:
         )
     ):
         return "light_bottom_reef"
-    # Light spinning/casting — unweighted lure or live bait, no float/bottom rig.
+    # Spinning/casting — unweighted lure or live bait, no float/bottom rig.
+    # Split by tackle class: big open-water gamefish (cobia, amberjack, tuna,
+    # large jacks, tarpon) need much heavier gear than flats/inshore finesse
+    # casting, even though both are the same basic no-weight presentation.
     if (
         "spinning" in text
         or "baitcasting" in text
         or "casting" in text
         or ("live-bait rig" in text and "surface" in text)
     ):
+        if "heavy" in text and "light" not in text:
+            return "heavy_spin_cast"
         return "light_spin_cast"
     return "fishfinder"
 
@@ -1088,8 +1207,11 @@ _RIG_GEAR_TYPE: dict[str, str] = {
     "dropper_loop_deep": "bait",
     "drift_bottom": "bait",
     "light_spin_cast": "mixed",
+    "heavy_spin_cast": "mixed",
     "vertical_jig_offshore": "lure",
     "salmon_mooching": "bait",
+    "heavy_conventional": "bait",
+    "steelhead_drift": "mixed",
 }
 
 # Rigs that work well as a first introduction — simple setup, forgiving tackle.
@@ -1221,7 +1343,7 @@ def build_rig_recommendations(
     rig_order: list[str] = []
 
     for sp in species_ranking:
-        key = _classify_rig(sp["rig"])
+        key = _classify_rig(sp["rig"], sp.get("name", ""))
         if key not in rig_groups:
             rig_groups[key] = []
             rig_order.append(key)
@@ -1482,8 +1604,11 @@ _RIG_KNOTS: dict[str, list[str]] = {
     "dropper_loop_deep": ["dropper_loop", "snell_knot", "fg_knot"],
     "drift_bottom": ["improved_clinch", "uni_to_uni"],
     "light_spin_cast": ["palomar", "uni_to_uni"],
+    "heavy_spin_cast": ["palomar", "fg_knot"],
     "vertical_jig_offshore": ["fg_knot", "palomar"],
     "salmon_mooching": ["uni_to_uni", "improved_clinch"],
+    "heavy_conventional": ["improved_clinch", "uni_to_uni"],
+    "steelhead_drift": ["snell_knot", "improved_clinch"],
 }
 
 def get_knots_for_rig(rig_key: str) -> list[dict[str, str]]:

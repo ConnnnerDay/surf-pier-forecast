@@ -52,5 +52,6 @@
 
   <!-- Legend box -->
   <rect x="15" y="355" width="470" height="35" rx="6" fill="#f7f9fc" stroke="#ccd" stroke-width="1"/>
-  <text x="30" y="377" font-size="10.5" fill="#555">Dropped straight down to schooling rockfish and reef fish spotted on sonar; jig with a slow lift.</text>
+  <text x="30" y="369" font-size="11" fill="#333" font-weight="bold">How it works:</text>
+  <text x="30" y="384" font-size="10.5" fill="#555">Dropped straight down to schooling rockfish and reef fish spotted on sonar; jig with a slow lift.</text>
 </svg>

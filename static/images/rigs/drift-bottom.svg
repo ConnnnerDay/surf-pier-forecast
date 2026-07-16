@@ -44,5 +44,6 @@
 
   <!-- Legend box -->
   <rect x="15" y="270" width="470" height="35" rx="6" fill="#f7f9fc" stroke="#ccd" stroke-width="1"/>
-  <text x="30" y="292" font-size="10.5" fill="#555">Slowly drifted instead of anchored to cover ground and find scattered flatfish and bottom feeders.</text>
+  <text x="30" y="284" font-size="11" fill="#333" font-weight="bold">How it works:</text>
+  <text x="30" y="299" font-size="10.5" fill="#555">Slowly drifted instead of anchored to cover ground and find scattered flatfish and bottom feeders.</text>
 </svg>

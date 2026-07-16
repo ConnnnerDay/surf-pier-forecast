@@ -296,6 +296,181 @@ class TestClassifyRig:
     def test_float_bead(self):
         assert _classify_rig("float bead rig above hook") == "pompano"
 
+    def test_slow_trolling_still_classifies_as_trolling(self):
+        assert (
+            _classify_rig("Medium to heavy trolling or slow-trolling near reef")
+            == "trolling"
+        )
+
+    def test_light_surf_rig_phrase(self):
+        assert _classify_rig("Light surf rig at 5-20 ft in the surf zone") == "pompano"
+
+    def test_ultralight_float_beats_generic_float(self):
+        assert (
+            _classify_rig("Ultra-light float rig with tiny hooks and dough bait")
+            == "ultralight_panfish"
+        )
+
+    def test_plain_float_still_classifies_as_float(self):
+        assert _classify_rig("Float rig with wire leader") == "float"
+
+    def test_deep_bottom_rig_routes_to_dropper_loop_deep(self):
+        assert (
+            _classify_rig("Medium to heavy bottom rig at 100-400 ft near reef")
+            == "dropper_loop_deep"
+        )
+
+    def test_very_deep_bottom_rig_routes_to_deep_drop(self):
+        assert (
+            _classify_rig("Heavy bottom rig at 200-800 ft near deep rocky reef")
+            == "deep-drop"
+        )
+
+    def test_shallow_bottom_rig_stays_light_bottom_reef(self):
+        assert (
+            _classify_rig("Light bottom rig near sandy bottom at 3-30 ft in bays")
+            == "light_bottom_reef"
+        )
+
+    def test_heavy_conventional_ball_sinker(self):
+        assert (
+            _classify_rig("Heavy conventional with 16-32 oz ball sinker at 100-600 ft")
+            == "heavy_conventional"
+        )
+
+    def test_heavy_tackle_incidental_catch(self):
+        assert (
+            _classify_rig("Heavy tackle (usually incidental catch)")
+            == "heavy_conventional"
+        )
+
+    def test_shark_name_fallback_without_wire_keyword(self):
+        assert (
+            _classify_rig("Heavy rig; 200 lb leader", "Brown shark (sandbar)")
+            == "shark"
+        )
+
+    def test_steelhead_name_hint_on_generic_drift_text(self):
+        assert (
+            _classify_rig(
+                "Drift or float rig in medium to fast water",
+                "Olympic Peninsula steelhead",
+            )
+            == "steelhead_drift"
+        )
+
+    def test_pencil_lead_routes_to_steelhead_drift(self):
+        assert (
+            _classify_rig("Drift rig with pencil lead; bobber-and-jig")
+            == "steelhead_drift"
+        )
+
+    def test_river_mouth_drift_routes_to_steelhead_drift(self):
+        assert (
+            _classify_rig("Light jig below a small float; drift fishing near river mouths")
+            == "steelhead_drift"
+        )
+
+    def test_fly_rod_wins_over_river_mouth_drift(self):
+        assert (
+            _classify_rig(
+                "Fly rod with sink-tip line is the traditional approach; "
+                "drift rig with roe near river mouths"
+            )
+            == "fly_pattern"
+        )
+
+    def test_bare_pier_mention_no_longer_forces_knocker(self):
+        # A species that just happens to be caught "near a pier" but whose
+        # own text names a completely different technique should classify
+        # by that technique, not get swept into the knocker bucket.
+        assert (
+            _classify_rig("Medium to heavy spinning or conventional near pier structure")
+            == "heavy_spin_cast"
+        )
+        assert (
+            _classify_rig("Hi-lo rig or Carolina rig; keep baits near bottom from piers")
+            == "hi-lo"
+        )
+
+    def test_actual_knocker_rig_still_classifies_as_knocker(self):
+        assert _classify_rig("Knocker rig tight to pilings; short fluorocarbon leader") == "knocker"
+
+    def test_heavy_spinning_routes_to_heavy_spin_cast(self):
+        assert (
+            _classify_rig("Heavy spinning or conventional near surface-cruising fish")
+            == "heavy_spin_cast"
+        )
+
+    def test_light_spinning_stays_light_spin_cast(self):
+        assert (
+            _classify_rig("Light to medium spinning near surface schools")
+            == "light_spin_cast"
+        )
+
+    def test_shark_word_boundary_excludes_sharksucker(self):
+        # "sharksucker" contains "shark" as a substring but remoras are not
+        # sharks and shouldn't be handed heavy wire-leader shark tackle.
+        assert (
+            _classify_rig(
+                "Any bottom or float rig (incidental catch)",
+                "Remora (sharksucker)",
+            )
+            != "shark"
+        )
+
+    def test_shark_name_still_wins_over_spinning_text(self):
+        assert (
+            _classify_rig("Heavy surf or spinning rig; 100 lb leader", "Atlantic blacktip shark")
+            == "shark"
+        )
+
+    def test_spinning_near_mangroves_is_not_a_bottom_rig(self):
+        # "mangroves"/"docks" are locations, not techniques — a species cast
+        # to on spinning gear near mangroves shouldn't be swept into the
+        # bottom rig bucket just because the location word matched.
+        assert (
+            _classify_rig("Light to medium spinning near mangroves and freshwater canals")
+            == "light_spin_cast"
+        )
+        assert (
+            _classify_rig("Light spinning near grass flats, docks, and channel edges")
+            == "light_spin_cast"
+        )
+
+    def test_bottom_rig_near_mangroves_still_classifies_as_bottom_reef(self):
+        assert (
+            _classify_rig("Light bottom rig near mangroves and muddy bottom")
+            == "light_bottom_reef"
+        )
+
+    def test_named_river_chinook_drift_routes_to_steelhead_drift(self):
+        # River-run chinook named for their home river are back-bounced/
+        # plugged in current the same way as steelhead, not slip-sinker
+        # drifted like an ocean/bay bottom fish.
+        assert (
+            _classify_rig(
+                "Drift rig in fast Klamath River water",
+                "Klamath River fall chinook",
+            )
+            == "steelhead_drift"
+        )
+
+    def test_trolling_still_wins_for_river_named_species(self):
+        assert (
+            _classify_rig(
+                "Trolling or drift rig in San Francisco Bay and Sacramento River",
+                "Sacramento River fall chinook",
+            )
+            == "trolling"
+        )
+
+    def test_plain_drift_rig_stays_drift_bottom(self):
+        assert (
+            _classify_rig("Spreader bar rig or slip sinker with 80-150 lb leader; drift fishing")
+            == "drift_bottom"
+        )
+
 
 # ---------------------------------------------------------------------------
 # _condition_rig_tip — moderate wave path, pier gaff path
@@ -392,6 +567,18 @@ class TestBuildRigRecommendations:
             (i for i, g in enumerate(gear_types) if g in ("lure", "mixed")), len(gear_types)
         )
         assert first_lure <= first_bait
+
+    def test_every_rig_category_has_an_image_file_and_gear_type(self):
+        import pathlib
+
+        from domain.species import RIG_CATEGORIES, _RIG_GEAR_TYPE
+
+        static_dir = pathlib.Path(__file__).resolve().parent.parent / "static"
+        for key, cat in RIG_CATEGORIES.items():
+            assert key in _RIG_GEAR_TYPE, f"{key} missing from _RIG_GEAR_TYPE"
+            image = cat.get("image")
+            assert image, f"{key} has no image path"
+            assert (static_dir / image).is_file(), f"{key} image not found: {image}"
 
 
 # ---------------------------------------------------------------------------
