@@ -1130,6 +1130,13 @@ def _classify_rig(rig_text: str, species_name: str = "") -> str:
                 return "deep-drop"
             if max_ft >= 300 or ("heavy" in text and max_ft >= 150):
                 return "dropper_loop_deep"
+    # River-run chinook named for their home river (Columbia, Klamath, etc.)
+    # drift-fished the same way as steelhead — back-bouncing/plugging in
+    # current — not the boat slip-sinker drift below, which is an ocean/bay
+    # bottom-fish presentation. Species already resolved as trolling above
+    # (e.g. Sacramento River fall chinook) are unaffected.
+    if "river" in name and "drift" in text:
+        return "steelhead_drift"
     # Drift rig — covered ground over sand/gravel/mud instead of anchored.
     if "drift" in text:
         return "drift_bottom"

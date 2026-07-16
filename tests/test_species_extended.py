@@ -444,6 +444,33 @@ class TestClassifyRig:
             == "light_bottom_reef"
         )
 
+    def test_named_river_chinook_drift_routes_to_steelhead_drift(self):
+        # River-run chinook named for their home river are back-bounced/
+        # plugged in current the same way as steelhead, not slip-sinker
+        # drifted like an ocean/bay bottom fish.
+        assert (
+            _classify_rig(
+                "Drift rig in fast Klamath River water",
+                "Klamath River fall chinook",
+            )
+            == "steelhead_drift"
+        )
+
+    def test_trolling_still_wins_for_river_named_species(self):
+        assert (
+            _classify_rig(
+                "Trolling or drift rig in San Francisco Bay and Sacramento River",
+                "Sacramento River fall chinook",
+            )
+            == "trolling"
+        )
+
+    def test_plain_drift_rig_stays_drift_bottom(self):
+        assert (
+            _classify_rig("Spreader bar rig or slip sinker with 80-150 lb leader; drift fishing")
+            == "drift_bottom"
+        )
+
 
 # ---------------------------------------------------------------------------
 # _condition_rig_tip — moderate wave path, pier gaff path
