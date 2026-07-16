@@ -1,5 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 350" font-family="Arial, sans-serif">
   <defs>
+    <linearGradient id="woodGrain" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#7a5a3a"/>
+      <stop offset="12%" stop-color="#9c7a52"/>
+      <stop offset="24%" stop-color="#7a5a3a"/>
+      <stop offset="38%" stop-color="#8a6644"/>
+      <stop offset="50%" stop-color="#9c7a52"/>
+      <stop offset="63%" stop-color="#7a5a3a"/>
+      <stop offset="78%" stop-color="#8a6644"/>
+      <stop offset="90%" stop-color="#6b4f32"/>
+      <stop offset="100%" stop-color="#7a5a3a"/>
+    </linearGradient>
+  </defs>
+  <defs>
     <radialGradient id="baitGrad" cx="35%" cy="30%" r="75%">
       <stop offset="0%" stop-color="#ffe4c4"/>
       <stop offset="45%" stop-color="#e8b48a"/>
@@ -49,7 +62,9 @@
 
   <!-- Leader going down -->
   <line x1="189" y1="80" x2="250" y2="100" stroke="#5da" stroke-width="2.5"/>
+  <line x1="189" y1="79.4" x2="250" y2="99.4" stroke="#e8fbf3" stroke-width="0.85" opacity="0.55"/>
   <line x1="250" y1="100" x2="250" y2="220" stroke="#5da" stroke-width="2.5"/>
+  <line x1="250" y1="99.4" x2="250" y2="219.4" stroke="#e8fbf3" stroke-width="0.85" opacity="0.55"/>
   <text x="290" y="130" font-size="11" fill="#555">Fluorocarbon</text>
   <text x="290" y="145" font-size="11" fill="#555">leader (12-24 in)</text>
 
@@ -80,7 +95,7 @@
   </g>
 
   <!-- Pier piling illustration -->
-  <rect x="400" y="40" width="30" height="240" rx="4" fill="#8B7355" stroke="#6B5335" stroke-width="2"/>
+  <rect x="400" y="40" width="30" height="240" rx="4" fill="url(#woodGrain)" stroke="#5a4326" stroke-width="2"/>
   <text x="415" y="35" text-anchor="middle" font-size="10" fill="#6B5335">Piling</text>
   <!-- Barnacles -->
   <circle cx="405" cy="120" r="3" fill="#9a9" stroke="#686" stroke-width="1"/>

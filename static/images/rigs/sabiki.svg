@@ -1,5 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 495" font-family="Arial, sans-serif">
   <defs>
+    <linearGradient id="fishGrad_b8d4e8" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#7aa8c4"/>
+      <stop offset="55%" stop-color="#b8d4e8"/>
+      <stop offset="100%" stop-color="#dfecf5"/>
+    </linearGradient>
+  </defs>
+  <defs>
     <radialGradient id="baitGrad" cx="35%" cy="30%" r="75%">
       <stop offset="0%" stop-color="#ffe4c4"/>
       <stop offset="45%" stop-color="#e8b48a"/>
@@ -132,10 +139,10 @@
 
   <!-- Baitfish illustrations near hooks -->
   <g transform="translate(315, 190)" opacity="0.5">
-    <path d="M0 5 Q5 0 12 3 Q18 5 20 5 Q18 5 12 7 Q5 10 0 5" fill="#b8d4e8" stroke="#7aa8c4" stroke-width="1"/>
+    <path d="M0 5 Q5 0 12 3 Q18 5 20 5 Q18 5 12 7 Q5 10 0 5" fill="url(#fishGrad_b8d4e8)" stroke="#7aa8c4" stroke-width="1"/>
   </g>
   <g transform="translate(105, 240)" opacity="0.5">
-    <path d="M0 5 Q5 0 12 3 Q18 5 20 5 Q18 5 12 7 Q5 10 0 5" fill="#b8d4e8" stroke="#7aa8c4" stroke-width="1"/>
+    <path d="M0 5 Q5 0 12 3 Q18 5 20 5 Q18 5 12 7 Q5 10 0 5" fill="url(#fishGrad_b8d4e8)" stroke="#7aa8c4" stroke-width="1"/>
   </g>
 
   <!-- Legend -->

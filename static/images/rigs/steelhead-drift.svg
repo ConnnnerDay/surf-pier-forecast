@@ -1,5 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 340" font-family="Arial, sans-serif">
   <defs>
+    <linearGradient id="fishGrad_8aa9c4" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#5c7fa0"/>
+      <stop offset="55%" stop-color="#8aa9c4"/>
+      <stop offset="100%" stop-color="#cad8e4"/>
+    </linearGradient>
+    <radialGradient id="beadGrad_e74c3c" cx="32%" cy="28%" r="75%">
+      <stop offset="0%" stop-color="#ffc9bd"/>
+      <stop offset="55%" stop-color="#e74c3c"/>
+      <stop offset="100%" stop-color="#c0392b"/>
+    </radialGradient>
+  </defs>
+  <defs>
     <radialGradient id="baitGrad" cx="35%" cy="30%" r="75%">
       <stop offset="0%" stop-color="#ffe4c4"/>
       <stop offset="45%" stop-color="#e8b48a"/>
@@ -63,11 +75,12 @@
 
   <!-- Option B: float above leader -->
   <line x1="165" y1="103" x2="230" y2="90" stroke="#68b" stroke-width="1.5"/>
-  <ellipse cx="245" cy="86" rx="10" ry="20" fill="#e74c3c" stroke="#c0392b" stroke-width="1.5" transform="rotate(20 245 86)"/>
+  <ellipse cx="245" cy="86" rx="10" ry="20" fill="url(#beadGrad_e74c3c)" stroke="#c0392b" stroke-width="1.5" transform="rotate(20 245 86)"/>
   <text x="245" y="60" text-anchor="middle" font-size="10" fill="#555">or a drift float</text>
 
   <!-- Leader down to hook -->
   <line x1="180" y1="150" x2="220" y2="175" stroke="#5da" stroke-width="2"/>
+  <line x1="180" y1="149.4" x2="220" y2="174.4" stroke="#e8fbf3" stroke-width="0.70" opacity="0.55"/>
   <text x="185" y="172" text-anchor="middle" font-size="10" fill="#555" transform="rotate(25, 185, 172)">18-24 in leader</text>
 
   <!-- Hook with yarn/roe -->
@@ -85,8 +98,8 @@
 
   <!-- Fish silhouette -->
   <g transform="translate(360, 130)" opacity="0.7">
-    <path d="M0 10 Q20 -8 45 10 Q20 28 0 10 Z" fill="#8aa9c4" stroke="#5c7fa0" stroke-width="1"/>
-    <path d="M45 10 L58 0 L58 20 Z" fill="#8aa9c4" stroke="#5c7fa0" stroke-width="1"/>
+    <path d="M0 10 Q20 -8 45 10 Q20 28 0 10 Z" fill="url(#fishGrad_8aa9c4)" stroke="#5c7fa0" stroke-width="1"/>
+    <path d="M45 10 L58 0 L58 20 Z" fill="url(#fishGrad_8aa9c4)" stroke="#5c7fa0" stroke-width="1"/>
   </g>
 
   <!-- Legend box -->

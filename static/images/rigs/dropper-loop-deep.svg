@@ -50,6 +50,7 @@
   <line x1="60" y1="49.2" x2="60" y2="89.2" stroke="#8fe6b8" stroke-width="0.96" stroke-dasharray="8,4" opacity="0.6"/>
   <text x="60" y="42" text-anchor="middle" font-size="10" fill="#345">Braid (50-80 lb)</text>
   <line x1="60" y1="90" x2="60" y2="250" stroke="#5da" stroke-width="2"/>
+  <line x1="60" y1="89.4" x2="60" y2="249.4" stroke="#e8fbf3" stroke-width="0.70" opacity="0.55"/>
 
   <!-- Dropper loop hooks, 3 of them -->
   <g>

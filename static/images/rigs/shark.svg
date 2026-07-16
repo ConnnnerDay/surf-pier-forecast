@@ -1,5 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 400" font-family="Arial, sans-serif">
   <defs>
+    <radialGradient id="beadGrad_e74c3c" cx="32%" cy="28%" r="75%">
+      <stop offset="0%" stop-color="#ffc9bd"/>
+      <stop offset="55%" stop-color="#e74c3c"/>
+      <stop offset="100%" stop-color="#c0392b"/>
+    </radialGradient>
+    <linearGradient id="woodGrain" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#7a5a3a"/>
+      <stop offset="12%" stop-color="#9c7a52"/>
+      <stop offset="24%" stop-color="#7a5a3a"/>
+      <stop offset="38%" stop-color="#8a6644"/>
+      <stop offset="50%" stop-color="#9c7a52"/>
+      <stop offset="63%" stop-color="#7a5a3a"/>
+      <stop offset="78%" stop-color="#8a6644"/>
+      <stop offset="90%" stop-color="#6b4f32"/>
+      <stop offset="100%" stop-color="#7a5a3a"/>
+    </linearGradient>
+  </defs>
+  <defs>
     <radialGradient id="baitGrad" cx="35%" cy="30%" r="75%">
       <stop offset="0%" stop-color="#ffe4c4"/>
       <stop offset="45%" stop-color="#e8b48a"/>
@@ -49,7 +67,7 @@
   <line x1="172" y1="79.2" x2="195" y2="79.2" stroke="#8fe6b8" stroke-width="0.96" opacity="0.6"/>
 
   <!-- Bead -->
-  <circle cx="205" cy="80" r="6" fill="#e74c3c" stroke="#c0392b" stroke-width="1.5"/>
+  <circle cx="205" cy="80" r="6" fill="url(#beadGrad_e74c3c)" stroke="#c0392b" stroke-width="1.5"/>
   <text x="205" y="100" text-anchor="middle" font-size="9" fill="#888">Bead</text>
 
   <!-- Heavy-duty swivel -->
@@ -95,8 +113,8 @@
 
   <!-- Sand spike illustration -->
   <g transform="translate(30, 120)">
-    <rect x="15" y="0" width="8" height="80" fill="#8B7355" stroke="#6B5335" stroke-width="1.5"/>
-    <polygon points="19,80 10,120 28,120" fill="#8B7355" stroke="#6B5335" stroke-width="1"/>
+    <rect x="15" y="0" width="8" height="80" fill="url(#woodGrain)" stroke="#5a4326" stroke-width="1.5"/>
+    <polygon points="19,80 10,120 28,120" fill="url(#woodGrain)" stroke="#5a4326" stroke-width="1"/>
     <text x="19" y="135" text-anchor="middle" font-size="10" fill="#6B5335">Sand spike</text>
     <!-- Rod holder cup -->
     <path d="M8 0 L8 -5 Q19 -10 30 -5 L30 0" fill="none" stroke="#6B5335" stroke-width="1.5"/>

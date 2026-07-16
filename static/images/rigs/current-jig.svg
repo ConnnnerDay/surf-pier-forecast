@@ -1,5 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 340" font-family="Arial, sans-serif">
   <defs>
+    <linearGradient id="woodGrain" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#7a5a3a"/>
+      <stop offset="12%" stop-color="#9c7a52"/>
+      <stop offset="24%" stop-color="#7a5a3a"/>
+      <stop offset="38%" stop-color="#8a6644"/>
+      <stop offset="50%" stop-color="#9c7a52"/>
+      <stop offset="63%" stop-color="#7a5a3a"/>
+      <stop offset="78%" stop-color="#8a6644"/>
+      <stop offset="90%" stop-color="#6b4f32"/>
+      <stop offset="100%" stop-color="#7a5a3a"/>
+    </linearGradient>
+  </defs>
+  <defs>
     <radialGradient id="baitGrad" cx="35%" cy="30%" r="75%">
       <stop offset="0%" stop-color="#ffe4c4"/>
       <stop offset="45%" stop-color="#e8b48a"/>
@@ -34,7 +47,7 @@
   <text x="250" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a3a5c">Current Jig / Bridge Jig Rig</text>
 
   <!-- Bridge piling -->
-  <rect x="410" y="45" width="30" height="260" rx="4" fill="#8B7355" stroke="#6B5335" stroke-width="2"/>
+  <rect x="410" y="45" width="30" height="260" rx="4" fill="url(#woodGrain)" stroke="#5a4326" stroke-width="2"/>
   <text x="425" y="38" text-anchor="middle" font-size="10" fill="#6B5335">Piling</text>
   <circle cx="417" cy="130" r="3" fill="#9a9" stroke="#686" stroke-width="1"/>
   <circle cx="432" cy="170" r="4" fill="#9a9" stroke="#686" stroke-width="1"/>
@@ -62,6 +75,7 @@
 
   <!-- Leader -->
   <line x1="255" y1="150" x2="270" y2="210" stroke="#5da" stroke-width="2.5"/>
+  <line x1="255" y1="149.4" x2="270" y2="209.4" stroke="#e8fbf3" stroke-width="0.85" opacity="0.55"/>
   <text x="300" y="180" font-size="11" fill="#555">Fluorocarbon</text>
   <text x="300" y="195" font-size="11" fill="#555">leader (18-24 in)</text>
 

@@ -1,5 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 320" font-family="Arial, sans-serif">
   <defs>
+    <radialGradient id="beadGrad_e74c3c" cx="32%" cy="28%" r="75%">
+      <stop offset="0%" stop-color="#ffc9bd"/>
+      <stop offset="55%" stop-color="#e74c3c"/>
+      <stop offset="100%" stop-color="#c0392b"/>
+    </radialGradient>
+  </defs>
+  <defs>
     <radialGradient id="baitGrad" cx="35%" cy="30%" r="75%">
       <stop offset="0%" stop-color="#ffe4c4"/>
       <stop offset="45%" stop-color="#e8b48a"/>
@@ -45,7 +52,9 @@
 
   <!-- Leader to first jig -->
   <line x1="199" y1="70" x2="270" y2="70" stroke="#5da" stroke-width="2"/>
+  <line x1="199" y1="69.4" x2="270" y2="69.4" stroke="#e8fbf3" stroke-width="0.70" opacity="0.55"/>
   <line x1="270" y1="70" x2="270" y2="120" stroke="#5da" stroke-width="2"/>
+  <line x1="270" y1="69.4" x2="270" y2="119.4" stroke="#e8fbf3" stroke-width="0.70" opacity="0.55"/>
 
   <!-- First shad dart / jig -->
   <g transform="translate(255, 120)">
@@ -64,6 +73,7 @@
 
   <!-- Leader between jigs -->
   <line x1="270" y1="162" x2="270" y2="220" stroke="#5da" stroke-width="2"/>
+  <line x1="270" y1="161.4" x2="270" y2="219.4" stroke="#e8fbf3" stroke-width="0.70" opacity="0.55"/>
   <!-- Gap label -->
   <line x1="290" y1="165" x2="290" y2="217" stroke="#c44" stroke-width="1" stroke-dasharray="4,3"/>
   <path d="M290 168 L286 175 M290 168 L294 175" fill="none" stroke="#c44" stroke-width="1.2"/>
@@ -73,7 +83,7 @@
 
   <!-- Second shad dart / jig -->
   <g transform="translate(255, 220)">
-    <circle cx="15" cy="8" r="10" fill="#e74c3c" stroke="#c0392b" stroke-width="1.5"/>
+    <circle cx="15" cy="8" r="10" fill="url(#beadGrad_e74c3c)" stroke="#c0392b" stroke-width="1.5"/>
     <path d="M15 18 L15 30 Q15 42 24 42 Q32 42 32 32 Q32 24 26 20" fill="none" stroke="url(#steelGrad)" stroke-width="2.2" filter="url(#softShadow)"/>
     <circle cx="25" cy="19" r="1.8" fill="url(#steelGradDark)"/>
     <path d="M5 8 Q-5 3 -8 8 Q-5 13 5 8" fill="#f39c12" stroke="#e67e22" stroke-width="0.8"/>

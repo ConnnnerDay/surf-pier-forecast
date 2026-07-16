@@ -1,5 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 320" font-family="Arial, sans-serif">
   <defs>
+    <linearGradient id="fishGrad_b8d4e8" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#7aa8c4"/>
+      <stop offset="55%" stop-color="#b8d4e8"/>
+      <stop offset="100%" stop-color="#dfecf5"/>
+    </linearGradient>
+    <radialGradient id="beadGrad_e74c3c" cx="32%" cy="28%" r="75%">
+      <stop offset="0%" stop-color="#ffc9bd"/>
+      <stop offset="55%" stop-color="#e74c3c"/>
+      <stop offset="100%" stop-color="#c0392b"/>
+    </radialGradient>
+  </defs>
+  <defs>
     <radialGradient id="baitGrad" cx="35%" cy="30%" r="75%">
       <stop offset="0%" stop-color="#ffe4c4"/>
       <stop offset="45%" stop-color="#e8b48a"/>
@@ -73,13 +85,14 @@
 
   <!-- Long fluorocarbon leader -->
   <line x1="368" y1="165" x2="430" y2="200" stroke="#5da" stroke-width="2"/>
+  <line x1="368" y1="164.4" x2="430" y2="199.4" stroke="#e8fbf3" stroke-width="0.70" opacity="0.55"/>
   <text x="420" y="180" font-size="10" fill="#555">Leader</text>
   <text x="420" y="193" font-size="9" fill="#888">6-15 ft fluoro</text>
 
   <!-- Trolling lure -->
   <g transform="translate(420, 200)">
     <!-- Lure head -->
-    <ellipse cx="15" cy="10" rx="15" ry="8" fill="#e74c3c" stroke="#c0392b" stroke-width="1.5"/>
+    <ellipse cx="15" cy="10" rx="15" ry="8" fill="url(#beadGrad_e74c3c)" stroke="#c0392b" stroke-width="1.5"/>
     <!-- Skirt -->
     <path d="M30 5 Q50 -5 55 8 Q60 12 55 15 Q50 25 30 15" fill="#f39c12" stroke="#e67e22" stroke-width="1" opacity="0.8"/>
     <path d="M30 8 Q45 0 52 10 Q55 15 48 18 Q40 22 30 14" fill="#e74c3c" stroke="#c0392b" stroke-width="0.8" opacity="0.6"/>
@@ -102,7 +115,7 @@
 
     <!-- Rigged ballyhoo at end -->
     <g transform="translate(400, 125)">
-      <path d="M0 5 Q10 0 22 3 Q35 5 40 5 Q35 5 22 7 Q10 10 0 5" fill="#b8d4e8" stroke="#7aa8c4" stroke-width="1"/>
+      <path d="M0 5 Q10 0 22 3 Q35 5 40 5 Q35 5 22 7 Q10 10 0 5" fill="url(#fishGrad_b8d4e8)" stroke="#7aa8c4" stroke-width="1"/>
       <line x1="0" y1="5" x2="-8" y2="5" stroke="#7aa8c4" stroke-width="1"/>
       <text x="20" y="20" text-anchor="middle" font-size="9" fill="#555">Ballyhoo</text>
     </g>

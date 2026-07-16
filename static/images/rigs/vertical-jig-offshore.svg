@@ -49,6 +49,7 @@
   <text x="30" y="70" font-size="10" fill="#345">Braid</text>
   <text x="30" y="83" font-size="10" fill="#345">50-65 lb</text>
   <line x1="90" y1="90" x2="90" y2="150" stroke="#5da" stroke-width="2"/>
+  <line x1="90" y1="89.4" x2="90" y2="149.4" stroke="#e8fbf3" stroke-width="0.70" opacity="0.55"/>
   <text x="200" y="115" font-size="10" fill="#eaf4fb">Fluoro leader</text>
   <text x="200" y="128" font-size="10" fill="#eaf4fb">4-6 ft, 60-100 lb</text>
 

@@ -56,6 +56,7 @@
 
   <!-- Leader to herring harness -->
   <line x1="190" y1="118" x2="215" y2="180" stroke="#5da" stroke-width="2"/>
+  <line x1="190" y1="117.4" x2="215" y2="179.4" stroke="#e8fbf3" stroke-width="0.70" opacity="0.55"/>
   <text x="235" y="150" font-size="11" fill="#555">Leader, 4-6 ft</text>
   <text x="235" y="164" font-size="10" fill="#888">15-20 lb mono</text>
 

@@ -1,5 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 400" font-family="Arial, sans-serif">
   <defs>
+    <radialGradient id="beadGrad_f1c40f" cx="32%" cy="28%" r="75%">
+      <stop offset="0%" stop-color="#fff3c0"/>
+      <stop offset="55%" stop-color="#f1c40f"/>
+      <stop offset="100%" stop-color="#d4ac0d"/>
+    </radialGradient>
+    <radialGradient id="beadGrad_FF6B35" cx="32%" cy="28%" r="75%">
+      <stop offset="0%" stop-color="#ffc199"/>
+      <stop offset="55%" stop-color="#FF6B35"/>
+      <stop offset="100%" stop-color="#e55520"/>
+    </radialGradient>
+    <radialGradient id="beadGrad_e74c3c" cx="32%" cy="28%" r="75%">
+      <stop offset="0%" stop-color="#ffc9bd"/>
+      <stop offset="55%" stop-color="#e74c3c"/>
+      <stop offset="100%" stop-color="#c0392b"/>
+    </radialGradient>
+  </defs>
+  <defs>
     <radialGradient id="baitGrad" cx="35%" cy="30%" r="75%">
       <stop offset="0%" stop-color="#ffe4c4"/>
       <stop offset="45%" stop-color="#e8b48a"/>
@@ -53,11 +70,11 @@
     <ellipse cx="250" cy="140" rx="6" ry="8" fill="none" stroke="#68b" stroke-width="2"/>
     <line x1="244" y1="140" x2="135" y2="140" stroke="#68b" stroke-width="2"/>
     <!-- Float bead (bright colored) -->
-    <ellipse cx="158" cy="133" rx="10" ry="7" fill="#FF6B35" stroke="#e55520" stroke-width="1.5"/>
+    <ellipse cx="158" cy="133" rx="10" ry="7" fill="url(#beadGrad_FF6B35)" stroke="#e55520" stroke-width="1.5"/>
     <text x="158" y="120" text-anchor="middle" font-size="10" fill="#FF6B35">Float bead</text>
     <!-- Teaser beads -->
-    <circle cx="140" cy="137" r="4" fill="#f1c40f" stroke="#d4ac0d" stroke-width="1"/>
-    <circle cx="140" cy="145" r="4" fill="#e74c3c" stroke="#c0392b" stroke-width="1"/>
+    <circle cx="140" cy="137" r="4" fill="url(#beadGrad_f1c40f)" stroke="#d4ac0d" stroke-width="1"/>
+    <circle cx="140" cy="145" r="4" fill="url(#beadGrad_e74c3c)" stroke="#c0392b" stroke-width="1"/>
     <text x="118" y="143" text-anchor="end" font-size="9" fill="#888">Beads</text>
     <!-- Hook -->
     <g transform="translate(108, 130)">
@@ -79,9 +96,9 @@
   <g>
     <ellipse cx="250" cy="222" rx="6" ry="8" fill="none" stroke="#68b" stroke-width="2"/>
     <line x1="244" y1="222" x2="135" y2="222" stroke="#68b" stroke-width="2"/>
-    <ellipse cx="158" cy="215" rx="10" ry="7" fill="#FF6B35" stroke="#e55520" stroke-width="1.5"/>
-    <circle cx="140" cy="219" r="4" fill="#f1c40f" stroke="#d4ac0d" stroke-width="1"/>
-    <circle cx="140" cy="227" r="4" fill="#e74c3c" stroke="#c0392b" stroke-width="1"/>
+    <ellipse cx="158" cy="215" rx="10" ry="7" fill="url(#beadGrad_FF6B35)" stroke="#e55520" stroke-width="1.5"/>
+    <circle cx="140" cy="219" r="4" fill="url(#beadGrad_f1c40f)" stroke="#d4ac0d" stroke-width="1"/>
+    <circle cx="140" cy="227" r="4" fill="url(#beadGrad_e74c3c)" stroke="#c0392b" stroke-width="1"/>
     <g transform="translate(108, 212)">
       <path d="M0 0 L0 16 Q0 26 8 26 Q16 26 16 18 Q16 12 12 9" fill="none" stroke="url(#steelGrad)" stroke-width="2" filter="url(#softShadow)"/>
       <circle cx="11" cy="8" r="1.5" fill="url(#steelGradDark)"/>

@@ -43,6 +43,7 @@
 
   <!-- Leader -->
   <line x1="180" y1="75" x2="230" y2="150" stroke="#5da" stroke-width="2"/>
+  <line x1="180" y1="74.4" x2="230" y2="149.4" stroke="#e8fbf3" stroke-width="0.70" opacity="0.55"/>
   <text x="245" y="105" text-anchor="middle" font-size="11" fill="#555" transform="rotate(65, 245, 105)">Fluoro leader</text>
   <text x="258" y="120" text-anchor="middle" font-size="10" fill="#888" transform="rotate(65, 258, 120)">12-18 in</text>
 
