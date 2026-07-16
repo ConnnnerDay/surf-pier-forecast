@@ -826,6 +826,21 @@ RIG_CATEGORIES: dict[str, dict[str, Any]] = {
         "leader": "18-24 in of 20-30 lb fluorocarbon",
         "image": "images/rigs/light-spin-cast.svg",
     },
+    "heavy_spin_cast": {
+        "name": "Heavy Spinning/Casting Rig (Big Gamefish)",
+        "description": (
+            "The same weightless, direct-cast presentation as the light "
+            "version above, scaled up for open-water bruisers — cobia, "
+            "amberjack, big jack crevalle, tarpon, tuna — that show up "
+            "cruising the surface, stacked at buoys and pilings, or "
+            "busting bait offshore. Live bait or a big popper/jig is cast "
+            "or pitched directly at the fish on stout spinning or "
+            "conventional gear built to stop a hard first run."
+        ),
+        "mainline": "30-50 lb braid",
+        "leader": "3-5 ft of 50-80 lb fluorocarbon",
+        "image": "images/rigs/heavy-spin-cast.svg",
+    },
     "vertical_jig_offshore": {
         "name": "Offshore Vertical Jig (Speed/Butterfly Jig)",
         "description": (
@@ -1012,7 +1027,8 @@ def _classify_rig(rig_text: str, species_name: str = "") -> str:
     if "stinger" in text or ("king" in text and "wire" in text):
         return "kingfish-stinger"
     if (
-        "shark" in text
+        re.search(r"\bshark\b", text)
+        or re.search(r"\bshark\b", name)
         or "very heavy wire" in text
         or "stand-up" in text
         or "heavy wire leader and heavy" in text
@@ -1025,9 +1041,12 @@ def _classify_rig(rig_text: str, species_name: str = "") -> str:
     # shark bucket above.
     if "heavy conventional" in text or ("heavy tackle" in text and "incidental" in text):
         return "heavy_conventional"
+    # Note: earlier revisions also caught any mention of "pier" or
+    # "structure" here, which stole ~70 species whose text goes on to
+    # describe a completely different technique (spinning, hi-lo, a bottom
+    # rig, a float) just because it named the location. Removed in favor of
+    # letting those species fall through to the more specific checks below.
     if "knocker" in text:
-        return "knocker"
-    if "pier" in text or "structure" in text:
         return "knocker"
     if (
         "pompano" in text
@@ -1140,20 +1159,19 @@ def _classify_rig(rig_text: str, species_name: str = "") -> str:
         )
     ):
         return "light_bottom_reef"
-    # Light spinning/casting — unweighted lure or live bait, no float/bottom rig.
+    # Spinning/casting — unweighted lure or live bait, no float/bottom rig.
+    # Split by tackle class: big open-water gamefish (cobia, amberjack, tuna,
+    # large jacks, tarpon) need much heavier gear than flats/inshore finesse
+    # casting, even though both are the same basic no-weight presentation.
     if (
         "spinning" in text
         or "baitcasting" in text
         or "casting" in text
         or ("live-bait rig" in text and "surface" in text)
     ):
+        if "heavy" in text and "light" not in text:
+            return "heavy_spin_cast"
         return "light_spin_cast"
-    # Last resort for shark species whose rig text describes a heavy mono
-    # leader without ever spelling out "wire" or "shark" (e.g. smaller
-    # inshore sharks), so they still land on shark tackle instead of the
-    # generic fishfinder default.
-    if "shark" in name:
-        return "shark"
     return "fishfinder"
 
 # Maps rig keys to their primary gear style ("bait", "lure", or "mixed").
@@ -1180,6 +1198,7 @@ _RIG_GEAR_TYPE: dict[str, str] = {
     "dropper_loop_deep": "bait",
     "drift_bottom": "bait",
     "light_spin_cast": "mixed",
+    "heavy_spin_cast": "mixed",
     "vertical_jig_offshore": "lure",
     "salmon_mooching": "bait",
     "heavy_conventional": "bait",
@@ -1576,6 +1595,7 @@ _RIG_KNOTS: dict[str, list[str]] = {
     "dropper_loop_deep": ["dropper_loop", "snell_knot", "fg_knot"],
     "drift_bottom": ["improved_clinch", "uni_to_uni"],
     "light_spin_cast": ["palomar", "uni_to_uni"],
+    "heavy_spin_cast": ["palomar", "fg_knot"],
     "vertical_jig_offshore": ["fg_knot", "palomar"],
     "salmon_mooching": ["uni_to_uni", "improved_clinch"],
     "heavy_conventional": ["improved_clinch", "uni_to_uni"],

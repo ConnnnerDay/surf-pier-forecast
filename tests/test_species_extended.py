@@ -380,6 +380,51 @@ class TestClassifyRig:
             == "fly_pattern"
         )
 
+    def test_bare_pier_mention_no_longer_forces_knocker(self):
+        # A species that just happens to be caught "near a pier" but whose
+        # own text names a completely different technique should classify
+        # by that technique, not get swept into the knocker bucket.
+        assert (
+            _classify_rig("Medium to heavy spinning or conventional near pier structure")
+            == "heavy_spin_cast"
+        )
+        assert (
+            _classify_rig("Hi-lo rig or Carolina rig; keep baits near bottom from piers")
+            == "hi-lo"
+        )
+
+    def test_actual_knocker_rig_still_classifies_as_knocker(self):
+        assert _classify_rig("Knocker rig tight to pilings; short fluorocarbon leader") == "knocker"
+
+    def test_heavy_spinning_routes_to_heavy_spin_cast(self):
+        assert (
+            _classify_rig("Heavy spinning or conventional near surface-cruising fish")
+            == "heavy_spin_cast"
+        )
+
+    def test_light_spinning_stays_light_spin_cast(self):
+        assert (
+            _classify_rig("Light to medium spinning near surface schools")
+            == "light_spin_cast"
+        )
+
+    def test_shark_word_boundary_excludes_sharksucker(self):
+        # "sharksucker" contains "shark" as a substring but remoras are not
+        # sharks and shouldn't be handed heavy wire-leader shark tackle.
+        assert (
+            _classify_rig(
+                "Any bottom or float rig (incidental catch)",
+                "Remora (sharksucker)",
+            )
+            != "shark"
+        )
+
+    def test_shark_name_still_wins_over_spinning_text(self):
+        assert (
+            _classify_rig("Heavy surf or spinning rig; 100 lb leader", "Atlantic blacktip shark")
+            == "shark"
+        )
+
 
 # ---------------------------------------------------------------------------
 # _condition_rig_tip — moderate wave path, pier gaff path
