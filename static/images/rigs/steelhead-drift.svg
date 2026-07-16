@@ -1,4 +1,26 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 340" font-family="Arial, sans-serif">
+  <defs>
+    <linearGradient id="steelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f2f2f2"/>
+      <stop offset="35%" stop-color="#b8b8b8"/>
+      <stop offset="70%" stop-color="#6e6e6e"/>
+      <stop offset="100%" stop-color="#3d3d3d"/>
+    </linearGradient>
+    <linearGradient id="steelGradDark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9a9a9a"/>
+      <stop offset="45%" stop-color="#5c5c5c"/>
+      <stop offset="100%" stop-color="#242424"/>
+    </linearGradient>
+    <radialGradient id="leadGrad" cx="32%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#e2e2e2"/>
+      <stop offset="35%" stop-color="#9a9a9a"/>
+      <stop offset="75%" stop-color="#5c5c5c"/>
+      <stop offset="100%" stop-color="#333333"/>
+    </radialGradient>
+    <filter id="softShadow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="1.4" dy="2.2" stdDeviation="1.6" flood-color="#000000" flood-opacity="0.28"/>
+    </filter>
+  </defs>
   <text x="250" y="28" text-anchor="middle" font-size="16" font-weight="bold" fill="#1a3a5c">River Drift &amp; Float Rig (Steelhead &amp; Salmon)</text>
 
   <!-- River current -->
@@ -19,11 +41,11 @@
   <text x="115" y="98" text-anchor="middle" font-size="10" fill="#555">10-15 lb mainline</text>
 
   <!-- Small swivel -->
-  <circle cx="165" cy="103" r="5" fill="#666" stroke="#444" stroke-width="1"/>
+  <circle cx="165" cy="103" r="5" fill="url(#steelGrad)" stroke="#333333" stroke-width="1" filter="url(#softShadow)"/>
 
   <!-- Option A: pencil lead dropper -->
   <line x1="165" y1="103" x2="180" y2="130" stroke="#68b" stroke-width="1.5"/>
-  <rect x="174" y="128" width="6" height="22" rx="2" fill="#999" stroke="#666" stroke-width="1"/>
+  <rect x="174" y="128" width="6" height="22" rx="2" fill="url(#leadGrad)" stroke="#4a4a4a" stroke-width="1"/>
   <text x="205" y="140" font-size="10" fill="#555">Pencil lead</text>
   <text x="205" y="152" font-size="10" fill="#555">(bounces bottom)</text>
 
@@ -38,7 +60,7 @@
 
   <!-- Hook with yarn/roe -->
   <g transform="translate(215, 170)">
-    <path d="M0 0 L0 10 Q0 16 5 16 Q10 16 10 12 Q10 8 7 6" fill="none" stroke="#444" stroke-width="1.8"/>
+    <path d="M0 0 L0 10 Q0 16 5 16 Q10 16 10 12 Q10 8 7 6" fill="none" stroke="url(#steelGrad)" stroke-width="1.8" filter="url(#softShadow)"/>
     <circle cx="4" cy="20" r="6" fill="#f2a6b0" stroke="#d47c8c" stroke-width="1"/>
     <text x="25" y="20" font-size="10" fill="#555">Cured roe / shrimp</text>
     <text x="25" y="32" font-size="10" fill="#555">or small jig</text>

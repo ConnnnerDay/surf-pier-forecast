@@ -1,4 +1,26 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 400" font-family="Arial, sans-serif">
+  <defs>
+    <linearGradient id="steelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f2f2f2"/>
+      <stop offset="35%" stop-color="#b8b8b8"/>
+      <stop offset="70%" stop-color="#6e6e6e"/>
+      <stop offset="100%" stop-color="#3d3d3d"/>
+    </linearGradient>
+    <linearGradient id="steelGradDark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9a9a9a"/>
+      <stop offset="45%" stop-color="#5c5c5c"/>
+      <stop offset="100%" stop-color="#242424"/>
+    </linearGradient>
+    <radialGradient id="leadGrad" cx="32%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#e2e2e2"/>
+      <stop offset="35%" stop-color="#9a9a9a"/>
+      <stop offset="75%" stop-color="#5c5c5c"/>
+      <stop offset="100%" stop-color="#333333"/>
+    </radialGradient>
+    <filter id="softShadow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="1.4" dy="2.2" stdDeviation="1.6" flood-color="#000000" flood-opacity="0.28"/>
+    </filter>
+  </defs>
   <text x="250" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a3a5c">Deep Dropper Loop Rig</text>
 
   <!-- Depth gradient background -->
@@ -39,7 +61,7 @@
   </g>
 
   <!-- Heavy sinker at the bottom -->
-  <ellipse cx="60" cy="270" rx="14" ry="28" fill="#888" stroke="#555" stroke-width="1.5"/>
+  <ellipse cx="60" cy="270" rx="14" ry="28" fill="url(#leadGrad)" stroke="#3a3a3a" stroke-width="1.5" filter="url(#softShadow)"/>
 
   <!-- Rocky bank -->
   <path d="M180 275 Q220 250 260 272 Q300 245 340 270 Q380 250 420 272 Q450 258 480 272 L480 280 L180 280 Z" fill="#7a8a9a" stroke="#5a6a7a" stroke-width="1.5"/>

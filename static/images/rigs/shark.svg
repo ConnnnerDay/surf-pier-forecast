@@ -1,4 +1,26 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 400" font-family="Arial, sans-serif">
+  <defs>
+    <linearGradient id="steelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f2f2f2"/>
+      <stop offset="35%" stop-color="#b8b8b8"/>
+      <stop offset="70%" stop-color="#6e6e6e"/>
+      <stop offset="100%" stop-color="#3d3d3d"/>
+    </linearGradient>
+    <linearGradient id="steelGradDark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9a9a9a"/>
+      <stop offset="45%" stop-color="#5c5c5c"/>
+      <stop offset="100%" stop-color="#242424"/>
+    </linearGradient>
+    <radialGradient id="leadGrad" cx="32%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#e2e2e2"/>
+      <stop offset="35%" stop-color="#9a9a9a"/>
+      <stop offset="75%" stop-color="#5c5c5c"/>
+      <stop offset="100%" stop-color="#333333"/>
+    </radialGradient>
+    <filter id="softShadow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="1.4" dy="2.2" stdDeviation="1.6" flood-color="#000000" flood-opacity="0.28"/>
+    </filter>
+  </defs>
   <text x="250" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a3a5c">Shark Rig (Heavy Bottom Rig)</text>
 
   <!-- Main line -->
@@ -7,7 +29,7 @@
 
   <!-- Heavy sliding sinker -->
   <g transform="translate(128, 62)">
-    <polygon points="22,0 0,45 44,45" fill="#a0a0a0" stroke="#666" stroke-width="2"/>
+    <polygon points="22,0 0,45 44,45" fill="url(#leadGrad)" stroke="#4a4a4a" stroke-width="2" filter="url(#softShadow)"/>
     <line x1="22" y1="8" x2="22" y2="38" stroke="#888" stroke-width="2"/>
     <text x="22" y="60" text-anchor="middle" font-size="11" fill="#555">Pyramid sinker</text>
     <text x="22" y="73" text-anchor="middle" font-size="10" fill="#888">(4-16 oz)</text>
@@ -20,9 +42,9 @@
 
   <!-- Heavy-duty swivel -->
   <g transform="translate(220, 70)">
-    <rect x="0" y="2" width="40" height="18" rx="9" fill="#555" stroke="#333" stroke-width="2"/>
-    <circle cx="5" cy="11" r="5" fill="#444" stroke="#333" stroke-width="1.5"/>
-    <circle cx="35" cy="11" r="5" fill="#444" stroke="#333" stroke-width="1.5"/>
+    <rect x="0" y="2" width="40" height="18" rx="9" fill="url(#steelGradDark)" stroke="#222222" stroke-width="2" filter="url(#softShadow)"/>
+    <circle cx="5" cy="11" r="5" fill="url(#steelGradDark)" stroke="#222222" stroke-width="1.5" filter="url(#softShadow)"/>
+    <circle cx="35" cy="11" r="5" fill="url(#steelGradDark)" stroke="#222222" stroke-width="1.5" filter="url(#softShadow)"/>
     <text x="20" y="36" text-anchor="middle" font-size="10" fill="#555">Heavy swivel</text>
   </g>
 
@@ -37,14 +59,14 @@
   <text x="315" y="190" font-size="10" fill="#888">or 200+ lb cable</text>
 
   <!-- Crimp sleeves on wire -->
-  <rect x="286" y="115" width="8" height="8" rx="2" fill="#777" stroke="#555" stroke-width="1"/>
+  <rect x="286" y="115" width="8" height="8" rx="2" fill="url(#steelGrad)" stroke="#3a3a3a" stroke-width="1"/>
   <text x="305" y="122" font-size="9" fill="#888">Crimp</text>
-  <rect x="286" y="218" width="8" height="8" rx="2" fill="#777" stroke="#555" stroke-width="1"/>
+  <rect x="286" y="218" width="8" height="8" rx="2" fill="url(#steelGrad)" stroke="#3a3a3a" stroke-width="1"/>
 
   <!-- Large circle hook -->
   <g transform="translate(272, 230)">
-    <path d="M18 0 L18 32 Q18 52 34 52 Q50 52 50 34 Q50 22 40 16" fill="none" stroke="#444" stroke-width="3.5"/>
-    <circle cx="38" cy="14" r="2.5" fill="#444"/>
+    <path d="M18 0 L18 32 Q18 52 34 52 Q50 52 50 34 Q50 22 40 16" fill="none" stroke="url(#steelGrad)" stroke-width="3.5" filter="url(#softShadow)"/>
+    <circle cx="38" cy="14" r="2.5" fill="url(#steelGradDark)"/>
     <text x="60" y="22" font-size="12" fill="#555" font-weight="bold">Circle hook</text>
     <text x="60" y="38" font-size="11" fill="#888">7/0 - 20/0</text>
   </g>

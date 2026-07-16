@@ -1,4 +1,26 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 320" font-family="Arial, sans-serif">
+  <defs>
+    <linearGradient id="steelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f2f2f2"/>
+      <stop offset="35%" stop-color="#b8b8b8"/>
+      <stop offset="70%" stop-color="#6e6e6e"/>
+      <stop offset="100%" stop-color="#3d3d3d"/>
+    </linearGradient>
+    <linearGradient id="steelGradDark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9a9a9a"/>
+      <stop offset="45%" stop-color="#5c5c5c"/>
+      <stop offset="100%" stop-color="#242424"/>
+    </linearGradient>
+    <radialGradient id="leadGrad" cx="32%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#e2e2e2"/>
+      <stop offset="35%" stop-color="#9a9a9a"/>
+      <stop offset="75%" stop-color="#5c5c5c"/>
+      <stop offset="100%" stop-color="#333333"/>
+    </radialGradient>
+    <filter id="softShadow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="1.4" dy="2.2" stdDeviation="1.6" flood-color="#000000" flood-opacity="0.28"/>
+    </filter>
+  </defs>
   <text x="250" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a3a5c">Tandem Jig Rig (Shad Dart Rig)</text>
 
   <!-- Main line -->
@@ -6,7 +28,7 @@
   <text x="100" y="60" text-anchor="middle" font-size="11" fill="#555">Main line (6-10 lb)</text>
 
   <!-- Swivel (optional) -->
-  <rect x="175" y="63" width="24" height="14" rx="7" fill="#666" stroke="#444" stroke-width="1.5"/>
+  <rect x="175" y="63" width="24" height="14" rx="7" fill="url(#steelGrad)" stroke="#333333" stroke-width="1.5" filter="url(#softShadow)"/>
   <text x="187" y="58" text-anchor="middle" font-size="9" fill="#555">Swivel</text>
 
   <!-- Leader to first jig -->
@@ -18,8 +40,8 @@
     <!-- Jig head -->
     <circle cx="15" cy="8" r="10" fill="#f39c12" stroke="#e67e22" stroke-width="1.5"/>
     <!-- Hook shank and bend -->
-    <path d="M15 18 L15 30 Q15 42 24 42 Q32 42 32 32 Q32 24 26 20" fill="none" stroke="#444" stroke-width="2.2"/>
-    <circle cx="25" cy="19" r="1.8" fill="#444"/>
+    <path d="M15 18 L15 30 Q15 42 24 42 Q32 42 32 32 Q32 24 26 20" fill="none" stroke="url(#steelGrad)" stroke-width="2.2" filter="url(#softShadow)"/>
+    <circle cx="25" cy="19" r="1.8" fill="url(#steelGradDark)"/>
     <!-- Tail/body dressing -->
     <path d="M5 8 Q-5 3 -8 8 Q-5 13 5 8" fill="#e74c3c" stroke="#c0392b" stroke-width="0.8"/>
     <path d="M3 5 Q-8 0 -12 5 Q-8 10 3 12" fill="#f1c40f" stroke="#d4ac0d" stroke-width="0.8" opacity="0.7"/>
@@ -40,8 +62,8 @@
   <!-- Second shad dart / jig -->
   <g transform="translate(255, 220)">
     <circle cx="15" cy="8" r="10" fill="#e74c3c" stroke="#c0392b" stroke-width="1.5"/>
-    <path d="M15 18 L15 30 Q15 42 24 42 Q32 42 32 32 Q32 24 26 20" fill="none" stroke="#444" stroke-width="2.2"/>
-    <circle cx="25" cy="19" r="1.8" fill="#444"/>
+    <path d="M15 18 L15 30 Q15 42 24 42 Q32 42 32 32 Q32 24 26 20" fill="none" stroke="url(#steelGrad)" stroke-width="2.2" filter="url(#softShadow)"/>
+    <circle cx="25" cy="19" r="1.8" fill="url(#steelGradDark)"/>
     <path d="M5 8 Q-5 3 -8 8 Q-5 13 5 8" fill="#f39c12" stroke="#e67e22" stroke-width="0.8"/>
     <path d="M3 5 Q-8 0 -12 5 Q-8 10 3 12" fill="#fff" stroke="#ccc" stroke-width="0.8" opacity="0.7"/>
     <text x="45" y="15" font-size="11" fill="#555" font-weight="bold">Jig #2</text>

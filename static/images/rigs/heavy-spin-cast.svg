@@ -1,10 +1,32 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 320" font-family="Arial, sans-serif">
+  <defs>
+    <linearGradient id="steelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f2f2f2"/>
+      <stop offset="35%" stop-color="#b8b8b8"/>
+      <stop offset="70%" stop-color="#6e6e6e"/>
+      <stop offset="100%" stop-color="#3d3d3d"/>
+    </linearGradient>
+    <linearGradient id="steelGradDark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9a9a9a"/>
+      <stop offset="45%" stop-color="#5c5c5c"/>
+      <stop offset="100%" stop-color="#242424"/>
+    </linearGradient>
+    <radialGradient id="leadGrad" cx="32%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#e2e2e2"/>
+      <stop offset="35%" stop-color="#9a9a9a"/>
+      <stop offset="75%" stop-color="#5c5c5c"/>
+      <stop offset="100%" stop-color="#333333"/>
+    </radialGradient>
+    <filter id="softShadow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="1.4" dy="2.2" stdDeviation="1.6" flood-color="#000000" flood-opacity="0.28"/>
+    </filter>
+  </defs>
   <text x="250" y="28" text-anchor="middle" font-size="16" font-weight="bold" fill="#1a3a5c">Heavy Spinning/Casting Rig (Big Gamefish)</text>
 
   <!-- Rod tip and heavy spinning/conventional reel -->
   <g transform="translate(30, 75)">
     <line x1="0" y1="22" x2="95" y2="8" stroke="#5a4a3a" stroke-width="4" stroke-linecap="round"/>
-    <ellipse cx="10" cy="27" rx="15" ry="10" fill="#555" stroke="#333" stroke-width="1.5"/>
+    <ellipse cx="10" cy="27" rx="15" ry="10" fill="url(#steelGradDark)" stroke="#222222" stroke-width="1.5" filter="url(#softShadow)"/>
     <text x="48" y="58" text-anchor="middle" font-size="10" fill="#555">Heavy spinning /</text>
     <text x="48" y="70" text-anchor="middle" font-size="10" fill="#555">conventional rod</text>
   </g>
@@ -36,7 +58,7 @@
     <path d="M0 12 Q22 -10 50 12 Q22 34 0 12 Z" fill="#6f92ad" stroke="#4d6f8a" stroke-width="1"/>
     <path d="M50 12 L64 0 L64 24 Z" fill="#6f92ad" stroke="#4d6f8a" stroke-width="1"/>
   </g>
-  <rect x="440" y="130" width="10" height="90" fill="#8a8a8a" stroke="#555" stroke-width="1"/>
+  <rect x="440" y="130" width="10" height="90" fill="url(#leadGrad)" stroke="#3a3a3a" stroke-width="1"/>
   <text x="445" y="235" text-anchor="middle" font-size="9" fill="#888">piling / buoy</text>
 
   <!-- Legend box -->

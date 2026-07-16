@@ -1,4 +1,26 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 320" font-family="Arial, sans-serif">
+  <defs>
+    <linearGradient id="steelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f2f2f2"/>
+      <stop offset="35%" stop-color="#b8b8b8"/>
+      <stop offset="70%" stop-color="#6e6e6e"/>
+      <stop offset="100%" stop-color="#3d3d3d"/>
+    </linearGradient>
+    <linearGradient id="steelGradDark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9a9a9a"/>
+      <stop offset="45%" stop-color="#5c5c5c"/>
+      <stop offset="100%" stop-color="#242424"/>
+    </linearGradient>
+    <radialGradient id="leadGrad" cx="32%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#e2e2e2"/>
+      <stop offset="35%" stop-color="#9a9a9a"/>
+      <stop offset="75%" stop-color="#5c5c5c"/>
+      <stop offset="100%" stop-color="#333333"/>
+    </radialGradient>
+    <filter id="softShadow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="1.4" dy="2.2" stdDeviation="1.6" flood-color="#000000" flood-opacity="0.28"/>
+    </filter>
+  </defs>
   <text x="250" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a3a5c">Saltwater Fly Leader Setup</text>
 
   <!-- Fly line (thick, weight-forward) -->
@@ -17,7 +39,7 @@
   <text x="335" y="114" text-anchor="middle" font-size="10" fill="#888">tippet, 12-30 lb</text>
 
   <!-- Non-slip loop knot -->
-  <circle cx="310" cy="130" r="5" fill="none" stroke="#444" stroke-width="1.5"/>
+  <circle cx="310" cy="130" r="5" fill="none" stroke="url(#steelGrad)" stroke-width="1.5" filter="url(#softShadow)"/>
 
   <!-- Fly (Clouser-style) -->
   <g transform="translate(295, 135)">
@@ -25,7 +47,7 @@
     <circle cx="4" cy="2" r="4" fill="#d4d4d4" stroke="#999" stroke-width="1"/>
     <path d="M4 6 Q0 24 -4 34 Q6 28 12 30 Q10 18 8 8" fill="#e0e0e0" stroke="#aaa" stroke-width="1" opacity="0.85"/>
     <path d="M4 6 Q8 22 14 32 Q4 28 -2 32 Q0 18 2 8" fill="#f0c14b" stroke="#c99a2e" stroke-width="1" opacity="0.7"/>
-    <path d="M28 20 L28 46 Q28 60 40 60 Q50 60 50 48 Q50 40 44 36" fill="none" stroke="#444" stroke-width="2"/>
+    <path d="M28 20 L28 46 Q28 60 40 60 Q50 60 50 48 Q50 40 44 36" fill="none" stroke="url(#steelGrad)" stroke-width="2" filter="url(#softShadow)"/>
   </g>
   <text x="360" y="165" font-size="11" fill="#555">Clouser Minnow</text>
   <text x="360" y="179" font-size="9.5" fill="#888">(or Deceiver, Crab, Toad)</text>

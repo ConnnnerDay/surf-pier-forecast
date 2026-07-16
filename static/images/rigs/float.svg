@@ -1,4 +1,26 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 400" font-family="Arial, sans-serif">
+  <defs>
+    <linearGradient id="steelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f2f2f2"/>
+      <stop offset="35%" stop-color="#b8b8b8"/>
+      <stop offset="70%" stop-color="#6e6e6e"/>
+      <stop offset="100%" stop-color="#3d3d3d"/>
+    </linearGradient>
+    <linearGradient id="steelGradDark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9a9a9a"/>
+      <stop offset="45%" stop-color="#5c5c5c"/>
+      <stop offset="100%" stop-color="#242424"/>
+    </linearGradient>
+    <radialGradient id="leadGrad" cx="32%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#e2e2e2"/>
+      <stop offset="35%" stop-color="#9a9a9a"/>
+      <stop offset="75%" stop-color="#5c5c5c"/>
+      <stop offset="100%" stop-color="#333333"/>
+    </radialGradient>
+    <filter id="softShadow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="1.4" dy="2.2" stdDeviation="1.6" flood-color="#000000" flood-opacity="0.28"/>
+    </filter>
+  </defs>
   <text x="250" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a3a5c">Float Rig (Bobber Rig)</text>
 
   <!-- Water surface -->
@@ -13,7 +35,7 @@
   <g transform="translate(220, 75)">
     <ellipse cx="20" cy="18" rx="18" ry="22" fill="#e74c3c" stroke="#c0392b" stroke-width="2"/>
     <ellipse cx="20" cy="8" rx="14" ry="10" fill="#e74c3c" stroke="#c0392b" stroke-width="0"/>
-    <rect x="18" y="-8" width="4" height="16" fill="#333"/>
+    <rect x="18" y="-8" width="4" height="16" fill="url(#steelGradDark)"/>
     <text x="52" y="10" font-size="12" fill="#555" font-weight="bold">Float</text>
     <text x="52" y="24" font-size="10" fill="#888">Popping cork,</text>
     <text x="52" y="36" font-size="10" fill="#888">cigar, or balloon</text>
@@ -34,13 +56,13 @@
   <text x="260" y="228" font-size="10" fill="#888">fluorocarbon</text>
 
   <!-- Small split shot (optional) -->
-  <circle cx="240" cy="250" r="4" fill="#777" stroke="#555" stroke-width="1"/>
+  <circle cx="240" cy="250" r="4" fill="url(#steelGrad)" stroke="#3a3a3a" stroke-width="1" filter="url(#softShadow)"/>
   <text x="260" y="254" font-size="9" fill="#888">Split shot (optional)</text>
 
   <!-- Hook -->
   <g transform="translate(227, 280)">
-    <path d="M13 0 L13 22 Q13 36 24 36 Q34 36 34 24 Q34 16 28 12" fill="none" stroke="#444" stroke-width="2.5"/>
-    <circle cx="27" cy="11" r="2" fill="#444"/>
+    <path d="M13 0 L13 22 Q13 36 24 36 Q34 36 34 24 Q34 16 28 12" fill="none" stroke="url(#steelGrad)" stroke-width="2.5" filter="url(#softShadow)"/>
+    <circle cx="27" cy="11" r="2" fill="url(#steelGradDark)"/>
     <text x="42" y="16" font-size="11" fill="#555">Circle or</text>
     <text x="42" y="30" font-size="11" fill="#555">J-hook</text>
   </g>

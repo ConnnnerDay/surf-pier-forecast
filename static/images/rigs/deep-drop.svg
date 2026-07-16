@@ -1,4 +1,26 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 470" font-family="Arial, sans-serif">
+  <defs>
+    <linearGradient id="steelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f2f2f2"/>
+      <stop offset="35%" stop-color="#b8b8b8"/>
+      <stop offset="70%" stop-color="#6e6e6e"/>
+      <stop offset="100%" stop-color="#3d3d3d"/>
+    </linearGradient>
+    <linearGradient id="steelGradDark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9a9a9a"/>
+      <stop offset="45%" stop-color="#5c5c5c"/>
+      <stop offset="100%" stop-color="#242424"/>
+    </linearGradient>
+    <radialGradient id="leadGrad" cx="32%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#e2e2e2"/>
+      <stop offset="35%" stop-color="#9a9a9a"/>
+      <stop offset="75%" stop-color="#5c5c5c"/>
+      <stop offset="100%" stop-color="#333333"/>
+    </radialGradient>
+    <filter id="softShadow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="1.4" dy="2.2" stdDeviation="1.6" flood-color="#000000" flood-opacity="0.28"/>
+    </filter>
+  </defs>
   <text x="250" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a3a5c">Deep Drop Rig</text>
 
   <!-- Depth scale on left -->
@@ -26,9 +48,9 @@
 
   <!-- Main line from electric reel -->
   <g transform="translate(100, 50)">
-    <rect x="0" y="0" width="60" height="30" rx="5" fill="#555" stroke="#333" stroke-width="2"/>
-    <circle cx="30" cy="15" r="10" fill="#444" stroke="#333" stroke-width="1"/>
-    <circle cx="30" cy="15" r="4" fill="#555" stroke="#333" stroke-width="1"/>
+    <rect x="0" y="0" width="60" height="30" rx="5" fill="url(#steelGradDark)" stroke="#222222" stroke-width="2" filter="url(#softShadow)"/>
+    <circle cx="30" cy="15" r="10" fill="url(#steelGradDark)" stroke="#222222" stroke-width="1" filter="url(#softShadow)"/>
+    <circle cx="30" cy="15" r="4" fill="url(#steelGradDark)" stroke="#222222" stroke-width="1" filter="url(#softShadow)"/>
     <text x="30" y="48" text-anchor="middle" font-size="10" fill="#555">Electric reel</text>
   </g>
   <text x="180" y="65" font-size="10" fill="#555">80-130 lb braid</text>
@@ -38,7 +60,7 @@
   <line x1="230" y1="120" x2="230" y2="340" stroke="#2a6" stroke-width="3"/>
 
   <!-- Heavy swivel -->
-  <rect x="216" y="125" width="28" height="14" rx="7" fill="#666" stroke="#444" stroke-width="1.5"/>
+  <rect x="216" y="125" width="28" height="14" rx="7" fill="url(#steelGrad)" stroke="#333333" stroke-width="1.5" filter="url(#softShadow)"/>
   <text x="260" y="136" font-size="10" fill="#555">Heavy swivel</text>
 
   <!-- Leader section -->
@@ -56,8 +78,8 @@
     <text x="155" y="182" text-anchor="end" font-size="9" fill="#2ecc71">LED light</text>
     <!-- Hook -->
     <g transform="translate(148, 180)">
-      <path d="M0 0 L0 14 Q0 22 8 22 Q14 22 14 16 Q14 10 10 8" fill="none" stroke="#444" stroke-width="2"/>
-      <circle cx="9" cy="7" r="1.5" fill="#444"/>
+      <path d="M0 0 L0 14 Q0 22 8 22 Q14 22 14 16 Q14 10 10 8" fill="none" stroke="url(#steelGrad)" stroke-width="2" filter="url(#softShadow)"/>
+      <circle cx="9" cy="7" r="1.5" fill="url(#steelGradDark)"/>
     </g>
     <text x="128" y="200" text-anchor="end" font-size="10" fill="#555">Hook #1</text>
   </g>
@@ -67,8 +89,8 @@
     <ellipse cx="230" cy="250" rx="5" ry="7" fill="none" stroke="#68b" stroke-width="2"/>
     <line x1="225" y1="250" x2="165" y2="250" stroke="#68b" stroke-width="2"/>
     <g transform="translate(148, 245)">
-      <path d="M0 0 L0 14 Q0 22 8 22 Q14 22 14 16 Q14 10 10 8" fill="none" stroke="#444" stroke-width="2"/>
-      <circle cx="9" cy="7" r="1.5" fill="#444"/>
+      <path d="M0 0 L0 14 Q0 22 8 22 Q14 22 14 16 Q14 10 10 8" fill="none" stroke="url(#steelGrad)" stroke-width="2" filter="url(#softShadow)"/>
+      <circle cx="9" cy="7" r="1.5" fill="url(#steelGradDark)"/>
     </g>
     <text x="128" y="265" text-anchor="end" font-size="10" fill="#555">Hook #2</text>
   </g>
@@ -78,15 +100,15 @@
     <ellipse cx="230" cy="305" rx="5" ry="7" fill="none" stroke="#68b" stroke-width="2"/>
     <line x1="225" y1="305" x2="165" y2="305" stroke="#68b" stroke-width="2"/>
     <g transform="translate(148, 300)">
-      <path d="M0 0 L0 14 Q0 22 8 22 Q14 22 14 16 Q14 10 10 8" fill="none" stroke="#444" stroke-width="2"/>
-      <circle cx="9" cy="7" r="1.5" fill="#444"/>
+      <path d="M0 0 L0 14 Q0 22 8 22 Q14 22 14 16 Q14 10 10 8" fill="none" stroke="url(#steelGrad)" stroke-width="2" filter="url(#softShadow)"/>
+      <circle cx="9" cy="7" r="1.5" fill="url(#steelGradDark)"/>
     </g>
     <text x="128" y="320" text-anchor="end" font-size="10" fill="#555">Hook #3</text>
   </g>
 
   <!-- Heavy bank sinker -->
   <g transform="translate(218, 340)">
-    <ellipse cx="12" cy="18" rx="14" ry="22" fill="#a0a0a0" stroke="#666" stroke-width="2"/>
+    <ellipse cx="12" cy="18" rx="14" ry="22" fill="url(#leadGrad)" stroke="#4a4a4a" stroke-width="2" filter="url(#softShadow)"/>
     <text x="38" y="15" font-size="11" fill="#555">Bank sinker</text>
     <text x="38" y="30" font-size="10" fill="#888">(2-8 lbs!)</text>
   </g>
