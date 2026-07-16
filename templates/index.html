@@ -395,10 +395,6 @@
                         </button>
                         {% endif %}
                         <p class="rig-desc">{{ rig.description }}</p>
-                        <div class="rig-targets">
-                            <span class="rig-targets-label">Good for:</span>
-                            {% for t in rig.targets %}<span class="rig-target-tag">{{ t }}</span>{% endfor %}
-                        </div>
                         {% if rig.cr_tip %}
                         <p class="rig-cr-tip">{{ rig.cr_tip }}</p>
                         {% endif %}
