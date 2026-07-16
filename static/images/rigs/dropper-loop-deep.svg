@@ -1,5 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 400" font-family="Arial, sans-serif">
   <defs>
+    <radialGradient id="baitGrad" cx="35%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#ffe4c4"/>
+      <stop offset="45%" stop-color="#e8b48a"/>
+      <stop offset="100%" stop-color="#b5794a"/>
+    </radialGradient>
+    <filter id="glossBlur" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="1.1"/>
+    </filter>
+  </defs>
+  <defs>
     <linearGradient id="steelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#f2f2f2"/>
       <stop offset="35%" stop-color="#b8b8b8"/>
@@ -37,6 +47,7 @@
 
   <!-- Main line down -->
   <line x1="60" y1="50" x2="60" y2="90" stroke="#2a6" stroke-width="3" stroke-dasharray="8,4"/>
+  <line x1="60" y1="49.2" x2="60" y2="89.2" stroke="#8fe6b8" stroke-width="0.96" stroke-dasharray="8,4" opacity="0.6"/>
   <text x="60" y="42" text-anchor="middle" font-size="10" fill="#345">Braid (50-80 lb)</text>
   <line x1="60" y1="90" x2="60" y2="250" stroke="#5da" stroke-width="2"/>
 
@@ -62,6 +73,7 @@
 
   <!-- Heavy sinker at the bottom -->
   <ellipse cx="60" cy="270" rx="14" ry="28" fill="url(#leadGrad)" stroke="#3a3a3a" stroke-width="1.5" filter="url(#softShadow)"/>
+  <ellipse cx="55.5" cy="259.4" rx="4.2" ry="6.2" fill="#ffffff" opacity="0.5" filter="url(#glossBlur)"/>
 
   <!-- Rocky bank -->
   <path d="M180 275 Q220 250 260 272 Q300 245 340 270 Q380 250 420 272 Q450 258 480 272 L480 280 L180 280 Z" fill="#7a8a9a" stroke="#5a6a7a" stroke-width="1.5"/>

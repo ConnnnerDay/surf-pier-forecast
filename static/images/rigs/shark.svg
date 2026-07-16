@@ -1,5 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 400" font-family="Arial, sans-serif">
   <defs>
+    <radialGradient id="baitGrad" cx="35%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#ffe4c4"/>
+      <stop offset="45%" stop-color="#e8b48a"/>
+      <stop offset="100%" stop-color="#b5794a"/>
+    </radialGradient>
+    <filter id="glossBlur" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="1.1"/>
+    </filter>
+  </defs>
+  <defs>
     <linearGradient id="steelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#f2f2f2"/>
       <stop offset="35%" stop-color="#b8b8b8"/>
@@ -25,6 +35,7 @@
 
   <!-- Main line -->
   <line x1="30" y1="80" x2="120" y2="80" stroke="#2a6" stroke-width="4" stroke-dasharray="8,4"/>
+  <line x1="30" y1="79.2" x2="120" y2="79.2" stroke="#8fe6b8" stroke-width="1.28" stroke-dasharray="8,4" opacity="0.6"/>
   <text x="75" y="70" text-anchor="middle" font-size="11" fill="#555">50-80 lb braid</text>
 
   <!-- Heavy sliding sinker -->
@@ -35,6 +46,7 @@
     <text x="22" y="73" text-anchor="middle" font-size="10" fill="#888">(4-16 oz)</text>
   </g>
   <line x1="172" y1="80" x2="195" y2="80" stroke="#2a6" stroke-width="3"/>
+  <line x1="172" y1="79.2" x2="195" y2="79.2" stroke="#8fe6b8" stroke-width="0.96" opacity="0.6"/>
 
   <!-- Bead -->
   <circle cx="205" cy="80" r="6" fill="#e74c3c" stroke="#c0392b" stroke-width="1.5"/>
@@ -43,8 +55,11 @@
   <!-- Heavy-duty swivel -->
   <g transform="translate(220, 70)">
     <rect x="0" y="2" width="40" height="18" rx="9" fill="url(#steelGradDark)" stroke="#222222" stroke-width="2" filter="url(#softShadow)"/>
+    <ellipse cx="10.4" cy="7.0" rx="6.4" ry="3.6" fill="#ffffff" opacity="0.5" filter="url(#glossBlur)"/>
     <circle cx="5" cy="11" r="5" fill="url(#steelGradDark)" stroke="#222222" stroke-width="1.5" filter="url(#softShadow)"/>
+    <ellipse cx="3.4" cy="9.2" rx="1.6" ry="1.6" fill="#ffffff" opacity="0.5" filter="url(#glossBlur)"/>
     <circle cx="35" cy="11" r="5" fill="url(#steelGradDark)" stroke="#222222" stroke-width="1.5" filter="url(#softShadow)"/>
+    <ellipse cx="33.4" cy="9.2" rx="1.6" ry="1.6" fill="#ffffff" opacity="0.5" filter="url(#glossBlur)"/>
     <text x="20" y="36" text-anchor="middle" font-size="10" fill="#555">Heavy swivel</text>
   </g>
 
@@ -73,7 +88,7 @@
 
   <!-- Large chunk bait -->
   <g transform="translate(110, 210)">
-    <ellipse cx="22" cy="15" rx="28" ry="16" fill="#f5c6a0" stroke="#d4956a" stroke-width="1.5"/>
+    <ellipse cx="22" cy="15" rx="28" ry="16" fill="url(#baitGrad)" stroke="#a8663a" stroke-width="1.5"/>
     <text x="22" y="42" text-anchor="middle" font-size="10" fill="#888">Large chunk bait</text>
     <text x="22" y="54" text-anchor="middle" font-size="9" fill="#888">(bonito, bluefish, stingray)</text>
   </g>
