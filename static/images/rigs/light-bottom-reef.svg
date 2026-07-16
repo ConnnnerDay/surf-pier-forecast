@@ -42,5 +42,6 @@
 
   <!-- Legend box -->
   <rect x="15" y="275" width="470" height="35" rx="6" fill="#f7f9fc" stroke="#ccd" stroke-width="1"/>
-  <text x="30" y="297" font-size="10.5" fill="#555">Just enough weight to hold near natural bottom without spooking line-shy reef and structure feeders.</text>
+  <text x="30" y="289" font-size="11" fill="#333" font-weight="bold">How it works:</text>
+  <text x="30" y="304" font-size="10.5" fill="#555">Just enough weight to hold near bottom without spooking line-shy reef and structure feeders.</text>
 </svg>
