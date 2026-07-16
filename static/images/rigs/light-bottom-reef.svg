@@ -1,5 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 320" font-family="Arial, sans-serif">
   <defs>
+    <linearGradient id="seafloorGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#9fae8a"/>
+      <stop offset="100%" stop-color="#6f7f5c"/>
+    </linearGradient>
+    <radialGradient id="pebbleGrad" cx="32%" cy="28%" r="75%">
+      <stop offset="0%" stop-color="#b9c4a6"/>
+      <stop offset="55%" stop-color="#7a8a6a"/>
+      <stop offset="100%" stop-color="#4a5a3a"/>
+    </radialGradient>
     <radialGradient id="baitGrad" cx="35%" cy="30%" r="75%">
       <stop offset="0%" stop-color="#ffe4c4"/>
       <stop offset="45%" stop-color="#e8b48a"/>
@@ -72,9 +81,9 @@
   </g>
 
   <!-- Reef / rocky bottom -->
-  <path d="M20 230 Q60 205 100 225 Q140 200 190 222 Q240 198 290 224 Q340 202 390 222 Q440 205 480 225 L480 260 L20 260 Z" fill="#8a9a7a" stroke="#6a7a5a" stroke-width="1.5"/>
-  <circle cx="90" cy="220" r="5" fill="#7a8a6a" stroke="#5a6a4a" stroke-width="1"/>
-  <circle cx="260" cy="218" r="6" fill="#7a8a6a" stroke="#5a6a4a" stroke-width="1"/>
+  <path d="M20 230 Q60 205 100 225 Q140 200 190 222 Q240 198 290 224 Q340 202 390 222 Q440 205 480 225 L480 260 L20 260 Z" fill="url(#seafloorGrad)" stroke="#6a7a5a" stroke-width="1.5"/>
+  <circle cx="90" cy="220" r="5" fill="url(#pebbleGrad)" stroke="#5a6a4a" stroke-width="1"/>
+  <circle cx="260" cy="218" r="6" fill="url(#pebbleGrad)" stroke="#5a6a4a" stroke-width="1"/>
   <text x="250" y="250" text-anchor="middle" font-size="10" fill="#4a5a3a">Sand / rock / grass bottom</text>
 
   <!-- Legend box -->

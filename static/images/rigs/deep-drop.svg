@@ -8,6 +8,16 @@
     <filter id="glossBlur" x="-60%" y="-60%" width="220%" height="220%">
       <feGaussianBlur stdDeviation="1.1"/>
     </filter>
+    <radialGradient id="ledGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#baffcf" stop-opacity="0.85"/>
+      <stop offset="45%" stop-color="#2ecc71" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#2ecc71" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="ledBody" cx="35%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#d6ffe4"/>
+      <stop offset="45%" stop-color="#4ade80"/>
+      <stop offset="100%" stop-color="#1e8e4f"/>
+    </radialGradient>
   </defs>
   <defs>
     <linearGradient id="steelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -87,10 +97,10 @@
   <g>
     <ellipse cx="230" cy="185" rx="5" ry="7" fill="none" stroke="#68b" stroke-width="2"/>
     <line x1="225" y1="185" x2="165" y2="185" stroke="#68b" stroke-width="2"/>
-    <!-- LED light -->
-    <rect x="168" y="176" width="14" height="8" rx="3" fill="#2ecc71" stroke="#27ae60" stroke-width="1"/>
     <!-- Light glow -->
-    <circle cx="175" cy="180" r="12" fill="#2ecc71" opacity="0.15"/>
+    <circle cx="175" cy="180" r="14" fill="url(#ledGlow)"/>
+    <!-- LED light -->
+    <rect x="168" y="176" width="14" height="8" rx="3" fill="url(#ledBody)" stroke="#1e8e4f" stroke-width="1"/>
     <text x="155" y="182" text-anchor="end" font-size="9" fill="#2ecc71">LED light</text>
     <!-- Hook -->
     <g transform="translate(148, 180)">

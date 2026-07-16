@@ -1,5 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 320" font-family="Arial, sans-serif">
   <defs>
+    <linearGradient id="hullGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#8a6a45"/>
+      <stop offset="55%" stop-color="#6B5335"/>
+      <stop offset="100%" stop-color="#4a3520"/>
+    </linearGradient>
     <linearGradient id="fishGrad_b8d4e8" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" stop-color="#7aa8c4"/>
       <stop offset="55%" stop-color="#b8d4e8"/>
@@ -50,7 +55,8 @@
 
   <!-- Boat silhouette -->
   <g transform="translate(30, 50)">
-    <path d="M0 45 Q10 55 50 55 L120 55 Q140 55 145 45 L150 35 L130 35 L120 20 L110 35 L0 35 Z" fill="#6B5335" stroke="#4a3520" stroke-width="1.5"/>
+    <path d="M0 45 Q10 55 50 55 L120 55 Q140 55 145 45 L150 35 L130 35 L120 20 L110 35 L0 35 Z" fill="url(#hullGrad)" stroke="#4a3520" stroke-width="1.5"/>
+    <path d="M2 35 L148 35" fill="none" stroke="#a88a5f" stroke-width="1" opacity="0.6"/>
     <!-- Tower -->
     <line x1="80" y1="20" x2="80" y2="-10" stroke="#4a3520" stroke-width="2"/>
     <line x1="60" y1="-10" x2="100" y2="-10" stroke="#4a3520" stroke-width="2"/>
