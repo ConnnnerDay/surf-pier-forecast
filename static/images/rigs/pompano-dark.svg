@@ -83,7 +83,7 @@
     <g transform="translate(108, 130)">
       <circle cx="0" cy="0" r="2.2" fill="none" stroke="url(#steelGrad)" stroke-width="1.44" filter="url(#softShadow)"/>
       <path d="M0 0 L0 16 Q0 26 8 26 Q16 26 16 18 Q16 12 12 9" fill="none" stroke="url(#steelGrad)" stroke-width="2" filter="url(#softShadow)"/>
-      <circle cx="11" cy="8" r="1.5" fill="url(#steelGradDark)"/>
+      <path d="M13.14 11.73 L17.73 10.86 L13.14 13.98 Z" fill="url(#steelGradDark)"/>
     </g>
     <text x="85" y="158" text-anchor="middle" font-size="10" fill="#c8d3dd">Hook #1</text>
   </g>
@@ -106,7 +106,7 @@
     <g transform="translate(108, 212)">
       <circle cx="0" cy="0" r="2.2" fill="none" stroke="url(#steelGrad)" stroke-width="1.44" filter="url(#softShadow)"/>
       <path d="M0 0 L0 16 Q0 26 8 26 Q16 26 16 18 Q16 12 12 9" fill="none" stroke="url(#steelGrad)" stroke-width="2" filter="url(#softShadow)"/>
-      <circle cx="11" cy="8" r="1.5" fill="url(#steelGradDark)"/>
+      <path d="M13.14 11.73 L17.73 10.86 L13.14 13.98 Z" fill="url(#steelGradDark)"/>
     </g>
     <text x="85" y="240" text-anchor="middle" font-size="10" fill="#c8d3dd">Hook #2</text>
   </g>

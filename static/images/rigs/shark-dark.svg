@@ -98,7 +98,7 @@
   <g transform="translate(272, 230)">
     <circle cx="18" cy="0" r="3.2" fill="none" stroke="url(#steelGrad)" stroke-width="2.52" filter="url(#softShadow)"/>
     <path d="M18 0 L18 32 Q18 52 34 52 Q50 52 50 34 Q50 22 40 16" fill="none" stroke="url(#steelGrad)" stroke-width="3.5" filter="url(#softShadow)"/>
-    <circle cx="38" cy="14" r="2.5" fill="url(#steelGradDark)"/>
+    <path d="M42.36 20.33 L49.82 18.10 L42.74 24.06 Z" fill="url(#steelGradDark)"/>
     <text x="60" y="22" font-size="12" fill="#c8d3dd" font-weight="bold">Circle hook</text>
     <text x="60" y="38" font-size="11" fill="#93a5b8">7/0 - 20/0</text>
   </g>
