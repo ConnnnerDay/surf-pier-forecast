@@ -83,13 +83,13 @@
     <text x="40" y="16" font-size="11" fill="#c8d3dd">Circle hook (3/0-5/0)</text>
   </g>
 
-  <!-- Live baitfish swimming freely -->
-  <g transform="translate(200, 210)">
+  <!-- Live baitfish, nose-hooked -->
+  <g transform="translate(197, 158)">
     <path d="M0 10 Q20 -6 45 10 Q20 26 0 10" fill="url(#fishGrad_b8d4e8)" stroke="#7ba3c4" stroke-width="1.5"/>
     <path d="M0 10 L-14 0 L-14 20 Z" fill="url(#fishGrad_b8d4e8)" stroke="#7ba3c4" stroke-width="1"/>
     <circle cx="34" cy="7" r="1.5" fill="url(#steelGradDark)"/>
-    <text x="55" y="14" font-size="10" fill="#93a5b8">Live baitfish or shrimp</text>
-    <text x="55" y="26" font-size="10" fill="#93a5b8">swims freely toward structure</text>
+    <text x="55" y="66" font-size="10" fill="#93a5b8">Live baitfish or shrimp</text>
+    <text x="55" y="78" font-size="10" fill="#93a5b8">swims freely toward structure</text>
   </g>
 
   <!-- Legend box -->
