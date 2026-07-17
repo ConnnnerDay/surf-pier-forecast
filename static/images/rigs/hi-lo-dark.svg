@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 460" font-family="Arial, sans-serif">
-  <rect x="0" y="0" width="500" height="460" fill="#FAFAF8"/>
+  <rect x="0" y="0" width="500" height="460" fill="#132235"/>
   <defs>
     <radialGradient id="baitGrad" cx="35%" cy="30%" r="75%">
       <stop offset="0%" stop-color="#ffe4c4"/>
@@ -32,12 +32,12 @@
       <feDropShadow dx="1.4" dy="2.2" stdDeviation="1.6" flood-color="#000000" flood-opacity="0.28"/>
     </filter>
   </defs>
-  <text x="250" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a3a5c">Hi-Lo Rig (Double Drop / Bottom Rig)</text>
+  <text x="250" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#7DD3FC">Hi-Lo Rig (Double Drop / Bottom Rig)</text>
 
   <!-- Main line coming in -->
   <line x1="30" y1="60" x2="150" y2="60" stroke="#2a6" stroke-width="3" stroke-dasharray="8,4"/>
   <line x1="30" y1="59.2" x2="150" y2="59.2" stroke="#8fe6b8" stroke-width="0.96" stroke-dasharray="8,4" opacity="0.6"/>
-  <text x="90" y="52" text-anchor="middle" font-size="11" fill="#555">Main line</text>
+  <text x="90" y="52" text-anchor="middle" font-size="11" fill="#c8d3dd">Main line</text>
 
   <!-- Swivel -->
   <rect x="155" y="52" width="34" height="16" rx="8" fill="url(#steelGrad)" stroke="#333333" stroke-width="1.5" filter="url(#softShadow)"/>
@@ -46,12 +46,12 @@
   <ellipse cx="158.7" cy="58.6" rx="1.3" ry="1.3" fill="#ffffff" opacity="0.5" filter="url(#glossBlur)"/>
   <circle cx="184" cy="60" r="4" fill="url(#steelGrad)" stroke="#333333" stroke-width="1" filter="url(#softShadow)"/>
   <ellipse cx="182.7" cy="58.6" rx="1.3" ry="1.3" fill="#ffffff" opacity="0.5" filter="url(#glossBlur)"/>
-  <text x="172" y="46" text-anchor="middle" font-size="10" fill="#555">Swivel</text>
+  <text x="172" y="46" text-anchor="middle" font-size="10" fill="#c8d3dd">Swivel</text>
 
   <!-- Vertical leader -->
   <line x1="189" y1="60" x2="250" y2="80" stroke="#68b" stroke-width="2.5"/>
   <line x1="250" y1="80" x2="250" y2="310" stroke="#68b" stroke-width="2.5"/>
-  <text x="270" y="100" font-size="11" fill="#555">30-40 lb mono</text>
+  <text x="270" y="100" font-size="11" fill="#c8d3dd">30-40 lb mono</text>
 
   <!-- Upper dropper loop + hook -->
   <g>
@@ -63,15 +63,15 @@
       <path d="M0 0 L0 18 Q0 30 10 30 Q20 30 20 20 Q20 13 14 10" fill="none" stroke="url(#steelGrad)" stroke-width="2.2" filter="url(#softShadow)"/>
       <circle cx="13" cy="9" r="1.8" fill="url(#steelGradDark)"/>
     </g>
-    <text x="120" y="170" text-anchor="middle" font-size="11" fill="#555">Hook #1</text>
-    <text x="120" y="183" text-anchor="middle" font-size="10" fill="#888">(upper)</text>
+    <text x="120" y="170" text-anchor="middle" font-size="11" fill="#c8d3dd">Hook #1</text>
+    <text x="120" y="183" text-anchor="middle" font-size="10" fill="#93a5b8">(upper)</text>
   </g>
 
   <!-- Gap label -->
-  <line x1="268" y1="148" x2="268" y2="215" stroke="#c44" stroke-width="1" stroke-dasharray="4,3"/>
-  <text x="300" y="185" font-size="10" fill="#c44">12-18 in gap</text>
-  <path d="M268 152 L264 158 M268 152 L272 158" fill="none" stroke="#c44" stroke-width="1.2"/>
-  <path d="M268 212 L264 206 M268 212 L272 206" fill="none" stroke="#c44" stroke-width="1.2"/>
+  <line x1="268" y1="148" x2="268" y2="215" stroke="#ff8a7a" stroke-width="1" stroke-dasharray="4,3"/>
+  <text x="300" y="185" font-size="10" fill="#ff8a7a">12-18 in gap</text>
+  <path d="M268 152 L264 158 M268 152 L272 158" fill="none" stroke="#ff8a7a" stroke-width="1.2"/>
+  <path d="M268 212 L264 206 M268 212 L272 206" fill="none" stroke="#ff8a7a" stroke-width="1.2"/>
 
   <!-- Lower dropper loop + hook -->
   <g>
@@ -81,27 +81,27 @@
       <path d="M0 0 L0 18 Q0 30 10 30 Q20 30 20 20 Q20 13 14 10" fill="none" stroke="url(#steelGrad)" stroke-width="2.2" filter="url(#softShadow)"/>
       <circle cx="13" cy="9" r="1.8" fill="url(#steelGradDark)"/>
     </g>
-    <text x="120" y="252" text-anchor="middle" font-size="11" fill="#555">Hook #2</text>
-    <text x="120" y="265" text-anchor="middle" font-size="10" fill="#888">(lower)</text>
+    <text x="120" y="252" text-anchor="middle" font-size="11" fill="#c8d3dd">Hook #2</text>
+    <text x="120" y="265" text-anchor="middle" font-size="10" fill="#93a5b8">(lower)</text>
   </g>
 
   <!-- Pyramid sinker -->
   <g transform="translate(232, 310)">
     <polygon points="18,0 0,40 36,40" fill="url(#leadGrad)" stroke="#4a4a4a" stroke-width="1.5" filter="url(#softShadow)"/>
-    <text x="18" y="55" text-anchor="middle" font-size="11" fill="#555">Pyramid sinker</text>
-    <text x="18" y="68" text-anchor="middle" font-size="10" fill="#888">(2-4 oz)</text>
+    <text x="18" y="55" text-anchor="middle" font-size="11" fill="#c8d3dd">Pyramid sinker</text>
+    <text x="18" y="68" text-anchor="middle" font-size="10" fill="#93a5b8">(2-4 oz)</text>
   </g>
 
   <!-- Legend -->
-  <rect x="310" y="230" width="175" height="75" rx="6" fill="#f7f9fc" stroke="#ccd" stroke-width="1" filter="url(#softShadow)"/>
-  <text x="325" y="250" font-size="11" fill="#333" font-weight="bold">Best for:</text>
-  <text x="325" y="267" font-size="10.5" fill="#555">Whiting, spot, croaker,</text>
-  <text x="325" y="282" font-size="10.5" fill="#555">sea bass, pompano,</text>
-  <text x="325" y="297" font-size="10.5" fill="#555">and other panfish</text>
+  <rect x="310" y="230" width="175" height="75" rx="6" fill="#0f2032" stroke="#2c4a68" stroke-width="1" filter="url(#softShadow)"/>
+  <text x="325" y="250" font-size="11" fill="#e8eef3" font-weight="bold">Best for:</text>
+  <text x="325" y="267" font-size="10.5" fill="#c8d3dd">Whiting, spot, croaker,</text>
+  <text x="325" y="282" font-size="10.5" fill="#c8d3dd">sea bass, pompano,</text>
+  <text x="325" y="297" font-size="10.5" fill="#c8d3dd">and other panfish</text>
 
   <!-- How it works -->
-  <rect x="15" y="400" width="470" height="50" rx="6" fill="#f7f9fc" stroke="#ccd" stroke-width="1" filter="url(#softShadow)"/>
-  <text x="30" y="418" font-size="11" fill="#333" font-weight="bold">How it works:</text>
-  <text x="30" y="434" font-size="10.5" fill="#555">Two baits fish two depths at once — the sinker anchors the bottom while the</text>
-  <text x="30" y="447" font-size="10.5" fill="#555">upper hook works higher in the water column.</text>
+  <rect x="15" y="400" width="470" height="50" rx="6" fill="#0f2032" stroke="#2c4a68" stroke-width="1" filter="url(#softShadow)"/>
+  <text x="30" y="418" font-size="11" fill="#e8eef3" font-weight="bold">How it works:</text>
+  <text x="30" y="434" font-size="10.5" fill="#c8d3dd">Two baits fish two depths at once — the sinker anchors the bottom while the</text>
+  <text x="30" y="447" font-size="10.5" fill="#c8d3dd">upper hook works higher in the water column.</text>
 </svg>

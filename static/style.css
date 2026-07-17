@@ -1683,32 +1683,6 @@ h2::before {
   line-height: 1.5;
 }
 
-.rig-targets {
-  margin: 0 0 0.75rem;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.3rem;
-}
-
-.rig-targets-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-muted);
-  margin-right: 0.25rem;
-}
-
-.rig-target-tag {
-  display: inline-block;
-  font-size: 0.7rem;
-  font-weight: 500;
-  padding: 0.15rem 0.5rem;
-  background: rgba(0,0,0,0.06);
-  color: var(--text);
-  border-radius: 3px;
-  white-space: nowrap;
-}
-
 .rig-cr-tip {
   margin: 0.4rem 0 0;
   font-size: 0.78rem;

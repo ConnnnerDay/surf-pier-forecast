@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 300" font-family="Arial, sans-serif">
-  <rect x="0" y="0" width="500" height="300" fill="#FAFAF8"/>
+  <rect x="0" y="0" width="500" height="300" fill="#132235"/>
   <defs>
     <radialGradient id="baitGrad" cx="35%" cy="30%" r="75%">
       <stop offset="0%" stop-color="#ffe4c4"/>
@@ -32,41 +32,41 @@
       <feDropShadow dx="1.4" dy="2.2" stdDeviation="1.6" flood-color="#000000" flood-opacity="0.28"/>
     </filter>
   </defs>
-  <text x="250" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a3a5c">Ultralight Panfish Rig</text>
+  <text x="250" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#7DD3FC">Ultralight Panfish Rig</text>
 
   <!-- Main line straight to leader, no swivel or hardware -->
   <line x1="30" y1="90" x2="220" y2="90" stroke="#2a6" stroke-width="2.5" stroke-dasharray="8,4"/>
   <line x1="30" y1="89.2" x2="220" y2="89.2" stroke="#8fe6b8" stroke-width="0.80" stroke-dasharray="8,4" opacity="0.6"/>
-  <text x="125" y="80" text-anchor="middle" font-size="11" fill="#555">Light line (6-10 lb)</text>
+  <text x="125" y="80" text-anchor="middle" font-size="11" fill="#c8d3dd">Light line (6-10 lb)</text>
 
   <!-- Split shot -->
   <circle cx="240" cy="90" r="5" fill="url(#leadGrad)" stroke="#4a4a4a" stroke-width="1.5" filter="url(#softShadow)"/>
   <ellipse cx="238.4" cy="88.2" rx="1.6" ry="1.6" fill="#ffffff" opacity="0.5" filter="url(#glossBlur)"/>
-  <text x="240" y="112" text-anchor="middle" font-size="10" fill="#555">Split shot</text>
-  <text x="240" y="124" text-anchor="middle" font-size="9" fill="#888">(1-2 only, no swivel)</text>
+  <text x="240" y="112" text-anchor="middle" font-size="10" fill="#c8d3dd">Split shot</text>
+  <text x="240" y="124" text-anchor="middle" font-size="9" fill="#93a5b8">(1-2 only, no swivel)</text>
 
   <!-- Leader -->
   <line x1="245" y1="90" x2="300" y2="150" stroke="#5da" stroke-width="1.5"/>
   <line x1="245" y1="89.4" x2="300" y2="149.4" stroke="#e8fbf3" stroke-width="0.70" opacity="0.55"/>
-  <text x="312" y="105" font-size="11" fill="#555">Leader, 8-12 lb</text>
-  <text x="312" y="119" font-size="10" fill="#888">12-18 in</text>
+  <text x="312" y="105" font-size="11" fill="#c8d3dd">Leader, 8-12 lb</text>
+  <text x="312" y="119" font-size="10" fill="#93a5b8">12-18 in</text>
 
   <!-- Tiny hook -->
   <g transform="translate(292, 155)">
     <path d="M3 0 L3 9 Q3 15 8 15 Q12 15 12 11 Q12 8 9 6" fill="none" stroke="url(#steelGrad)" stroke-width="1.75" filter="url(#softShadow)"/>
     <circle cx="9" cy="5" r="1" fill="url(#steelGradDark)"/>
-    <text x="20" y="10" font-size="11" fill="#555">Tiny hook, #6-#2</text>
+    <text x="20" y="10" font-size="11" fill="#c8d3dd">Tiny hook, #6-#2</text>
   </g>
 
   <!-- Small bait -->
   <g transform="translate(280, 175)">
     <ellipse cx="10" cy="8" rx="10" ry="5" fill="url(#baitGrad)" stroke="#a8663a" stroke-width="1"/>
-    <text x="10" y="26" text-anchor="middle" font-size="10" fill="#888">Bloodworm bit / tiny shrimp</text>
+    <text x="10" y="26" text-anchor="middle" font-size="10" fill="#93a5b8">Bloodworm bit / tiny shrimp</text>
   </g>
 
   <!-- Legend box -->
-  <rect x="15" y="220" width="470" height="55" rx="6" fill="#f7f9fc" stroke="#ccd" stroke-width="1" filter="url(#softShadow)"/>
-  <text x="30" y="240" font-size="11" fill="#333" font-weight="bold">Why so light:</text>
-  <text x="30" y="258" font-size="10.5" fill="#555">Small-mouthed bait-stealers like pinfish, silver perch, and blennies feel any heavy hardware.</text>
-  <text x="30" y="270" font-size="10.5" fill="#555">Minimal split-shot weight and a tiny hook let them commit before dropping the bait.</text>
+  <rect x="15" y="220" width="470" height="55" rx="6" fill="#0f2032" stroke="#2c4a68" stroke-width="1" filter="url(#softShadow)"/>
+  <text x="30" y="240" font-size="11" fill="#e8eef3" font-weight="bold">Why so light:</text>
+  <text x="30" y="258" font-size="10.5" fill="#c8d3dd">Small-mouthed bait-stealers like pinfish, silver perch, and blennies feel any heavy hardware.</text>
+  <text x="30" y="270" font-size="10.5" fill="#c8d3dd">Minimal split-shot weight and a tiny hook let them commit before dropping the bait.</text>
 </svg>

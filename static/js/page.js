@@ -9,6 +9,30 @@ function esc(s) {
     return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+/* ---- Rig diagram dark-mode variant ---- */
+// Rig diagrams are static SVGs (not inline), so they can't read CSS
+// variables — each one ships a pre-rendered "-dark.svg" twin with light
+// text on a dark card. Swap to it whenever the site is in dark mode.
+function rigImgSrcForTheme(src) {
+    if (!src) return src;
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    var isDarkVariant = /-dark\.svg$/.test(src);
+    if (isDark && !isDarkVariant) return src.replace(/\.svg$/, '-dark.svg');
+    if (!isDark && isDarkVariant) return src.replace(/-dark\.svg$/, '.svg');
+    return src;
+}
+
+function applyRigImgTheme() {
+    document.querySelectorAll('.rig-diagram img').forEach(function(img) {
+        img.src = rigImgSrcForTheme(img.getAttribute('src'));
+    });
+    var modalImg = document.getElementById('rig-img-modal-img');
+    if (modalImg && modalImg.getAttribute('src')) {
+        modalImg.src = rigImgSrcForTheme(modalImg.getAttribute('src'));
+    }
+}
+applyRigImgTheme();
+
 /* ---- Alerts collapse/expand ---- */
 function toggleAlerts(btn) {
     var detail = document.getElementById('alerts-detail');
@@ -194,6 +218,7 @@ function toggleTheme() {
         document.documentElement.setAttribute('data-theme', 'dark');
         localStorage.setItem('theme', 'dark');
     }
+    applyRigImgTheme();
     syncToServer();
 }
 
@@ -577,7 +602,7 @@ if ('serviceWorker' in navigator) {
         var name = btn.getAttribute('data-rig-img-name') || 'Rig diagram';
         if (!src) return;
         _prevFocus = document.activeElement || null;
-        img.src = src;
+        img.src = rigImgSrcForTheme(src);
         img.alt = name + ' diagram';
         title.textContent = name;
         modal.hidden = false;

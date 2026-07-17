@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 320" font-family="Arial, sans-serif">
-  <rect x="0" y="0" width="500" height="320" fill="#FAFAF8"/>
+  <rect x="0" y="0" width="500" height="320" fill="#132235"/>
   <defs>
     <linearGradient id="waterTint" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#bfe0f2" stop-opacity="0.35"/>
@@ -38,7 +38,7 @@
       <feDropShadow dx="1.4" dy="2.2" stdDeviation="1.6" flood-color="#000000" flood-opacity="0.28"/>
     </filter>
   </defs>
-  <text x="250" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a3a5c">Drift Rig (Slip Sinker)</text>
+  <text x="250" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#7DD3FC">Drift Rig (Slip Sinker)</text>
 
   <!-- Water surface -->
   <rect x="15" y="60" width="480" height="26" fill="url(#waterTint)"/>
@@ -48,36 +48,36 @@
   <!-- Boat with drift arrow -->
   <g transform="translate(330, 30)">
     <path d="M0 12 Q10 -2 55 -2 Q95 -2 105 12 L95 20 L10 20 Z" fill="#c9701f" stroke="#966" stroke-width="1.5"/>
-    <path d="M115 12 L140 6 M133 2 L140 6 L133 10" fill="none" stroke="#c44" stroke-width="1.75"/>
+    <path d="M115 12 L140 6 M133 2 L140 6 L133 10" fill="none" stroke="#ff8a7a" stroke-width="1.75"/>
     <text x="52" y="-8" text-anchor="middle" font-size="10" fill="#966">Drifting boat</text>
   </g>
 
   <!-- Main line -->
   <line x1="30" y1="80" x2="170" y2="80" stroke="#2a6" stroke-width="3" stroke-dasharray="8,4"/>
   <line x1="30" y1="79.2" x2="170" y2="79.2" stroke="#8fe6b8" stroke-width="0.96" stroke-dasharray="8,4" opacity="0.6"/>
-  <text x="98" y="70" text-anchor="middle" font-size="11" fill="#555">Main line (30-50 lb braid)</text>
+  <text x="98" y="70" text-anchor="middle" font-size="11" fill="#c8d3dd">Main line (30-50 lb braid)</text>
 
   <!-- Slip / torpedo sinker -->
   <path d="M175 80 L200 68 L225 80 L200 92 Z" fill="url(#leadGrad)" stroke="#4a4a4a" stroke-width="1.5" filter="url(#softShadow)"/>
-  <text x="200" y="112" text-anchor="middle" font-size="10" fill="#555">Slip / torpedo sinker</text>
-  <path d="M180 60 L195 60 M190 55 L195 60 L190 65" fill="none" stroke="#c44" stroke-width="1.5"/>
-  <text x="187" y="50" text-anchor="middle" font-size="9" fill="#c44">slides freely</text>
+  <text x="200" y="112" text-anchor="middle" font-size="10" fill="#c8d3dd">Slip / torpedo sinker</text>
+  <path d="M180 60 L195 60 M190 55 L195 60 L190 65" fill="none" stroke="#ff8a7a" stroke-width="1.5"/>
+  <text x="187" y="50" text-anchor="middle" font-size="9" fill="#ff8a7a">slides freely</text>
 
   <!-- Barrel swivel -->
   <rect x="235" y="73" width="28" height="14" rx="7" fill="url(#steelGrad)" stroke="#333333" stroke-width="1.5" filter="url(#softShadow)"/>
   <ellipse cx="242.3" cy="76.9" rx="4.5" ry="2.8" fill="#ffffff" opacity="0.5" filter="url(#glossBlur)"/>
-  <text x="249" y="102" text-anchor="middle" font-size="10" fill="#555">Swivel</text>
+  <text x="249" y="102" text-anchor="middle" font-size="10" fill="#c8d3dd">Swivel</text>
 
   <!-- Leader -->
   <line x1="263" y1="80" x2="360" y2="150" stroke="#5da" stroke-width="2.5"/>
   <line x1="263" y1="79.4" x2="360" y2="149.4" stroke="#e8fbf3" stroke-width="0.85" opacity="0.55"/>
-  <text x="315" y="105" text-anchor="middle" font-size="11" fill="#555" transform="rotate(35, 315, 105)">Fluoro leader, 3-5 ft</text>
+  <text x="315" y="105" text-anchor="middle" font-size="11" fill="#c8d3dd" transform="rotate(35, 315, 105)">Fluoro leader, 3-5 ft</text>
 
   <!-- Circle hook -->
   <g transform="translate(352, 150)">
     <path d="M8 0 L8 20 Q8 34 20 34 Q30 34 30 22 Q30 14 22 10" fill="none" stroke="url(#steelGrad)" stroke-width="2.5" filter="url(#softShadow)"/>
     <circle cx="21" cy="9" r="2" fill="url(#steelGradDark)"/>
-    <text x="40" y="16" font-size="11" fill="#555">Circle hook</text>
+    <text x="40" y="16" font-size="11" fill="#c8d3dd">Circle hook</text>
   </g>
 
   <!-- Sand/gravel bottom sweeping under the drift -->
@@ -87,7 +87,7 @@
   <text x="150" y="195" text-anchor="middle" font-size="9" fill="#4a9eda">drift direction</text>
 
   <!-- Legend box -->
-  <rect x="15" y="270" width="470" height="35" rx="6" fill="#f7f9fc" stroke="#ccd" stroke-width="1" filter="url(#softShadow)"/>
-  <text x="30" y="284" font-size="11" fill="#333" font-weight="bold">How it works:</text>
-  <text x="30" y="299" font-size="10.5" fill="#555">Slowly drifted instead of anchored to cover ground and find scattered flatfish and bottom feeders.</text>
+  <rect x="15" y="270" width="470" height="35" rx="6" fill="#0f2032" stroke="#2c4a68" stroke-width="1" filter="url(#softShadow)"/>
+  <text x="30" y="284" font-size="11" fill="#e8eef3" font-weight="bold">How it works:</text>
+  <text x="30" y="299" font-size="10.5" fill="#c8d3dd">Slowly drifted instead of anchored to cover ground and find scattered flatfish and bottom feeders.</text>
 </svg>

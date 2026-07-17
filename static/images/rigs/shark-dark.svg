@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 400" font-family="Arial, sans-serif">
-  <rect x="0" y="0" width="500" height="400" fill="#FAFAF8"/>
+  <rect x="0" y="0" width="500" height="400" fill="#132235"/>
   <defs>
     <radialGradient id="beadGrad_e74c3c" cx="32%" cy="28%" r="75%">
       <stop offset="0%" stop-color="#ffc9bd"/>
@@ -50,26 +50,26 @@
       <feDropShadow dx="1.4" dy="2.2" stdDeviation="1.6" flood-color="#000000" flood-opacity="0.28"/>
     </filter>
   </defs>
-  <text x="250" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a3a5c">Shark Rig (Heavy Bottom Rig)</text>
+  <text x="250" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#7DD3FC">Shark Rig (Heavy Bottom Rig)</text>
 
   <!-- Main line -->
   <line x1="30" y1="80" x2="120" y2="80" stroke="#2a6" stroke-width="4" stroke-dasharray="8,4"/>
   <line x1="30" y1="79.2" x2="120" y2="79.2" stroke="#8fe6b8" stroke-width="1.28" stroke-dasharray="8,4" opacity="0.6"/>
-  <text x="75" y="70" text-anchor="middle" font-size="11" fill="#555">50-80 lb braid</text>
+  <text x="75" y="70" text-anchor="middle" font-size="11" fill="#c8d3dd">50-80 lb braid</text>
 
   <!-- Heavy sliding sinker -->
   <g transform="translate(128, 62)">
     <polygon points="22,0 0,45 44,45" fill="url(#leadGrad)" stroke="#4a4a4a" stroke-width="2" filter="url(#softShadow)"/>
     <line x1="22" y1="8" x2="22" y2="38" stroke="#888" stroke-width="2"/>
-    <text x="22" y="60" text-anchor="middle" font-size="11" fill="#555">Pyramid sinker</text>
-    <text x="22" y="73" text-anchor="middle" font-size="10" fill="#888">(4-16 oz)</text>
+    <text x="22" y="60" text-anchor="middle" font-size="11" fill="#c8d3dd">Pyramid sinker</text>
+    <text x="22" y="73" text-anchor="middle" font-size="10" fill="#93a5b8">(4-16 oz)</text>
   </g>
   <line x1="172" y1="80" x2="195" y2="80" stroke="#2a6" stroke-width="3"/>
   <line x1="172" y1="79.2" x2="195" y2="79.2" stroke="#8fe6b8" stroke-width="0.96" opacity="0.6"/>
 
   <!-- Bead -->
   <circle cx="205" cy="80" r="6" fill="url(#beadGrad_e74c3c)" stroke="#c0392b" stroke-width="1.5"/>
-  <text x="205" y="100" text-anchor="middle" font-size="9" fill="#888">Bead</text>
+  <text x="205" y="100" text-anchor="middle" font-size="9" fill="#93a5b8">Bead</text>
 
   <!-- Heavy-duty swivel -->
   <g transform="translate(220, 70)">
@@ -79,55 +79,55 @@
     <ellipse cx="3.4" cy="9.2" rx="1.6" ry="1.6" fill="#ffffff" opacity="0.5" filter="url(#glossBlur)"/>
     <circle cx="35" cy="11" r="5" fill="url(#steelGradDark)" stroke="#222222" stroke-width="1.5" filter="url(#softShadow)"/>
     <ellipse cx="33.4" cy="9.2" rx="1.6" ry="1.6" fill="#ffffff" opacity="0.5" filter="url(#glossBlur)"/>
-    <text x="20" y="36" text-anchor="middle" font-size="10" fill="#555">Heavy swivel</text>
+    <text x="20" y="36" text-anchor="middle" font-size="10" fill="#c8d3dd">Heavy swivel</text>
   </g>
 
   <!-- Wire leader - long and going down -->
   <path d="M260 88 L290 100 L292 115 L288 130 L292 145 L288 160 L292 175 L288 190 L292 205 L288 220 L290 230" fill="none" stroke="url(#steelGrad)" stroke-width="2.4" stroke-linejoin="round"/>
 
   <!-- Wire leader label -->
-  <text x="315" y="145" font-size="11" fill="#555">Coated wire</text>
-  <text x="315" y="160" font-size="11" fill="#555">leader</text>
-  <text x="315" y="175" font-size="10" fill="#888">3-6 ft of #9-#19</text>
-  <text x="315" y="190" font-size="10" fill="#888">or 200+ lb cable</text>
+  <text x="315" y="145" font-size="11" fill="#c8d3dd">Coated wire</text>
+  <text x="315" y="160" font-size="11" fill="#c8d3dd">leader</text>
+  <text x="315" y="175" font-size="10" fill="#93a5b8">3-6 ft of #9-#19</text>
+  <text x="315" y="190" font-size="10" fill="#93a5b8">or 200+ lb cable</text>
 
   <!-- Crimp sleeves on wire -->
   <rect x="286" y="115" width="8" height="8" rx="2" fill="url(#steelGrad)" stroke="#3a3a3a" stroke-width="1"/>
-  <text x="305" y="122" font-size="9" fill="#888">Crimp</text>
+  <text x="305" y="122" font-size="9" fill="#93a5b8">Crimp</text>
   <rect x="286" y="218" width="8" height="8" rx="2" fill="url(#steelGrad)" stroke="#3a3a3a" stroke-width="1"/>
 
   <!-- Large circle hook -->
   <g transform="translate(272, 230)">
     <path d="M18 0 L18 32 Q18 52 34 52 Q50 52 50 34 Q50 22 40 16" fill="none" stroke="url(#steelGrad)" stroke-width="3.5" filter="url(#softShadow)"/>
     <circle cx="38" cy="14" r="2.5" fill="url(#steelGradDark)"/>
-    <text x="60" y="22" font-size="12" fill="#555" font-weight="bold">Circle hook</text>
-    <text x="60" y="38" font-size="11" fill="#888">7/0 - 20/0</text>
+    <text x="60" y="22" font-size="12" fill="#c8d3dd" font-weight="bold">Circle hook</text>
+    <text x="60" y="38" font-size="11" fill="#93a5b8">7/0 - 20/0</text>
   </g>
 
   <!-- Large chunk bait -->
   <g transform="translate(110, 210)">
     <ellipse cx="22" cy="15" rx="28" ry="16" fill="url(#baitGrad)" stroke="#a8663a" stroke-width="1.5"/>
-    <text x="22" y="42" text-anchor="middle" font-size="10" fill="#888">Large chunk bait</text>
-    <text x="22" y="54" text-anchor="middle" font-size="9" fill="#888">(bonito, bluefish, stingray)</text>
+    <text x="22" y="42" text-anchor="middle" font-size="10" fill="#93a5b8">Large chunk bait</text>
+    <text x="22" y="54" text-anchor="middle" font-size="9" fill="#93a5b8">(bonito, bluefish, stingray)</text>
   </g>
 
   <!-- Sand spike illustration -->
   <g transform="translate(30, 120)">
     <rect x="15" y="0" width="8" height="80" fill="url(#woodGrain)" stroke="#5a4326" stroke-width="1.5"/>
     <polygon points="19,80 10,120 28,120" fill="url(#woodGrain)" stroke="#5a4326" stroke-width="1"/>
-    <text x="19" y="135" text-anchor="middle" font-size="10" fill="#6B5335">Sand spike</text>
+    <text x="19" y="135" text-anchor="middle" font-size="10" fill="#c9a876">Sand spike</text>
     <!-- Rod holder cup -->
     <path d="M8 0 L8 -5 Q19 -10 30 -5 L30 0" fill="none" stroke="#6B5335" stroke-width="1.5"/>
   </g>
 
   <!-- Legend -->
-  <rect x="15" y="285" width="470" height="55" rx="6" fill="#f7f9fc" stroke="#ccd" stroke-width="1" filter="url(#softShadow)"/>
-  <text x="30" y="303" font-size="11" fill="#333" font-weight="bold">Safety:</text>
-  <text x="90" y="303" font-size="10.5" fill="#555">Use a sand spike and fighting belt. Circle hooks only —</text>
-  <text x="30" y="319" font-size="10.5" fill="#555">ensures jaw hooking for safe release. Check local size and species limits.</text>
+  <rect x="15" y="285" width="470" height="55" rx="6" fill="#0f2032" stroke="#2c4a68" stroke-width="1" filter="url(#softShadow)"/>
+  <text x="30" y="303" font-size="11" fill="#e8eef3" font-weight="bold">Safety:</text>
+  <text x="90" y="303" font-size="10.5" fill="#c8d3dd">Use a sand spike and fighting belt. Circle hooks only —</text>
+  <text x="30" y="319" font-size="10.5" fill="#c8d3dd">ensures jaw hooking for safe release. Check local size and species limits.</text>
 
   <!-- How it works -->
-  <rect x="15" y="350" width="470" height="35" rx="6" fill="#f7f9fc" stroke="#ccd" stroke-width="1" filter="url(#softShadow)"/>
-  <text x="30" y="364" font-size="11" fill="#333" font-weight="bold">How it works:</text>
-  <text x="30" y="379" font-size="10.5" fill="#555">Coated wire or cable resists a shark's abrasive skin and teeth where mono or fluoro would part.</text>
+  <rect x="15" y="350" width="470" height="35" rx="6" fill="#0f2032" stroke="#2c4a68" stroke-width="1" filter="url(#softShadow)"/>
+  <text x="30" y="364" font-size="11" fill="#e8eef3" font-weight="bold">How it works:</text>
+  <text x="30" y="379" font-size="10.5" fill="#c8d3dd">Coated wire or cable resists a shark's abrasive skin and teeth where mono or fluoro would part.</text>
 </svg>

@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 320" font-family="Arial, sans-serif">
-  <rect x="0" y="0" width="500" height="320" fill="#FAFAF8"/>
+  <rect x="0" y="0" width="500" height="320" fill="#132235"/>
   <defs>
     <linearGradient id="waterTint" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#bfe0f2" stop-opacity="0.35"/>
@@ -45,7 +45,7 @@
       <feDropShadow dx="1.4" dy="2.2" stdDeviation="1.6" flood-color="#000000" flood-opacity="0.28"/>
     </filter>
   </defs>
-  <text x="250" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a3a5c">Kayak Live Bait Freeline Rig</text>
+  <text x="250" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#7DD3FC">Kayak Live Bait Freeline Rig</text>
 
   <!-- Water surface -->
   <rect x="15" y="95" width="480" height="26" fill="url(#waterTint)"/>
@@ -62,24 +62,24 @@
   <!-- Main line, nearly weightless -->
   <line x1="30" y1="70" x2="180" y2="70" stroke="#2a6" stroke-width="3" stroke-dasharray="8,4"/>
   <line x1="30" y1="69.2" x2="180" y2="69.2" stroke="#8fe6b8" stroke-width="0.96" stroke-dasharray="8,4" opacity="0.6"/>
-  <text x="105" y="60" text-anchor="middle" font-size="11" fill="#555">Main line (20-30 lb braid)</text>
+  <text x="105" y="60" text-anchor="middle" font-size="11" fill="#c8d3dd">Main line (20-30 lb braid)</text>
 
   <!-- Split shot only -->
   <circle cx="195" cy="80" r="5" fill="url(#leadGrad)" stroke="#4a4a4a" stroke-width="1.5" filter="url(#softShadow)"/>
   <ellipse cx="193.4" cy="78.2" rx="1.6" ry="1.6" fill="#ffffff" opacity="0.5" filter="url(#glossBlur)"/>
-  <text x="195" y="100" text-anchor="middle" font-size="10" fill="#555">Split shot</text>
-  <text x="195" y="112" text-anchor="middle" font-size="9" fill="#888">(minimal / none)</text>
+  <text x="195" y="100" text-anchor="middle" font-size="10" fill="#c8d3dd">Split shot</text>
+  <text x="195" y="112" text-anchor="middle" font-size="9" fill="#93a5b8">(minimal / none)</text>
 
   <!-- Leader -->
   <line x1="200" y1="82" x2="230" y2="160" stroke="#5da" stroke-width="2"/>
   <line x1="200" y1="81.4" x2="230" y2="159.4" stroke="#e8fbf3" stroke-width="0.70" opacity="0.55"/>
-  <text x="255" y="120" text-anchor="middle" font-size="11" fill="#555" transform="rotate(65, 255, 120)">Fluoro leader, 2-4 ft</text>
+  <text x="255" y="120" text-anchor="middle" font-size="11" fill="#c8d3dd" transform="rotate(65, 255, 120)">Fluoro leader, 2-4 ft</text>
 
   <!-- Circle hook -->
   <g transform="translate(220, 160)">
     <path d="M8 0 L8 20 Q8 34 20 34 Q30 34 30 22 Q30 14 22 10" fill="none" stroke="url(#steelGrad)" stroke-width="2.5" filter="url(#softShadow)"/>
     <circle cx="21" cy="9" r="2" fill="url(#steelGradDark)"/>
-    <text x="40" y="16" font-size="11" fill="#555">Circle hook (3/0-5/0)</text>
+    <text x="40" y="16" font-size="11" fill="#c8d3dd">Circle hook (3/0-5/0)</text>
   </g>
 
   <!-- Live baitfish swimming freely -->
@@ -87,13 +87,13 @@
     <path d="M0 10 Q20 -6 45 10 Q20 26 0 10" fill="url(#fishGrad_b8d4e8)" stroke="#7ba3c4" stroke-width="1.5"/>
     <path d="M0 10 L-14 0 L-14 20 Z" fill="url(#fishGrad_b8d4e8)" stroke="#7ba3c4" stroke-width="1"/>
     <circle cx="34" cy="7" r="1.5" fill="url(#steelGradDark)"/>
-    <text x="55" y="14" font-size="10" fill="#888">Live baitfish or shrimp</text>
-    <text x="55" y="26" font-size="10" fill="#888">swims freely toward structure</text>
+    <text x="55" y="14" font-size="10" fill="#93a5b8">Live baitfish or shrimp</text>
+    <text x="55" y="26" font-size="10" fill="#93a5b8">swims freely toward structure</text>
   </g>
 
   <!-- Legend box -->
-  <rect x="15" y="253" width="470" height="60" rx="6" fill="#f7f9fc" stroke="#ccd" stroke-width="1" filter="url(#softShadow)"/>
-  <text x="30" y="271" font-size="11" fill="#333" font-weight="bold">Technique:</text>
-  <text x="30" y="288" font-size="10.5" fill="#555">Anchor the kayak upcurrent and let the lightly-weighted bait drift into the strike zone near</text>
-  <text x="30" y="303" font-size="9.5" fill="#888">structure — snook, cobia, and tripletail track a struggling live bait from a distance.</text>
+  <rect x="15" y="253" width="470" height="60" rx="6" fill="#0f2032" stroke="#2c4a68" stroke-width="1" filter="url(#softShadow)"/>
+  <text x="30" y="271" font-size="11" fill="#e8eef3" font-weight="bold">Technique:</text>
+  <text x="30" y="288" font-size="10.5" fill="#c8d3dd">Anchor the kayak upcurrent and let the lightly-weighted bait drift into the strike zone near</text>
+  <text x="30" y="303" font-size="9.5" fill="#93a5b8">structure — snook, cobia, and tripletail track a struggling live bait from a distance.</text>
 </svg>
