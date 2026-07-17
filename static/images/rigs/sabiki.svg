@@ -46,9 +46,11 @@
   <line x1="30" y1="54.2" x2="200" y2="54.2" stroke="#8fe6b8" stroke-width="0.96" stroke-dasharray="8,4" opacity="0.6"/>
   <text x="115" y="47" text-anchor="middle" font-size="11" fill="#555">Main line (10-15 lb)</text>
 
-  <!-- Snap swivel at top -->
-  <rect x="205" y="48" width="28" height="14" rx="7" fill="url(#steelGrad)" stroke="#333333" stroke-width="1.5" filter="url(#softShadow)"/>
-  <ellipse cx="212.3" cy="51.9" rx="4.5" ry="2.8" fill="#ffffff" opacity="0.5" filter="url(#glossBlur)"/>
+  <!-- Snap swivel at top: an oval barrel body with a small wire eye at each end -->
+  <ellipse cx="219.0" cy="55.0" rx="14.0" ry="7.0" fill="url(#steelGrad)" stroke="#333333" stroke-width="1.2" filter="url(#softShadow)"/>
+  <circle cx="206.5" cy="55.0" r="4.3" fill="none" stroke="url(#steelGrad)" stroke-width="2.06" filter="url(#softShadow)"/>
+  <circle cx="231.5" cy="55.0" r="4.3" fill="none" stroke="url(#steelGrad)" stroke-width="2.06" filter="url(#softShadow)"/>
+  <ellipse cx="215.1" cy="52.5" rx="5.6" ry="2.2" fill="#ffffff" opacity="0.55" filter="url(#glossBlur)"/>
   <text x="219" y="42" text-anchor="middle" font-size="10" fill="#555">Snap swivel</text>
 
   <!-- Vertical main rig line -->
@@ -57,7 +59,8 @@
   <!-- Hook 1 -->
   <g>
     <line x1="219" y1="90" x2="170" y2="95" stroke="#68b" stroke-width="1.5"/>
-    <g transform="translate(150, 88)">
+    <g transform="translate(170, 95)">
+      <circle cx="0" cy="0" r="1.4" fill="none" stroke="url(#steelGrad)" stroke-width="1.3" filter="url(#softShadow)"/>
       <path d="M0 0 L0 10 Q0 16 5 16 Q10 16 10 12 Q10 8 7 6" fill="none" stroke="url(#steelGrad)" stroke-width="1.8" filter="url(#softShadow)"/>
       <!-- Feather/flash -->
       <path d="M-2 0 Q-10 -5 -5 2 Q-10 0 -3 5" fill="#f1c40f" stroke="#d4ac0d" stroke-width="0.8"/>
@@ -68,7 +71,8 @@
   <!-- Hook 2 -->
   <g>
     <line x1="219" y1="140" x2="275" y2="145" stroke="#68b" stroke-width="1.5"/>
-    <g transform="translate(278, 138)">
+    <g transform="translate(275, 145)">
+      <circle cx="0" cy="0" r="1.4" fill="none" stroke="url(#steelGrad)" stroke-width="1.3" filter="url(#softShadow)"/>
       <path d="M0 0 L0 10 Q0 16 5 16 Q10 16 10 12 Q10 8 7 6" fill="none" stroke="url(#steelGrad)" stroke-width="1.8" filter="url(#softShadow)"/>
       <path d="M-2 0 Q-10 -5 -5 2 Q-10 0 -3 5" fill="#3498db" stroke="#2980b9" stroke-width="0.8"/>
       <path d="M2 -2 Q5 -10 4 -3 Q8 -8 3 -1" fill="#f39c12" stroke="#e67e22" stroke-width="0.8"/>
@@ -80,7 +84,8 @@
   <!-- Hook 3 -->
   <g>
     <line x1="219" y1="190" x2="170" y2="195" stroke="#68b" stroke-width="1.5"/>
-    <g transform="translate(150, 188)">
+    <g transform="translate(170, 195)">
+      <circle cx="0" cy="0" r="1.4" fill="none" stroke="url(#steelGrad)" stroke-width="1.3" filter="url(#softShadow)"/>
       <path d="M0 0 L0 10 Q0 16 5 16 Q10 16 10 12 Q10 8 7 6" fill="none" stroke="url(#steelGrad)" stroke-width="1.8" filter="url(#softShadow)"/>
       <path d="M-2 0 Q-10 -5 -5 2 Q-10 0 -3 5" fill="#2ecc71" stroke="#27ae60" stroke-width="0.8"/>
       <path d="M2 -2 Q5 -10 4 -3 Q8 -8 3 -1" fill="#e74c3c" stroke="#c0392b" stroke-width="0.8"/>
@@ -90,7 +95,8 @@
   <!-- Hook 4 -->
   <g>
     <line x1="219" y1="240" x2="275" y2="245" stroke="#68b" stroke-width="1.5"/>
-    <g transform="translate(278, 238)">
+    <g transform="translate(275, 245)">
+      <circle cx="0" cy="0" r="1.4" fill="none" stroke="url(#steelGrad)" stroke-width="1.3" filter="url(#softShadow)"/>
       <path d="M0 0 L0 10 Q0 16 5 16 Q10 16 10 12 Q10 8 7 6" fill="none" stroke="url(#steelGrad)" stroke-width="1.8" filter="url(#softShadow)"/>
       <path d="M-2 0 Q-10 -5 -5 2 Q-10 0 -3 5" fill="#f1c40f" stroke="#d4ac0d" stroke-width="0.8"/>
       <path d="M2 -2 Q5 -10 4 -3 Q8 -8 3 -1" fill="#9b59b6" stroke="#8e44ad" stroke-width="0.8"/>
@@ -100,7 +106,8 @@
   <!-- Hook 5 -->
   <g>
     <line x1="219" y1="290" x2="170" y2="295" stroke="#68b" stroke-width="1.5"/>
-    <g transform="translate(150, 288)">
+    <g transform="translate(170, 295)">
+      <circle cx="0" cy="0" r="1.4" fill="none" stroke="url(#steelGrad)" stroke-width="1.3" filter="url(#softShadow)"/>
       <path d="M0 0 L0 10 Q0 16 5 16 Q10 16 10 12 Q10 8 7 6" fill="none" stroke="url(#steelGrad)" stroke-width="1.8" filter="url(#softShadow)"/>
       <path d="M-2 0 Q-10 -5 -5 2 Q-10 0 -3 5" fill="#e74c3c" stroke="#c0392b" stroke-width="0.8"/>
       <path d="M2 -2 Q5 -10 4 -3 Q8 -8 3 -1" fill="#f1c40f" stroke="#d4ac0d" stroke-width="0.8"/>
@@ -110,7 +117,8 @@
   <!-- Hook 6 -->
   <g>
     <line x1="219" y1="340" x2="275" y2="345" stroke="#68b" stroke-width="1.5"/>
-    <g transform="translate(278, 338)">
+    <g transform="translate(275, 345)">
+      <circle cx="0" cy="0" r="1.4" fill="none" stroke="url(#steelGrad)" stroke-width="1.3" filter="url(#softShadow)"/>
       <path d="M0 0 L0 10 Q0 16 5 16 Q10 16 10 12 Q10 8 7 6" fill="none" stroke="url(#steelGrad)" stroke-width="1.8" filter="url(#softShadow)"/>
       <path d="M-2 0 Q-10 -5 -5 2 Q-10 0 -3 5" fill="#3498db" stroke="#2980b9" stroke-width="0.8"/>
       <path d="M2 -2 Q5 -10 4 -3 Q8 -8 3 -1" fill="#2ecc71" stroke="#27ae60" stroke-width="0.8"/>

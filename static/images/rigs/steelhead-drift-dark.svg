@@ -64,9 +64,11 @@
   <line x1="90" y1="119.2" x2="160" y2="104.2" stroke="#8fe6b8" stroke-width="0.80" stroke-dasharray="7,4" opacity="0.6"/>
   <text x="115" y="98" text-anchor="middle" font-size="10" fill="#c8d3dd">10-15 lb mainline</text>
 
-  <!-- Small swivel -->
-  <circle cx="165" cy="103" r="5" fill="url(#steelGrad)" stroke="#333333" stroke-width="1" filter="url(#softShadow)"/>
-  <ellipse cx="163.4" cy="101.2" rx="1.6" ry="1.6" fill="#ffffff" opacity="0.5" filter="url(#glossBlur)"/>
+  <!-- Small swivel: an oval barrel body with a small wire eye at each end -->
+  <ellipse cx="165.0" cy="103.0" rx="5.0" ry="5.0" fill="url(#steelGrad)" stroke="#333333" stroke-width="1.2" filter="url(#softShadow)"/>
+  <circle cx="161.1" cy="103.0" r="3.1" fill="none" stroke="url(#steelGrad)" stroke-width="1.49" filter="url(#softShadow)"/>
+  <circle cx="168.9" cy="103.0" r="3.1" fill="none" stroke="url(#steelGrad)" stroke-width="1.49" filter="url(#softShadow)"/>
+  <ellipse cx="163.6" cy="101.2" rx="2.0" ry="1.6" fill="#ffffff" opacity="0.55" filter="url(#glossBlur)"/>
 
   <!-- Option A: pencil lead dropper -->
   <line x1="165" y1="103" x2="180" y2="130" stroke="#68b" stroke-width="1.5"/>
@@ -85,7 +87,8 @@
   <text x="185" y="172" text-anchor="middle" font-size="10" fill="#c8d3dd" transform="rotate(25, 185, 172)">18-24 in leader</text>
 
   <!-- Hook with yarn/roe -->
-  <g transform="translate(215, 170)">
+  <g transform="translate(220, 175)">
+    <circle cx="0" cy="0" r="1.4" fill="none" stroke="url(#steelGrad)" stroke-width="1.3" filter="url(#softShadow)"/>
     <path d="M0 0 L0 10 Q0 16 5 16 Q10 16 10 12 Q10 8 7 6" fill="none" stroke="url(#steelGrad)" stroke-width="1.8" filter="url(#softShadow)"/>
     <circle cx="4" cy="20" r="6" fill="#f2a6b0" stroke="#d47c8c" stroke-width="1"/>
     <text x="25" y="20" font-size="10" fill="#c8d3dd">Cured roe / shrimp</text>

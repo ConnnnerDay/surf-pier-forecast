@@ -66,7 +66,7 @@
   <text x="313" y="142" text-anchor="middle" font-size="10" fill="#888" transform="rotate(50, 313, 142)">50-80 lb</text>
 
   <!-- Big popper / live bait -->
-  <g transform="translate(290, 160)">
+  <g transform="translate(300, 154)">
     <path d="M0 6 L20 0 L34 8 L20 16 Z" fill="#f39c12" stroke="#c87f0a" stroke-width="1.5"/>
     <circle cx="6" cy="8" r="1.3" fill="#fff"/>
     <path d="M32 8 Q48 12 60 24 Q50 26 40 32 Q38 20 32 13" fill="#89c" stroke="#557" stroke-width="1" opacity="0.85"/>
