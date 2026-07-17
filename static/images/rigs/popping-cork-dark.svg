@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 395" font-family="Arial, sans-serif">
-  <rect x="0" y="0" width="500" height="395" fill="#FAFAF8"/>
+  <rect x="0" y="0" width="500" height="395" fill="#132235"/>
   <defs>
     <linearGradient id="waterTint" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#bfe0f2" stop-opacity="0.35"/>
@@ -50,7 +50,7 @@
       <feDropShadow dx="1.4" dy="2.2" stdDeviation="1.6" flood-color="#000000" flood-opacity="0.28"/>
     </filter>
   </defs>
-  <text x="250" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a3a5c">Popping Cork Rig</text>
+  <text x="250" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#7DD3FC">Popping Cork Rig</text>
 
   <!-- Water surface -->
   <rect x="25" y="110" width="460" height="26" fill="url(#waterTint)"/>
@@ -60,7 +60,7 @@
   <!-- Main line -->
   <line x1="30" y1="85" x2="190" y2="85" stroke="#2a6" stroke-width="3" stroke-dasharray="8,4"/>
   <line x1="30" y1="84.2" x2="190" y2="84.2" stroke="#8fe6b8" stroke-width="0.96" stroke-dasharray="8,4" opacity="0.6"/>
-  <text x="110" y="77" text-anchor="middle" font-size="11" fill="#555">Main line (15-20 lb braid)</text>
+  <text x="110" y="77" text-anchor="middle" font-size="11" fill="#c8d3dd">Main line (15-20 lb braid)</text>
 
   <!-- Popping cork -->
   <g transform="translate(200, 68)">
@@ -74,9 +74,9 @@
     <circle cx="20" cy="44" r="4" fill="url(#beadGrad_e74c3c)" stroke="#c0392b" stroke-width="1"/>
     <circle cx="20" cy="52" r="4" fill="url(#beadGrad_f1c40f)" stroke="#d4ac0d" stroke-width="1"/>
 
-    <text x="55" y="10" font-size="12" fill="#555" font-weight="bold">Popping cork</text>
-    <text x="55" y="25" font-size="10" fill="#888">Concave top creates</text>
-    <text x="55" y="37" font-size="10" fill="#888">splash when popped</text>
+    <text x="55" y="10" font-size="12" fill="#c8d3dd" font-weight="bold">Popping cork</text>
+    <text x="55" y="25" font-size="10" fill="#93a5b8">Concave top creates</text>
+    <text x="55" y="37" font-size="10" fill="#93a5b8">splash when popped</text>
   </g>
 
   <!-- Splash effect -->
@@ -91,16 +91,16 @@
   <!-- Leader -->
   <line x1="220" y1="128" x2="220" y2="280" stroke="#5da" stroke-width="2.5"/>
   <line x1="220" y1="127.4" x2="220" y2="279.4" stroke="#e8fbf3" stroke-width="0.85" opacity="0.55"/>
-  <text x="240" y="200" font-size="11" fill="#555">Fluorocarbon</text>
-  <text x="240" y="215" font-size="11" fill="#555">leader</text>
-  <text x="240" y="230" font-size="10" fill="#888">18-36 in</text>
+  <text x="240" y="200" font-size="11" fill="#c8d3dd">Fluorocarbon</text>
+  <text x="240" y="215" font-size="11" fill="#c8d3dd">leader</text>
+  <text x="240" y="230" font-size="10" fill="#93a5b8">18-36 in</text>
 
   <!-- Hook -->
   <g transform="translate(207, 280)">
     <path d="M13 0 L13 22 Q13 36 24 36 Q34 36 34 24 Q34 16 28 12" fill="none" stroke="url(#steelGrad)" stroke-width="2.5" filter="url(#softShadow)"/>
     <circle cx="27" cy="11" r="2" fill="url(#steelGradDark)"/>
-    <text x="42" y="16" font-size="11" fill="#555">Circle hook</text>
-    <text x="42" y="30" font-size="10" fill="#888">1/0 - 2/0</text>
+    <text x="42" y="16" font-size="11" fill="#c8d3dd">Circle hook</text>
+    <text x="42" y="30" font-size="10" fill="#93a5b8">1/0 - 2/0</text>
   </g>
 
   <!-- Live shrimp on hook -->
@@ -108,18 +108,18 @@
     <path d="M5 2 Q15 -2 25 2 Q30 5 28 10 Q25 14 22 12 L15 14 Q8 14 5 10 Q2 6 5 2" fill="url(#baitGrad)" stroke="#a8663a" stroke-width="1"/>
     <line x1="5" y1="4" x2="-2" y2="0" stroke="#d4956a" stroke-width="1"/>
     <line x1="5" y1="6" x2="-2" y2="6" stroke="#d4956a" stroke-width="1"/>
-    <text x="15" y="28" text-anchor="middle" font-size="10" fill="#888">Live shrimp</text>
+    <text x="15" y="28" text-anchor="middle" font-size="10" fill="#93a5b8">Live shrimp</text>
   </g>
 
   <!-- Action arrows showing popping motion -->
   <g transform="translate(270, 42)">
-    <path d="M0 15 L10 0 L20 15" fill="none" stroke="#c44" stroke-width="2"/>
-    <text x="10" y="28" text-anchor="middle" font-size="9" fill="#c44">Pop!</text>
+    <path d="M0 15 L10 0 L20 15" fill="none" stroke="#ff8a7a" stroke-width="2"/>
+    <text x="10" y="28" text-anchor="middle" font-size="9" fill="#ff8a7a">Pop!</text>
   </g>
 
   <!-- Legend -->
-  <rect x="15" y="333" width="470" height="52" rx="6" fill="#f7f9fc" stroke="#ccd" stroke-width="1" filter="url(#softShadow)"/>
-  <text x="30" y="352" font-size="11" fill="#333" font-weight="bold">Technique:</text>
-  <text x="110" y="352" font-size="10.5" fill="#555">Twitch rod tip to pop the cork — splash imitates feeding fish.</text>
-  <text x="30" y="369" font-size="10.5" fill="#555">Attracts speckled trout, redfish, and flounder keying on the commotion.</text>
+  <rect x="15" y="333" width="470" height="52" rx="6" fill="#0f2032" stroke="#2c4a68" stroke-width="1" filter="url(#softShadow)"/>
+  <text x="30" y="352" font-size="11" fill="#e8eef3" font-weight="bold">Technique:</text>
+  <text x="110" y="352" font-size="10.5" fill="#c8d3dd">Twitch rod tip to pop the cork — splash imitates feeding fish.</text>
+  <text x="30" y="369" font-size="10.5" fill="#c8d3dd">Attracts speckled trout, redfish, and flounder keying on the commotion.</text>
 </svg>

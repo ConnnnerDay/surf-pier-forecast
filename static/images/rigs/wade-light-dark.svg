@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 320" font-family="Arial, sans-serif">
-  <rect x="0" y="0" width="500" height="320" fill="#FAFAF8"/>
+  <rect x="0" y="0" width="500" height="320" fill="#132235"/>
   <defs>
     <linearGradient id="waterTint" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#bfe0f2" stop-opacity="0.35"/>
@@ -38,7 +38,7 @@
       <feDropShadow dx="1.4" dy="2.2" stdDeviation="1.6" flood-color="#000000" flood-opacity="0.28"/>
     </filter>
   </defs>
-  <text x="250" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a3a5c">Wade / Flats Light Tackle Rig</text>
+  <text x="250" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#7DD3FC">Wade / Flats Light Tackle Rig</text>
 
   <!-- Water surface -->
   <rect x="15" y="100" width="480" height="26" fill="url(#waterTint)"/>
@@ -48,22 +48,22 @@
   <!-- Main line -->
   <line x1="30" y1="75" x2="180" y2="75" stroke="#2a6" stroke-width="3" stroke-dasharray="8,4"/>
   <line x1="30" y1="74.2" x2="180" y2="74.2" stroke="#8fe6b8" stroke-width="0.96" stroke-dasharray="8,4" opacity="0.6"/>
-  <text x="105" y="65" text-anchor="middle" font-size="11" fill="#555">Light braid (10-15 lb)</text>
+  <text x="105" y="65" text-anchor="middle" font-size="11" fill="#c8d3dd">Light braid (10-15 lb)</text>
 
   <!-- Leader -->
   <line x1="180" y1="75" x2="230" y2="150" stroke="#5da" stroke-width="2"/>
   <line x1="180" y1="74.4" x2="230" y2="149.4" stroke="#e8fbf3" stroke-width="0.70" opacity="0.55"/>
-  <text x="245" y="105" text-anchor="middle" font-size="11" fill="#555" transform="rotate(65, 245, 105)">Fluoro leader</text>
-  <text x="258" y="120" text-anchor="middle" font-size="10" fill="#888" transform="rotate(65, 258, 120)">12-18 in</text>
+  <text x="245" y="105" text-anchor="middle" font-size="11" fill="#c8d3dd" transform="rotate(65, 245, 105)">Fluoro leader</text>
+  <text x="258" y="120" text-anchor="middle" font-size="10" fill="#93a5b8" transform="rotate(65, 258, 120)">12-18 in</text>
 
   <!-- Jig head with soft plastic -->
   <g transform="translate(210, 150)">
     <path d="M10 0 Q22 0 22 12 Q22 20 10 20 Q0 20 0 10 Q0 0 10 0" fill="#e74c3c" stroke="#b03a2e" stroke-width="1.5"/>
     <circle cx="7" cy="8" r="1.5" fill="#fff"/>
     <path d="M20 12 Q40 18 55 30 Q42 32 30 40 Q28 26 20 18" fill="#88c" stroke="#557" stroke-width="1" opacity="0.85"/>
-    <text x="65" y="18" font-size="11" fill="#555">Jig head + soft plastic</text>
-    <text x="65" y="32" font-size="10" fill="#888">1/8 - 1/4 oz shrimp or</text>
-    <text x="65" y="44" font-size="10" fill="#888">paddle-tail</text>
+    <text x="65" y="18" font-size="11" fill="#c8d3dd">Jig head + soft plastic</text>
+    <text x="65" y="32" font-size="10" fill="#93a5b8">1/8 - 1/4 oz shrimp or</text>
+    <text x="65" y="44" font-size="10" fill="#93a5b8">paddle-tail</text>
   </g>
 
   <!-- Wading figure silhouette -->
@@ -75,8 +75,8 @@
   <text x="430" y="20" text-anchor="middle" font-size="10" fill="#7a93a8">Wading angler</text>
 
   <!-- Legend box -->
-  <rect x="15" y="240" width="470" height="60" rx="6" fill="#f7f9fc" stroke="#ccd" stroke-width="1" filter="url(#softShadow)"/>
-  <text x="30" y="260" font-size="11" fill="#333" font-weight="bold">Presentation:</text>
-  <text x="30" y="278" font-size="10.5" fill="#555">No float or bottom weight — the jig sinks naturally. Keep splash to a minimum on shallow flats;</text>
-  <text x="30" y="292" font-size="10.5" fill="#555">a popping cork above the leader also works when suspending live shrimp over grass.</text>
+  <rect x="15" y="240" width="470" height="60" rx="6" fill="#0f2032" stroke="#2c4a68" stroke-width="1" filter="url(#softShadow)"/>
+  <text x="30" y="260" font-size="11" fill="#e8eef3" font-weight="bold">Presentation:</text>
+  <text x="30" y="278" font-size="10.5" fill="#c8d3dd">No float or bottom weight — the jig sinks naturally. Keep splash to a minimum on shallow flats;</text>
+  <text x="30" y="292" font-size="10.5" fill="#c8d3dd">a popping cork above the leader also works when suspending live shrimp over grass.</text>
 </svg>

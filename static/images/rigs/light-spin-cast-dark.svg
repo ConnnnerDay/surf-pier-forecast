@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 320" font-family="Arial, sans-serif">
-  <rect x="0" y="0" width="500" height="320" fill="#FAFAF8"/>
+  <rect x="0" y="0" width="500" height="320" fill="#132235"/>
   <defs>
     <linearGradient id="fishGrad_7ba3c4" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" stop-color="#5a83a4"/>
@@ -39,14 +39,14 @@
       <feDropShadow dx="1.4" dy="2.2" stdDeviation="1.6" flood-color="#000000" flood-opacity="0.28"/>
     </filter>
   </defs>
-  <text x="250" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a3a5c">Light Spinning/Casting Rig</text>
+  <text x="250" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#7DD3FC">Light Spinning/Casting Rig</text>
 
   <!-- Rod tip and spinning reel -->
   <g transform="translate(30, 75)">
     <line x1="0" y1="20" x2="90" y2="10" stroke="#5a4a3a" stroke-width="3" stroke-linecap="round"/>
     <ellipse cx="8" cy="24" rx="12" ry="8" fill="url(#steelGrad)" stroke="#333333" stroke-width="1.5" filter="url(#softShadow)"/>
     <ellipse cx="4.2" cy="21.0" rx="3.6" ry="1.8" fill="#ffffff" opacity="0.5" filter="url(#glossBlur)"/>
-    <text x="45" y="55" text-anchor="middle" font-size="10" fill="#555">Spinning / baitcasting rod</text>
+    <text x="45" y="55" text-anchor="middle" font-size="10" fill="#c8d3dd">Spinning / baitcasting rod</text>
   </g>
 
   <!-- Cast arc -->
@@ -57,19 +57,19 @@
   <!-- Line straight to leader, no float or bottom weight -->
   <line x1="120" y1="70" x2="240" y2="100" stroke="#2a6" stroke-width="2.5" stroke-dasharray="8,4"/>
   <line x1="120" y1="69.2" x2="240" y2="99.2" stroke="#8fe6b8" stroke-width="0.80" stroke-dasharray="8,4" opacity="0.6"/>
-  <text x="175" y="98" text-anchor="middle" font-size="11" fill="#555">Braid (10-20 lb)</text>
+  <text x="175" y="98" text-anchor="middle" font-size="11" fill="#c8d3dd">Braid (10-20 lb)</text>
 
   <line x1="240" y1="100" x2="300" y2="150" stroke="#5da" stroke-width="2"/>
   <line x1="240" y1="99.4" x2="300" y2="149.4" stroke="#e8fbf3" stroke-width="0.70" opacity="0.55"/>
-  <text x="290" y="120" text-anchor="middle" font-size="11" fill="#555" transform="rotate(50, 290, 120)">Fluoro leader, 18-24 in</text>
+  <text x="290" y="120" text-anchor="middle" font-size="11" fill="#c8d3dd" transform="rotate(50, 290, 120)">Fluoro leader, 18-24 in</text>
 
   <!-- Jig head with soft plastic, unweighted presentation -->
   <g transform="translate(292, 150)">
     <path d="M8 0 Q18 0 18 10 Q18 17 8 17 Q0 17 0 8 Q0 0 8 0" fill="#e74c3c" stroke="#b03a2e" stroke-width="1.5"/>
     <circle cx="6" cy="6" r="1.2" fill="#fff"/>
     <path d="M16 10 Q34 15 47 26 Q36 28 26 34 Q24 22 16 15" fill="#88c" stroke="#557" stroke-width="1" opacity="0.85"/>
-    <text x="58" y="14" font-size="11" fill="#555">Jig head + soft plastic</text>
-    <text x="58" y="28" font-size="10" fill="#888">or lightly-weighted live bait</text>
+    <text x="58" y="14" font-size="11" fill="#c8d3dd">Jig head + soft plastic</text>
+    <text x="58" y="28" font-size="10" fill="#93a5b8">or lightly-weighted live bait</text>
   </g>
 
   <!-- Surface schooling fish -->
@@ -80,8 +80,8 @@
   </g>
 
   <!-- Legend box -->
-  <rect x="15" y="240" width="470" height="55" rx="6" fill="#f7f9fc" stroke="#ccd" stroke-width="1" filter="url(#softShadow)"/>
-  <text x="30" y="260" font-size="11" fill="#333" font-weight="bold">Presentation:</text>
-  <text x="30" y="278" font-size="10.5" fill="#555">No float or sinker — cast directly to visible fish, current seams, or structure and work the</text>
-  <text x="30" y="290" font-size="10.5" fill="#555">lure or bait back with a natural swimming action.</text>
+  <rect x="15" y="240" width="470" height="55" rx="6" fill="#0f2032" stroke="#2c4a68" stroke-width="1" filter="url(#softShadow)"/>
+  <text x="30" y="260" font-size="11" fill="#e8eef3" font-weight="bold">Presentation:</text>
+  <text x="30" y="278" font-size="10.5" fill="#c8d3dd">No float or sinker — cast directly to visible fish, current seams, or structure and work the</text>
+  <text x="30" y="290" font-size="10.5" fill="#c8d3dd">lure or bait back with a natural swimming action.</text>
 </svg>

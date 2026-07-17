@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 340" font-family="Arial, sans-serif">
-  <rect x="0" y="0" width="500" height="340" fill="#FAFAF8"/>
+  <rect x="0" y="0" width="500" height="340" fill="#132235"/>
   <defs>
     <radialGradient id="baitGrad" cx="35%" cy="30%" r="75%">
       <stop offset="0%" stop-color="#ffe4c4"/>
@@ -32,68 +32,68 @@
       <feDropShadow dx="1.4" dy="2.2" stdDeviation="1.6" flood-color="#000000" flood-opacity="0.28"/>
     </filter>
   </defs>
-  <text x="250" y="28" text-anchor="middle" font-size="17" font-weight="bold" fill="#1a3a5c">Heavy Conventional Bottom Rig</text>
+  <text x="250" y="28" text-anchor="middle" font-size="17" font-weight="bold" fill="#7DD3FC">Heavy Conventional Bottom Rig</text>
 
   <!-- Rod / reel icon -->
   <g transform="translate(30, 55)">
     <rect x="0" y="10" width="10" height="26" rx="3" fill="url(#steelGradDark)" stroke="#222222" stroke-width="1"/>
     <circle cx="5" cy="18" r="3.5" fill="url(#leadGrad)" stroke="#333333" stroke-width="1"/>
-    <text x="5" y="52" text-anchor="middle" font-size="9" fill="#888">Conventional</text>
-    <text x="5" y="63" text-anchor="middle" font-size="9" fill="#888">reel</text>
+    <text x="5" y="52" text-anchor="middle" font-size="9" fill="#93a5b8">Conventional</text>
+    <text x="5" y="63" text-anchor="middle" font-size="9" fill="#93a5b8">reel</text>
   </g>
 
   <!-- Main line -->
   <line x1="45" y1="70" x2="170" y2="70" stroke="#2a6" stroke-width="3.5" stroke-dasharray="8,4"/>
   <line x1="45" y1="69.2" x2="170" y2="69.2" stroke="#8fe6b8" stroke-width="1.12" stroke-dasharray="8,4" opacity="0.6"/>
-  <text x="105" y="60" text-anchor="middle" font-size="11" fill="#555">Mainline (65-100 lb braid)</text>
+  <text x="105" y="60" text-anchor="middle" font-size="11" fill="#c8d3dd">Mainline (65-100 lb braid)</text>
 
   <!-- Ball / torpedo sinker sliding on mainline -->
   <ellipse cx="200" cy="70" rx="24" ry="16" fill="url(#leadGrad)" stroke="#3a3a3a" stroke-width="1.5" filter="url(#softShadow)"/>
   <ellipse cx="192.3" cy="63.9" rx="7.2" ry="3.5" fill="#ffffff" opacity="0.5" filter="url(#glossBlur)"/>
-  <text x="200" y="102" text-anchor="middle" font-size="11" fill="#555">Ball / torpedo sinker</text>
-  <text x="200" y="115" text-anchor="middle" font-size="10" fill="#888">(16-32 oz)</text>
-  <path d="M172 50 L192 50 M187 45 L192 50 L187 55" fill="none" stroke="#c44" stroke-width="1.5"/>
-  <path d="M228 50 L208 50 M213 45 L208 50 L213 55" fill="none" stroke="#c44" stroke-width="1.5"/>
-  <text x="200" y="43" text-anchor="middle" font-size="9" fill="#c44">slides freely</text>
+  <text x="200" y="102" text-anchor="middle" font-size="11" fill="#c8d3dd">Ball / torpedo sinker</text>
+  <text x="200" y="115" text-anchor="middle" font-size="10" fill="#93a5b8">(16-32 oz)</text>
+  <path d="M172 50 L192 50 M187 45 L192 50 L187 55" fill="none" stroke="#ff8a7a" stroke-width="1.5"/>
+  <path d="M228 50 L208 50 M213 45 L208 50 L213 55" fill="none" stroke="#ff8a7a" stroke-width="1.5"/>
+  <text x="200" y="43" text-anchor="middle" font-size="9" fill="#ff8a7a">slides freely</text>
 
   <!-- Heavy swivel -->
   <rect x="240" y="62" width="30" height="16" rx="8" fill="url(#steelGrad)" stroke="#333333" stroke-width="1.5" filter="url(#softShadow)"/>
   <ellipse cx="247.8" cy="66.5" rx="4.8" ry="3.2" fill="#ffffff" opacity="0.5" filter="url(#glossBlur)"/>
-  <text x="255" y="118" text-anchor="middle" font-size="10" fill="#555">Heavy-duty swivel</text>
+  <text x="255" y="118" text-anchor="middle" font-size="10" fill="#c8d3dd">Heavy-duty swivel</text>
 
   <!-- Leader -->
   <line x1="270" y1="70" x2="340" y2="70" stroke="#5da" stroke-width="3"/>
   <line x1="270" y1="69.4" x2="340" y2="69.4" stroke="#e8fbf3" stroke-width="1.02" opacity="0.55"/>
   <line x1="340" y1="70" x2="400" y2="160" stroke="#5da" stroke-width="3"/>
   <line x1="340" y1="69.4" x2="400" y2="159.4" stroke="#e8fbf3" stroke-width="1.02" opacity="0.55"/>
-  <text x="360" y="98" text-anchor="middle" font-size="11" fill="#555" transform="rotate(30, 360, 98)">80-150 lb mono/fluoro leader</text>
-  <text x="378" y="116" text-anchor="middle" font-size="10" fill="#888" transform="rotate(30, 378, 116)">4-6 ft</text>
+  <text x="360" y="98" text-anchor="middle" font-size="11" fill="#c8d3dd" transform="rotate(30, 360, 98)">80-150 lb mono/fluoro leader</text>
+  <text x="378" y="116" text-anchor="middle" font-size="10" fill="#93a5b8" transform="rotate(30, 378, 116)">4-6 ft</text>
 
   <!-- Large circle hook -->
   <g transform="translate(398, 158)">
     <path d="M0 0 L0 26 Q0 44 16 44 Q32 44 32 28 Q32 16 21 12" fill="none" stroke="url(#steelGrad)" stroke-width="3" filter="url(#softShadow)"/>
     <circle cx="20" cy="11" r="2.3" fill="url(#steelGradDark)"/>
-    <text x="40" y="24" font-size="11" fill="#555">Large circle hook</text>
-    <text x="40" y="38" font-size="10" fill="#888">10/0 - 16/0</text>
+    <text x="40" y="24" font-size="11" fill="#c8d3dd">Large circle hook</text>
+    <text x="40" y="38" font-size="10" fill="#93a5b8">10/0 - 16/0</text>
   </g>
 
   <!-- Big bait -->
   <g transform="translate(378, 218)">
     <ellipse cx="16" cy="18" rx="24" ry="13" fill="url(#baitGrad)" stroke="#a8663a" stroke-width="1"/>
-    <text x="16" y="46" text-anchor="middle" font-size="10" fill="#888">Whole fish / large cut bait</text>
+    <text x="16" y="46" text-anchor="middle" font-size="10" fill="#93a5b8">Whole fish / large cut bait</text>
   </g>
 
   <!-- Fighting harness icon -->
   <g transform="translate(60, 150)">
     <ellipse cx="20" cy="20" rx="20" ry="24" fill="none" stroke="#999" stroke-width="2" stroke-dasharray="4,3"/>
-    <text x="20" y="60" text-anchor="middle" font-size="10" fill="#888">Fighting belt /</text>
-    <text x="20" y="72" text-anchor="middle" font-size="10" fill="#888">gimbal harness</text>
-    <text x="20" y="84" text-anchor="middle" font-size="10" fill="#888">recommended</text>
+    <text x="20" y="60" text-anchor="middle" font-size="10" fill="#93a5b8">Fighting belt /</text>
+    <text x="20" y="72" text-anchor="middle" font-size="10" fill="#93a5b8">gimbal harness</text>
+    <text x="20" y="84" text-anchor="middle" font-size="10" fill="#93a5b8">recommended</text>
   </g>
 
   <!-- Legend box -->
-  <rect x="15" y="260" width="470" height="65" rx="6" fill="#f7f9fc" stroke="#ccd" stroke-width="1" filter="url(#softShadow)"/>
-  <text x="30" y="280" font-size="11" fill="#333" font-weight="bold">How it works:</text>
-  <text x="30" y="298" font-size="10.5" fill="#555">Straight-down bottom presentation for oversized fish — big halibut, goliath grouper — where</text>
-  <text x="30" y="313" font-size="10.5" fill="#555">the fight is about raw pulling power, not finesse. A heavy sinker holds bottom against current.</text>
+  <rect x="15" y="260" width="470" height="65" rx="6" fill="#0f2032" stroke="#2c4a68" stroke-width="1" filter="url(#softShadow)"/>
+  <text x="30" y="280" font-size="11" fill="#e8eef3" font-weight="bold">How it works:</text>
+  <text x="30" y="298" font-size="10.5" fill="#c8d3dd">Straight-down bottom presentation for oversized fish — big halibut, goliath grouper — where</text>
+  <text x="30" y="313" font-size="10.5" fill="#c8d3dd">the fight is about raw pulling power, not finesse. A heavy sinker holds bottom against current.</text>
 </svg>

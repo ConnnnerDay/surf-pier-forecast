@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 360" font-family="Arial, sans-serif">
-  <rect x="0" y="0" width="500" height="360" fill="#FAFAF8"/>
+  <rect x="0" y="0" width="500" height="360" fill="#132235"/>
   <defs>
     <linearGradient id="waterTint" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#bfe0f2" stop-opacity="0.35"/>
@@ -55,7 +55,7 @@
       <feDropShadow dx="1.4" dy="2.2" stdDeviation="1.6" flood-color="#000000" flood-opacity="0.28"/>
     </filter>
   </defs>
-  <text x="250" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a3a5c">King Mackerel Stinger Rig</text>
+  <text x="250" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#7DD3FC">King Mackerel Stinger Rig</text>
 
   <!-- Water surface -->
   <rect x="25" y="80" width="460" height="26" fill="url(#waterTint)"/>
@@ -65,7 +65,7 @@
   <!-- Main line -->
   <line x1="30" y1="60" x2="170" y2="60" stroke="#2a6" stroke-width="3" stroke-dasharray="8,4"/>
   <line x1="30" y1="59.2" x2="170" y2="59.2" stroke="#8fe6b8" stroke-width="0.96" stroke-dasharray="8,4" opacity="0.6"/>
-  <text x="100" y="52" text-anchor="middle" font-size="11" fill="#555">Main line (20-30 lb)</text>
+  <text x="100" y="52" text-anchor="middle" font-size="11" fill="#c8d3dd">Main line (20-30 lb)</text>
 
   <!-- Float/balloon -->
   <g transform="translate(180, 40)">
@@ -76,19 +76,19 @@
   <!-- Swivel -->
   <rect x="175" y="72" width="30" height="14" rx="7" fill="url(#steelGrad)" stroke="#333333" stroke-width="1.5" filter="url(#softShadow)"/>
   <ellipse cx="182.8" cy="75.9" rx="4.8" ry="2.8" fill="#ffffff" opacity="0.5" filter="url(#glossBlur)"/>
-  <text x="190" y="100" text-anchor="middle" font-size="10" fill="#555">Swivel</text>
+  <text x="190" y="100" text-anchor="middle" font-size="10" fill="#c8d3dd">Swivel</text>
 
   <!-- Wire leader down to baitfish -->
   <path d="M190 86 L192 93 L188 100 L192 107 L188 114 L192 121 L188 128 L190 135" fill="none" stroke="url(#steelGrad)" stroke-width="1.6" stroke-linejoin="round"/>
-  <text x="210" y="120" font-size="10" fill="#555">Wire leader</text>
-  <text x="210" y="133" font-size="9" fill="#888">#4-#7 wire</text>
+  <text x="210" y="120" font-size="10" fill="#c8d3dd">Wire leader</text>
+  <text x="210" y="133" font-size="9" fill="#93a5b8">#4-#7 wire</text>
 
   <!-- Nose hook -->
   <g transform="translate(180, 135)">
     <path d="M10 0 L10 12 Q10 20 16 20 Q22 20 22 14 Q22 9 18 7" fill="none" stroke="url(#steelGrad)" stroke-width="2.2" filter="url(#softShadow)"/>
     <circle cx="17" cy="6" r="1.5" fill="url(#steelGradDark)"/>
   </g>
-  <text x="140" y="148" text-anchor="end" font-size="11" fill="#555">Nose hook</text>
+  <text x="140" y="148" text-anchor="end" font-size="11" fill="#c8d3dd">Nose hook</text>
 
   <!-- Baitfish body -->
   <g transform="translate(158, 150)">
@@ -100,12 +100,12 @@
     <path d="M130 22 L148 12 L148 32 Z" fill="url(#fishGrad_9bc1d8)" stroke="#7aa8c4" stroke-width="1"/>
     <!-- Fins -->
     <path d="M45 12 L55 2 L65 10" fill="url(#fishGrad_9bc1d8)" stroke="#7aa8c4" stroke-width="1"/>
-    <text x="65" y="52" text-anchor="middle" font-size="11" fill="#555">Live baitfish (menhaden/mullet)</text>
+    <text x="65" y="52" text-anchor="middle" font-size="11" fill="#c8d3dd">Live baitfish (menhaden/mullet)</text>
   </g>
 
   <!-- Short wire to stinger treble -->
   <path d="M280 170 L288 168 L296 173 L303 169 L310 172" fill="none" stroke="url(#steelGrad)" stroke-width="1.4" stroke-linejoin="round"/>
-  <text x="330" y="160" font-size="10" fill="#555">Short wire</text>
+  <text x="330" y="160" font-size="10" fill="#c8d3dd">Short wire</text>
 
   <!-- Treble stinger hook near tail -->
   <g transform="translate(305, 165)">
@@ -118,19 +118,19 @@
     <circle cx="2" cy="22" r="1.2" fill="url(#steelGradDark)"/>
     <circle cx="16" cy="22" r="1.2" fill="url(#steelGradDark)"/>
   </g>
-  <text x="340" y="192" font-size="11" fill="#c44" font-weight="bold">Stinger treble</text>
-  <text x="340" y="206" font-size="10" fill="#888">(catches short strikes)</text>
+  <text x="340" y="192" font-size="11" fill="#ff8a7a" font-weight="bold">Stinger treble</text>
+  <text x="340" y="206" font-size="10" fill="#93a5b8">(catches short strikes)</text>
 
   <!-- Annotation arrow showing king strike pattern -->
   <g transform="translate(50, 210)">
-    <path d="M0 20 Q40 0 80 15 Q120 30 160 10" fill="none" stroke="#c44" stroke-width="1.5" stroke-dasharray="5,3"/>
-    <polygon points="160,10 148,8 152,18" fill="#c44"/>
-    <text x="80" y="50" text-anchor="middle" font-size="10" fill="#c44">King strikes at tail first</text>
+    <path d="M0 20 Q40 0 80 15 Q120 30 160 10" fill="none" stroke="#ff8a7a" stroke-width="1.5" stroke-dasharray="5,3"/>
+    <polygon points="160,10 148,8 152,18" fill="#ff8a7a"/>
+    <text x="80" y="50" text-anchor="middle" font-size="10" fill="#ff8a7a">King strikes at tail first</text>
   </g>
 
   <!-- Legend -->
-  <rect x="15" y="280" width="470" height="68" rx="6" fill="#f7f9fc" stroke="#ccd" stroke-width="1" filter="url(#softShadow)"/>
-  <text x="30" y="300" font-size="11" fill="#333" font-weight="bold">Why a stinger?</text>
-  <text x="30" y="318" font-size="10.5" fill="#555">King mackerel attack from behind, slashing at the tail of the baitfish. A single</text>
-  <text x="30" y="333" font-size="10.5" fill="#555">nose hook misses most strikes. The trailing treble catches these short-strikers.</text>
+  <rect x="15" y="280" width="470" height="68" rx="6" fill="#0f2032" stroke="#2c4a68" stroke-width="1" filter="url(#softShadow)"/>
+  <text x="30" y="300" font-size="11" fill="#e8eef3" font-weight="bold">Why a stinger?</text>
+  <text x="30" y="318" font-size="10.5" fill="#c8d3dd">King mackerel attack from behind, slashing at the tail of the baitfish. A single</text>
+  <text x="30" y="333" font-size="10.5" fill="#c8d3dd">nose hook misses most strikes. The trailing treble catches these short-strikers.</text>
 </svg>

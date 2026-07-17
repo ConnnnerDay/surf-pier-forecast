@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 350" font-family="Arial, sans-serif">
-  <rect x="0" y="0" width="500" height="350" fill="#FAFAF8"/>
+  <rect x="0" y="0" width="500" height="350" fill="#132235"/>
   <defs>
     <linearGradient id="woodGrain" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" stop-color="#7a5a3a"/>
@@ -45,12 +45,12 @@
       <feDropShadow dx="1.4" dy="2.2" stdDeviation="1.6" flood-color="#000000" flood-opacity="0.28"/>
     </filter>
   </defs>
-  <text x="250" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a3a5c">Knocker Rig</text>
+  <text x="250" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#7DD3FC">Knocker Rig</text>
 
   <!-- Main line -->
   <line x1="30" y1="80" x2="150" y2="80" stroke="#2a6" stroke-width="3" stroke-dasharray="8,4"/>
   <line x1="30" y1="79.2" x2="150" y2="79.2" stroke="#8fe6b8" stroke-width="0.96" stroke-dasharray="8,4" opacity="0.6"/>
-  <text x="90" y="70" text-anchor="middle" font-size="11" fill="#555">Main line (30-50 lb braid)</text>
+  <text x="90" y="70" text-anchor="middle" font-size="11" fill="#c8d3dd">Main line (30-50 lb braid)</text>
 
   <!-- Barrel swivel -->
   <rect x="155" y="72" width="34" height="16" rx="8" fill="url(#steelGrad)" stroke="#333333" stroke-width="1.5" filter="url(#softShadow)"/>
@@ -59,53 +59,53 @@
   <ellipse cx="158.7" cy="78.6" rx="1.3" ry="1.3" fill="#ffffff" opacity="0.5" filter="url(#glossBlur)"/>
   <circle cx="184" cy="80" r="4" fill="url(#steelGrad)" stroke="#333333" stroke-width="1" filter="url(#softShadow)"/>
   <ellipse cx="182.7" cy="78.6" rx="1.3" ry="1.3" fill="#ffffff" opacity="0.5" filter="url(#glossBlur)"/>
-  <text x="172" y="104" text-anchor="middle" font-size="10" fill="#555">Barrel swivel</text>
+  <text x="172" y="104" text-anchor="middle" font-size="10" fill="#c8d3dd">Barrel swivel</text>
 
   <!-- Leader going down -->
   <line x1="189" y1="80" x2="250" y2="100" stroke="#5da" stroke-width="2.5"/>
   <line x1="189" y1="79.4" x2="250" y2="99.4" stroke="#e8fbf3" stroke-width="0.85" opacity="0.55"/>
   <line x1="250" y1="100" x2="250" y2="220" stroke="#5da" stroke-width="2.5"/>
   <line x1="250" y1="99.4" x2="250" y2="219.4" stroke="#e8fbf3" stroke-width="0.85" opacity="0.55"/>
-  <text x="290" y="130" font-size="11" fill="#555">Fluorocarbon</text>
-  <text x="290" y="145" font-size="11" fill="#555">leader (12-24 in)</text>
+  <text x="290" y="130" font-size="11" fill="#c8d3dd">Fluorocarbon</text>
+  <text x="290" y="145" font-size="11" fill="#c8d3dd">leader (12-24 in)</text>
 
   <!-- Egg sinker on leader - at the bottom near hook -->
   <ellipse cx="250" cy="195" rx="22" ry="12" fill="url(#leadGrad)" stroke="#4a4a4a" stroke-width="1.5" filter="url(#softShadow)"/>
   <ellipse cx="243.0" cy="190.4" rx="6.6" ry="2.6" fill="#ffffff" opacity="0.5" filter="url(#glossBlur)"/>
   <ellipse cx="250" cy="195" rx="4" ry="12" fill="url(#leadGrad)" stroke="#4a4a4a" stroke-width="1"/>
-  <text x="175" y="195" text-anchor="end" font-size="11" fill="#555">Egg sinker</text>
-  <text x="175" y="210" text-anchor="end" font-size="10" fill="#888">(slides on leader)</text>
+  <text x="175" y="195" text-anchor="end" font-size="11" fill="#c8d3dd">Egg sinker</text>
+  <text x="175" y="210" text-anchor="end" font-size="10" fill="#93a5b8">(slides on leader)</text>
 
   <!-- Arrow showing sinker rests against hook -->
-  <path d="M250 210 L250 222" stroke="#c44" stroke-width="1.5"/>
-  <text x="300" y="218" font-size="10" fill="#c44">Sinker rests</text>
-  <text x="300" y="230" font-size="10" fill="#c44">on hook eye</text>
+  <path d="M250 210 L250 222" stroke="#ff8a7a" stroke-width="1.5"/>
+  <text x="300" y="218" font-size="10" fill="#ff8a7a">Sinker rests</text>
+  <text x="300" y="230" font-size="10" fill="#ff8a7a">on hook eye</text>
 
   <!-- Hook -->
   <g transform="translate(237, 222)">
     <path d="M13 0 L13 25 Q13 42 26 42 Q38 42 38 28 Q38 18 30 14" fill="none" stroke="url(#steelGrad)" stroke-width="2.5" filter="url(#softShadow)"/>
     <circle cx="29" cy="13" r="2" fill="url(#steelGradDark)"/>
-    <text x="48" y="18" font-size="11" fill="#555">Circle hook</text>
-    <text x="48" y="32" font-size="10" fill="#888">1/0 - 3/0</text>
+    <text x="48" y="18" font-size="11" fill="#c8d3dd">Circle hook</text>
+    <text x="48" y="32" font-size="10" fill="#93a5b8">1/0 - 3/0</text>
   </g>
 
   <!-- Bait on hook -->
   <g transform="translate(244, 260)">
     <ellipse cx="8" cy="8" rx="14" ry="8" fill="url(#baitGrad)" stroke="#a8663a" stroke-width="1"/>
-    <text x="8" y="28" text-anchor="middle" font-size="10" fill="#888">Fiddler crab / shrimp</text>
+    <text x="8" y="28" text-anchor="middle" font-size="10" fill="#93a5b8">Fiddler crab / shrimp</text>
   </g>
 
   <!-- Pier piling illustration -->
   <rect x="400" y="40" width="30" height="240" rx="4" fill="url(#woodGrain)" stroke="#5a4326" stroke-width="2"/>
-  <text x="415" y="35" text-anchor="middle" font-size="10" fill="#6B5335">Piling</text>
+  <text x="415" y="35" text-anchor="middle" font-size="10" fill="#c9a876">Piling</text>
   <!-- Barnacles -->
   <circle cx="405" cy="120" r="3" fill="#9a9" stroke="#686" stroke-width="1"/>
   <circle cx="420" cy="150" r="4" fill="#9a9" stroke="#686" stroke-width="1"/>
   <circle cx="408" cy="200" r="3" fill="#9a9" stroke="#686" stroke-width="1"/>
 
   <!-- Legend -->
-  <rect x="15" y="288" width="470" height="55" rx="6" fill="#f7f9fc" stroke="#ccd" stroke-width="1" filter="url(#softShadow)"/>
-  <text x="30" y="305" font-size="11" fill="#333" font-weight="bold">How it works:</text>
-  <text x="30" y="322" font-size="10.5" fill="#555">The sinker rests right at the hook eye instead of sliding freely, so there's no slack</text>
-  <text x="30" y="336" font-size="10.5" fill="#555">line to let bait drift into a snag. Drop it straight down beside pilings and rocks.</text>
+  <rect x="15" y="288" width="470" height="55" rx="6" fill="#0f2032" stroke="#2c4a68" stroke-width="1" filter="url(#softShadow)"/>
+  <text x="30" y="305" font-size="11" fill="#e8eef3" font-weight="bold">How it works:</text>
+  <text x="30" y="322" font-size="10.5" fill="#c8d3dd">The sinker rests right at the hook eye instead of sliding freely, so there's no slack</text>
+  <text x="30" y="336" font-size="10.5" fill="#c8d3dd">line to let bait drift into a snag. Drop it straight down beside pilings and rocks.</text>
 </svg>

@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 340" font-family="Arial, sans-serif">
-  <rect x="0" y="0" width="500" height="340" fill="#FAFAF8"/>
+  <rect x="0" y="0" width="500" height="340" fill="#132235"/>
   <defs>
     <radialGradient id="baitGrad" cx="35%" cy="30%" r="75%">
       <stop offset="0%" stop-color="#ffe4c4"/>
@@ -32,34 +32,34 @@
       <feDropShadow dx="1.4" dy="2.2" stdDeviation="1.6" flood-color="#000000" flood-opacity="0.28"/>
     </filter>
   </defs>
-  <text x="250" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a3a5c">Salmon Mooching Rig</text>
+  <text x="250" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#7DD3FC">Salmon Mooching Rig</text>
 
   <!-- Boat drifting -->
   <g transform="translate(340, 45)">
     <path d="M0 12 Q10 -2 55 -2 Q95 -2 105 12 L95 20 L10 20 Z" fill="#c9701f" stroke="#966" stroke-width="1.5"/>
     <text x="52" y="-8" text-anchor="middle" font-size="10" fill="#966">Controlled drift / slow idle</text>
   </g>
-  <path d="M300 60 L330 66 M320 60 L330 66 L320 72" fill="none" stroke="#c44" stroke-width="1.5" opacity="0.7"/>
+  <path d="M300 60 L330 66 M320 60 L330 66 L320 72" fill="none" stroke="#ff8a7a" stroke-width="1.5" opacity="0.7"/>
 
   <!-- Main line -->
   <line x1="30" y1="75" x2="150" y2="75" stroke="#2a6" stroke-width="3" stroke-dasharray="8,4"/>
   <line x1="30" y1="74.2" x2="150" y2="74.2" stroke="#8fe6b8" stroke-width="0.96" stroke-dasharray="8,4" opacity="0.6"/>
-  <text x="90" y="65" text-anchor="middle" font-size="11" fill="#555">Mono or braid (20-30 lb)</text>
+  <text x="90" y="65" text-anchor="middle" font-size="11" fill="#c8d3dd">Mono or braid (20-30 lb)</text>
   <line x1="150" y1="75" x2="190" y2="110" stroke="#2a6" stroke-width="3" stroke-dasharray="8,4"/>
   <line x1="150" y1="74.2" x2="190" y2="109.2" stroke="#8fe6b8" stroke-width="0.96" stroke-dasharray="8,4" opacity="0.6"/>
 
   <!-- Mooching (banana) sinker -->
   <g transform="translate(178, 110)">
     <path d="M0 8 Q10 -6 24 8 Q10 20 0 8" fill="url(#leadGrad)" stroke="#4a4a4a" stroke-width="1.5" filter="url(#softShadow)"/>
-    <text x="34" y="6" font-size="10" fill="#555">Banana / crescent</text>
-    <text x="34" y="19" font-size="10" fill="#555">mooching sinker</text>
+    <text x="34" y="6" font-size="10" fill="#c8d3dd">Banana / crescent</text>
+    <text x="34" y="19" font-size="10" fill="#c8d3dd">mooching sinker</text>
   </g>
 
   <!-- Leader to herring harness -->
   <line x1="190" y1="118" x2="215" y2="180" stroke="#5da" stroke-width="2"/>
   <line x1="190" y1="117.4" x2="215" y2="179.4" stroke="#e8fbf3" stroke-width="0.70" opacity="0.55"/>
-  <text x="235" y="150" font-size="11" fill="#555">Leader, 4-6 ft</text>
-  <text x="235" y="164" font-size="10" fill="#888">15-20 lb mono</text>
+  <text x="235" y="150" font-size="11" fill="#c8d3dd">Leader, 4-6 ft</text>
+  <text x="235" y="164" font-size="10" fill="#93a5b8">15-20 lb mono</text>
 
   <!-- Two-hook herring harness -->
   <g transform="translate(195, 180)">
@@ -69,21 +69,21 @@
     <line x1="40" y1="20" x2="42" y2="36" stroke="#444" stroke-width="1.5"/>
     <circle cx="40" cy="19" r="1.5" fill="url(#steelGradDark)"/>
   </g>
-  <text x="270" y="205" font-size="11" fill="#555">Cut-plug or whole</text>
-  <text x="270" y="219" font-size="11" fill="#555">herring, 2-hook harness</text>
-  <text x="270" y="233" font-size="10" fill="#888">rolls and spins as it falls</text>
+  <text x="270" y="205" font-size="11" fill="#c8d3dd">Cut-plug or whole</text>
+  <text x="270" y="219" font-size="11" fill="#c8d3dd">herring, 2-hook harness</text>
+  <text x="270" y="233" font-size="10" fill="#93a5b8">rolls and spins as it falls</text>
 
   <!-- Roll/spin motion arrows -->
   <g transform="translate(150, 225)" opacity="0.8">
-    <path d="M0 0 Q10 -8 20 0 Q10 8 0 0" fill="none" stroke="#c44" stroke-width="1.5"/>
-    <path d="M17 -2 L20 0 L17 3" fill="none" stroke="#c44" stroke-width="1.5"/>
-    <text x="10" y="20" text-anchor="middle" font-size="9" fill="#c44">spin</text>
+    <path d="M0 0 Q10 -8 20 0 Q10 8 0 0" fill="none" stroke="#ff8a7a" stroke-width="1.5"/>
+    <path d="M17 -2 L20 0 L17 3" fill="none" stroke="#ff8a7a" stroke-width="1.5"/>
+    <text x="10" y="20" text-anchor="middle" font-size="9" fill="#ff8a7a">spin</text>
   </g>
 
   <!-- Legend box -->
-  <rect x="15" y="270" width="470" height="55" rx="6" fill="#f7f9fc" stroke="#ccd" stroke-width="1" filter="url(#softShadow)"/>
-  <text x="30" y="288" font-size="11" fill="#333" font-weight="bold">Technique:</text>
-  <text x="100" y="288" font-size="10.5" fill="#555">Drift or idle slowly — not a fast troll — so the harness spins</text>
-  <text x="30" y="304" font-size="10.5" fill="#555">naturally. Hold depth with sinker weight or a light downrigger near</text>
-  <text x="30" y="318" font-size="10.5" fill="#555">river mouths and tide rips for king and coho salmon.</text>
+  <rect x="15" y="270" width="470" height="55" rx="6" fill="#0f2032" stroke="#2c4a68" stroke-width="1" filter="url(#softShadow)"/>
+  <text x="30" y="288" font-size="11" fill="#e8eef3" font-weight="bold">Technique:</text>
+  <text x="100" y="288" font-size="10.5" fill="#c8d3dd">Drift or idle slowly — not a fast troll — so the harness spins</text>
+  <text x="30" y="304" font-size="10.5" fill="#c8d3dd">naturally. Hold depth with sinker weight or a light downrigger near</text>
+  <text x="30" y="318" font-size="10.5" fill="#c8d3dd">river mouths and tide rips for king and coho salmon.</text>
 </svg>
