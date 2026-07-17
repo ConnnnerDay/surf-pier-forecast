@@ -73,9 +73,11 @@
     <text x="18" y="22" text-anchor="middle" font-size="10" fill="#fff" font-weight="bold">Float</text>
   </g>
 
-  <!-- Swivel -->
-  <rect x="175" y="72" width="30" height="14" rx="7" fill="url(#steelGrad)" stroke="#333333" stroke-width="1.5" filter="url(#softShadow)"/>
-  <ellipse cx="182.8" cy="75.9" rx="4.8" ry="2.8" fill="#ffffff" opacity="0.5" filter="url(#glossBlur)"/>
+  <!-- Swivel: an oval barrel body with a small wire eye at each end -->
+  <ellipse cx="190.0" cy="79.0" rx="15.0" ry="7.0" fill="url(#steelGrad)" stroke="#333333" stroke-width="1.2" filter="url(#softShadow)"/>
+  <circle cx="176.5" cy="79.0" r="4.3" fill="none" stroke="url(#steelGrad)" stroke-width="2.06" filter="url(#softShadow)"/>
+  <circle cx="203.5" cy="79.0" r="4.3" fill="none" stroke="url(#steelGrad)" stroke-width="2.06" filter="url(#softShadow)"/>
+  <ellipse cx="185.8" cy="76.5" rx="6.0" ry="2.2" fill="#ffffff" opacity="0.55" filter="url(#glossBlur)"/>
   <text x="190" y="100" text-anchor="middle" font-size="10" fill="#555">Swivel</text>
 
   <!-- Wire leader down to baitfish -->
@@ -85,6 +87,7 @@
 
   <!-- Nose hook -->
   <g transform="translate(180, 135)">
+    <circle cx="10" cy="0" r="1.9" fill="none" stroke="url(#steelGrad)" stroke-width="1.6" filter="url(#softShadow)"/>
     <path d="M10 0 L10 12 Q10 20 16 20 Q22 20 22 14 Q22 9 18 7" fill="none" stroke="url(#steelGrad)" stroke-width="2.2" filter="url(#softShadow)"/>
     <circle cx="17" cy="6" r="1.5" fill="url(#steelGradDark)"/>
   </g>
@@ -108,7 +111,7 @@
   <text x="330" y="160" font-size="10" fill="#555">Short wire</text>
 
   <!-- Treble stinger hook near tail -->
-  <g transform="translate(305, 165)">
+  <g transform="translate(302, 172)">
     <line x1="8" y1="0" x2="8" y2="8" stroke="#444" stroke-width="2"/>
     <!-- Three prongs -->
     <path d="M8 8 L8 20 Q8 26 12 26 Q16 26 16 22" fill="none" stroke="url(#steelGrad)" stroke-width="2" filter="url(#softShadow)"/>

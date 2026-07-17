@@ -55,11 +55,12 @@
   <ellipse cx="308.4" cy="128.2" rx="1.6" ry="1.6" fill="#ffffff" opacity="0.5" filter="url(#glossBlur)"/>
 
   <!-- Fly (Clouser-style) -->
-  <g transform="translate(295, 135)">
+  <g transform="translate(310, 130)">
     <path d="M0 0 L28 22" stroke="#444" stroke-width="2"/>
     <circle cx="4" cy="2" r="4" fill="#d4d4d4" stroke="#999" stroke-width="1"/>
     <path d="M4 6 Q0 24 -4 34 Q6 28 12 30 Q10 18 8 8" fill="#e0e0e0" stroke="#aaa" stroke-width="1" opacity="0.85"/>
     <path d="M4 6 Q8 22 14 32 Q4 28 -2 32 Q0 18 2 8" fill="#f0c14b" stroke="#c99a2e" stroke-width="1" opacity="0.7"/>
+    <circle cx="28" cy="20" r="3.2" fill="none" stroke="url(#steelGrad)" stroke-width="1.44" filter="url(#softShadow)"/>
     <path d="M28 20 L28 46 Q28 60 40 60 Q50 60 50 48 Q50 40 44 36" fill="none" stroke="url(#steelGrad)" stroke-width="2" filter="url(#softShadow)"/>
   </g>
   <text x="360" y="165" font-size="11" fill="#555">Clouser Minnow</text>

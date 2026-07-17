@@ -57,7 +57,7 @@
   <text x="258" y="120" text-anchor="middle" font-size="10" fill="#888" transform="rotate(65, 258, 120)">12-18 in</text>
 
   <!-- Jig head with soft plastic -->
-  <g transform="translate(210, 150)">
+  <g transform="translate(220, 150)">
     <path d="M10 0 Q22 0 22 12 Q22 20 10 20 Q0 20 0 10 Q0 0 10 0" fill="#e74c3c" stroke="#b03a2e" stroke-width="1.5"/>
     <circle cx="7" cy="8" r="1.5" fill="#fff"/>
     <path d="M20 12 Q40 18 55 30 Q42 32 30 40 Q28 26 20 18" fill="#88c" stroke="#557" stroke-width="1" opacity="0.85"/>
