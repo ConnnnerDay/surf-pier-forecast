@@ -76,14 +76,14 @@
     <circle cx="0" cy="0" r="3.2" fill="none" stroke="url(#steelGrad)" stroke-width="2.16" filter="url(#softShadow)"/>
     <path d="M0 0 L0 26 Q0 44 16 44 Q32 44 32 28 Q32 16 21 12" fill="none" stroke="url(#steelGrad)" stroke-width="3" filter="url(#softShadow)"/>
     <path d="M23.89 15.50 L30.24 12.18 L24.89 18.80 Z" fill="url(#steelGradDark)"/>
-    <text x="40" y="24" font-size="11" fill="#555">Large circle hook</text>
-    <text x="40" y="38" font-size="10" fill="#888">10/0 - 16/0</text>
+    <text x="16" y="66" text-anchor="middle" font-size="11" fill="#555">Large circle hook</text>
+    <text x="16" y="78" text-anchor="middle" font-size="10" fill="#888">10/0 - 16/0</text>
   </g>
 
-  <!-- Big bait -->
-  <g transform="translate(378, 218)">
+  <!-- Big bait, threaded onto the hook bend -->
+  <g transform="translate(408, 186)">
     <ellipse cx="16" cy="18" rx="24" ry="13" fill="url(#baitGrad)" stroke="#a8663a" stroke-width="1"/>
-    <text x="16" y="46" text-anchor="middle" font-size="10" fill="#888">Whole fish / large cut bait</text>
+    <text x="16" y="66" text-anchor="middle" font-size="10" fill="#888">Whole fish / large cut bait</text>
   </g>
 
   <!-- Fighting harness icon -->

@@ -93,8 +93,8 @@
     <text x="35" y="34" font-size="10" fill="#888">2/0 - 5/0</text>
   </g>
 
-  <!-- Bait -->
-  <g transform="translate(392, 200)">
+  <!-- Bait, threaded onto the hook bend -->
+  <g transform="translate(402, 183)">
     <ellipse cx="12" cy="15" rx="18" ry="10" fill="url(#baitGrad)" stroke="#a8663a" stroke-width="1"/>
     <text x="12" y="40" text-anchor="middle" font-size="10" fill="#888">Cut bait / shrimp</text>
   </g>

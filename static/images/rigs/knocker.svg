@@ -89,7 +89,7 @@
   </g>
 
   <!-- Bait on hook -->
-  <g transform="translate(244, 260)">
+  <g transform="translate(262, 256)">
     <ellipse cx="8" cy="8" rx="14" ry="8" fill="url(#baitGrad)" stroke="#a8663a" stroke-width="1"/>
     <text x="8" y="28" text-anchor="middle" font-size="10" fill="#888">Fiddler crab / shrimp</text>
   </g>
