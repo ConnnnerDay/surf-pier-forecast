@@ -1412,10 +1412,15 @@ h2::before {
 }
 
 .species-photo {
-  width: 56px;
-  height: 56px;
+  width: 64px;
+  height: 64px;
   border-radius: 8px;
-  object-fit: cover;
+  /* contain, not cover: source photos come from Wikipedia/Commons/NOAA with
+     wildly different aspect ratios (square illustrations, landscape hero
+     banners, tall field photos). Cropping to fill would cut the fish out of
+     some of them unpredictably; showing the whole photo on a shared neutral
+     fill reads as a uniform set even though the sources don't match. */
+  object-fit: contain;
   flex-shrink: 0;
   align-self: flex-start;
   background: rgba(148, 163, 184, 0.14);
@@ -5624,8 +5629,13 @@ footer p {
 .reg-modal__photo {
   display: block;
   width: 100%;
-  max-height: 220px;
-  object-fit: cover;
+  height: 200px;
+  /* contain (not cover) on a fixed-size, neutral-filled box for the same
+     reason as .species-photo -- source photos vary in aspect ratio and
+     framing, so showing the whole photo on a consistent box reads as
+     uniform even though individual photos don't match each other. */
+  object-fit: contain;
+  background: rgba(148, 163, 184, 0.14);
   border-radius: var(--radius-sm);
   margin-bottom: 0.3rem;
 }

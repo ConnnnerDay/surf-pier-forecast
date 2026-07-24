@@ -40,6 +40,29 @@ def _summary(title="Red drum", thumb="https://upload.wikimedia.org/thumb.jpg", p
     }
 
 
+def test_resize_wikimedia_thumb_rewrites_width_segment():
+    url = "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Red_drum.jpg/220px-Red_drum.jpg"
+    assert si._resize_wikimedia_thumb(url, 480) == (
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Red_drum.jpg/480px-Red_drum.jpg"
+    )
+
+
+def test_resize_wikimedia_thumb_leaves_non_thumb_url_unchanged():
+    url = "https://upload.wikimedia.org/wikipedia/commons/a/ab/Red_drum.jpg"
+    assert si._resize_wikimedia_thumb(url, 480) == url
+
+
+def test_fetch_from_wikipedia_upsizes_thumbnail(db, monkeypatch):
+    small_thumb = "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Red_drum.jpg/220px-Red_drum.jpg"
+    monkeypatch.setattr(
+        si, "http_get", lambda url, **kw: _FakeResponse(200, _summary(thumb=small_thumb))
+    )
+    result = si._fetch_from_wikipedia("Red drum (puppy drum)")
+    assert result["thumb_url"] == (
+        f"https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Red_drum.jpg/{si._TARGET_WIDTH}px-Red_drum.jpg"
+    )
+
+
 def test_cache_key_strips_parenthetical_and_lowercases():
     assert si._cache_key("Red drum (puppy drum)") == "red drum"
     assert si._cache_key("Bluefish") == "bluefish"
@@ -264,6 +287,50 @@ def test_fetch_from_commons_returns_first_photo_candidate(db, monkeypatch):
         "title": "Red drum",
         "credit": "Wikimedia Commons",
     }
+
+
+def test_fetch_from_commons_prefers_resized_thumburl_over_original(db, monkeypatch):
+    payload = _commons_search_result(
+        {
+            "1": {
+                "index": 1,
+                "title": "File:Red drum.jpg",
+                "imageinfo": [
+                    {
+                        "url": "https://upload.wikimedia.org/red-drum-original-huge.jpg",
+                        "thumburl": "https://upload.wikimedia.org/480px-red-drum.jpg",
+                        "descriptionurl": "https://commons.wikimedia.org/wiki/File:Red_drum.jpg",
+                    }
+                ],
+            }
+        }
+    )
+    monkeypatch.setattr(si, "http_get", lambda url, **kw: _FakeResponse(200, payload))
+
+    result = si._fetch_from_commons("Red drum")
+    assert result["thumb_url"] == "https://upload.wikimedia.org/480px-red-drum.jpg"
+
+
+def test_fetch_from_commons_extension_check_uses_original_not_thumburl(db, monkeypatch):
+    """A range-map SVG's thumburl is rendered as .png by Commons, which must
+    not let it slip past the photo-extension filter disguised as a photo."""
+    payload = _commons_search_result(
+        {
+            "1": {
+                "index": 1,
+                "title": "File:Bluefish.jpg",
+                "imageinfo": [
+                    {
+                        "url": "https://upload.wikimedia.org/range-map.svg",
+                        "thumburl": "https://upload.wikimedia.org/480px-range-map.svg.png",
+                        "descriptionurl": "x",
+                    }
+                ],
+            }
+        }
+    )
+    monkeypatch.setattr(si, "http_get", lambda url, **kw: _FakeResponse(200, payload))
+    assert si._fetch_from_commons("Bluefish") is None
 
 
 def test_fetch_from_commons_returns_none_when_only_non_photo_results(db, monkeypatch):
