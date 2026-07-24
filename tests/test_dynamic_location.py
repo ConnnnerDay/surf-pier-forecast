@@ -240,6 +240,7 @@ class TestDynamicLocationEndToEnd:
 
         monkeypatch.setattr(fc, "ForecastBuilder", _stub_builder())
         monkeypatch.setattr(fc, "get_water_temp", lambda *_a, **_k: (74.0, True))
+        monkeypatch.setattr(fc, "get_species_image", lambda *_a, **_k: None)
 
         # A Gulf coastal point near Galveston, TX. Build it directly so the test
         # doesn't depend on station catalogs (blocked in CI).
