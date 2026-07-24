@@ -1,5 +1,6 @@
 """Species photo lookup: fetches a representative photo per species from
-Wikipedia (or, failing that, NOAA Fisheries) and caches the result in SQLite.
+Wikipedia, Wikimedia Commons, or NOAA Fisheries (tried in that order) and
+caches the result in SQLite.
 
 Only the small number of species actually shown in a given forecast (capped
 at 10 by ``build_species_ranking``) are ever looked up, and each species is
@@ -8,12 +9,17 @@ species' photo essentially never changes. A miss (no usable photo found from
 either source) is cached too, but for a much shorter window, so a temporary
 outage doesn't wrongly stick a species with "no photo" forever.
 
-Two sources are tried in order:
+Three sources are tried in order:
 
 1. Wikipedia's page-summary API (falling back to opensearch when the common
    name doesn't match an article title directly) -- broad species coverage,
    images are Commons-hosted and machine-taggable with a license.
-2. NOAA Fisheries species profile pages (``fisheries.noaa.gov/species/<slug>``)
+2. Wikimedia Commons' own search API -- catches species that have Commons
+   photos but no full Wikipedia article. Since this is a fuzzy full-text
+   search rather than a curated article lookup, results are filtered to
+   photo file extensions and away from filenames that look like maps/
+   diagrams/icons rather than an actual photo of the fish.
+3. NOAA Fisheries species profile pages (``fisheries.noaa.gov/species/<slug>``)
    -- narrower coverage (only species NOAA profiles, which happens to overlap
    heavily with recreationally-fished species this app covers) but the
    photos are U.S. government work, so public domain. The slug is guessed
@@ -23,7 +29,7 @@ Two sources are tried in order:
 
 Network access degrades gracefully everywhere: any failure (timeout, 404, no
 usable image, malformed response) simply returns ``None`` from that source,
-so an outage at either provider never breaks forecast generation -- it just
+so an outage at any one provider never breaks forecast generation -- it just
 means that run's cards render without a photo.
 """
 
@@ -54,6 +60,17 @@ _WIKIPEDIA_OPENSEARCH = (
 )
 _NOAA_SPECIES_PAGE = "https://www.fisheries.noaa.gov/species/{}"
 _NOAA_MAX_RESPONSE_BYTES = 2 * 1024 * 1024
+
+_COMMONS_SEARCH = (
+    "https://commons.wikimedia.org/w/api.php"
+    "?action=query&generator=search&gsrsearch={}&gsrnamespace=6&gsrlimit=5"
+    "&prop=imageinfo&iiprop=url&format=json"
+)
+_PHOTO_EXT_RE = re.compile(r"\.(jpe?g|png)$", re.IGNORECASE)
+# Commons File: search returns diagrams, range maps, and icons alongside real
+# photos; filenames for those non-photo files reliably contain one of these
+# words, so they're excluded rather than risk showing a map as "the fish".
+_NON_PHOTO_NAME_RE = re.compile(r"(map|distribution|range|diagram|icon|logo)", re.IGNORECASE)
 
 
 def _cache_key(species_name: str) -> str:
@@ -154,7 +171,7 @@ def _fetch_from_wikipedia(species_name: str) -> Optional[dict[str, Any]]:
         if alt_title and alt_title.lower() != title.lower():
             data = _fetch_summary(alt_title)
 
-    if not data:
+    if not isinstance(data, dict):
         return None
     thumb_url = (data.get("thumbnail") or {}).get("source")
     if not thumb_url:
@@ -167,6 +184,55 @@ def _fetch_from_wikipedia(species_name: str) -> Optional[dict[str, Any]]:
         "title": data.get("title", title),
         "credit": "Wikipedia",
     }
+
+
+def _fetch_from_commons(species_name: str) -> Optional[dict[str, Any]]:
+    """Search Wikimedia Commons directly for a species photo.
+
+    Unlike ``_fetch_from_wikipedia``, this isn't gated on the species having
+    a full Wikipedia article -- it's a fuzzy full-text search over Commons'
+    File: namespace, so results are filtered down to plausible photo files
+    (see ``_PHOTO_EXT_RE`` / ``_NON_PHOTO_NAME_RE``) before accepting one.
+    """
+    title = species_name.split("(")[0].strip()
+    if not title:
+        return None
+    query = f"{title} fish"
+    try:
+        resp = http_get(
+            _COMMONS_SEARCH.format(quote(query)),
+            endpoint="species_images.commons_search",
+            timeout=_TIMEOUT,
+        )
+        if resp.status_code != 200:
+            return None
+        data = resp.json()
+    except Exception:
+        return None
+    if not isinstance(data, dict):
+        return None
+
+    pages = ((data.get("query") or {}).get("pages")) or {}
+    # `index` is MediaWiki's own relevance rank for generator=search results;
+    # dict iteration order isn't guaranteed to match it.
+    candidates = sorted(pages.values(), key=lambda p: p.get("index", 0))
+    for page in candidates:
+        imageinfo = page.get("imageinfo") or []
+        if not imageinfo:
+            continue
+        thumb_url = imageinfo[0].get("url") or ""
+        page_title = page.get("title", "")
+        if not _PHOTO_EXT_RE.search(thumb_url):
+            continue
+        if _NON_PHOTO_NAME_RE.search(page_title):
+            continue
+        return {
+            "thumb_url": thumb_url,
+            "page_url": imageinfo[0].get("descriptionurl", ""),
+            "title": title,
+            "credit": "Wikimedia Commons",
+        }
+    return None
 
 
 def _noaa_slug(species_name: str) -> str:
@@ -216,7 +282,11 @@ def _fetch_from_noaa(species_name: str) -> Optional[dict[str, Any]]:
 
 def _fetch_image(species_name: str) -> Optional[dict[str, Any]]:
     """Try each photo source in order, returning the first usable result."""
-    return _fetch_from_wikipedia(species_name) or _fetch_from_noaa(species_name)
+    return (
+        _fetch_from_wikipedia(species_name)
+        or _fetch_from_commons(species_name)
+        or _fetch_from_noaa(species_name)
+    )
 
 
 def get_species_image(species_name: str) -> Optional[dict[str, Any]]:

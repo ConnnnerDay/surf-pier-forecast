@@ -111,6 +111,11 @@ def test_fetch_falls_back_to_opensearch_when_no_thumbnail(db, monkeypatch):
     assert any("opensearch" in c for c in calls)
 
 
+def test_fetch_from_wikipedia_returns_none_on_malformed_json(db, monkeypatch):
+    monkeypatch.setattr(si, "http_get", lambda url, **kw: _FakeResponse(200, ["unexpected", "shape"]))
+    assert si._fetch_from_wikipedia("Bluefish") is None
+
+
 def test_fetch_returns_none_on_request_exception(db, monkeypatch):
     def fake_get(url, **kwargs):
         raise ConnectionError("boom")
@@ -186,9 +191,9 @@ def test_fetch_from_noaa_returns_none_on_oversized_response(db, monkeypatch):
     assert si._fetch_from_noaa("Bluefish") is None
 
 
-def test_get_species_image_falls_back_to_noaa_when_wikipedia_has_nothing(db, monkeypatch):
+def test_get_species_image_falls_back_to_noaa_when_others_have_nothing(db, monkeypatch):
     def fake_get(url, **kwargs):
-        if "wikipedia.org" in url:
+        if "en.wikipedia.org" in url or "commons.wikimedia.org" in url:
             return _FakeResponse(404, {})
         return _FakeResponse(200, content=_noaa_html(title="Bluefish"))
 
@@ -199,6 +204,115 @@ def test_get_species_image_falls_back_to_noaa_when_wikipedia_has_nothing(db, mon
     assert result["title"] == "Bluefish"
 
 
-def test_get_species_image_none_when_both_sources_miss(db, monkeypatch):
+def test_get_species_image_none_when_all_sources_miss(db, monkeypatch):
     monkeypatch.setattr(si, "http_get", lambda url, **kw: _FakeResponse(404, {}))
     assert si.get_species_image("Totally Fake Species") is None
+
+
+# ---------------------------------------------------------------------------
+# Wikimedia Commons fallback source
+# ---------------------------------------------------------------------------
+
+
+def _commons_search_result(pages):
+    return {"query": {"pages": pages}}
+
+
+def test_fetch_from_commons_returns_first_photo_candidate(db, monkeypatch):
+    payload = _commons_search_result(
+        {
+            "1": {
+                "index": 2,
+                "title": "File:Red drum range map.svg",
+                "imageinfo": [
+                    {
+                        "url": "https://upload.wikimedia.org/red-drum-map.svg",
+                        "descriptionurl": "https://commons.wikimedia.org/wiki/File:Red_drum_range_map.svg",
+                    }
+                ],
+            },
+            "2": {
+                "index": 1,
+                "title": "File:Red drum.jpg",
+                "imageinfo": [
+                    {
+                        "url": "https://upload.wikimedia.org/red-drum.jpg",
+                        "descriptionurl": "https://commons.wikimedia.org/wiki/File:Red_drum.jpg",
+                    }
+                ],
+            },
+        }
+    )
+    monkeypatch.setattr(si, "http_get", lambda url, **kw: _FakeResponse(200, payload))
+
+    result = si._fetch_from_commons("Red drum (puppy drum)")
+    # The map (index 2) is skipped for both its filename and its .svg
+    # extension; the photo (index 1, ranked first by Commons) wins.
+    assert result == {
+        "thumb_url": "https://upload.wikimedia.org/red-drum.jpg",
+        "page_url": "https://commons.wikimedia.org/wiki/File:Red_drum.jpg",
+        "title": "Red drum",
+        "credit": "Wikimedia Commons",
+    }
+
+
+def test_fetch_from_commons_returns_none_when_only_non_photo_results(db, monkeypatch):
+    payload = _commons_search_result(
+        {
+            "1": {
+                "index": 1,
+                "title": "File:Bluefish distribution map.svg",
+                "imageinfo": [{"url": "https://upload.wikimedia.org/map.svg", "descriptionurl": "x"}],
+            }
+        }
+    )
+    monkeypatch.setattr(si, "http_get", lambda url, **kw: _FakeResponse(200, payload))
+    assert si._fetch_from_commons("Bluefish") is None
+
+
+def test_fetch_from_commons_returns_none_on_no_results(db, monkeypatch):
+    monkeypatch.setattr(
+        si, "http_get", lambda url, **kw: _FakeResponse(200, _commons_search_result({}))
+    )
+    assert si._fetch_from_commons("Bluefish") is None
+
+
+def test_fetch_from_commons_returns_none_on_non_200(db, monkeypatch):
+    monkeypatch.setattr(si, "http_get", lambda url, **kw: _FakeResponse(404, {}))
+    assert si._fetch_from_commons("Bluefish") is None
+
+
+def test_fetch_from_commons_returns_none_on_malformed_json(db, monkeypatch):
+    """A non-dict JSON body (or a request exception) must degrade to None,
+    not raise -- this is the bug caught while wiring the fallback chain."""
+    monkeypatch.setattr(si, "http_get", lambda url, **kw: _FakeResponse(200, ["unexpected", "shape"]))
+    assert si._fetch_from_commons("Bluefish") is None
+
+
+def test_get_species_image_falls_back_to_commons_when_wikipedia_has_nothing(db, monkeypatch):
+    def fake_get(url, **kwargs):
+        if "en.wikipedia.org" in url:
+            return _FakeResponse(404, {})
+        if "commons.wikimedia.org" in url:
+            payload = _commons_search_result(
+                {
+                    "1": {
+                        "index": 1,
+                        "title": "File:Bluefish.jpg",
+                        "imageinfo": [
+                            {
+                                "url": "https://upload.wikimedia.org/bluefish.jpg",
+                                "descriptionurl": "https://commons.wikimedia.org/wiki/File:Bluefish.jpg",
+                            }
+                        ],
+                    }
+                }
+            )
+            return _FakeResponse(200, payload)
+        raise AssertionError(f"unexpected URL {url}")
+
+    monkeypatch.setattr(si, "http_get", fake_get)
+
+    result = si.get_species_image("Bluefish")
+    assert result["credit"] == "Wikimedia Commons"
+    assert result["thumb_url"] == "https://upload.wikimedia.org/bluefish.jpg"
