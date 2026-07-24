@@ -525,8 +525,17 @@ if ('serviceWorker' in navigator) {
         var regOfficialSource = card.getAttribute('data-reg-official-source') || card.getAttribute('data-reg-fallback-source') || '';
         var confidence = card.getAttribute('data-reg-confidence') || 'none';
         var lastUpdated = card.getAttribute('data-reg-last-updated') || '';
+        var imageUrl = card.getAttribute('data-species-image') || '';
+        var imageCredit = card.getAttribute('data-species-image-credit') || '';
+        var imageCreditLabel = card.getAttribute('data-species-image-credit-label') || 'source';
 
         var html = '';
+        if (imageUrl) {
+            html += '<img class="reg-modal__photo" src="' + esc(imageUrl) + '" alt="' + esc(species) + '" loading="lazy">';
+            if (imageCredit) {
+                html += '<p class="reg-photo-credit">Photo: <a href="' + esc(imageCredit) + '" target="_blank" rel="noopener noreferrer">' + esc(imageCreditLabel) + '</a></p>';
+            }
+        }
         if (confidence === 'stale') {
             html += '<div class="reg-stale-alert"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Regulation data may be outdated. Verify before fishing.</div>';
         } else if (confidence === 'unverified' || confidence === 'unverified_unknown') {

@@ -151,6 +151,7 @@ Primary tables:
 - `forecast_cache` — cached forecast results (4-hour TTL)
 - `catch_log` — fishing log entries
 - `reg_scrape_cache` — regulation cache
+- `species_image_cache` — Wikipedia species photo cache
 
 Initialize or re-initialize the database:
 

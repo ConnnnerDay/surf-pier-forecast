@@ -53,6 +53,7 @@ from services.datagov import get_water_quality_summary as _get_wq
 from services.hdx_fao import get_hdx_fao_enrichment as _get_fao
 from services.arcgis_live_feeds import get_nearest_river_discharge as _get_river
 from services.bathymetry import get_depth_profile as _get_bathy
+from storage.species_images import get_species_image
 from domain.species import (
     _SPECIES_BY_COAST,
     onshore_offshore_dirs,
@@ -105,6 +106,32 @@ def _profile_cache_key(forecast: dict, location: dict | None, profile: dict) -> 
 _FORECAST_POOL = _cf.ThreadPoolExecutor(
     max_workers=30, thread_name_prefix="forecast-fetch"
 )
+
+
+def _attach_species_images(species: list[dict[str, Any]]) -> None:
+    """Attach a Wikipedia photo (thumbnail + credit link) to each species entry.
+
+    Looked up concurrently across the (small, capped-at-10) ranked species
+    list using the shared forecast pool. Each lookup is persistently cached
+    (see storage.species_images), so this only costs real network latency the
+    first time a given species is ever looked up across the whole app.
+    Species without a usable photo are left unmodified -- the template
+    already renders fine without an image.
+    """
+    todo = [sp for sp in species if "image_url" not in sp]
+    if not todo:
+        return
+    futures = {_FORECAST_POOL.submit(get_species_image, sp["name"]): sp for sp in todo}
+    for fut in _cf.as_completed(futures):
+        sp = futures[fut]
+        try:
+            image = fut.result()
+        except Exception:
+            image = None
+        if image:
+            sp["image_url"] = image["thumb_url"]
+            sp["image_credit_url"] = image["page_url"]
+            sp["image_credit_label"] = image.get("credit", "")
 
 # Generic mid-Atlantic historical monthly averages used as the absolute
 # last resort when no location is set.
@@ -3265,6 +3292,7 @@ def generate_forecast(
             tide_state=t_state,
             wind_strength=wind_strength,
         )
+    _attach_species_images(forecast["species"])
 
     forecast["sources_used"] = sorted(set(sources_used))
     forecast["fallbacks_triggered"] = sorted(set(fallbacks_triggered))
@@ -3518,6 +3546,7 @@ def personalize_forecast(
             tide_state=t_state,
             wind_strength=wind_strength,
         )
+    _attach_species_images(species)
 
     # Apply primary-goal score adjustments so trophy hunters see big gamefish
     # first, action anglers see prolific biters, and relaxing anglers see

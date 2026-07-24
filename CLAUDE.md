@@ -57,6 +57,7 @@ This is a self-hosted Flask fishing forecast app. It fetches live marine data fr
 | `web/auth.py` | Login, register, email verification, passkeys (WebAuthn), Google/Apple OAuth |
 | `locations.py` | Curated coastal locations + dynamic any-point resolution (`get_location`, `build_dynamic_location`, `timezone_for_point`, geocoding, nearest-spot search) |
 | `services/stations.py` | Nearest NOAA CO-OPS (tide + water-temp) and NDBC station resolution from cached public catalogs; powers dynamic locations |
+| `storage/species_images.py` | Per-species photo lookup (Wikipedia summary API → Wikimedia Commons search → NOAA Fisheries species pages; SQLite-cached), attached to the ranked species list shown in "What's Biting" / the regs modal |
 | `services/` | One file per external API (nws, noaa, ndbc, astro, stations, etc.) |
 
 ### Blueprints

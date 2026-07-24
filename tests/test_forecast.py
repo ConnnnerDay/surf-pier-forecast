@@ -997,6 +997,7 @@ def test_personalize_forecast_uses_location_fish_region_for_calendar(monkeypatch
         "build_species_ranking",
         lambda *_args, **_kwargs: [{"name": "Red drum (puppy drum)"}],
     )
+    monkeypatch.setattr(fc, "get_species_image", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(fc, "build_rig_recommendations", lambda *_args, **_kwargs: [])
     monkeypatch.setattr(fc, "build_bait_ranking", lambda *_args, **_kwargs: [])
     monkeypatch.setattr(fc, "build_bite_alerts", lambda *_args, **_kwargs: [])
@@ -1210,6 +1211,7 @@ def test_personalize_caught_here_boost(monkeypatch):
     ):
         monkeypatch.setattr(fc, name, lambda *a, **k: [])
     monkeypatch.setattr(fc, "_get_technique_tip", lambda *a, **k: "")
+    monkeypatch.setattr(fc, "get_species_image", lambda *a, **k: None)
 
     forecast = {
         "generated_at": "2026-06-10T10:00:00",

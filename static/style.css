@@ -1411,6 +1411,17 @@ h2::before {
   align-self: flex-start;
 }
 
+.species-photo {
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+  align-self: flex-start;
+  background: rgba(148, 163, 184, 0.14);
+  border: 1px solid var(--border-light);
+}
+
 .species-card:nth-child(1) .species-rank {
   color: #92400E;
   background: rgba(217, 119, 6, 0.2);
@@ -5609,6 +5620,23 @@ footer p {
 .reg-modal__body {
   padding: 0.75rem 1rem 1rem;
   overflow-y: auto;
+}
+.reg-modal__photo {
+  display: block;
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  margin-bottom: 0.3rem;
+}
+.reg-photo-credit {
+  margin: 0 0 0.75rem;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-align: right;
+}
+.reg-photo-credit a {
+  color: inherit;
 }
 .reg-modal__grid {
   display: grid;

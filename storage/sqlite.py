@@ -142,6 +142,13 @@ CREATE TABLE IF NOT EXISTS reg_scrape_cache (
     PRIMARY KEY (species_key, state)
 );
 
+CREATE TABLE IF NOT EXISTS species_image_cache (
+    species_key TEXT PRIMARY KEY,
+    found       INTEGER NOT NULL DEFAULT 0,
+    image_json  TEXT,
+    fetched_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS push_subscriptions (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -204,6 +211,7 @@ _KNOWN_TABLES = frozenset(
         "forecast_cache",
         "catch_log",
         "reg_scrape_cache",
+        "species_image_cache",
     }
 )
 
