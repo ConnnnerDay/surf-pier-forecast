@@ -40,7 +40,7 @@ import logging
 import re
 from datetime import datetime
 from typing import Any, Optional
-from urllib.parse import quote
+from urllib.parse import quote, urljoin
 
 from bs4 import BeautifulSoup
 
@@ -265,9 +265,14 @@ def _fetch_from_noaa(species_name: str) -> Optional[dict[str, Any]]:
         return None
 
     og_image = soup.find("meta", property="og:image")
-    thumb_url = og_image.get("content") if og_image else None
-    if not thumb_url:
+    raw_thumb_url = og_image.get("content") if og_image else None
+    if not raw_thumb_url:
         return None
+    # The Open Graph spec requires an absolute URL here, but resolve it
+    # against the page URL anyway in case a real-world page emits a
+    # protocol-relative or root-relative path -- a relative <img src> would
+    # otherwise resolve against *this app's* origin in the browser and 404.
+    thumb_url = urljoin(page_url, str(raw_thumb_url))
 
     og_title = soup.find("meta", property="og:title")
     title = (og_title.get("content") if og_title else None) or species_name
