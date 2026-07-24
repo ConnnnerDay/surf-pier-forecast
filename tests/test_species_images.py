@@ -170,6 +170,16 @@ def test_fetch_from_noaa_extracts_og_image(db, monkeypatch):
     }
 
 
+def test_fetch_from_noaa_resolves_relative_og_image_url(db, monkeypatch):
+    monkeypatch.setattr(
+        si,
+        "http_get",
+        lambda url, **kw: _FakeResponse(200, content=_noaa_html(image="/s3/2021-05/red-drum.jpg")),
+    )
+    result = si._fetch_from_noaa("Red drum")
+    assert result["thumb_url"] == "https://www.fisheries.noaa.gov/s3/2021-05/red-drum.jpg"
+
+
 def test_fetch_from_noaa_returns_none_without_og_image(db, monkeypatch):
     monkeypatch.setattr(
         si, "http_get", lambda url, **kw: _FakeResponse(200, content=b"<html><head></head></html>")
