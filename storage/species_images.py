@@ -63,10 +63,18 @@ _NOAA_MAX_RESPONSE_BYTES = 2 * 1024 * 1024
 
 _COMMONS_SEARCH = (
     "https://commons.wikimedia.org/w/api.php"
-    "?action=query&generator=search&gsrsearch={}&gsrnamespace=6&gsrlimit=5"
-    "&prop=imageinfo&iiprop=url&format=json"
+    "?action=query&generator=search&gsrsearch={query}&gsrnamespace=6&gsrlimit=5"
+    "&prop=imageinfo&iiprop=url&iiurlwidth={width}&format=json"
 )
 _PHOTO_EXT_RE = re.compile(r"\.(jpe?g|png)$", re.IGNORECASE)
+
+# Requested rendering width for both Wikipedia and Commons photos. Shared by
+# the small card thumbnail and the larger regs-modal photo (~220px tall), and
+# generous enough to stay sharp at 2-3x device pixel ratios; Wikimedia's
+# thumbnailing service caps this at the source image's own size, so it never
+# upscales a small original into a blurry mess.
+_TARGET_WIDTH = 480
+_THUMB_WIDTH_RE = re.compile(r"/(\d+)px-")
 # Commons File: search returns diagrams, range maps, and icons alongside real
 # photos; filenames for those non-photo files reliably contain one of these
 # words, so they're excluded rather than risk showing a map as "the fish".
@@ -163,6 +171,21 @@ def _fetch_summary(title: str) -> Optional[dict[str, Any]]:
         return None
 
 
+def _resize_wikimedia_thumb(thumb_url: str, width: int) -> str:
+    """Request a differently-sized rendering of a Wikimedia thumbnail.
+
+    Wikimedia's thumbnail URLs encode the requested pixel width right before
+    the filename (e.g. ``.../thumb/a/ab/Red_drum.jpg/320px-Red_drum.jpg``),
+    and the thumbnailing service will render any width up to the source
+    image's own size on request -- editing that segment is enough, no extra
+    API call needed. The page-summary API's default thumbnail is sized for a
+    mobile preview card, which is too small to stay sharp once displayed at
+    2-3x device pixel ratio; this asks for something sharper instead.
+    Left unchanged if the URL doesn't look like a thumb URL (best-effort).
+    """
+    return _THUMB_WIDTH_RE.sub(f"/{width}px-", thumb_url, count=1)
+
+
 def _fetch_from_wikipedia(species_name: str) -> Optional[dict[str, Any]]:
     title = species_name.split("(")[0].strip()
     data = _fetch_summary(title)
@@ -176,6 +199,7 @@ def _fetch_from_wikipedia(species_name: str) -> Optional[dict[str, Any]]:
     thumb_url = (data.get("thumbnail") or {}).get("source")
     if not thumb_url:
         return None
+    thumb_url = _resize_wikimedia_thumb(thumb_url, _TARGET_WIDTH)
     page_url = ((data.get("content_urls") or {}).get("desktop") or {}).get("page", "")
 
     return {
@@ -200,7 +224,7 @@ def _fetch_from_commons(species_name: str) -> Optional[dict[str, Any]]:
     query = f"{title} fish"
     try:
         resp = http_get(
-            _COMMONS_SEARCH.format(quote(query)),
+            _COMMONS_SEARCH.format(query=quote(query), width=_TARGET_WIDTH),
             endpoint="species_images.commons_search",
             timeout=_TIMEOUT,
         )
@@ -220,15 +244,20 @@ def _fetch_from_commons(species_name: str) -> Optional[dict[str, Any]]:
         imageinfo = page.get("imageinfo") or []
         if not imageinfo:
             continue
-        thumb_url = imageinfo[0].get("url") or ""
+        info = imageinfo[0]
+        # The extension check must run against the *original* file, not the
+        # resized thumbnail -- Commons renders every thumbnail as PNG/JPG
+        # regardless of source type, so an SVG range map would otherwise slip
+        # past the filter disguised as a "photo.png".
+        original_url = info.get("url") or ""
         page_title = page.get("title", "")
-        if not _PHOTO_EXT_RE.search(thumb_url):
+        if not _PHOTO_EXT_RE.search(original_url):
             continue
         if _NON_PHOTO_NAME_RE.search(page_title):
             continue
         return {
-            "thumb_url": thumb_url,
-            "page_url": imageinfo[0].get("descriptionurl", ""),
+            "thumb_url": info.get("thumburl") or original_url,
+            "page_url": info.get("descriptionurl", ""),
             "title": title,
             "credit": "Wikimedia Commons",
         }
