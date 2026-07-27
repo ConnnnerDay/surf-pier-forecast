@@ -39,7 +39,7 @@
                 {% endif %}
                 <div class="species-card" data-species-name="{{ sp.name }}" data-species-bait="{{ sp.bait|lower }}" data-species-rig="{{ sp.rig|lower }}" data-activity="{{ sp.activity|lower }}" data-reg-confidence="{{ _warn_kind }}" data-reg-fallback-source="{{ forecast.official_regulations_url or '' }}" data-species-image="{{ sp.image_url or '' }}" data-species-image-credit="{{ sp.image_credit_url or '' }}" data-species-image-credit-label="{{ sp.image_credit_label or '' }}"{% if sp.regulation %} data-reg-min-size="{{ sp.regulation.min_size }}" data-reg-bag-limit="{{ sp.regulation.bag_limit }}" data-reg-season="{{ sp.regulation.season }}" data-reg-notes="{{ sp.regulation.notes }}" data-reg-gear="{{ sp.regulation.gear or '' }}" data-reg-slot="{{ sp.regulation.slot or '' }}" data-reg-official-source="{{ sp.regulation.official_source or '' }}" data-reg-data-status="{{ sp.regulation.data_status or '' }}" data-reg-last-updated="{{ sp.regulation.last_updated or '' }}" data-reg-is-stale="{{ sp.regulation.is_stale|lower }}" data-reg-fetched-at="{{ sp.regulation.fetched_at or '' }}"{% endif %}>
                     {% if sp.image_url %}
-                    <img class="species-photo" src="{{ sp.image_url }}" alt="{{ sp.name }}" loading="lazy" width="64" height="64">
+                    <img class="species-photo" src="{{ sp.image_url }}" alt="{{ sp.name }}" loading="lazy" width="100">
                     {% endif %}
                     <div class="species-rank">{{ sp.rank }}</div>
                     <div class="species-body">
