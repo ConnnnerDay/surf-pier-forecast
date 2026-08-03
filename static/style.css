@@ -1363,6 +1363,7 @@ h2::before {
 
 .species-card {
   display: flex;
+  flex-direction: column;
   gap: 0.6rem;
   padding: 0.75rem 0.85rem;
   border-radius: var(--radius);
@@ -1370,6 +1371,11 @@ h2::before {
   border-left: 3px solid #E8D9B8;
   background: rgba(255,255,255,0.65);
   transition: box-shadow 0.18s ease;
+}
+
+.species-card-top {
+  display: flex;
+  gap: 0.6rem;
 }
 
 [data-theme="dark"] .species-card {
@@ -1412,13 +1418,38 @@ h2::before {
 }
 
 .species-photo {
-  width: 100px;
-  /* No fixed height + align-self:stretch (the flex row's default) instead
-     of flex-start: the photo fills the full card height -- matching
-     whatever the text content ends up being -- instead of sitting as a
-     small 64px square with empty space below it. Width stays pinned so
-     this has no effect once .species-card switches to a column layout on
-     mobile (there the photo just sizes to its own aspect ratio). */
+  /* Fluid, not a single breakpoint jump: card width scales continuously
+     with the viewport (up to main's own 1600px/94vw cap), and a single
+     min-width:900px jump from 92px to 120px meant the photo's share of the
+     card ranged anywhere from ~16% (very wide desktop) to ~29% (just past
+     the two-column breakpoint, where cards are narrowest) depending on
+     exactly how wide the screen happened to be. Scaling with vw keeps that
+     proportion roughly consistent across the whole range instead of at the
+     mercy of which side of one breakpoint the viewport lands on. */
+  width: clamp(90px, 8vw, 130px);
+  /* Capped, not unbounded: this stretches (align-self:stretch, the flex
+     row's default) to match .species-card-top's height -- i.e. the name +
+     explanation + tip block only, NOT the specs grid below it. That block
+     is usually a reasonable size, so this eliminates the old dead space
+     below a small fixed thumbnail without turning into a giant slab once a
+     real photo's solid-colored background (common in underwater/aquarium
+     shots) gets stretched to fill something oversized. When a card's text
+     is unusually tall, the max-height caps it and it just sits at the top
+     instead of dominating the card. Width stays pinned so this has no
+     effect once .species-card-top switches to a column layout on mobile
+     (there the photo just sizes to its own aspect ratio). */
+  max-height: 170px;
+  /* Flexbox computes a stretched item's "hypothetical" size from its own
+     natural dimensions before stretching kicks in -- for an <img> that's
+     the real photo's own aspect ratio. A tall/narrow source photo (a
+     portrait field shot, an unusually cropped Commons file) would then
+     force .species-card-top taller than short text needs, just to fit
+     that photo's shape, reintroducing a smaller version of the original
+     dead-space problem next to two-line explanations with no tip. Pinning
+     a fixed aspect-ratio here decouples that hypothetical size from
+     whatever the actual photo's proportions are, so short cards stay
+     short regardless of which photo happens to be attached. */
+  aspect-ratio: 4 / 5;
   border-radius: 8px;
   /* contain, not cover: source photos come from Wikipedia/Commons/NOAA with
      wildly different aspect ratios (square illustrations, landscape hero
@@ -1493,7 +1524,8 @@ h2::before {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.35rem 0.75rem;
-  margin-top: 0.6rem;
+  /* No margin-top here: .species-card's own flex gap already separates this
+     from .species-card-top above it, now that the two are siblings. */
   padding-top: 0.6rem;
   border-top: 1px solid var(--border-light);
 }
@@ -4977,7 +5009,7 @@ footer p {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .species-card {
+  .species-card-top {
     flex-direction: column;
     align-items: flex-start;
   }
@@ -5126,6 +5158,14 @@ footer p {
 
   .rig-diagram img {
     max-height: 120px !important;
+  }
+
+  /* Decorative species photos aren't worth the ink on a printed forecast --
+     unlike the rig diagram above, there's no informational content lost by
+     dropping them, and .species-card-top's flex layout otherwise leaves a
+     blank photo-shaped gap where a hotlinked image just won't render. */
+  .species-photo {
+    display: none !important;
   }
 
   .knot-detail[open] .knot-steps {
@@ -5633,7 +5673,14 @@ footer p {
 .reg-modal__photo {
   display: block;
   width: 100%;
-  height: 200px;
+  /* aspect-ratio, not a fixed height: width is fluid (100% of the modal,
+     which itself is min(440px, 94vw)), so a fixed px height meant this
+     box's proportions changed with the screen -- squarish on a narrow
+     phone, wide and short on desktop -- instead of looking the same shape
+     everywhere. max-height keeps it from growing past a sane size on wider
+     modals. */
+  aspect-ratio: 16 / 9;
+  max-height: 220px;
   /* contain (not cover) on a fixed-size, neutral-filled box for the same
      reason as .species-photo -- source photos vary in aspect ratio and
      framing, so showing the whole photo on a consistent box reads as

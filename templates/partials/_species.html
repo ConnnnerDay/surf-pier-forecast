@@ -38,59 +38,65 @@
                 {% elif sp.regulation_status == 'unknown' and forecast.location_state %}{% set _warn_kind = 'unverified_unknown' %}
                 {% endif %}
                 <div class="species-card" data-species-name="{{ sp.name }}" data-species-bait="{{ sp.bait|lower }}" data-species-rig="{{ sp.rig|lower }}" data-activity="{{ sp.activity|lower }}" data-reg-confidence="{{ _warn_kind }}" data-reg-fallback-source="{{ forecast.official_regulations_url or '' }}" data-species-image="{{ sp.image_url or '' }}" data-species-image-credit="{{ sp.image_credit_url or '' }}" data-species-image-credit-label="{{ sp.image_credit_label or '' }}"{% if sp.regulation %} data-reg-min-size="{{ sp.regulation.min_size }}" data-reg-bag-limit="{{ sp.regulation.bag_limit }}" data-reg-season="{{ sp.regulation.season }}" data-reg-notes="{{ sp.regulation.notes }}" data-reg-gear="{{ sp.regulation.gear or '' }}" data-reg-slot="{{ sp.regulation.slot or '' }}" data-reg-official-source="{{ sp.regulation.official_source or '' }}" data-reg-data-status="{{ sp.regulation.data_status or '' }}" data-reg-last-updated="{{ sp.regulation.last_updated or '' }}" data-reg-is-stale="{{ sp.regulation.is_stale|lower }}" data-reg-fetched-at="{{ sp.regulation.fetched_at or '' }}"{% endif %}>
-                    {% if sp.image_url %}
-                    <img class="species-photo" src="{{ sp.image_url }}" alt="{{ sp.name }}" loading="lazy" width="100">
-                    {% endif %}
-                    <div class="species-rank">{{ sp.rank }}</div>
-                    <div class="species-body">
-                        <div class="species-name-row">
-                            <h3>{{ sp.name }}</h3>
-                            {% if caught_species and sp.name|lower in caught_species %}
-                            <span class="caught-here-badge" title="You've caught this species at this location before">Caught here</span>
-                            {% endif %}
-                            <button class="regs-pill" type="button" data-open-regs aria-label="View regulations for {{ sp.name }}">
-                                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                                Regs
-                            </button>
-                        </div>
-                        <p class="species-why">{{ sp.explanation }}</p>
-                        {% if sp.tip %}
-                        <p class="species-tip">
-                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg>
-                            {{ sp.tip }}
-                        </p>
+                    <div class="species-card-top">
+                        {% if sp.image_url %}
+                        {# onerror: a hotlinked third-party photo can go dead after the
+                           fact (source page reorganized, file renamed/deleted). Removing
+                           the element on failure falls back to the same clean no-photo
+                           layout instead of rendering a broken-image icon + raw alt text. #}
+                        <img class="species-photo" src="{{ sp.image_url }}" alt="{{ sp.name }}" loading="lazy" width="100" onerror="this.remove()">
                         {% endif %}
-                        <div class="species-meta">
-                            {# Bait and rig — hidden for lure-only anglers #}
-                            {% if not lures_only %}
-                            <div class="meta-item meta-item--bait">
-                                <span class="meta-label"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M12 12v8M8 16h8"/></svg>Bait</span>
-                                <span class="meta-value">{{ sp.bait }}</span>
+                        <div class="species-rank">{{ sp.rank }}</div>
+                        <div class="species-body">
+                            <div class="species-name-row">
+                                <h3>{{ sp.name }}</h3>
+                                {% if caught_species and sp.name|lower in caught_species %}
+                                <span class="caught-here-badge" title="You've caught this species at this location before">Caught here</span>
+                                {% endif %}
+                                <button class="regs-pill" type="button" data-open-regs aria-label="View regulations for {{ sp.name }}">
+                                    <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                                    Regs
+                                </button>
                             </div>
-                            <div class="meta-item">
-                                <span class="meta-label"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 12h18M3 6h18M3 18h18"/></svg>Rig</span>
-                                <span class="meta-value">{{ sp.rig }}</span>
-                            </div>
-                            <div class="meta-item">
-                                <span class="meta-label"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 2v10a4 4 0 0 1-4 4H6"/><path d="M4 14l2 2-2 2"/></svg>Hook</span>
-                                <span class="meta-value">{{ sp.hook_size }}</span>
-                            </div>
-                            <div class="meta-item">
-                                <span class="meta-label"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="15" r="5"/><path d="M9 9h6l-1.5-4h-3L9 9z"/></svg>Sinker</span>
-                                <span class="meta-value">{{ sp.sinker }}</span>
-                            </div>
-                            {% endif %}
-                            {# Lure recommendation — shown for anglers who use lures #}
-                            {% if uses_lures and sp.lures %}
-                            <div class="meta-item meta-item--lures">
-                                <span class="meta-label"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M8 12l2 2 4-4"/></svg>Lures</span>
-                                <span class="meta-value">{{ sp.lures }}</span>
-                            </div>
+                            <p class="species-why">{{ sp.explanation }}</p>
+                            {% if sp.tip %}
+                            <p class="species-tip">
+                                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg>
+                                {{ sp.tip }}
+                            </p>
                             {% endif %}
                         </div>
-                        {# Regulations live in exactly one place: the "Regs" button above,
-                           which opens the modal with the full detail and confidence note. #}
                     </div>
+                    <div class="species-meta">
+                        {# Bait and rig — hidden for lure-only anglers #}
+                        {% if not lures_only %}
+                        <div class="meta-item meta-item--bait">
+                            <span class="meta-label"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M12 12v8M8 16h8"/></svg>Bait</span>
+                            <span class="meta-value">{{ sp.bait }}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 12h18M3 6h18M3 18h18"/></svg>Rig</span>
+                            <span class="meta-value">{{ sp.rig }}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 2v10a4 4 0 0 1-4 4H6"/><path d="M4 14l2 2-2 2"/></svg>Hook</span>
+                            <span class="meta-value">{{ sp.hook_size }}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="15" r="5"/><path d="M9 9h6l-1.5-4h-3L9 9z"/></svg>Sinker</span>
+                            <span class="meta-value">{{ sp.sinker }}</span>
+                        </div>
+                        {% endif %}
+                        {# Lure recommendation — shown for anglers who use lures #}
+                        {% if uses_lures and sp.lures %}
+                        <div class="meta-item meta-item--lures">
+                            <span class="meta-label"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M8 12l2 2 4-4"/></svg>Lures</span>
+                            <span class="meta-value">{{ sp.lures }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {# Regulations live in exactly one place: the "Regs" button above,
+                       which opens the modal with the full detail and confidence note. #}
                 </div>
                 {% endfor %}
             </div>
