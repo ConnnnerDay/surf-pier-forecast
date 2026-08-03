@@ -1363,6 +1363,7 @@ h2::before {
 
 .species-card {
   display: flex;
+  flex-direction: column;
   gap: 0.6rem;
   padding: 0.75rem 0.85rem;
   border-radius: var(--radius);
@@ -1370,6 +1371,11 @@ h2::before {
   border-left: 3px solid #E8D9B8;
   background: rgba(255,255,255,0.65);
   transition: box-shadow 0.18s ease;
+}
+
+.species-card-top {
+  display: flex;
+  gap: 0.6rem;
 }
 
 [data-theme="dark"] .species-card {
@@ -1412,13 +1418,19 @@ h2::before {
 }
 
 .species-photo {
-  width: 100px;
-  /* No fixed height + align-self:stretch (the flex row's default) instead
-     of flex-start: the photo fills the full card height -- matching
-     whatever the text content ends up being -- instead of sitting as a
-     small 64px square with empty space below it. Width stays pinned so
-     this has no effect once .species-card switches to a column layout on
-     mobile (there the photo just sizes to its own aspect ratio). */
+  width: 92px;
+  /* Capped, not unbounded: this stretches (align-self:stretch, the flex
+     row's default) to match .species-card-top's height -- i.e. the name +
+     explanation + tip block only, NOT the specs grid below it. That block
+     is usually a reasonable size, so this eliminates the old dead space
+     below a small fixed thumbnail without turning into a giant slab once a
+     real photo's solid-colored background (common in underwater/aquarium
+     shots) gets stretched to fill something oversized. When a card's text
+     is unusually tall, the max-height caps it and it just sits at the top
+     instead of dominating the card. Width stays pinned so this has no
+     effect once .species-card-top switches to a column layout on mobile
+     (there the photo just sizes to its own aspect ratio). */
+  max-height: 170px;
   border-radius: 8px;
   /* contain, not cover: source photos come from Wikipedia/Commons/NOAA with
      wildly different aspect ratios (square illustrations, landscape hero
@@ -1429,6 +1441,15 @@ h2::before {
   flex-shrink: 0;
   background: rgba(148, 163, 184, 0.14);
   border: 1px solid var(--border-light);
+}
+
+@media (min-width: 900px) {
+  /* Cards are noticeably wider once the species grid goes two-column, so
+     the photo can afford a bit more width there instead of staying a fixed
+     size regardless of how much room is actually available. */
+  .species-photo {
+    width: 120px;
+  }
 }
 
 .species-card:nth-child(1) .species-rank {
@@ -1493,7 +1514,8 @@ h2::before {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.35rem 0.75rem;
-  margin-top: 0.6rem;
+  /* No margin-top here: .species-card's own flex gap already separates this
+     from .species-card-top above it, now that the two are siblings. */
   padding-top: 0.6rem;
   border-top: 1px solid var(--border-light);
 }
@@ -4977,7 +4999,7 @@ footer p {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .species-card {
+  .species-card-top {
     flex-direction: column;
     align-items: flex-start;
   }
