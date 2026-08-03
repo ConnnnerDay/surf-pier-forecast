@@ -1412,8 +1412,13 @@ h2::before {
 }
 
 .species-photo {
-  width: 64px;
-  height: 64px;
+  width: 100px;
+  /* No fixed height + align-self:stretch (the flex row's default) instead
+     of flex-start: the photo fills the full card height -- matching
+     whatever the text content ends up being -- instead of sitting as a
+     small 64px square with empty space below it. Width stays pinned so
+     this has no effect once .species-card switches to a column layout on
+     mobile (there the photo just sizes to its own aspect ratio). */
   border-radius: 8px;
   /* contain, not cover: source photos come from Wikipedia/Commons/NOAA with
      wildly different aspect ratios (square illustrations, landscape hero
@@ -1422,7 +1427,6 @@ h2::before {
      fill reads as a uniform set even though the sources don't match. */
   object-fit: contain;
   flex-shrink: 0;
-  align-self: flex-start;
   background: rgba(148, 163, 184, 0.14);
   border: 1px solid var(--border-light);
 }
