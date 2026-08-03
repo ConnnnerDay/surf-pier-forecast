@@ -5160,6 +5160,14 @@ footer p {
     max-height: 120px !important;
   }
 
+  /* Decorative species photos aren't worth the ink on a printed forecast --
+     unlike the rig diagram above, there's no informational content lost by
+     dropping them, and .species-card-top's flex layout otherwise leaves a
+     blank photo-shaped gap where a hotlinked image just won't render. */
+  .species-photo {
+    display: none !important;
+  }
+
   .knot-detail[open] .knot-steps {
     border-top: 1px solid #ccc !important;
   }
@@ -5665,7 +5673,14 @@ footer p {
 .reg-modal__photo {
   display: block;
   width: 100%;
-  height: 200px;
+  /* aspect-ratio, not a fixed height: width is fluid (100% of the modal,
+     which itself is min(440px, 94vw)), so a fixed px height meant this
+     box's proportions changed with the screen -- squarish on a narrow
+     phone, wide and short on desktop -- instead of looking the same shape
+     everywhere. max-height keeps it from growing past a sane size on wider
+     modals. */
+  aspect-ratio: 16 / 9;
+  max-height: 220px;
   /* contain (not cover) on a fixed-size, neutral-filled box for the same
      reason as .species-photo -- source photos vary in aspect ratio and
      framing, so showing the whole photo on a consistent box reads as
