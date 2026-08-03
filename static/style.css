@@ -1418,7 +1418,15 @@ h2::before {
 }
 
 .species-photo {
-  width: 92px;
+  /* Fluid, not a single breakpoint jump: card width scales continuously
+     with the viewport (up to main's own 1600px/94vw cap), and a single
+     min-width:900px jump from 92px to 120px meant the photo's share of the
+     card ranged anywhere from ~16% (very wide desktop) to ~29% (just past
+     the two-column breakpoint, where cards are narrowest) depending on
+     exactly how wide the screen happened to be. Scaling with vw keeps that
+     proportion roughly consistent across the whole range instead of at the
+     mercy of which side of one breakpoint the viewport lands on. */
+  width: clamp(90px, 8vw, 130px);
   /* Capped, not unbounded: this stretches (align-self:stretch, the flex
      row's default) to match .species-card-top's height -- i.e. the name +
      explanation + tip block only, NOT the specs grid below it. That block
@@ -1452,15 +1460,6 @@ h2::before {
   flex-shrink: 0;
   background: rgba(148, 163, 184, 0.14);
   border: 1px solid var(--border-light);
-}
-
-@media (min-width: 900px) {
-  /* Cards are noticeably wider once the species grid goes two-column, so
-     the photo can afford a bit more width there instead of staying a fixed
-     size regardless of how much room is actually available. */
-  .species-photo {
-    width: 120px;
-  }
 }
 
 .species-card:nth-child(1) .species-rank {
