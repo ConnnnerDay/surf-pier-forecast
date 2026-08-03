@@ -1431,6 +1431,17 @@ h2::before {
      effect once .species-card-top switches to a column layout on mobile
      (there the photo just sizes to its own aspect ratio). */
   max-height: 170px;
+  /* Flexbox computes a stretched item's "hypothetical" size from its own
+     natural dimensions before stretching kicks in -- for an <img> that's
+     the real photo's own aspect ratio. A tall/narrow source photo (a
+     portrait field shot, an unusually cropped Commons file) would then
+     force .species-card-top taller than short text needs, just to fit
+     that photo's shape, reintroducing a smaller version of the original
+     dead-space problem next to two-line explanations with no tip. Pinning
+     a fixed aspect-ratio here decouples that hypothetical size from
+     whatever the actual photo's proportions are, so short cards stay
+     short regardless of which photo happens to be attached. */
+  aspect-ratio: 4 / 5;
   border-radius: 8px;
   /* contain, not cover: source photos come from Wikipedia/Commons/NOAA with
      wildly different aspect ratios (square illustrations, landscape hero
