@@ -1,0 +1,24 @@
+{
+  "name": "surf-pier-forecast-workspace",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@11.16.0",
+  "engines": {
+    "node": ">=24.14.0 <25",
+    "pnpm": "11.16.0"
+  },
+  "scripts": {
+    "dev:web": "pnpm --filter @surf-pier/web dev",
+    "dev:api": "uv --directory apps/api run uvicorn surf_pier_api.main:app --reload",
+    "build:web": "pnpm --filter @surf-pier/web build",
+    "test:web": "pnpm --filter @surf-pier/web test",
+    "test:api": "uv --directory apps/api run pytest",
+    "lint:web": "pnpm --filter @surf-pier/web lint",
+    "lint:api": "uv --directory apps/api run ruff check .",
+    "typecheck:web": "pnpm --filter @surf-pier/web typecheck",
+    "typecheck:api": "uv --directory apps/api run mypy src tests",
+    "check:web": "pnpm lint:web && pnpm typecheck:web && pnpm test:web && pnpm build:web",
+    "check:api": "pnpm lint:api && pnpm typecheck:api && pnpm test:api",
+    "check": "pnpm check:web && pnpm check:api"
+  }
+}

@@ -1,0 +1,45 @@
+:root {
+  color-scheme: dark;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #071b24;
+  color: #f3f7f8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+main {
+  display: grid;
+  min-height: 100svh;
+  place-content: center;
+  padding: 2rem;
+  text-align: center;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(2.25rem, 8vw, 5rem);
+  letter-spacing: -0.04em;
+}
+
+.eyebrow {
+  margin-bottom: 0.75rem;
+  color: #67d8ca;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.summary {
+  max-width: 36rem;
+  margin: 1rem auto 0;
+  color: #b9cbd1;
+  font-size: 1.125rem;
+  line-height: 1.6;
+}

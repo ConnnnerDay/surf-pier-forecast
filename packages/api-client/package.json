@@ -1,0 +1,6 @@
+{
+  "name": "@surf-pier/api-client",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Reserved workspace for the generated OpenAPI client"
+}

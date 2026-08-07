@@ -10,3 +10,16 @@ __pycache__/
 .coverage
 htmlcov/
 .pytest_cache/
+
+# Rewrite workspace
+node_modules/
+.pnpm-store/
+.next/
+out/
+dist/
+.turbo/
+*.tsbuildinfo
+.uv-cache/
+.ruff_cache/
+.mypy_cache/
+apps/api/.venv/
