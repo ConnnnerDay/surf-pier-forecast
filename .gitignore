@@ -6,6 +6,9 @@ __pycache__/
 /data/
 # env secrets
 .env
+.env.*
+!.env.example
+!**/.env.example
 # test artifacts
 .coverage
 htmlcov/
@@ -23,3 +26,4 @@ dist/
 .ruff_cache/
 .mypy_cache/
 apps/api/.venv/
+.local/
