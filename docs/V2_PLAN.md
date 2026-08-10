@@ -91,33 +91,64 @@ a **clean slate** — new schema, new database, existing v1 users re-register.
 | Team process | Lightweight for now (linting/formatting + README) — formalize PR templates/contribution docs only once a real second contributor shows up (none lined up yet) |
 | Beta feedback | **In-app feedback form** — low-friction way for beta testers to report issues/ideas |
 
-## 5. MVP scope
+## 5. UX & operational decisions
+
+| Area | Decision |
+|---|---|
+| Units | Support **both imperial and metric**, user-toggleable (not imperial-only like v1) |
+| Theme | **Light + dark mode**, following system setting by default with a manual override |
+| Onboarding | **Guided walkthrough** after signup (a few screens covering the score, timeline, species list) before landing on the dashboard |
+| Visual identity | **Fully new** — clean break from v1's look, not an evolution of it |
+| Design ownership | **Claude proposes a starting logo/icon/color palette** as part of the build so there's something functional for the beta; refine or replace later |
+| Session length | **Long-lived (weeks)** with silent refresh-token renewal — casual-use app, minimize re-login friction |
+| Data rights | **Self-service export + delete** in account settings from the start |
+| Device/browser support | **Modern mobile browsers only** (recent iOS Safari, Android Chrome) as the real target; desktop gets a reasonable but not heavily-optimized experience |
+| Data freshness transparency | Go beyond v1's silent stale-cache fallback — **timestamp every data point's freshness in the UI** so users always know how current what they're seeing is, especially when an upstream source (NOAA/NWS/NDBC) is degraded |
+| Testing rigor | **Thorough** — unit tests for domain logic (ported from v1) + integration tests for the API + end-to-end tests (Playwright) for critical flows (signup, viewing a forecast) |
+| Budget | Keep hosting/services **minimal (~$0-25/mo)** — free tiers and cheap server, consistent with self-hosting everything |
+| Age policy | **13+** minimum to create an account |
+| Account security | **Stricter than v1**: optional 2FA (TOTP authenticator), tighter rate limiting/lockouts on failed logins, and login-alert emails on sign-in from a new device/location. (v1's existing password-complexity rule is kept, not raised further.) |
+| Future UGC moderation | For the eventual crowdsourced bite-reports feature: **community-driven** (flag/upvote, auto-hide past a threshold) rather than manual review |
+| Help content | A **simple FAQ page** alongside the in-app feedback form |
+| Share previews | **Rich Open Graph preview cards** (image showing score/conditions) when a shared forecast link is posted elsewhere |
+| Curated spot count | Target **100+ curated locations** at launch — denser out-of-the-box coverage across all US coasts, on top of the existing dynamic any-point resolution |
+| Beta discovery | A **public landing page with a "request beta access" form** — you manually approve requests onto the allowlist. Gives the private beta a shareable front door without opening signup |
+| Affiliate links (future monetization) | Worth considering later — tackle/gear affiliate links tied to existing rig/bait recommendations. Not built now. |
+| Partnerships (bait shops, marinas, tournaments, charters) | Noted as an interesting future direction, not a current priority |
+
+## 6. MVP scope
 
 **In scope for launch:**
-- Accounts (signup/login via email+password, Google/Apple, passkeys), gated by the beta allowlist
-- Forecast dashboard — conditions, go/no-go score, headline best-time-window callout, ranked species, rig/bait recs (both live bait & artificial)
-- Personal profile: max-wind/max-surf thresholds, gear/tackle limitations, mobility/accessibility factors, experience-level filtering, target-species favorites list
+- Accounts (signup/login via email+password, Google/Apple, passkeys, optional 2FA), gated by the beta allowlist, 13+ age gate, login-alert emails
+- Guided onboarding walkthrough for new users
+- Forecast dashboard — conditions with freshness timestamps, go/no-go score, headline best-time-window callout, ranked species, rig/bait recs (both live bait & artificial)
+- Personal profile: max-wind/max-surf thresholds, gear/tackle limitations, mobility/accessibility factors, experience-level filtering, target-species favorites list, unit toggle (imperial/metric), light/dark theme toggle
 - Regulations lookup + legal-catch calculator (continental US coastal states)
-- Save ~5 locations, switch between them; expanded curated-spot list across all US coasts equally
+- Save ~5 locations, switch between them; expanded curated-spot list (100+) across all US coasts equally
 - Installable PWA shell with offline caching of the last forecast
-- In-app feedback form
+- Public shared forecast links with rich Open Graph preview cards
+- Self-service data export + account deletion
+- In-app feedback form + a simple FAQ page
+- Public landing page with a "request beta access" form
 - Self-hosted error monitoring (Sentry) + usage analytics (PostHog)
 - Automated DB backups
+- Thorough test coverage (unit + integration + Playwright e2e for critical flows)
 
 **Explicitly deferred (not MVP):**
 - Catch log (species, length/weight, photo, GPS, kept/released — see §3)
 - Alerts/notifications (condition-threshold, plus species migration/run alerts as a future direction)
-- Crowdsourced real-time bite reports
+- Crowdsourced real-time bite reports (community flag/upvote moderation, when built)
 - Camera-based fish species ID
 - SaltStrong-style visual map/structure cues
 - Native iOS/Android apps
-- Monetization/payments
+- Monetization/payments, including affiliate/tackle-shop links
+- Partnership/integration angles (bait shops, marinas, tournaments, charters)
 - Public (non-beta) open signup and the associated legal hardening
 - Formal team/contribution process
 - Any migration of v1 data
 - Alaska/Hawaii/territories regulations coverage
 
-## 6. Phased build plan
+## 7. Phased build plan
 
 1. **New repo scaffold** — FastAPI backend skeleton + React (Vite) frontend
    skeleton, GitHub Actions CI (lint/test) + auto-deploy on merge, dev
@@ -126,13 +157,16 @@ a **clean slate** — new schema, new database, existing v1 users re-register.
 2. **Backend core** — port domain/services modules unchanged; JWT auth
    (email/password + OAuth + passkeys) with a beta allowlist gate; new
    schema (users, locations, profiles) via SQLAlchemy + Alembic; automated
-   backup job
-3. **Frontend core** — signup/login flow (allowlist-gated), mobile-first
-   dashboard for one location, installable PWA shell with offline caching,
-   in-app feedback form
-4. **Feature parity for MVP** — species/rig recs, regulations lookup,
-   multi-location (~5) with switching, public shared links, expanded
-   curated-spot list across all coasts
+   backup job, plus 2FA/rate-limiting/login-alert-email security features
+3. **Frontend core** — signup/login flow (allowlist-gated, age gate, guided
+   onboarding walkthrough), mobile-first dashboard for one location,
+   installable PWA shell with offline caching, unit/theme toggles,
+   in-app feedback form + FAQ page
+4. **Feature parity for MVP** — species/rig recs, regulations lookup +
+   legal-catch calculator, multi-location (~5) with switching, public
+   shared links with OG preview cards, expanded curated-spot list (100+)
+   across all coasts, self-service export/delete, starter logo/icon/palette,
+   public landing page with beta-request form
 5. **Private beta** — admit allowlisted users, collect feedback, fix issues
 6. **Cutover** — v1 retired/redirects once v2 clears the beta and is ready
    for public signup (legal pages finalized at that point)
@@ -140,13 +174,13 @@ a **clean slate** — new schema, new database, existing v1 users re-register.
    app packaging, monetization, formal contribution process — ordered
    once there are real users and (if a collaborator joins) more hands
 
-## 7. Still open (small, resolve as we go)
+## 8. Still open (small, resolve as we go)
 
-- Product name / domain / logo & color palette
+- Product name / domain
 - Exact monetization model
 - Who ends up on the private beta allowlist
 
 ---
 
-*This is the working spec. Next step: scaffold the new repo (§6.1) when
+*This is the working spec. Next step: scaffold the new repo (§7.1) when
 you're ready to start building.*
