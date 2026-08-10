@@ -1,117 +1,99 @@
 # v2 Plan: Mobile-First Fishing Forecast App
 
-Status: **draft — for review, no code changes yet.**
+Status: **decided — locked in from stakeholder Q&A, ready to scope into build tasks.**
 
-## 1. What's changing
+## 1. Product summary
 
-v1 is a self-hosted Flask website with session-cookie auth, server-rendered
-Jinja2 pages, and optional accounts. v2 pivots to a **mobile-first,
-installable web app (PWA)** where creating an account is the front door:
-sign up, save your location(s), and get the fishing forecast for your area
-on your phone. No more "surf & pier" framing — this should read as a
-general fishing-forecast product for any US coastal (and eventually
-inland/lake) location.
+v2 is a **public product** (any angler can sign up), scoped to **US
+coastal/saltwater fishing** — same domain as v1, not expanding to
+freshwater/lakes. It's meant to eventually **monetize** (model TBD — no
+monetization hooks get built into the first version), and the priority is
+**doing it right over shipping fast** — no fixed deadline.
 
-Backend is being rewritten alongside the frontend, not just re-skinned.
+It replaces v1's self-hosted Flask website with a **mobile-first,
+installable PWA**. No app store distribution for now. No more "surf & pier"
+branding — genuinely for any coastal angler. Naming stays a placeholder
+until closer to launch.
 
-## 2. What stays (don't reinvent this)
+Design direction: **SaltStrong-like** — clean, visual, spot/structure-aware
+mobile UX. (The actual map/structure visual-cue feature is a **post-MVP**
+addition, not part of the initial build — see §4.)
 
-The domain logic in v1 is the hard-won, tested part of this project and
-should be **ported forward as-is**, not rewritten:
+## 2. What stays from v1 (port forward, don't rewrite)
+
+The domain logic is the hard-won, tested part of this project:
 
 - `domain/forecast.py` — `score_conditions()`, `classify_conditions()`,
   `build_activity_timeline()`
 - `domain/species.py` — 851-species DB, scoring, rig/bait recommendations
-- `domain/catch_insights.py` — catch-log pattern analysis
 - `services/nws.py`, `services/noaa.py`, `services/ndbc.py`, `services/astro.py`,
   `services/stations.py` — external data integrations
 - `regulations.py` + `storage/reg_scraper.py` — 2,700+ regulation entries
 - `locations.py` — curated locations + dynamic any-point resolution
 
-These are framework-agnostic Python and should drop into a new backend
-service with minimal changes (mostly import path updates).
+These are framework-agnostic Python and drop into the new backend with
+minimal changes.
 
-## 3. Target architecture
+**Not carried over:** v1's accounts, catch logs, and other user data. v2 is
+a **clean slate** — new schema, new database, existing v1 users re-register.
 
-### Backend: FastAPI (rewrite from Flask)
+## 3. Architecture decisions
 
-- **FastAPI** + **Pydantic** models for the JSON API — async-friendly, fits
-  a mobile client better than session-cookie Flask, gives us OpenAPI docs
-  for free (replaces hand-maintained `/api/openapi.json`)
-- **SQLAlchemy + Alembic** replacing the current hand-written `storage/sqlite.py`
-  CRUD + `migrate_sqlite.py` — proper migrations instead of one-shot schema setup
-- **Auth: JWT access + refresh tokens**, not Flask session cookies — required
-  for a mobile client that isn't a browser. Keep passkeys/WebAuthn and
-  Google/Apple OAuth from v1; add device/session listing so users can see
-  and revoke logged-in devices
-- DB: SQLite is fine for dev/self-host; evaluate Postgres for production
-  once the app is not single-process (needed if we run more than one API
-  worker/process, since SQLite's writer-locking doesn't scale across
-  processes the way the current single-process Flask deployment tolerates)
-- Push notifications: carry over `services/push.py` (VAPID web push) —
-  this already works for browser-based PWAs, which covers the mobile-web
-  target directly
+| Area | Decision |
+|---|---|
+| Repo | **New, separate repo** — v1 (`surf-pier-forecast`) stays untouched/archived |
+| Backend language | **Stays Python** (FastAPI) — preserves the species/forecast/regulations logic above without a hand-port to JS |
+| Frontend | **Modern JS framework** (React or Svelte — leaning React for ecosystem/tooling maturity for a solo-maintained PWA; open to Svelte if you'd rather) |
+| Distribution | **PWA only** for now — installable via browser, no app store. Native apps are a post-launch consideration once there's traction |
+| Auth | **Email+password, Google/Apple OAuth, and passkeys** — all three carried forward from v1, issued as JWT access+refresh tokens (not session cookies) so a non-browser mobile client works cleanly |
+| Database | SQLite to start (matches "simple/cheap self-hosted"); revisit Postgres only if/when running multiple API workers, since SQLite's write-locking doesn't scale across processes |
+| Hosting | **Simple/cheap self-hosted**, same model as v1 (single VM/server) |
+| Multi-location | Users can save **a handful of locations** (~5), not unlimited, not just one |
+| Shared forecast links | **Public, no login required** — same as v1's `/f/<location_id>` behavior |
+| Rollout | **Big-bang cutover** — v1 retired once v2 hits MVP parity, no side-by-side beta period |
+| Monetization | Not built into MVP. Model undecided (freemium/ads/one-time) — defer the decision, don't design revenue hooks yet |
 
-### Frontend: Mobile-first PWA
+## 4. MVP scope
 
-- Rebuild `templates/` + `static/` as a dedicated mobile-first frontend
-  (open decision — see §5) instead of the current desktop-first Jinja2
-  pages with responsive CSS bolted on
-- Installable (manifest + service worker already exist in v1 and are
-  reusable groundwork) — "Add to Home Screen" is the initial distribution
-  path, no app store needed for launch
-- Signup/login is the entry point — no anonymous dashboard access like v1
-  currently allows before the setup wizard
+**In scope for launch:**
+- Accounts (signup/login via email+password, Google/Apple, passkeys)
+- Forecast dashboard — conditions, go/no-go score, ranked species, rig/bait recs
+- Regulations lookup
+- Save up to ~5 locations, switch between them
+- Installable PWA shell (manifest + service worker)
 
-### Non-goals for the first v2 milestone
+**Explicitly deferred (not MVP):**
+- Catch log
+- Alerts/notifications (email/web-push)
+- SaltStrong-style visual map/structure cues
+- Native iOS/Android apps
+- Monetization/payments
+- Any migration of v1 data
 
-- Native iOS/Android apps (App Store/Play Store) — revisit once the PWA
-  and API are validated with real users
-- Multi-region/international expansion — stay US-coastal for parity with v1
-- Payments/monetization — not in scope until the core product is live
+## 5. Phased build plan
 
-## 4. Data model changes
+1. **New repo scaffold** — FastAPI backend skeleton + React frontend
+   skeleton (Vite), CI, dev environment
+2. **Backend core** — port domain/services modules unchanged; JWT auth
+   (email/password + OAuth + passkeys); new schema (users, locations,
+   profiles) via SQLAlchemy + Alembic
+3. **Frontend core** — signup/login flow, mobile-first dashboard for one
+   location, installable PWA shell
+4. **Feature parity for MVP** — species/rig recs, regulations lookup,
+   multi-location (up to 5) with switching, public shared links
+5. **Cutover** — v1 retired/redirects once MVP is live and stable
+6. **Post-launch backlog** — catch log, alerts, visual map cues, native
+   app packaging, monetization — in whatever order makes sense once there
+   are real users
 
-- Accounts become **required**, not opt-in — every forecast view is tied
-  to a signed-in user and their saved location(s)
-- A user can save **multiple locations** (v1 supports one default + shared
-  links; v2 should support a small list, e.g. home spots, with quick switching)
-- Carry forward: `profiles` (fishing preferences), `catch_log` (with
-  condition snapshot), `push_subscriptions`, `notification_log`, WebAuthn
-  credentials
-- Shareable links (`/f/<location_id>`) — keep the concept, but decide
-  whether unauthenticated viewers can see a shared forecast or must sign up
-  first (open decision, §5)
+## 6. Still open (small, can resolve as we go)
 
-## 5. Open decisions (need your input before/while building)
-
-1. **Frontend stack** — plain server-rendered mobile-first templates (fastest,
-   closest to v1) vs. a JS framework (React/Svelte + Vite) for a more
-   app-like feel (more work, better long-term UX for a mobile product)
-2. **Shared forecast links** — public (no login) or gated behind signup in v2?
-3. **Hosting/infra** — staying on the current self-hosted single-VM model,
-   or moving to something that supports multiple API workers (relevant to
-   the SQLite-vs-Postgres call above)?
-4. **Timeline/rollout** — big-bang cutover once v2 is ready, or run v1 and
-   v2 side by side for a while (e.g. v2 behind a beta flag/subdomain)?
-5. **Existing users** — do accounts/catch logs from v1 need to migrate into
-   v2's new schema, or is v2 a clean slate?
-
-## 6. Phased rollout
-
-1. **Backend skeleton** — new FastAPI service, JWT auth, port domain/services
-   modules untouched, stand up account signup/login + "save a location, get
-   a forecast" as the one core API flow
-2. **Frontend skeleton** — mobile-first signup/login + single-location
-   dashboard, installable PWA shell
-3. **Feature parity** — species rankings, rig recommendations, regulations,
-   catch log, notifications, multi-location support
-4. **Cutover** — v1 retired/redirects to v2 once parity + the open decisions
-   above are resolved
-5. **Post-launch** — revisit native app packaging once the PWA has real usage
+- React vs. Svelte, final call
+- New repo name/branding
+- Exact monetization model (deliberately deferred, not blocking)
 
 ---
 
-*This doc is the starting point for review — nothing here is final. Once
-the open decisions in §5 are answered, this becomes the working spec for
-implementation.*
+*Decisions above came from a stakeholder Q&A session and are the working
+spec. Next step: scaffold the new repo (§5.1) once you're ready to start
+building.*
