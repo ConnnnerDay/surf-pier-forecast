@@ -45,7 +45,28 @@ minimal changes.
 **Not carried over:** v1's accounts, catch logs, and other user data. v2 is
 a **clean slate** — new schema, new database, existing v1 users re-register.
 
-## 3. Architecture decisions
+## 3. Fishing domain decisions
+
+| Area | Decision |
+|---|---|
+| Fishing styles | **All of v1's** — surf, pier, kayak, inshore, offshore/nearshore. No narrowing. |
+| Skill level | **Both**, same as v1 — plain-language headline score for casual users, full data available underneath for experienced anglers |
+| Species DB | **Keep the 851-species DB as-is** — no trimming |
+| Forecast priority | **Tide movement and wind/wave height** are what matter most to prioritize/surface prominently; solunar, water temp, and pressure stay in the model but aren't the headline factors |
+| Regulations | Lookup (species/state size & bag limits) **plus a legal-catch calculator** — user enters species + length, app says if it's legal to keep right now, in their state/water |
+| Regulations coverage | **Continental US coastal states only** for MVP — no Alaska/Hawaii/territories yet |
+| Bait/rig style | **Both live bait and artificial lures**, same as v1 — no lean either direction |
+| Safety info (small craft advisories, rip currents) | **Present but secondary**, same as v1 — included in conditions/score, not headlined |
+| Best-time-to-fish | Dashboard gets a **headline "best window today" callout** pulled from the existing hourly activity-timeline model, with the full timeline available below/on tap |
+| Personalization | Beyond v1's max-wind/max-surf thresholds and offshore/inshore profile: add **gear/tackle limitations**, **mobility/accessibility factors**, **experience-level filtering**, and a **simple target-species favorites list** that biases rankings toward species the user actually wants |
+
+**Noted for later (not MVP, but worth designing toward):**
+- **Crowdsourced real-time bite reports** ("what's biting near me" from other users) — post-MVP, ties into the community/visual-cues direction, needs moderation/spam handling
+- **Camera-based fish species ID** (photo → species + legal-to-keep check) — interesting, explicitly post-MVP, needs an image-classification component
+- **Species migration/run alerts** (e.g. "striped bass run starting near you") as a direction for the eventual alerts feature, beyond v1's simple condition-threshold alerts
+- Catch log (post-MVP) should capture **species, length/weight, photo, GPS location of the catch, and kept-vs-released** when it's built — GPS location of individual catches is more sensitive than location-level data and needs privacy handling when implemented
+
+## 4. Architecture decisions
 
 | Area | Decision |
 |---|---|
@@ -70,29 +91,33 @@ a **clean slate** — new schema, new database, existing v1 users re-register.
 | Team process | Lightweight for now (linting/formatting + README) — formalize PR templates/contribution docs only once a real second contributor shows up (none lined up yet) |
 | Beta feedback | **In-app feedback form** — low-friction way for beta testers to report issues/ideas |
 
-## 4. MVP scope
+## 5. MVP scope
 
 **In scope for launch:**
 - Accounts (signup/login via email+password, Google/Apple, passkeys), gated by the beta allowlist
-- Forecast dashboard — conditions, go/no-go score, ranked species, rig/bait recs
-- Regulations lookup
-- Save ~5 locations, switch between them; expanded curated-spot list across all US coasts
+- Forecast dashboard — conditions, go/no-go score, headline best-time-window callout, ranked species, rig/bait recs (both live bait & artificial)
+- Personal profile: max-wind/max-surf thresholds, gear/tackle limitations, mobility/accessibility factors, experience-level filtering, target-species favorites list
+- Regulations lookup + legal-catch calculator (continental US coastal states)
+- Save ~5 locations, switch between them; expanded curated-spot list across all US coasts equally
 - Installable PWA shell with offline caching of the last forecast
 - In-app feedback form
 - Self-hosted error monitoring (Sentry) + usage analytics (PostHog)
 - Automated DB backups
 
 **Explicitly deferred (not MVP):**
-- Catch log
-- Alerts/notifications (email/web-push)
+- Catch log (species, length/weight, photo, GPS, kept/released — see §3)
+- Alerts/notifications (condition-threshold, plus species migration/run alerts as a future direction)
+- Crowdsourced real-time bite reports
+- Camera-based fish species ID
 - SaltStrong-style visual map/structure cues
 - Native iOS/Android apps
 - Monetization/payments
 - Public (non-beta) open signup and the associated legal hardening
 - Formal team/contribution process
 - Any migration of v1 data
+- Alaska/Hawaii/territories regulations coverage
 
-## 5. Phased build plan
+## 6. Phased build plan
 
 1. **New repo scaffold** — FastAPI backend skeleton + React (Vite) frontend
    skeleton, GitHub Actions CI (lint/test) + auto-deploy on merge, dev
@@ -115,7 +140,7 @@ a **clean slate** — new schema, new database, existing v1 users re-register.
    app packaging, monetization, formal contribution process — ordered
    once there are real users and (if a collaborator joins) more hands
 
-## 6. Still open (small, resolve as we go)
+## 7. Still open (small, resolve as we go)
 
 - Product name / domain / logo & color palette
 - Exact monetization model
@@ -123,5 +148,5 @@ a **clean slate** — new schema, new database, existing v1 users re-register.
 
 ---
 
-*This is the working spec. Next step: scaffold the new repo (§5.1) when
+*This is the working spec. Next step: scaffold the new repo (§6.1) when
 you're ready to start building.*
