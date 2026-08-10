@@ -1,12 +1,12 @@
 # v2 Plan: Mobile-First Fishing Forecast App
 
-Status: **phases 1-4 complete** — scaffold, the v1 forecast-engine port,
+Status: **phases 1-5 complete** — scaffold, the v1 forecast-engine port,
 full backend auth (email/password + Google/Apple OAuth + passkeys +
 2FA + login-alert emails), a 4-hour TTL forecast cache, a full profile
-API, matching frontend screens, and Playwright e2e coverage wired into
-CI. See [`/v2/README.md`](../v2/README.md) for the current feature list
-and what's still open (regulations lookup, multi-location switching UI,
-in-app feedback). See §7.
+API, matching frontend screens, Playwright e2e coverage wired into CI,
+and a regulations lookup + legal-catch calculator. See
+[`/v2/README.md`](../v2/README.md) for the current feature list and
+what's still open (multi-location switching UI, in-app feedback). See §7.
 
 **Repo note:** §4 below still says "new, separate repo" — that was the
 plan, but this session's GitHub access couldn't create a new repository,
@@ -220,19 +220,38 @@ a **clean slate** — new schema, new database, existing v1 users re-register.
    Python and Node, seeds a fixed beta-allowlist fixture set via
    `backend/scripts/seed_e2e.py`, boots both servers, runs the suite).
    Covers signup (allowlist rejection + happy path + onboarding),
-   login (success, wrong password, logout), and adding a location through
-   to a real rendered forecast. All 6 tests pass reliably against a real
-   backend + real (if network-degraded in this sandbox) forecast engine.
-6. **Feature parity for MVP (remaining)** — legal-catch calculator,
+   login (success, wrong password, logout), adding a location through to a
+   real rendered forecast, and the regulations lookup + legal-catch
+   calculator flow. All 7 tests pass reliably against a real backend +
+   real (if network-degraded in this sandbox) forecast engine.
+6. ✅ **Regulations lookup + legal-catch calculator** (done) —
+   `GET /regulations/species` (autocomplete source, 851-species catalog),
+   `GET /regulations/lookup` (species+state → status/min-size/slot/bag
+   limit/season/gear/notes/official source, `source_file` stripped same as
+   the forecast route), `POST /regulations/legal-catch` (species+state+
+   measured length → legal/too_small/too_large/cannot_target/unknown
+   verdict). New engineering, not a port — v1 exposes regulation text but
+   never evaluated a specific catch against it. The size parser
+   (`app/core/catch_calculator.py`) is deliberately conservative: ambiguous
+   or multi-region size text (`"12 in TL in Gulf; 14 in TL in Atlantic"`)
+   resolves to `unknown` rather than guessing, and a
+   prohibited/out-of-season/catch-and-release status short-circuits the
+   size check entirely. Frontend is a single `/regulations` page (species
+   autocomplete via `<datalist>`, state selector scoped to **continental US
+   coastal states only** per §5 — the raw dataset also carries AK/HI/a
+   stray non-coastal AZ row that are intentionally excluded from the
+   selector). 79 backend tests (17 pure calculator unit tests + 11 route
+   integration tests) and a live-browser-verified e2e flow.
+7. **Feature parity for MVP (remaining)** —
    multi-location switching UI (API supports it, UI shows one at a time),
    OG preview cards for shared links, expanded curated-spot list (100+)
    across all coasts, self-service export/delete, starter logo/icon/palette
    (placeholder logo done, see `v2/frontend/public/pwa-*.png`), public
    landing page with beta-request form (done)
-7. **Private beta** — admit allowlisted users, collect feedback, fix issues
-8. **Cutover** — v1 retired/redirects once v2 clears the beta and is ready
+8. **Private beta** — admit allowlisted users, collect feedback, fix issues
+9. **Cutover** — v1 retired/redirects once v2 clears the beta and is ready
    for public signup (legal pages finalized at that point)
-9. **Post-launch backlog** — catch log, alerts, visual map cues, native
+10. **Post-launch backlog** — catch log, alerts, visual map cues, native
    app packaging, monetization, formal contribution process — ordered
    once there are real users and (if a collaborator joins) more hands
 
@@ -244,5 +263,6 @@ a **clean slate** — new schema, new database, existing v1 users re-register.
 
 ---
 
-*This is the working spec. Next step: OAuth/passkeys, 2FA enrollment, and
-the profile API (§7.3) — see `/v2/README.md` for local dev setup.*
+*This is the working spec. Next step: multi-location switching UI, OG
+preview cards, and self-service export/delete (§7.7) — see
+`/v2/README.md` for local dev setup.*

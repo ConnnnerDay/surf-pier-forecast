@@ -32,6 +32,19 @@ separate SQLite file from `app.db` so the schemas never collide.
 synchronous live fetch on the request that hits it — v1's
 stale-serve-then-refresh-in-a-background-thread isn't replicated).
 
+`GET /regulations/species`, `GET /regulations/lookup`, and
+`POST /regulations/legal-catch` (`app/api/routes/regulations.py`) expose
+`regulations.py`'s lookup/classification against a new legal-catch
+calculator (`app/core/catch_calculator.py`) — given a regulation payload
+and a measured fish length, it returns a
+legal/too_small/too_large/cannot_target/unknown verdict. This is new
+engineering, not a port: v1 exposes regulation text but never evaluated a
+specific catch against it. Size-limit text is scraped/hand-compiled free
+text, so parsing is deliberately conservative — ambiguous or
+multi-region text (`"12 in TL in Gulf; 14 in TL in Atlantic"`) resolves
+to `unknown` rather than guessing, and prohibited/out-of-season/
+catch-and-release statuses short-circuit the size check entirely.
+
 ## Setup
 
 ```bash

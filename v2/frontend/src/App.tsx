@@ -9,6 +9,7 @@ import { NotFound } from './pages/NotFound'
 import { OAuthCallback } from './pages/OAuthCallback'
 import { Onboarding } from './pages/Onboarding'
 import { Profile } from './pages/Profile'
+import { Regulations } from './pages/Regulations'
 import { Signup } from './pages/Signup'
 
 function App() {
@@ -42,6 +43,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Profile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/regulations"
+          element={
+            <ProtectedRoute>
+              <Regulations />
             </ProtectedRoute>
           }
         />

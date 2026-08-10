@@ -41,6 +41,11 @@ describe('App routing', () => {
     expect(screen.getByRole('heading', { name: /log in/i })).toBeInTheDocument()
   })
 
+  it('redirects unauthenticated users away from /regulations', () => {
+    renderAt('/regulations')
+    expect(screen.getByRole('heading', { name: /log in/i })).toBeInTheDocument()
+  })
+
   it('renders a 404 for unknown routes', () => {
     renderAt('/nope')
     expect(screen.getByText(/page not found/i)).toBeInTheDocument()
