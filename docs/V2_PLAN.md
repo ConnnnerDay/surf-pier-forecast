@@ -1,9 +1,12 @@
 # v2 Plan: Mobile-First Fishing Forecast App
 
-Status: **phase 1 (scaffold) complete.** Backend and frontend skeletons
-exist under [`/v2`](../v2) with passing lint/type-check/tests/build — see
-[`/v2/README.md`](../v2/README.md). Phase 2 (porting the actual forecast
-engine, OAuth/passkeys, profile API) is next; see §6.
+Status: **phases 1-4 complete** — scaffold, the v1 forecast-engine port,
+full backend auth (email/password + Google/Apple OAuth + passkeys +
+2FA + login-alert emails), a 4-hour TTL forecast cache, a full profile
+API, matching frontend screens, and Playwright e2e coverage wired into
+CI. See [`/v2/README.md`](../v2/README.md) for the current feature list
+and what's still open (regulations lookup, multi-location switching UI,
+in-app feedback). See §7.
 
 **Repo note:** §4 below still says "new, separate repo" — that was the
 plan, but this session's GitHub access couldn't create a new repository,
@@ -167,25 +170,69 @@ a **clean slate** — new schema, new database, existing v1 users re-register.
    theme + units contexts, guided onboarding, a public beta-request
    landing page. **Not yet done from this step:** auto-deploy on merge
    (placeholder job only, no server to deploy to yet), Sentry/PostHog.
-2. **Backend core (remaining)** — port domain/services modules unchanged
-   from v1; add Google/Apple OAuth + passkeys (only email/password
-   exists so far); the actual forecast engine
-   (`domain/forecast.py:generate_forecast()`); 2FA enrollment and
-   login-alert emails (TOTP verification exists, enrollment doesn't);
-   profile API (model exists, no endpoints yet)
-3. **Frontend core** — signup/login flow (allowlist-gated, age gate, guided
-   onboarding walkthrough), mobile-first dashboard for one location,
-   installable PWA shell with offline caching, unit/theme toggles,
-   in-app feedback form + FAQ page
-4. **Feature parity for MVP** — species/rig recs, regulations lookup +
-   legal-catch calculator, multi-location (~5) with switching, public
-   shared links with OG preview cards, expanded curated-spot list (100+)
-   across all coasts, self-service export/delete, starter logo/icon/palette,
-   public landing page with beta-request form
-5. **Private beta** — admit allowlisted users, collect feedback, fix issues
-6. **Cutover** — v1 retired/redirects once v2 clears the beta and is ready
+2. ✅ **Forecast engine port** (done) — `domain/forecast.py`,
+   `domain/species.py`, `domain/catch_insights.py`, `locations.py`,
+   `regulations.py`, `utils.py`, and their `services/`/`storage/`
+   dependencies copied verbatim into `v2/backend` (same top-level layout
+   as v1, so imports needed zero changes); a new minimal
+   `storage/sqlite.py` shim replaces v1's full user/profile DB layer,
+   providing just the two small read-through caches
+   (`species_image_cache`, `reg_scrape_cache`) those modules still touch
+   directly. `GET /forecast/{location_id}` calls
+   `locations.py:build_dynamic_location()` → `domain/forecast.py:generate_forecast()`
+   for real, now fronted by a 4-hour TTL cache (`ForecastCache` table,
+   matching v1's cache window — see item 3) — verified with a live browser
+   walkthrough producing a real scored forecast with ranked species and
+   bait/rig recs. Ported code is excluded from v2's own ruff/mypy config
+   (carries v1's lint debt, not this project's to fix as a side effect of
+   the port — see `v2/backend/pyproject.toml`). Also stripped a
+   `source_file` field (an absolute server filesystem path) from
+   regulation data before it reaches the API response, since v1 never
+   filtered that either. **Known follow-up:** no background refresh —
+   v1's stale-serve-then-refresh-in-a-thread behavior isn't replicated,
+   a cache miss/expiry is still a synchronous live fetch on the request
+   that hits it.
+3. ✅ **Backend core** (done) — Google/Apple OAuth (JWKS-verified
+   `id_token`, with a DOB-collection step for first-time signups since
+   neither provider reliably hands back a birthdate and the 13+ age gate
+   still has to apply); passkeys/WebAuthn (registration + discoverable/
+   usernameless login, multiple credentials per user, `webauthn` package);
+   2FA enrollment (`/auth/2fa/enroll` + `/confirm` + `/disable`, TOTP
+   verification already existed from the scaffold); login-alert emails
+   (backgrounded, new-device detection via a per-user device-label history,
+   ported v1's `services/email.py` SMTP utility — safe no-op until
+   `SMTP_HOST`/`SMTP_FROM` are set); profile API (`GET`/`PATCH /profile`,
+   full CRUD on every personalization field, wired into the forecast
+   route's profile-to-dict adapter). All net-new engineering, not a port —
+   v1 never actually had OAuth/WebAuthn routes despite CLAUDE.md
+   describing them.
+4. ✅ **Frontend core** (done) — signup/login flow (allowlist-gated, age
+   gate, guided onboarding walkthrough), mobile-first dashboard with a
+   real forecast view (score, best-time window, ranked species),
+   installable PWA shell with offline caching, unit/theme toggles, a full
+   profile screen (thresholds, styles, gear/accessibility, target
+   species, units/theme, 2FA and passkey management), Google/Apple
+   sign-in buttons + OAuth callback/complete-signup pages, passkey
+   register/login UI (`navigator.credentials`). **Not yet done:** in-app
+   feedback form, FAQ page.
+5. ✅ **Playwright e2e coverage** (done) — `v2/frontend/e2e/`, wired into
+   `.github/workflows/v2-ci.yml` as a dedicated `e2e` job (sets up both
+   Python and Node, seeds a fixed beta-allowlist fixture set via
+   `backend/scripts/seed_e2e.py`, boots both servers, runs the suite).
+   Covers signup (allowlist rejection + happy path + onboarding),
+   login (success, wrong password, logout), and adding a location through
+   to a real rendered forecast. All 6 tests pass reliably against a real
+   backend + real (if network-degraded in this sandbox) forecast engine.
+6. **Feature parity for MVP (remaining)** — legal-catch calculator,
+   multi-location switching UI (API supports it, UI shows one at a time),
+   OG preview cards for shared links, expanded curated-spot list (100+)
+   across all coasts, self-service export/delete, starter logo/icon/palette
+   (placeholder logo done, see `v2/frontend/public/pwa-*.png`), public
+   landing page with beta-request form (done)
+7. **Private beta** — admit allowlisted users, collect feedback, fix issues
+8. **Cutover** — v1 retired/redirects once v2 clears the beta and is ready
    for public signup (legal pages finalized at that point)
-7. **Post-launch backlog** — catch log, alerts, visual map cues, native
+9. **Post-launch backlog** — catch log, alerts, visual map cues, native
    app packaging, monetization, formal contribution process — ordered
    once there are real users and (if a collaborator joins) more hands
 
@@ -197,5 +244,5 @@ a **clean slate** — new schema, new database, existing v1 users re-register.
 
 ---
 
-*This is the working spec. Next step: scaffold the new repo (§7.1) when
-you're ready to start building.*
+*This is the working spec. Next step: OAuth/passkeys, 2FA enrollment, and
+the profile API (§7.3) — see `/v2/README.md` for local dev setup.*

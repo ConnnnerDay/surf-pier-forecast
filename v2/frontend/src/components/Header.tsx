@@ -37,9 +37,14 @@ export function Header() {
           {THEME_LABEL[theme]}
         </button>
         {user ? (
-          <button className="button button--secondary" onClick={logout}>
-            Log out
-          </button>
+          <>
+            <Link to="/profile" className="button button--secondary">
+              Profile
+            </Link>
+            <button className="button button--secondary" onClick={logout}>
+              Log out
+            </button>
+          </>
         ) : (
           <Link to="/login" className="button button--secondary">
             Log in

@@ -15,13 +15,18 @@ The mobile-first rewrite described in [`/docs/V2_PLAN.md`](../docs/V2_PLAN.md).
 
 ## Status
 
-Phase 1 scaffold is done and verified (lint, type-check, tests, and a
-production build all pass for both halves — see each directory's README).
-**Not done yet:** porting v1's actual forecast engine
-(`domain/forecast.py`, `domain/species.py`, `services/*.py`,
-`locations.py`, `regulations.py`) into the backend, OAuth/passkeys, the
-profile/personalization API and screen, and Playwright e2e tests. See
-`docs/V2_PLAN.md` §6 "Phased build plan" for what's next.
+Phases 1-4 of `docs/V2_PLAN.md`'s build plan are done: scaffold, the v1
+forecast-engine port, full backend auth (email/password, Google/Apple
+OAuth, passkeys/WebAuthn, TOTP 2FA, login-alert emails, a 4-hour TTL
+forecast cache, a full profile API), the matching frontend screens, and
+Playwright e2e coverage (signup, login, add-a-location-to-forecast) wired
+into CI. Lint, type-check, unit tests, e2e tests, and a production build
+all pass for both halves — see each directory's README.
+
+**Not done yet:** regulations lookup + legal-catch calculator,
+multi-location switching UI, in-app feedback form, FAQ page, and
+background forecast-cache refresh (a cache miss is still a synchronous
+live fetch). See `docs/V2_PLAN.md` §7 "Phased build plan" for what's next.
 
 ## Local dev
 

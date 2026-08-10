@@ -1,10 +1,13 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { ApiError } from '../api/client'
+import { apiRequest, ApiError } from '../api/client'
+import { OAuthButtons } from '../components/OAuthButtons'
+import { deviceLabel } from '../utils/device'
+import { getPasskey, passkeysSupported } from '../utils/webauthn'
 
 export function Login() {
-  const { login } = useAuth()
+  const { login, loginWithTokens } = useAuth()
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -26,6 +29,25 @@ export function Login() {
       } else {
         setError(err instanceof ApiError ? err.message : 'Login failed')
       }
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const loginWithPasskey = async () => {
+    setError(null)
+    setSubmitting(true)
+    try {
+      const options = await apiRequest('/auth/passkey/login/options', { method: 'POST' })
+      const credential = await getPasskey(options)
+      const tokens = await apiRequest<{ access_token: string; refresh_token: string }>(
+        '/auth/passkey/login/verify',
+        { method: 'POST', body: { credential, device_label: deviceLabel() } },
+      )
+      await loginWithTokens(tokens.access_token, tokens.refresh_token)
+      navigate('/dashboard')
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Passkey sign-in failed')
     } finally {
       setSubmitting(false)
     }
@@ -73,6 +95,18 @@ export function Login() {
           Log in
         </button>
       </form>
+      {passkeysSupported() && (
+        <button
+          type="button"
+          className="button button--secondary"
+          style={{ marginTop: '1rem', width: '100%' }}
+          onClick={loginWithPasskey}
+          disabled={submitting}
+        >
+          Sign in with a passkey
+        </button>
+      )}
+      <OAuthButtons />
       <p className="text-muted" style={{ marginTop: '2rem' }}>
         Don't have an account? <Link to="/signup">Sign up</Link>
       </p>

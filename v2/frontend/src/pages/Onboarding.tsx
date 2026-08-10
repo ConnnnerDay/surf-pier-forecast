@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { apiRequest } from '../api/client'
 
 const STEPS = [
   {
@@ -25,6 +26,17 @@ export function Onboarding() {
   const navigate = useNavigate()
   const isLast = step === STEPS.length - 1
 
+  const finish = () => {
+    // Best-effort — a failed write here shouldn't block getting to the
+    // dashboard, it just means onboarding may show again next time.
+    apiRequest('/profile', {
+      method: 'PATCH',
+      auth: true,
+      body: { onboarding_completed: true },
+    }).catch(() => {})
+    navigate('/dashboard')
+  }
+
   return (
     <div className="page">
       <div className="card" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -42,10 +54,7 @@ export function Onboarding() {
           >
             Back
           </button>
-          <button
-            className="button"
-            onClick={() => (isLast ? navigate('/dashboard') : setStep((s) => s + 1))}
-          >
+          <button className="button" onClick={() => (isLast ? finish() : setStep((s) => s + 1))}>
             {isLast ? 'Get started' : 'Next'}
           </button>
         </div>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { apiRequest, ApiError } from '../api/client'
 import { useAuth } from '../context/AuthContext'
+import { ForecastView } from '../components/ForecastView'
 
 interface SavedLocation {
   id: string
@@ -69,14 +70,10 @@ export function Dashboard() {
       )}
 
       {selected && (
-        <div className="card" style={{ marginTop: '1rem' }}>
-          <h2>{selected.label}</h2>
-          <p className="text-muted">
-            Forecast generation isn't wired up yet in this scaffold — the API
-            route exists (<code>/forecast/{'{'}location_id{'}'}</code>) but still
-            needs v1's forecast engine ported in (see docs/V2_PLAN.md phase 2).
-          </p>
-        </div>
+        <>
+          <h2 style={{ marginBottom: 0 }}>{selected.label}</h2>
+          <ForecastView locationId={selected.id} />
+        </>
       )}
 
       {locations && locations.length > 0 && locations.length < MAX_LOCATIONS && (

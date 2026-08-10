@@ -8,10 +8,12 @@ import {
   type ReactNode,
 } from 'react'
 import { apiRequest, tokenStorage } from '../api/client'
+import { deviceLabel } from '../utils/device'
 
 interface User {
   id: string
   email: string
+  totp_enabled: boolean
 }
 
 interface TokenPair {
@@ -24,7 +26,9 @@ interface AuthContextValue {
   isLoading: boolean
   signup: (email: string, password: string, dateOfBirth: string) => Promise<void>
   login: (email: string, password: string, totpCode?: string) => Promise<void>
+  loginWithTokens: (accessToken: string, refreshToken: string) => Promise<void>
   logout: () => void
+  refreshUser: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -69,9 +73,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (email: string, password: string, totpCode?: string) => {
       const tokens = await apiRequest<TokenPair>('/auth/login', {
         method: 'POST',
-        body: { email, password, totp_code: totpCode },
+        body: { email, password, totp_code: totpCode, device_label: deviceLabel() },
       })
       tokenStorage.set(tokens.access_token, tokens.refresh_token)
+      await loadMe()
+    },
+    [loadMe],
+  )
+
+  const loginWithTokens = useCallback(
+    async (accessToken: string, refreshToken: string) => {
+      tokenStorage.set(accessToken, refreshToken)
       await loadMe()
     },
     [loadMe],
@@ -83,8 +95,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const value = useMemo(
-    () => ({ user, isLoading, signup, login, logout }),
-    [user, isLoading, signup, login, logout],
+    () => ({ user, isLoading, signup, login, loginWithTokens, logout, refreshUser: loadMe }),
+    [user, isLoading, signup, login, loginWithTokens, logout, loadMe],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

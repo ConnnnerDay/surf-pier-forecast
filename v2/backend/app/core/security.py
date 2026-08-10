@@ -44,6 +44,25 @@ def create_refresh_token(user_id: str) -> str:
     return _create_token(user_id, timedelta(days=settings.refresh_token_expire_days), "refresh")
 
 
+def create_oauth_pending_token(provider: str, provider_sub: str, email: str) -> str:
+    """Short-lived token proving "this email/sub was just verified by
+    <provider>'s identity token" — issued when a first-time OAuth sign-in
+    still needs a date of birth (for the 13+ age gate) before an account
+    can actually be created. See app/api/routes/oauth.py."""
+    settings = get_settings()
+    now = datetime.now(UTC)
+    payload: dict[str, Any] = {
+        "type": "oauth_pending",
+        "provider": provider,
+        "provider_sub": provider_sub,
+        "email": email,
+        "iat": now,
+        "exp": now + timedelta(minutes=10),
+        "jti": uuid.uuid4().hex,
+    }
+    return jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
+
+
 def decode_token(token: str) -> dict[str, Any]:
     settings = get_settings()
     return jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
