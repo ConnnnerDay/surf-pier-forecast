@@ -1,6 +1,12 @@
-# Surf & Pier Fishing Forecast
+# Fishing Forecast
 
-A self-hosted Flask web app that combines NOAA/NWS/NDBC marine data with species logic, rig guidance, and personal fishing preferences to generate a practical surf & pier fishing game plan.
+A self-hosted Flask web app that combines NOAA/NWS/NDBC marine data with species logic, rig guidance, and personal fishing preferences to generate a practical fishing game plan for any US coastal spot.
+
+## Project status
+
+**This codebase is v1** — a self-hosted Flask website. It works, but it's being retired as the primary direction.
+
+**v2 (in progress)** is a pivot away from a self-hosted Flask site toward a mobile-focused application/website with real user accounts: people sign up, save their location(s), and get the fishing forecast for their area from any device. Expect the account/auth model, location handling, and delivery (native/mobile-web) to change significantly as that work lands. Everything below documents the current v1 app as it exists today.
 
 ## Highlights
 
