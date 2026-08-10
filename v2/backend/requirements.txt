@@ -11,3 +11,8 @@ pyjwt==2.10.1
 pyotp==2.9.0
 python-multipart==0.0.20
 httpx==0.28.1
+
+# Ported from v1 (domain/forecast.py, domain/species.py, and their
+# dependencies under services/ and storage/) — see docs/V2_PLAN.md §2.
+requests==2.32.3
+beautifulsoup4==4.12.3

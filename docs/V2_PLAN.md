@@ -1,9 +1,13 @@
 # v2 Plan: Mobile-First Fishing Forecast App
 
-Status: **phase 1 (scaffold) complete.** Backend and frontend skeletons
-exist under [`/v2`](../v2) with passing lint/type-check/tests/build — see
-[`/v2/README.md`](../v2/README.md). Phase 2 (porting the actual forecast
-engine, OAuth/passkeys, profile API) is next; see §6.
+Status: **phase 1 (scaffold) complete; phase 2 forecast engine port done.**
+The real v1 forecast engine is live in `/v2` end-to-end — verified with a
+real browser walkthrough (signup → onboarding → add a location → a live
+forecast renders with score, best-time window, and ranked species). See
+[`/v2/README.md`](../v2/README.md). Still remaining from phase 2:
+OAuth/passkeys (email/password only so far), 2FA enrollment, login-alert
+emails, and the profile API/screen (personalization fields exist in the
+DB model but aren't editable yet). See §6.
 
 **Repo note:** §4 below still says "new, separate repo" — that was the
 plan, but this session's GitHub access couldn't create a new repository,
@@ -167,25 +171,46 @@ a **clean slate** — new schema, new database, existing v1 users re-register.
    theme + units contexts, guided onboarding, a public beta-request
    landing page. **Not yet done from this step:** auto-deploy on merge
    (placeholder job only, no server to deploy to yet), Sentry/PostHog.
-2. **Backend core (remaining)** — port domain/services modules unchanged
-   from v1; add Google/Apple OAuth + passkeys (only email/password
-   exists so far); the actual forecast engine
-   (`domain/forecast.py:generate_forecast()`); 2FA enrollment and
-   login-alert emails (TOTP verification exists, enrollment doesn't);
-   profile API (model exists, no endpoints yet)
-3. **Frontend core** — signup/login flow (allowlist-gated, age gate, guided
-   onboarding walkthrough), mobile-first dashboard for one location,
-   installable PWA shell with offline caching, unit/theme toggles,
-   in-app feedback form + FAQ page
-4. **Feature parity for MVP** — species/rig recs, regulations lookup +
-   legal-catch calculator, multi-location (~5) with switching, public
-   shared links with OG preview cards, expanded curated-spot list (100+)
-   across all coasts, self-service export/delete, starter logo/icon/palette,
-   public landing page with beta-request form
-5. **Private beta** — admit allowlisted users, collect feedback, fix issues
-6. **Cutover** — v1 retired/redirects once v2 clears the beta and is ready
+2. ✅ **Forecast engine port** (done) — `domain/forecast.py`,
+   `domain/species.py`, `domain/catch_insights.py`, `locations.py`,
+   `regulations.py`, `utils.py`, and their `services/`/`storage/`
+   dependencies copied verbatim into `v2/backend` (same top-level layout
+   as v1, so imports needed zero changes); a new minimal
+   `storage/sqlite.py` shim replaces v1's full user/profile DB layer,
+   providing just the two small read-through caches
+   (`species_image_cache`, `reg_scrape_cache`) those modules still touch
+   directly. `GET /forecast/{location_id}` calls
+   `locations.py:build_dynamic_location()` → `domain/forecast.py:generate_forecast()`
+   for real — verified with a live browser walkthrough producing a real
+   scored forecast with ranked species and bait/rig recs. Ported code is
+   excluded from v2's own ruff/mypy config (carries v1's lint debt, not
+   this project's to fix as a side effect of the port — see
+   `v2/backend/pyproject.toml`). **Known follow-ups:** no caching layer yet
+   (every request is a live multi-second NOAA/NWS/NDBC fetch — v1 has a
+   4-hour TTL cache + background refresh this doesn't have yet); stripped
+   a `source_file` field (an absolute server filesystem path) from
+   regulation data before it reaches the API response, since v1 never
+   filtered that either.
+3. **Backend core (remaining)** — Google/Apple OAuth + passkeys (only
+   email/password exists so far); 2FA enrollment and login-alert emails
+   (TOTP verification exists, enrollment doesn't); profile API (model
+   exists, no endpoints yet — the forecast route reads it directly via
+   SQLAlchemy for now)
+4. ✅ **Frontend core** (done) — signup/login flow (allowlist-gated, age
+   gate, guided onboarding walkthrough), mobile-first dashboard with a
+   real forecast view (score, best-time window, ranked species),
+   installable PWA shell with offline caching, unit/theme toggles.
+   **Not yet done:** in-app feedback form, FAQ page.
+5. **Feature parity for MVP (remaining)** — legal-catch calculator,
+   multi-location switching UI (API supports it, UI shows one at a time),
+   OG preview cards for shared links, expanded curated-spot list (100+)
+   across all coasts, self-service export/delete, starter logo/icon/palette
+   (placeholder logo done, see `v2/frontend/public/pwa-*.png`), public
+   landing page with beta-request form (done)
+6. **Private beta** — admit allowlisted users, collect feedback, fix issues
+7. **Cutover** — v1 retired/redirects once v2 clears the beta and is ready
    for public signup (legal pages finalized at that point)
-7. **Post-launch backlog** — catch log, alerts, visual map cues, native
+8. **Post-launch backlog** — catch log, alerts, visual map cues, native
    app packaging, monetization, formal contribution process — ordered
    once there are real users and (if a collaborator joins) more hands
 
@@ -197,5 +222,5 @@ a **clean slate** — new schema, new database, existing v1 users re-register.
 
 ---
 
-*This is the working spec. Next step: scaffold the new repo (§7.1) when
-you're ready to start building.*
+*This is the working spec. Next step: OAuth/passkeys, 2FA enrollment, and
+the profile API (§7.3) — see `/v2/README.md` for local dev setup.*

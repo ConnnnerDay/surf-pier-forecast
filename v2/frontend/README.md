@@ -13,10 +13,17 @@ and color palette are a placeholder starting point (see `docs/V2_PLAN.md`
 §5 "Design ownership") — swap out `public/pwa-*.png`, `public/favicon.png`,
 and the CSS custom properties in `src/index.css` when real branding lands.
 
-**Not yet built:** the actual forecast view (backend doesn't generate
-forecasts yet either — see `v2/backend/README.md`), the profile/personalization
-screen, regulations lookup + legal-catch calculator, and Playwright e2e
-coverage for the critical flows (only unit tests exist so far).
+The dashboard's `ForecastView` (`src/components/ForecastView.tsx`) calls
+the real `/forecast/{id}` endpoint and renders the live score, best-time
+window, and ranked species — `src/api/forecast.ts` types only the fields
+currently rendered, not the full (much larger) response shape, since the
+backend response isn't fully modeled on the frontend yet.
+
+**Not yet built:** the profile/personalization screen (backend model
+exists, no UI), regulations lookup + legal-catch calculator, multi-location
+switching UI (backend supports up to 5, dashboard only shows one at a
+time), and Playwright e2e coverage for the critical flows (only unit
+tests exist so far).
 
 ## Setup
 
