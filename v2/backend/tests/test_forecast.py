@@ -1,6 +1,10 @@
+from datetime import UTC, datetime, timedelta
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
+
+from app.models.forecast_cache import ForecastCache
 
 
 def _signup_and_get_headers(client: TestClient, email: str) -> dict[str, str]:
@@ -83,3 +87,78 @@ def test_forecast_generation_wired_to_ported_v1_engine(
         "max_wind_kt": None,
         "max_wave_ft": None,
     }
+
+
+def _add_location(client: TestClient, headers: dict[str, str]) -> str:
+    resp = client.post(
+        "/locations",
+        json={"label": "Wrightsville Beach", "lat": 34.2104, "lng": -77.7964},
+        headers=headers,
+    )
+    assert resp.status_code == 201
+    return resp.json()["id"]
+
+
+def test_forecast_is_cached_within_ttl(client: TestClient, allowlisted_email: str) -> None:
+    headers = _signup_and_get_headers(client, allowlisted_email)
+    location_id = _add_location(client, headers)
+
+    with (
+        patch("app.api.routes.forecast.build_dynamic_location", return_value={}),
+        patch(
+            "app.api.routes.forecast.generate_forecast",
+            return_value={"outlook": "Good", "species": []},
+        ) as mock_generate,
+    ):
+        first = client.get(f"/forecast/{location_id}", headers=headers)
+        second = client.get(f"/forecast/{location_id}", headers=headers)
+
+    assert first.status_code == 200
+    assert second.status_code == 200
+    assert second.json()["outlook"] == "Good"
+    # the second request was served from cache, not a second live call
+    assert mock_generate.call_count == 1
+
+
+def test_forecast_refresh_query_param_bypasses_cache(
+    client: TestClient, allowlisted_email: str
+) -> None:
+    headers = _signup_and_get_headers(client, allowlisted_email)
+    location_id = _add_location(client, headers)
+
+    with (
+        patch("app.api.routes.forecast.build_dynamic_location", return_value={}),
+        patch(
+            "app.api.routes.forecast.generate_forecast",
+            return_value={"outlook": "Good", "species": []},
+        ) as mock_generate,
+    ):
+        client.get(f"/forecast/{location_id}", headers=headers)
+        client.get(f"/forecast/{location_id}?refresh=true", headers=headers)
+
+    assert mock_generate.call_count == 2
+
+
+def test_forecast_regenerates_once_cache_is_stale(
+    client: TestClient, allowlisted_email: str, db_session: Session
+) -> None:
+    headers = _signup_and_get_headers(client, allowlisted_email)
+    location_id = _add_location(client, headers)
+
+    with (
+        patch("app.api.routes.forecast.build_dynamic_location", return_value={}),
+        patch(
+            "app.api.routes.forecast.generate_forecast",
+            return_value={"outlook": "Good", "species": []},
+        ) as mock_generate,
+    ):
+        client.get(f"/forecast/{location_id}", headers=headers)
+
+        cached = db_session.get(ForecastCache, location_id)
+        assert cached is not None
+        cached.generated_at = datetime.now(UTC) - timedelta(hours=5)
+        db_session.commit()
+
+        client.get(f"/forecast/{location_id}", headers=headers)
+
+    assert mock_generate.call_count == 2

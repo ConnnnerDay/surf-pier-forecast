@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { ApiError } from '../api/client'
+import { OAuthButtons } from '../components/OAuthButtons'
 
 export function Signup() {
   const { signup } = useAuth()
@@ -76,6 +77,7 @@ export function Signup() {
           Sign up
         </button>
       </form>
+      <OAuthButtons />
       <p className="text-muted" style={{ marginTop: '2rem' }}>
         Already have an account? <Link to="/login">Log in</Link>
       </p>

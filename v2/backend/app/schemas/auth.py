@@ -28,6 +28,10 @@ class LoginRequest(BaseModel):
     email: EmailStr
     password: str
     totp_code: str | None = None
+    # Client-supplied device label (e.g. browser + OS) used only to detect
+    # "signing in from a new device" for the login-alert email — optional,
+    # a missing label just means we can't tell devices apart for this login.
+    device_label: str | None = None
 
 
 class TokenPair(BaseModel):
@@ -38,3 +42,16 @@ class TokenPair(BaseModel):
 
 class RefreshRequest(BaseModel):
     refresh_token: str
+
+
+class TwoFactorEnrollResponse(BaseModel):
+    secret: str
+    provisioning_uri: str
+
+
+class TwoFactorConfirmRequest(BaseModel):
+    code: str
+
+
+class TwoFactorDisableRequest(BaseModel):
+    password: str

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import auth, beta, forecast, health, locations
+from app.api.routes import auth, beta, forecast, health, locations, oauth, passkey, profile
 from app.core.config import get_settings
 
 
@@ -19,8 +19,11 @@ def create_app() -> FastAPI:
 
     app.include_router(health.router)
     app.include_router(auth.router)
+    app.include_router(oauth.router)
+    app.include_router(passkey.router)
     app.include_router(beta.router)
     app.include_router(locations.router)
+    app.include_router(profile.router)
     app.include_router(forecast.router)
 
     return app

@@ -1,20 +1,13 @@
-import hashlib
-from datetime import date
 from typing import Annotated
 
 import jwt
 import pyotp
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
-from app.core.security import (
-    create_access_token,
-    create_refresh_token,
-    decode_token,
-    hash_password,
-    verify_password,
-)
+from app.core.auth_helpers import age_years, hash_token, issue_tokens
+from app.core.security import decode_token, hash_password, verify_password
 from app.db.session import get_db
 from app.models.profile import Profile
 from app.models.user import BetaAllowlistEntry, RefreshToken, User
@@ -24,40 +17,45 @@ from app.schemas.auth import (
     RefreshRequest,
     SignupRequest,
     TokenPair,
+    TwoFactorConfirmRequest,
+    TwoFactorDisableRequest,
+    TwoFactorEnrollResponse,
 )
 from app.schemas.user import UserOut
+from services.email import send_email
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-def _age_years(dob: date) -> int:
-    today = date.today()
-    return today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
-
-
-def _hash_token(token: str) -> str:
-    return hashlib.sha256(token.encode()).hexdigest()
-
-
-def _issue_tokens(db: Session, user: User, device_label: str | None) -> TokenPair:
-    access = create_access_token(user.id)
-    refresh = create_refresh_token(user.id)
-    db.add(
-        RefreshToken(
-            user_id=user.id,
-            token_hash=_hash_token(refresh),
-            device_label=device_label,
-        )
+def _is_new_device(db: Session, user: User, device_label: str | None) -> bool:
+    """True when `device_label` has never been recorded for this user before
+    (across all of their refresh tokens, revoked or not) — used to decide
+    whether a login is worth a "new device" alert email. A missing label
+    can't be told apart from any other login, so it never counts as new."""
+    if not device_label:
+        return False
+    seen_before = (
+        db.query(RefreshToken).filter_by(user_id=user.id, device_label=device_label).first()
     )
-    db.commit()
-    # TODO(phase 2): send a login-alert email when this is a new device,
-    # per the "stricter account security" decision in docs/V2_PLAN.md.
-    return TokenPair(access_token=access, refresh_token=refresh)
+    return seen_before is None
+
+
+def _send_login_alert(to_email: str, device_label: str | None) -> None:
+    device = device_label or "an unrecognized device"
+    send_email(
+        to=to_email,
+        subject="New sign-in to your Fishing Forecast account",
+        body_text=(
+            f"Your account was just signed into from {device}.\n\n"
+            "If this was you, no action is needed. If it wasn't, change your "
+            "password and consider enabling two-factor authentication."
+        ),
+    )
 
 
 @router.post("/signup", response_model=TokenPair, status_code=status.HTTP_201_CREATED)
 def signup(payload: SignupRequest, db: Annotated[Session, Depends(get_db)]) -> TokenPair:
-    if _age_years(payload.date_of_birth) < MIN_SIGNUP_AGE_YEARS:
+    if age_years(payload.date_of_birth) < MIN_SIGNUP_AGE_YEARS:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=f"You must be at least {MIN_SIGNUP_AGE_YEARS} to sign up",
@@ -87,11 +85,15 @@ def signup(payload: SignupRequest, db: Annotated[Session, Depends(get_db)]) -> T
     db.commit()
     db.refresh(user)
 
-    return _issue_tokens(db, user, device_label=None)
+    return issue_tokens(db, user, device_label=None)
 
 
 @router.post("/login", response_model=TokenPair)
-def login(payload: LoginRequest, db: Annotated[Session, Depends(get_db)]) -> TokenPair:
+def login(
+    payload: LoginRequest,
+    db: Annotated[Session, Depends(get_db)],
+    background_tasks: BackgroundTasks,
+) -> TokenPair:
     unauthorized = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password"
     )
@@ -113,7 +115,12 @@ def login(payload: LoginRequest, db: Annotated[Session, Depends(get_db)]) -> Tok
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid TOTP code"
             )
 
-    return _issue_tokens(db, user, device_label=None)
+    if _is_new_device(db, user, payload.device_label):
+        # Backgrounded so a slow/unconfigured SMTP server never delays the
+        # login response itself.
+        background_tasks.add_task(_send_login_alert, user.email, payload.device_label)
+
+    return issue_tokens(db, user, device_label=payload.device_label)
 
 
 @router.post("/refresh", response_model=TokenPair)
@@ -130,7 +137,7 @@ def refresh(payload: RefreshRequest, db: Annotated[Session, Depends(get_db)]) ->
 
     token_row = (
         db.query(RefreshToken)
-        .filter_by(token_hash=_hash_token(payload.refresh_token), revoked=False)
+        .filter_by(token_hash=hash_token(payload.refresh_token), revoked=False)
         .one_or_none()
     )
     if token_row is None:
@@ -142,9 +149,62 @@ def refresh(payload: RefreshRequest, db: Annotated[Session, Depends(get_db)]) ->
 
     token_row.revoked = True
     db.commit()
-    return _issue_tokens(db, user, device_label=token_row.device_label)
+    return issue_tokens(db, user, device_label=token_row.device_label)
 
 
 @router.get("/me", response_model=UserOut)
 def me(user: Annotated[User, Depends(get_current_user)]) -> User:
+    return user
+
+
+@router.post("/2fa/enroll", response_model=TwoFactorEnrollResponse)
+def enroll_2fa(
+    user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
+) -> TwoFactorEnrollResponse:
+    """Generate a new TOTP secret and store it *unconfirmed* — totp_enabled
+    stays False (so login doesn't start demanding a code) until the user
+    proves they've actually got it in an authenticator app via /2fa/confirm.
+    Calling this again before confirming replaces the pending secret."""
+    secret = pyotp.random_base32()
+    user.totp_secret = secret
+    user.totp_enabled = False
+    db.commit()
+
+    uri = pyotp.TOTP(secret).provisioning_uri(name=user.email, issuer_name="Fishing Forecast")
+    return TwoFactorEnrollResponse(secret=secret, provisioning_uri=uri)
+
+
+@router.post("/2fa/confirm", response_model=UserOut)
+def confirm_2fa(
+    payload: TwoFactorConfirmRequest,
+    user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
+) -> User:
+    if not user.totp_secret:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Call /2fa/enroll first"
+        )
+    if not pyotp.TOTP(user.totp_secret).verify(payload.code):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid code")
+
+    user.totp_enabled = True
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+@router.post("/2fa/disable", response_model=UserOut)
+def disable_2fa(
+    payload: TwoFactorDisableRequest,
+    user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
+) -> User:
+    if user.password_hash is None or not verify_password(payload.password, user.password_hash):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect password")
+
+    user.totp_enabled = False
+    user.totp_secret = None
+    db.commit()
+    db.refresh(user)
     return user

@@ -1,10 +1,13 @@
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
+from app.core.config import get_settings
 from app.db.session import get_db
+from app.models.forecast_cache import ForecastCache
 from app.models.location import SavedLocation
 from app.models.profile import Profile
 from app.models.user import User
@@ -44,29 +47,49 @@ def _strip_internal_fields(forecast: dict) -> dict:
     return forecast
 
 
+def _is_fresh(generated_at: datetime, ttl_minutes: int) -> bool:
+    # SQLite doesn't reliably round-trip tzinfo through DateTime(timezone=True)
+    # — normalize a naive value back to UTC (everything here is always
+    # written as datetime.now(UTC)) rather than let the comparison below
+    # raise on naive-vs-aware subtraction.
+    if generated_at.tzinfo is None:
+        generated_at = generated_at.replace(tzinfo=UTC)
+    return datetime.now(UTC) - generated_at < timedelta(minutes=ttl_minutes)
+
+
 @router.get("/{location_id}")
 def get_forecast(
     location_id: str,
     user: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
+    refresh: bool = False,
 ) -> dict:
     location = db.query(SavedLocation).filter_by(id=location_id, user_id=user.id).one_or_none()
     if location is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Location not found")
 
-    profile = db.query(Profile).filter_by(user_id=user.id).one_or_none()
+    ttl_minutes = get_settings().forecast_cache_ttl_minutes
+    cached = db.get(ForecastCache, location_id)
+    if cached is not None and not refresh and _is_fresh(cached.generated_at, ttl_minutes):
+        forecast = dict(cached.forecast_json)
+    else:
+        profile = db.query(Profile).filter_by(user_id=user.id).one_or_none()
+        loc_dict = build_dynamic_location(location.lat, location.lng)
+        forecast = generate_forecast(location=loc_dict, profile=_profile_dict(profile))
+        forecast = _strip_internal_fields(forecast)
 
-    # TODO(follow-up): this calls out to NOAA/NWS/NDBC synchronously on every
-    # request. v1 fronts generate_forecast() with a 4-hour SQLite TTL cache
-    # and background refresh (see CLAUDE.md "Data flow") — v2 doesn't have
-    # that caching layer yet, so every dashboard load is a live (~seconds)
-    # fetch. Fine for the beta, not fine at any real scale.
-    loc_dict = build_dynamic_location(location.lat, location.lng)
-    forecast = generate_forecast(location=loc_dict, profile=_profile_dict(profile))
+        if cached is None:
+            cached = ForecastCache(location_id=location_id)
+            db.add(cached)
+        cached.forecast_json = forecast
+        cached.generated_at = datetime.now(UTC)
+        db.commit()
 
-    # Prefer the user's own label and v2's own location id over the ones
-    # build_dynamic_location() invents for an anonymous lat/lng point.
+    # Prefer the user's own (possibly since-renamed) label and v2's own
+    # location id over the ones build_dynamic_location() invented for the
+    # raw lat/lng — applied on every response, cached or not, so a label
+    # change shows up immediately without needing a fresh forecast.
     forecast["location_id"] = location.id
     forecast["location_name"] = location.label
 
-    return _strip_internal_fields(forecast)
+    return forecast

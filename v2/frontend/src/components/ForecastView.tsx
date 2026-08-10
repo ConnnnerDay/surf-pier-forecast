@@ -8,26 +8,27 @@ export function ForecastView({ locationId }: { locationId: string }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    let cancelled = false
+    const controller = new AbortController()
     setForecast(null)
     setError(null)
     setLoading(true)
 
-    apiRequest<Forecast>(`/forecast/${locationId}`, { auth: true })
-      .then((data) => {
-        if (!cancelled) setForecast(data)
-      })
+    apiRequest<Forecast>(`/forecast/${locationId}`, { auth: true, signal: controller.signal })
+      .then((data) => setForecast(data))
       .catch((err) => {
-        if (!cancelled) {
-          setError(err instanceof ApiError ? err.message : 'Could not load the forecast')
-        }
+        // aborted by the cleanup below (e.g. React StrictMode's double-invoke
+        // in dev, or the user switching locations mid-request) — not a real
+        // failure, and the superseded request never reaches the backend's
+        // /forecast/{id} handler at all now instead of running twice.
+        if (err instanceof DOMException && err.name === 'AbortError') return
+        setError(err instanceof ApiError ? err.message : 'Could not load the forecast')
       })
       .finally(() => {
-        if (!cancelled) setLoading(false)
+        if (!controller.signal.aborted) setLoading(false)
       })
 
     return () => {
-      cancelled = true
+      controller.abort()
     }
   }, [locationId])
 

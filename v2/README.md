@@ -15,22 +15,18 @@ The mobile-first rewrite described in [`/docs/V2_PLAN.md`](../docs/V2_PLAN.md).
 
 ## Status
 
-Phase 1 (scaffold) and phase 2's forecast-engine port are both done.
-v1's forecast engine (`domain/forecast.py`, `domain/species.py`,
-`locations.py`, `regulations.py`, and their `services/`/`storage/`
-dependencies) is copied verbatim into `v2/backend` and wired to a real
-`GET /forecast/{location_id}` endpoint — verified with a live browser
-walkthrough (signup → onboarding → add a location → a real scored
-forecast renders with ranked species and bait/rig recommendations).
-Lint, type-check, tests, and a production build all pass for both
-halves — see each directory's README.
+Phases 1-4 of `docs/V2_PLAN.md`'s build plan are done: scaffold, the v1
+forecast-engine port, full backend auth (email/password, Google/Apple
+OAuth, passkeys/WebAuthn, TOTP 2FA, login-alert emails, a 4-hour TTL
+forecast cache, a full profile API), the matching frontend screens, and
+Playwright e2e coverage (signup, login, add-a-location-to-forecast) wired
+into CI. Lint, type-check, unit tests, e2e tests, and a production build
+all pass for both halves — see each directory's README.
 
-**Not done yet:** OAuth/passkeys (email/password auth only so far), 2FA
-enrollment, login-alert emails, the profile/personalization API and
-screen (the model exists, no UI to edit it), forecast caching (every
-request is a live multi-second NOAA/NWS/NDBC fetch — v1's 4-hour TTL
-cache + background refresh isn't ported), and Playwright e2e tests. See
-`docs/V2_PLAN.md` §7 "Phased build plan" for what's next.
+**Not done yet:** regulations lookup + legal-catch calculator,
+multi-location switching UI, in-app feedback form, FAQ page, and
+background forecast-cache refresh (a cache miss is still a synchronous
+live fetch). See `docs/V2_PLAN.md` §7 "Phased build plan" for what's next.
 
 ## Local dev
 

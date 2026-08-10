@@ -32,6 +32,7 @@ interface RequestOptions {
   method?: 'GET' | 'POST' | 'DELETE' | 'PATCH'
   body?: unknown
   auth?: boolean
+  signal?: AbortSignal
 }
 
 async function rawRequest<T>(path: string, options: RequestOptions): Promise<T> {
@@ -43,6 +44,7 @@ async function rawRequest<T>(path: string, options: RequestOptions): Promise<T> 
     method: options.method ?? 'GET',
     headers,
     body: options.body ? JSON.stringify(options.body) : undefined,
+    signal: options.signal,
   })
   if (!res.ok) {
     const detail = await res.json().catch(() => ({ detail: res.statusText }))
