@@ -1,6 +1,14 @@
 # v2 Plan: Mobile-First Fishing Forecast App
 
-Status: **locked — full spec from stakeholder Q&A, ready to scaffold.**
+Status: **phase 1 (scaffold) complete.** Backend and frontend skeletons
+exist under [`/v2`](../v2) with passing lint/type-check/tests/build — see
+[`/v2/README.md`](../v2/README.md). Phase 2 (porting the actual forecast
+engine, OAuth/passkeys, profile API) is next; see §6.
+
+**Repo note:** §4 below still says "new, separate repo" — that was the
+plan, but this session's GitHub access couldn't create a new repository,
+so v2 lives at `/v2` in this repo instead. Revisit moving it later if it
+still matters.
 
 ## 1. Product summary
 
@@ -150,14 +158,21 @@ a **clean slate** — new schema, new database, existing v1 users re-register.
 
 ## 7. Phased build plan
 
-1. **New repo scaffold** — FastAPI backend skeleton + React (Vite) frontend
-   skeleton, GitHub Actions CI (lint/test) + auto-deploy on merge, dev
-   environment, self-hosted Sentry + PostHog wired in early so they cover
-   the whole build
-2. **Backend core** — port domain/services modules unchanged; JWT auth
-   (email/password + OAuth + passkeys) with a beta allowlist gate; new
-   schema (users, locations, profiles) via SQLAlchemy + Alembic; automated
-   backup job, plus 2FA/rate-limiting/login-alert-email security features
+1. ✅ **Repo scaffold** (done — see `/v2`, built inside this repo rather than
+   a separate one) — FastAPI backend skeleton + React (Vite) frontend
+   skeleton, GitHub Actions CI (`.github/workflows/v2-ci.yml`, lint + type
+   check + test + build), JWT auth (email/password only so far — signup,
+   login, refresh, `/me`), beta-allowlist gate, age gate, saved-locations
+   CRUD (capped at 5), installable PWA shell with offline API caching,
+   theme + units contexts, guided onboarding, a public beta-request
+   landing page. **Not yet done from this step:** auto-deploy on merge
+   (placeholder job only, no server to deploy to yet), Sentry/PostHog.
+2. **Backend core (remaining)** — port domain/services modules unchanged
+   from v1; add Google/Apple OAuth + passkeys (only email/password
+   exists so far); the actual forecast engine
+   (`domain/forecast.py:generate_forecast()`); 2FA enrollment and
+   login-alert emails (TOTP verification exists, enrollment doesn't);
+   profile API (model exists, no endpoints yet)
 3. **Frontend core** — signup/login flow (allowlist-gated, age gate, guided
    onboarding walkthrough), mobile-first dashboard for one location,
    installable PWA shell with offline caching, unit/theme toggles,

@@ -26,7 +26,7 @@ jobs:
         run: pip install -r requirements-dev.txt
 
       - name: Lint with ruff
-        run: ruff check .
+        run: ruff check . --exclude v2
 
       - name: Run tests
         env:
@@ -48,7 +48,7 @@ jobs:
         run: pip install -r requirements-dev.txt
 
       - name: Check formatting
-        run: ruff format --check .
+        run: ruff format --check . --exclude v2
 
       - name: Type check with mypy
-        run: mypy --ignore-missing-imports --exclude '(migrations?|migrate)' .
+        run: mypy --ignore-missing-imports --exclude '(migrations?|migrate|^v2/)' .
