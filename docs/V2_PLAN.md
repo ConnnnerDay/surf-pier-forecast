@@ -1,12 +1,13 @@
 # v2 Plan: Mobile-First Fishing Forecast App
 
-Status: **phases 1-5 complete** — scaffold, the v1 forecast-engine port,
+Status: **phases 1-6 complete** — scaffold, the v1 forecast-engine port,
 full backend auth (email/password + Google/Apple OAuth + passkeys +
 2FA + login-alert emails), a 4-hour TTL forecast cache, a full profile
 API, matching frontend screens, Playwright e2e coverage wired into CI,
-and a regulations lookup + legal-catch calculator. See
-[`/v2/README.md`](../v2/README.md) for the current feature list and
-what's still open (multi-location switching UI, in-app feedback). See §7.
+a regulations lookup + legal-catch calculator, and multi-location
+switching. See [`/v2/README.md`](../v2/README.md) for the current
+feature list and what's still open (OG preview cards, in-app feedback).
+See §7.
 
 **Repo note:** §4 below still says "new, separate repo" — that was the
 plan, but this session's GitHub access couldn't create a new repository,
@@ -242,18 +243,28 @@ a **clean slate** — new schema, new database, existing v1 users re-register.
    stray non-coastal AZ row that are intentionally excluded from the
    selector). 79 backend tests (17 pure calculator unit tests + 11 route
    integration tests) and a live-browser-verified e2e flow.
-7. **Feature parity for MVP (remaining)** —
-   multi-location switching UI (API supports it, UI shows one at a time),
+7. ✅ **Multi-location switching UI** (done) — a new `PATCH
+   /locations/{id}` endpoint (rename and/or set-as-default, unsetting any
+   previous default for that user in the same transaction) alongside the
+   existing list/create/delete routes. The dashboard's location switcher
+   is now a row of chips (one per saved location, capped at 5): click to
+   switch the active forecast, a star to set/see the default, an × to
+   remove — replacing the old plain `<select>` that only handled viewing
+   one at a time. 10 new backend route tests (list/create/cap-at-5/
+   rename/default-switch/ownership/404s/auth-gating) and a new Playwright
+   e2e spec (add two locations, switch, set default, remove) — 8/8 e2e
+   tests pass live.
+8. **Feature parity for MVP (remaining)** —
    OG preview cards for shared links, expanded curated-spot list (100+)
    across all coasts, self-service export/delete, starter logo/icon/palette
    (placeholder logo done, see `v2/frontend/public/pwa-*.png`), public
    landing page with beta-request form (done)
-8. **Private beta** — admit allowlisted users, collect feedback, fix issues
-9. **Cutover** — v1 retired/redirects once v2 clears the beta and is ready
-   for public signup (legal pages finalized at that point)
-10. **Post-launch backlog** — catch log, alerts, visual map cues, native
-   app packaging, monetization, formal contribution process — ordered
-   once there are real users and (if a collaborator joins) more hands
+9. **Private beta** — admit allowlisted users, collect feedback, fix issues
+10. **Cutover** — v1 retired/redirects once v2 clears the beta and is ready
+    for public signup (legal pages finalized at that point)
+11. **Post-launch backlog** — catch log, alerts, visual map cues, native
+    app packaging, monetization, formal contribution process — ordered
+    once there are real users and (if a collaborator joins) more hands
 
 ## 8. Still open (small, resolve as we go)
 
@@ -263,6 +274,5 @@ a **clean slate** — new schema, new database, existing v1 users re-register.
 
 ---
 
-*This is the working spec. Next step: multi-location switching UI, OG
-preview cards, and self-service export/delete (§7.7) — see
-`/v2/README.md` for local dev setup.*
+*This is the working spec. Next step: OG preview cards and self-service
+export/delete (§7.8) — see `/v2/README.md` for local dev setup.*

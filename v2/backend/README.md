@@ -10,10 +10,11 @@ OAuth (JWKS-verified `id_token`, with a DOB-collection step for first-time
 OAuth signups so the age gate still applies), passkeys/WebAuthn
 (discoverable/usernameless login, multiple credentials per user), optional
 TOTP 2FA (enroll/confirm/disable), and login-alert emails on sign-in from a
-new device. Saved locations (capped at 5), a full profile API, SQLAlchemy
-models, Alembic, and a large test suite (see `tests/`). Note: v1 never
-actually had OAuth/WebAuthn routes despite CLAUDE.md describing them — all
-of that is new engineering here, not a port.
+new device. Saved locations (capped at 5, with rename/set-default/delete
+via `GET`/`POST`/`PATCH`/`DELETE /locations`), a full profile API,
+SQLAlchemy models, Alembic, and a large test suite (see `tests/`). Note:
+v1 never actually had OAuth/WebAuthn routes despite CLAUDE.md describing
+them — all of that is new engineering here, not a port.
 
 `GET /forecast/{location_id}` is wired to v1's real forecast engine —
 `domain/`, `services/`, `storage/`, `locations.py`, `regulations.py`, and

@@ -7,7 +7,7 @@ from app.api.deps import get_current_user
 from app.db.session import get_db
 from app.models.location import SavedLocation
 from app.models.user import User
-from app.schemas.location import SavedLocationCreate, SavedLocationOut
+from app.schemas.location import SavedLocationCreate, SavedLocationOut, SavedLocationUpdate
 
 router = APIRouter(prefix="/locations", tags=["locations"])
 
@@ -36,6 +36,30 @@ def create_location(
         )
     location = SavedLocation(user_id=user.id, **payload.model_dump())
     db.add(location)
+    db.commit()
+    db.refresh(location)
+    return location
+
+
+@router.patch("/{location_id}", response_model=SavedLocationOut)
+def update_location(
+    location_id: str,
+    payload: SavedLocationUpdate,
+    user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
+) -> SavedLocation:
+    location = db.query(SavedLocation).filter_by(id=location_id, user_id=user.id).one_or_none()
+    if location is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Location not found")
+
+    if payload.label is not None:
+        location.label = payload.label
+    if payload.is_default is True:
+        db.query(SavedLocation).filter_by(user_id=user.id).update({"is_default": False})
+        location.is_default = True
+    elif payload.is_default is False:
+        location.is_default = False
+
     db.commit()
     db.refresh(location)
     return location

@@ -18,6 +18,7 @@ _E2E_EMAILS = [
     "e2e-existing@example.com",  # pre-signed-up by e2e/global-setup.ts for login tests
     "e2e-newuser@example.com",  # consumed by the signup-flow test itself
     "e2e-forecast@example.com",  # consumed by the add-location/forecast test
+    "e2e-locations@example.com",  # consumed by the multi-location switching test
 ]
 
 

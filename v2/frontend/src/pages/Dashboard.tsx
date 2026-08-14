@@ -1,17 +1,8 @@
 import { useEffect, useState } from 'react'
 import { apiRequest, ApiError } from '../api/client'
+import { MAX_SAVED_LOCATIONS, type SavedLocation } from '../api/locations'
 import { useAuth } from '../context/AuthContext'
 import { ForecastView } from '../components/ForecastView'
-
-interface SavedLocation {
-  id: string
-  label: string
-  lat: number
-  lng: number
-  is_default: boolean
-}
-
-const MAX_LOCATIONS = 5
 
 export function Dashboard() {
   const { user } = useAuth()
@@ -19,6 +10,7 @@ export function Dashboard() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [showAddForm, setShowAddForm] = useState(false)
+  const [busyId, setBusyId] = useState<string | null>(null)
 
   const refresh = async () => {
     try {
@@ -37,24 +29,98 @@ export function Dashboard() {
 
   const selected = locations?.find((l) => l.id === selectedId) ?? null
 
+  const setDefault = async (id: string) => {
+    setBusyId(id)
+    setError(null)
+    try {
+      await apiRequest(`/locations/${id}`, { method: 'PATCH', auth: true, body: { is_default: true } })
+      await refresh()
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not set default location')
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  const removeLocation = async (id: string) => {
+    setBusyId(id)
+    setError(null)
+    try {
+      await apiRequest(`/locations/${id}`, { method: 'DELETE', auth: true })
+      if (selectedId === id) setSelectedId(null)
+      await refresh()
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not remove location')
+    } finally {
+      setBusyId(null)
+    }
+  }
+
   return (
     <div className="page">
       <h1>Hey, {user?.email.split('@')[0]}</h1>
 
-      {locations && locations.length > 1 && (
-        <div className="field">
-          <label htmlFor="location-select">Location</label>
-          <select
-            id="location-select"
-            value={selectedId ?? ''}
-            onChange={(e) => setSelectedId(e.target.value)}
-          >
+      {locations && locations.length > 0 && (
+        <div className="field" role="tablist" aria-label="Saved locations">
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
             {locations.map((loc) => (
-              <option key={loc.id} value={loc.id}>
-                {loc.label}
-              </option>
+              <div
+                key={loc.id}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.25rem',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: 'var(--radius)',
+                  padding: '0.25rem 0.25rem 0.25rem 0.75rem',
+                  background: loc.id === selectedId ? 'var(--color-surface)' : 'transparent',
+                }}
+              >
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={loc.id === selectedId}
+                  onClick={() => setSelectedId(loc.id)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: loc.id === selectedId ? 'var(--color-text)' : 'var(--color-text-muted)',
+                    fontWeight: loc.id === selectedId ? 700 : 400,
+                    padding: '0.25rem 0',
+                  }}
+                >
+                  {loc.label}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDefault(loc.id)}
+                  disabled={loc.is_default || busyId === loc.id}
+                  title={loc.is_default ? 'Default location' : 'Set as default'}
+                  aria-label={loc.is_default ? 'Default location' : `Set ${loc.label} as default`}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: loc.is_default ? 'default' : 'pointer',
+                    opacity: loc.is_default ? 1 : 0.4,
+                    padding: '0.25rem',
+                  }}
+                >
+                  {loc.is_default ? '★' : '☆'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => removeLocation(loc.id)}
+                  disabled={busyId === loc.id}
+                  aria-label={`Remove ${loc.label}`}
+                  className="button button--secondary"
+                  style={{ padding: '0 0.5rem' }}
+                >
+                  ×
+                </button>
+              </div>
             ))}
-          </select>
+          </div>
         </div>
       )}
 
@@ -76,7 +142,7 @@ export function Dashboard() {
         </>
       )}
 
-      {locations && locations.length > 0 && locations.length < MAX_LOCATIONS && (
+      {locations && locations.length > 0 && locations.length < MAX_SAVED_LOCATIONS && (
         <button
           className="button button--secondary"
           style={{ marginTop: '1rem' }}
