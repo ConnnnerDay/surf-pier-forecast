@@ -23,9 +23,29 @@ window, and ranked species — `src/api/forecast.ts` types only the fields
 currently rendered, not the full (much larger) response shape, since the
 backend response isn't fully modeled on the frontend yet.
 
-**Not yet built:** regulations lookup + legal-catch calculator,
-multi-location switching UI (backend supports up to 5, dashboard only
-shows one at a time), in-app feedback form, FAQ page.
+A `/regulations` page (`src/pages/Regulations.tsx`) looks up a species +
+state (species via `<datalist>` autocomplete backed by
+`GET /regulations/species`, state limited to the continental US coastal
+states the dataset covers) and shows status/size/bag-limit/season/notes,
+plus an inline "check a catch" length input that calls
+`POST /regulations/legal-catch` for a legal/too-small/too-large/
+cannot-target/unknown verdict.
+
+The dashboard's location switcher (`src/pages/Dashboard.tsx`) is a row of
+chips, one per saved location (capped at 5): click a chip to switch the
+active forecast, a star to set/see the default (`PATCH /locations/{id}`),
+an × to remove it (`DELETE /locations/{id}`).
+
+The profile page's danger zone (`src/components/AccountDangerZone.tsx`)
+downloads a full data export as a JSON file and, behind a typed-"DELETE"
+confirmation (plus a password field when the account has one), permanently
+deletes the account. Deletion does a hard `window.location.href`
+redirect rather than a client-side `navigate()` — the same render that
+clears the logged-in user also makes `ProtectedRoute` (still mounted on
+this page) fire its own redirect to `/login`, and a plain `navigate()`
+call reliably loses that race.
+
+**Not yet built:** in-app feedback form, FAQ page.
 
 ## Setup
 
@@ -50,8 +70,11 @@ npm run test:e2e  # Playwright — see below
 ## e2e tests
 
 `e2e/` holds Playwright specs covering signup (allowlist rejection + happy
-path + onboarding), login (success, wrong password, logout), and adding a
-location through to a real rendered forecast. `playwright.config.ts` boots
+path + onboarding), login (success, wrong password, logout), adding a
+location through to a real rendered forecast, multi-location switching
+(add two, switch, set default, remove), the regulations lookup +
+legal-catch calculator flow, and data export + account deletion.
+`playwright.config.ts` boots
 both the frontend dev server and a real backend
 (`e2e/start-backend.sh` resets the dev DB and seeds a fixed set of
 beta-allowlist emails via `../backend/scripts/seed_e2e.py`) automatically —

@@ -38,6 +38,9 @@ export function Header() {
         </button>
         {user ? (
           <>
+            <Link to="/regulations" className="button button--secondary">
+              Regs
+            </Link>
             <Link to="/profile" className="button button--secondary">
               Profile
             </Link>

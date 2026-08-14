@@ -1,12 +1,13 @@
 # v2 Plan: Mobile-First Fishing Forecast App
 
-Status: **phases 1-4 complete** — scaffold, the v1 forecast-engine port,
+Status: **phases 1-7 complete** — scaffold, the v1 forecast-engine port,
 full backend auth (email/password + Google/Apple OAuth + passkeys +
 2FA + login-alert emails), a 4-hour TTL forecast cache, a full profile
-API, matching frontend screens, and Playwright e2e coverage wired into
-CI. See [`/v2/README.md`](../v2/README.md) for the current feature list
-and what's still open (regulations lookup, multi-location switching UI,
-in-app feedback). See §7.
+API, matching frontend screens, Playwright e2e coverage wired into CI,
+a regulations lookup + legal-catch calculator, multi-location
+switching, and self-service data export + account deletion. See
+[`/v2/README.md`](../v2/README.md) for the current feature list and
+what's still open (OG preview cards, in-app feedback). See §7.
 
 **Repo note:** §4 below still says "new, separate repo" — that was the
 plan, but this session's GitHub access couldn't create a new repository,
@@ -220,21 +221,68 @@ a **clean slate** — new schema, new database, existing v1 users re-register.
    Python and Node, seeds a fixed beta-allowlist fixture set via
    `backend/scripts/seed_e2e.py`, boots both servers, runs the suite).
    Covers signup (allowlist rejection + happy path + onboarding),
-   login (success, wrong password, logout), and adding a location through
-   to a real rendered forecast. All 6 tests pass reliably against a real
-   backend + real (if network-degraded in this sandbox) forecast engine.
-6. **Feature parity for MVP (remaining)** — legal-catch calculator,
-   multi-location switching UI (API supports it, UI shows one at a time),
+   login (success, wrong password, logout), adding a location through to a
+   real rendered forecast, and the regulations lookup + legal-catch
+   calculator flow. All 7 tests pass reliably against a real backend +
+   real (if network-degraded in this sandbox) forecast engine.
+6. ✅ **Regulations lookup + legal-catch calculator** (done) —
+   `GET /regulations/species` (autocomplete source, 851-species catalog),
+   `GET /regulations/lookup` (species+state → status/min-size/slot/bag
+   limit/season/gear/notes/official source, `source_file` stripped same as
+   the forecast route), `POST /regulations/legal-catch` (species+state+
+   measured length → legal/too_small/too_large/cannot_target/unknown
+   verdict). New engineering, not a port — v1 exposes regulation text but
+   never evaluated a specific catch against it. The size parser
+   (`app/core/catch_calculator.py`) is deliberately conservative: ambiguous
+   or multi-region size text (`"12 in TL in Gulf; 14 in TL in Atlantic"`)
+   resolves to `unknown` rather than guessing, and a
+   prohibited/out-of-season/catch-and-release status short-circuits the
+   size check entirely. Frontend is a single `/regulations` page (species
+   autocomplete via `<datalist>`, state selector scoped to **continental US
+   coastal states only** per §5 — the raw dataset also carries AK/HI/a
+   stray non-coastal AZ row that are intentionally excluded from the
+   selector). 79 backend tests (17 pure calculator unit tests + 11 route
+   integration tests) and a live-browser-verified e2e flow.
+7. ✅ **Multi-location switching UI** (done) — a new `PATCH
+   /locations/{id}` endpoint (rename and/or set-as-default, unsetting any
+   previous default for that user in the same transaction) alongside the
+   existing list/create/delete routes. The dashboard's location switcher
+   is now a row of chips (one per saved location, capped at 5): click to
+   switch the active forecast, a star to set/see the default, an × to
+   remove — replacing the old plain `<select>` that only handled viewing
+   one at a time. 10 new backend route tests (list/create/cap-at-5/
+   rename/default-switch/ownership/404s/auth-gating) and a new Playwright
+   e2e spec (add two locations, switch, set default, remove) — 8/8 e2e
+   tests pass live.
+8. ✅ **Self-service data export + account deletion** (done) — `GET
+   /account/export` returns everything stored about the account (profile,
+   saved locations, and account metadata — email, DOB, created-at, linked
+   OAuth providers, 2FA status), excluding security material (password
+   hash, TOTP secret, refresh tokens, passkey public keys); the frontend
+   triggers this as a downloaded JSON file. `DELETE /account` permanently
+   removes the account and everything tied to it (refresh tokens, passkey
+   credentials, WebAuthn challenges, cached forecasts for its locations,
+   saved locations, profile, the user row itself) — password-gated when
+   the account has one (email/password signups), no extra check needed
+   for OAuth/passkey-only accounts since the bearer token already proves
+   session ownership. The frontend danger-zone UI on the profile page
+   requires typing "DELETE" to confirm. 7 new backend tests plus a new
+   Playwright e2e spec (export triggers a real file download, delete
+   removes the account, a subsequent login attempt fails) — 8/9 e2e
+   tests pass live (the 9th, `forecast.spec.ts`, is the pre-existing,
+   previously-documented sandbox network flakiness around live NOAA/NWS
+   calls — passes reliably when run standalone).
+9. **Feature parity for MVP (remaining)** —
    OG preview cards for shared links, expanded curated-spot list (100+)
-   across all coasts, self-service export/delete, starter logo/icon/palette
-   (placeholder logo done, see `v2/frontend/public/pwa-*.png`), public
-   landing page with beta-request form (done)
-7. **Private beta** — admit allowlisted users, collect feedback, fix issues
-8. **Cutover** — v1 retired/redirects once v2 clears the beta and is ready
-   for public signup (legal pages finalized at that point)
-9. **Post-launch backlog** — catch log, alerts, visual map cues, native
-   app packaging, monetization, formal contribution process — ordered
-   once there are real users and (if a collaborator joins) more hands
+   across all coasts, starter logo/icon/palette (placeholder logo done,
+   see `v2/frontend/public/pwa-*.png`), public landing page with
+   beta-request form (done)
+10. **Private beta** — admit allowlisted users, collect feedback, fix issues
+11. **Cutover** — v1 retired/redirects once v2 clears the beta and is ready
+    for public signup (legal pages finalized at that point)
+12. **Post-launch backlog** — catch log, alerts, visual map cues, native
+    app packaging, monetization, formal contribution process — ordered
+    once there are real users and (if a collaborator joins) more hands
 
 ## 8. Still open (small, resolve as we go)
 
@@ -244,5 +292,6 @@ a **clean slate** — new schema, new database, existing v1 users re-register.
 
 ---
 
-*This is the working spec. Next step: OAuth/passkeys, 2FA enrollment, and
-the profile API (§7.3) — see `/v2/README.md` for local dev setup.*
+*This is the working spec. Next step: OG preview cards for shared links
+and an expanded curated-spot list (§7.9) — see `/v2/README.md` for local
+dev setup.*

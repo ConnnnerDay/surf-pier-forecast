@@ -10,10 +10,11 @@ OAuth (JWKS-verified `id_token`, with a DOB-collection step for first-time
 OAuth signups so the age gate still applies), passkeys/WebAuthn
 (discoverable/usernameless login, multiple credentials per user), optional
 TOTP 2FA (enroll/confirm/disable), and login-alert emails on sign-in from a
-new device. Saved locations (capped at 5), a full profile API, SQLAlchemy
-models, Alembic, and a large test suite (see `tests/`). Note: v1 never
-actually had OAuth/WebAuthn routes despite CLAUDE.md describing them — all
-of that is new engineering here, not a port.
+new device. Saved locations (capped at 5, with rename/set-default/delete
+via `GET`/`POST`/`PATCH`/`DELETE /locations`), a full profile API,
+SQLAlchemy models, Alembic, and a large test suite (see `tests/`). Note:
+v1 never actually had OAuth/WebAuthn routes despite CLAUDE.md describing
+them — all of that is new engineering here, not a port.
 
 `GET /forecast/{location_id}` is wired to v1's real forecast engine —
 `domain/`, `services/`, `storage/`, `locations.py`, `regulations.py`, and
@@ -31,6 +32,32 @@ separate SQLite file from `app.db` so the schemas never collide.
 **Known gaps:** no background refresh (a cache miss/expiry is still a
 synchronous live fetch on the request that hits it — v1's
 stale-serve-then-refresh-in-a-background-thread isn't replicated).
+
+`GET /regulations/species`, `GET /regulations/lookup`, and
+`POST /regulations/legal-catch` (`app/api/routes/regulations.py`) expose
+`regulations.py`'s lookup/classification against a new legal-catch
+calculator (`app/core/catch_calculator.py`) — given a regulation payload
+and a measured fish length, it returns a
+legal/too_small/too_large/cannot_target/unknown verdict. This is new
+engineering, not a port: v1 exposes regulation text but never evaluated a
+specific catch against it. Size-limit text is scraped/hand-compiled free
+text, so parsing is deliberately conservative — ambiguous or
+multi-region text (`"12 in TL in Gulf; 14 in TL in Atlantic"`) resolves
+to `unknown` rather than guessing, and prohibited/out-of-season/
+catch-and-release statuses short-circuit the size check entirely.
+
+`GET /account/export` and `DELETE /account` (`app/api/routes/account.py`)
+cover the self-service data export + account deletion required by
+docs/V2_PLAN.md §6 MVP scope. Export returns the account's profile, saved
+locations, and account metadata (not security material — no password
+hash, TOTP secret, refresh tokens, or passkey public keys). Delete is
+password-gated when the account has one (email/password signups skip
+straight to deletion for OAuth/passkey-only accounts, since the bearer
+token already proves session ownership) and explicitly cleans up every
+table tied to the user — refresh tokens, passkey credentials, WebAuthn
+challenges, cached forecasts for the account's locations — before
+deleting the user row itself (which cascades locations and the profile
+via the `User` model's relationships).
 
 ## Setup
 

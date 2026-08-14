@@ -9,6 +9,11 @@ class SavedLocationCreate(BaseModel):
     is_default: bool = False
 
 
+class SavedLocationUpdate(BaseModel):
+    label: str | None = None
+    is_default: bool | None = None
+
+
 class SavedLocationOut(BaseModel):
     id: str
     label: str

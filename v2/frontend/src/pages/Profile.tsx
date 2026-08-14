@@ -6,6 +6,7 @@ import {
   GEAR_LIMITATIONS,
   type Profile as ProfileData,
 } from '../api/profile'
+import { AccountDangerZone } from '../components/AccountDangerZone'
 import { PasskeySettings } from '../components/PasskeySettings'
 import { TwoFactorSettings } from '../components/TwoFactorSettings'
 import { useTheme } from '../context/ThemeContext'
@@ -230,6 +231,7 @@ export function Profile() {
       <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <PasskeySettings />
         <TwoFactorSettings />
+        <AccountDangerZone />
       </div>
     </div>
   )
