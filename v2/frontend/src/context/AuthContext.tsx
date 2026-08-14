@@ -14,6 +14,7 @@ interface User {
   id: string
   email: string
   totp_enabled: boolean
+  has_password: boolean
 }
 
 interface TokenPair {

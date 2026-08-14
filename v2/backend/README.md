@@ -46,6 +46,19 @@ multi-region text (`"12 in TL in Gulf; 14 in TL in Atlantic"`) resolves
 to `unknown` rather than guessing, and prohibited/out-of-season/
 catch-and-release statuses short-circuit the size check entirely.
 
+`GET /account/export` and `DELETE /account` (`app/api/routes/account.py`)
+cover the self-service data export + account deletion required by
+docs/V2_PLAN.md §6 MVP scope. Export returns the account's profile, saved
+locations, and account metadata (not security material — no password
+hash, TOTP secret, refresh tokens, or passkey public keys). Delete is
+password-gated when the account has one (email/password signups skip
+straight to deletion for OAuth/passkey-only accounts, since the bearer
+token already proves session ownership) and explicitly cleans up every
+table tied to the user — refresh tokens, passkey credentials, WebAuthn
+challenges, cached forecasts for the account's locations — before
+deleting the user row itself (which cascades locations and the profile
+via the `User` model's relationships).
+
 ## Setup
 
 ```bash

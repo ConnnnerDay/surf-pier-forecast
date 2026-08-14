@@ -15,21 +15,22 @@ The mobile-first rewrite described in [`/docs/V2_PLAN.md`](../docs/V2_PLAN.md).
 
 ## Status
 
-Phases 1-6 of `docs/V2_PLAN.md`'s build plan are done: scaffold, the v1
+Phases 1-7 of `docs/V2_PLAN.md`'s build plan are done: scaffold, the v1
 forecast-engine port, full backend auth (email/password, Google/Apple
 OAuth, passkeys/WebAuthn, TOTP 2FA, login-alert emails, a 4-hour TTL
 forecast cache, a full profile API), the matching frontend screens,
 Playwright e2e coverage (signup, login, add-a-location-to-forecast,
-regulations lookup, multi-location switching) wired into CI, a
-regulations lookup + legal-catch calculator, and multi-location
-switching (rename/set-default/remove). Lint, type-check, unit tests,
-e2e tests, and a production build all pass for both halves — see each
+regulations lookup, multi-location switching, account export/delete)
+wired into CI, a regulations lookup + legal-catch calculator,
+multi-location switching (rename/set-default/remove), and self-service
+data export + account deletion. Lint, type-check, unit tests, e2e
+tests, and a production build all pass for both halves — see each
 directory's README.
 
 **Not done yet:** in-app feedback form, FAQ page, OG preview cards for
-shared links, self-service export/delete, and background forecast-cache
-refresh (a cache miss is still a synchronous live fetch). See
-`docs/V2_PLAN.md` §7 "Phased build plan" for what's next.
+shared links, an expanded curated-spot list (100+), and background
+forecast-cache refresh (a cache miss is still a synchronous live
+fetch). See `docs/V2_PLAN.md` §7 "Phased build plan" for what's next.
 
 ## Local dev
 

@@ -19,6 +19,7 @@ _E2E_EMAILS = [
     "e2e-newuser@example.com",  # consumed by the signup-flow test itself
     "e2e-forecast@example.com",  # consumed by the add-location/forecast test
     "e2e-locations@example.com",  # consumed by the multi-location switching test
+    "e2e-account@example.com",  # consumed by the data-export/delete-account test
 ]
 
 

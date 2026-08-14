@@ -1,13 +1,13 @@
 # v2 Plan: Mobile-First Fishing Forecast App
 
-Status: **phases 1-6 complete** — scaffold, the v1 forecast-engine port,
+Status: **phases 1-7 complete** — scaffold, the v1 forecast-engine port,
 full backend auth (email/password + Google/Apple OAuth + passkeys +
 2FA + login-alert emails), a 4-hour TTL forecast cache, a full profile
 API, matching frontend screens, Playwright e2e coverage wired into CI,
-a regulations lookup + legal-catch calculator, and multi-location
-switching. See [`/v2/README.md`](../v2/README.md) for the current
-feature list and what's still open (OG preview cards, in-app feedback).
-See §7.
+a regulations lookup + legal-catch calculator, multi-location
+switching, and self-service data export + account deletion. See
+[`/v2/README.md`](../v2/README.md) for the current feature list and
+what's still open (OG preview cards, in-app feedback). See §7.
 
 **Repo note:** §4 below still says "new, separate repo" — that was the
 plan, but this session's GitHub access couldn't create a new repository,
@@ -254,15 +254,33 @@ a **clean slate** — new schema, new database, existing v1 users re-register.
    rename/default-switch/ownership/404s/auth-gating) and a new Playwright
    e2e spec (add two locations, switch, set default, remove) — 8/8 e2e
    tests pass live.
-8. **Feature parity for MVP (remaining)** —
+8. ✅ **Self-service data export + account deletion** (done) — `GET
+   /account/export` returns everything stored about the account (profile,
+   saved locations, and account metadata — email, DOB, created-at, linked
+   OAuth providers, 2FA status), excluding security material (password
+   hash, TOTP secret, refresh tokens, passkey public keys); the frontend
+   triggers this as a downloaded JSON file. `DELETE /account` permanently
+   removes the account and everything tied to it (refresh tokens, passkey
+   credentials, WebAuthn challenges, cached forecasts for its locations,
+   saved locations, profile, the user row itself) — password-gated when
+   the account has one (email/password signups), no extra check needed
+   for OAuth/passkey-only accounts since the bearer token already proves
+   session ownership. The frontend danger-zone UI on the profile page
+   requires typing "DELETE" to confirm. 7 new backend tests plus a new
+   Playwright e2e spec (export triggers a real file download, delete
+   removes the account, a subsequent login attempt fails) — 8/9 e2e
+   tests pass live (the 9th, `forecast.spec.ts`, is the pre-existing,
+   previously-documented sandbox network flakiness around live NOAA/NWS
+   calls — passes reliably when run standalone).
+9. **Feature parity for MVP (remaining)** —
    OG preview cards for shared links, expanded curated-spot list (100+)
-   across all coasts, self-service export/delete, starter logo/icon/palette
-   (placeholder logo done, see `v2/frontend/public/pwa-*.png`), public
-   landing page with beta-request form (done)
-9. **Private beta** — admit allowlisted users, collect feedback, fix issues
-10. **Cutover** — v1 retired/redirects once v2 clears the beta and is ready
+   across all coasts, starter logo/icon/palette (placeholder logo done,
+   see `v2/frontend/public/pwa-*.png`), public landing page with
+   beta-request form (done)
+10. **Private beta** — admit allowlisted users, collect feedback, fix issues
+11. **Cutover** — v1 retired/redirects once v2 clears the beta and is ready
     for public signup (legal pages finalized at that point)
-11. **Post-launch backlog** — catch log, alerts, visual map cues, native
+12. **Post-launch backlog** — catch log, alerts, visual map cues, native
     app packaging, monetization, formal contribution process — ordered
     once there are real users and (if a collaborator joins) more hands
 
@@ -274,5 +292,6 @@ a **clean slate** — new schema, new database, existing v1 users re-register.
 
 ---
 
-*This is the working spec. Next step: OG preview cards and self-service
-export/delete (§7.8) — see `/v2/README.md` for local dev setup.*
+*This is the working spec. Next step: OG preview cards for shared links
+and an expanded curated-spot list (§7.9) — see `/v2/README.md` for local
+dev setup.*

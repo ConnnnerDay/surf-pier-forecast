@@ -36,6 +36,15 @@ chips, one per saved location (capped at 5): click a chip to switch the
 active forecast, a star to set/see the default (`PATCH /locations/{id}`),
 an × to remove it (`DELETE /locations/{id}`).
 
+The profile page's danger zone (`src/components/AccountDangerZone.tsx`)
+downloads a full data export as a JSON file and, behind a typed-"DELETE"
+confirmation (plus a password field when the account has one), permanently
+deletes the account. Deletion does a hard `window.location.href`
+redirect rather than a client-side `navigate()` — the same render that
+clears the logged-in user also makes `ProtectedRoute` (still mounted on
+this page) fire its own redirect to `/login`, and a plain `navigate()`
+call reliably loses that race.
+
 **Not yet built:** in-app feedback form, FAQ page.
 
 ## Setup
@@ -63,8 +72,9 @@ npm run test:e2e  # Playwright — see below
 `e2e/` holds Playwright specs covering signup (allowlist rejection + happy
 path + onboarding), login (success, wrong password, logout), adding a
 location through to a real rendered forecast, multi-location switching
-(add two, switch, set default, remove), and the regulations lookup +
-legal-catch calculator flow. `playwright.config.ts` boots
+(add two, switch, set default, remove), the regulations lookup +
+legal-catch calculator flow, and data export + account deletion.
+`playwright.config.ts` boots
 both the frontend dev server and a real backend
 (`e2e/start-backend.sh` resets the dev DB and seeds a fixed set of
 beta-allowlist emails via `../backend/scripts/seed_e2e.py`) automatically —

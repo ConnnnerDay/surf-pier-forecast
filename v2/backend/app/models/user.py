@@ -50,6 +50,13 @@ class User(Base):
         back_populates="user", uselist=False, cascade="all, delete-orphan"
     )
 
+    @property
+    def has_password(self) -> bool:
+        """Whether this account can log in with email+password, vs. being
+        OAuth/passkey-only — lets the frontend decide whether to ask for a
+        password before a destructive action (see UserOut, /account)."""
+        return self.password_hash is not None
+
 
 class RefreshToken(Base):
     """One row per issued refresh token / logged-in device, so a user can see
