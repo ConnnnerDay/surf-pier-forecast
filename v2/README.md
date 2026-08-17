@@ -1,6 +1,20 @@
 # v2
 
-The mobile-first rewrite described in [`/docs/V2_PLAN.md`](../docs/V2_PLAN.md).
+> **ARCHIVED — reference only, not the active application path.** This
+> prototype (React/Vite + custom JWT/OAuth/passkey auth + SQLite) predates
+> the canonical architecture decision recorded in
+> [`docs/CANONICAL_ROADMAP.md`](../docs/CANONICAL_ROADMAP.md). As of
+> recovery gate R3, the canonical path is [`apps/web`](../apps/web)
+> (Next.js) and [`apps/api`](../apps/api) (FastAPI + Better Auth +
+> PostgreSQL). Every route, module, and feature here has already been
+> classified keep/adapt/replace/defer against that contract in
+> [`docs/R1_RECONCILIATION_AUDIT.md`](../docs/R1_RECONCILIATION_AUDIT.md) —
+> read that before reusing anything from this tree. Do not add features
+> here or deploy it; it is evidence for porting into `apps/api`/`apps/web`,
+> not a second live application.
+
+The mobile-first rewrite described in [`/docs/V2_PLAN.md`](../docs/V2_PLAN.md)
+(also archived — see the note at the top of that file).
 
 > **Note on location:** the plan originally called for a new, separate
 > GitHub repo. In practice, this session's GitHub integration couldn't

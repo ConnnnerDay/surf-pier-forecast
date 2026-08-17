@@ -269,8 +269,8 @@ current `/v2` code, but do not override this contract.
 |---|---|---|---|
 | R0 | Durable canonical roadmap and cross-agent handoff | This document, `AGENTS.md`, Claude warning, master issue, merged PR | Complete — merged in PR #319 |
 | R1 | Reconciliation audit | Every `/v2` route, module, schema, feature, and test mapped to keep/adapt/replace/defer with reasons and owning future sprint | Complete — merged in PR #322 |
-| R2 | Truthful deterministic CI baseline | Exact current commands recorded; live-provider tests removed from required CI; failures classified as regression or known debt | Complete when this PR merges |
-| R3 | One canonical application path | Next.js/FastAPI/PostgreSQL skeleton is the named path; duplicate prototypes are clearly archived/reference-only; local smoke path is documented | Next |
+| R2 | Truthful deterministic CI baseline | Exact current commands recorded; live-provider tests removed from required CI; failures classified as regression or known debt | Complete — merged in PR #323 |
+| R3 | One canonical application path | Next.js/FastAPI/PostgreSQL skeleton is the named path; duplicate prototypes are clearly archived/reference-only; local smoke path is documented | Complete when this PR merges |
 
 No gate may be marked complete until its PR is merged to `main` and linked in
 issue #318.
@@ -427,43 +427,42 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged recovery PR: #322 (R1 — reconciliation audit, `0fc7d4c`,
-  merged as `b7df7fa`).
-- This PR delivers R2: [`docs/R2_CI_BASELINE.md`](R2_CI_BASELINE.md) —
-  exact current CI commands recorded for both workflows; the one
-  live-provider-dependent test R1 found (`v2/frontend/e2e/forecast.spec.ts`)
-  tagged `@live-network` and excluded from the default/required e2e run
-  (still runnable manually via a new `workflow_dispatch` job); and every
-  current CI failure classified as regression or known debt. Also fixes a
-  CI-truthfulness bug found while recording commands: `test.yml`'s `test`
-  and `lint` jobs each ran a static-analysis step before pytest/mypy with
-  no `continue-on-error`, so pytest and mypy have never actually executed
-  in this workflow's history (masked by `ruff check`/`ruff format --check`
-  always failing first). Fixed so each check runs independently. CI
-  configuration only; no application/product code changed.
-- Current gate once this PR merges: **R3 — one canonical application
-  path.**
-- Exact next action: establish the Next.js/FastAPI/PostgreSQL skeleton as
-  the named canonical path (sprint 4's monorepo scaffold is the natural
-  starting point — `apps/web`, `apps/api`, generated shared OpenAPI
-  schemas per the technical contract table) and clearly mark `/v2` and the
-  legacy Flask app as archived/reference-only. Do not port product logic
-  or start numbered sprints beyond what R3 itself requires in the R3 PR.
+- Last merged recovery PR: #323 (R2 — truthful deterministic CI baseline,
+  `1297922`, merged as `edb5e06`).
+- This PR delivers R3: [`docs/R3_CANONICAL_PATH.md`](R3_CANONICAL_PATH.md) —
+  a Next.js skeleton at `apps/web` and a FastAPI skeleton at `apps/api`,
+  both verified to actually boot and respond (see that doc §3); `/v2` and
+  the legacy Flask app relabeled archived/reference-only at the top of
+  their own READMEs, not moved or deleted (R1's classifications already
+  live in `docs/R1_RECONCILIATION_AUDIT.md`, and physically relocating
+  ~19k lines is a mechanical follow-up, not R3's job). No auth, database,
+  ported domain logic, or CI for the new `apps/` tree — those are sprint 4
+  onward, deliberately out of scope here.
+- **This is the last recovery gate.** Once this PR merges, R0-R3 are all
+  complete and numbered product sprints resume.
+- Exact next action: sprint 4 (repository baseline / monorepo scaffold) —
+  give `apps/web`/`apps/api` a real build+smoke-test CI job (this PR
+  intentionally shipped without one), and follow the sprint ledger's
+  "definition of ready" (state outcome/non-goals, dependencies, acceptance
+  criteria, and test commands in the sprint's own issue before starting).
+  Sprints 1-3 (repository baseline audit, product definition, architecture
+  decision) already have recovered-but-not-accepted evidence from closed
+  PRs #309-#311 per the sprint ledger — the next agent should check
+  whether that evidence still satisfies each sprint's outcome before
+  redoing the work.
 - Known blocker: none.
-- Known baseline carried into R3: per `docs/R2_CI_BASELINE.md` §2.1, the
-  legacy `ruff check`/`ruff format --check` findings (~600 errors, ~65
-  unformatted files) and this PR's newly-enabled `pytest`/`mypy` results
-  (unknown until this PR's own CI runs) are recorded as known debt for
-  sprint 6, not blockers for R3. R2 also found that `requirements-dev.txt`
-  pins `ruff`/`mypy` to open version ranges, not exact versions — a
-  determinism gap also owned by sprint 6. R1's open product question is
-  still unresolved: whether `services/{datagov,hdx_fao,arcgis_live_feeds,
+- Known baseline carried forward: per `docs/R2_CI_BASELINE.md`, the legacy
+  `ruff check`/`ruff format --check`/`mypy` findings (~600 errors, ~65
+  unformatted files, 23 mypy errors) remain known debt for sprint 6, not a
+  blocker for R3 or sprint 4 — `apps/web`/`apps/api` are new code with no
+  relation to that backlog. R1's open product question is still
+  unresolved: whether `services/{datagov,hdx_fao,arcgis_live_feeds,
   bathymetry}.py` (not named in the canonical contract's required
   providers) are future enrichment or scope creep — route to the product
-  owner before Phase 2 sprints port providers wholesale. R2 also flagged
-  that this session could not verify GitHub branch-protection/required-
-  status-check configuration via available tooling — a repo admin should
-  configure it once §2.1's pre-existing failures are worked down.
+  owner before Phase 2 sprints port providers wholesale. This session
+  still could not verify GitHub branch-protection/required-status-check
+  configuration via available tooling — a repo admin should configure it,
+  now including the new `apps/` CI once sprint 4 adds it.
 - Unmerged work considered complete: none.
 - Product decisions on record 2026-08-17 (see that section above) refine the
   product contract — public general-audience scope, ~$1/month subscription

@@ -1,18 +1,23 @@
 # Fishing Forecast
 
-> **Development handoff:** Active product work is governed by
+> **ARCHIVED — reference only, not the active application.** As of recovery
+> gate R3, the canonical application path is [`apps/web`](apps/web) (Next.js)
+> and [`apps/api`](apps/api) (FastAPI) — see
 > [`docs/CANONICAL_ROADMAP.md`](docs/CANONICAL_ROADMAP.md) and
-> [master issue #318](https://github.com/ConnnnerDay/surf-pier-forecast/issues/318).
-> The legacy Flask app and merged `/v2` are reference implementations while
-> recovery gates R0-R3 establish one canonical product path.
+> [`docs/R3_CANONICAL_PATH.md`](docs/R3_CANONICAL_PATH.md). Everything this
+> file documents below (the self-hosted Flask app) is retired outright per
+> the product decisions on record and kept only as evidence for porting
+> characterized logic into `apps/api`, per
+> [`docs/R1_RECONCILIATION_AUDIT.md`](docs/R1_RECONCILIATION_AUDIT.md). Do
+> not run this app in production or add features to it.
 
 A self-hosted Flask web app that combines NOAA/NWS/NDBC marine data with species logic, rig guidance, and personal fishing preferences to generate a practical fishing game plan for any US coastal spot.
 
 ## Project status
 
-**This codebase is v1** — a self-hosted Flask website. It works, but it's being retired as the primary direction.
+**This codebase is v1** — a self-hosted Flask website, retired. It is kept only as reference material for porting its forecast/species/regulations logic into `apps/api` under characterization tests.
 
-**v2 (in progress)** is a pivot away from a self-hosted Flask site toward a mobile-focused application/website with real user accounts: people sign up, save their location(s), and get the fishing forecast for their area from any device. Expect the account/auth model, location handling, and delivery (native/mobile-web) to change significantly as that work lands. See [`docs/V2_PLAN.md`](docs/V2_PLAN.md) for the current architecture/roadmap draft. Everything below documents the current v1 app as it exists today.
+**`/v2`** was an in-repo pivot attempt (React/Vite + custom JWT auth + SQLite) that predates the canonical architecture decision. It is also archived/reference-only — see [`v2/README.md`](v2/README.md). Everything below documents the v1 app as it exists today, for historical/porting reference.
 
 ## Highlights
 

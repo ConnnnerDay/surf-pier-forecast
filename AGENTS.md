@@ -21,9 +21,11 @@ reference material only.
 
 ## Current stop sign
 
-Do not add product features until recovery gates R0-R3 in the canonical
-roadmap are complete. R1 (the merged-code reconciliation audit, see
-[`docs/R1_RECONCILIATION_AUDIT.md`](docs/R1_RECONCILIATION_AUDIT.md)) and R2
-(the truthful deterministic CI baseline, see
-[`docs/R2_CI_BASELINE.md`](docs/R2_CI_BASELINE.md)) are done. The next PR
-after this handoff is R3: one canonical application path.
+Recovery gates R0-R3 are all complete as of this PR — see
+[`docs/R1_RECONCILIATION_AUDIT.md`](docs/R1_RECONCILIATION_AUDIT.md),
+[`docs/R2_CI_BASELINE.md`](docs/R2_CI_BASELINE.md), and
+[`docs/R3_CANONICAL_PATH.md`](docs/R3_CANONICAL_PATH.md). The canonical
+application path is now [`apps/web`](apps/web) (Next.js) and
+[`apps/api`](apps/api) (FastAPI) — both skeletons only, no auth/database/
+ported logic yet. Numbered product sprints resume; read the roadmap's live
+checkpoint for the exact next sprint before starting anything.
