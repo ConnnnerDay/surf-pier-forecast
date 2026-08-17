@@ -270,10 +270,13 @@ current `/v2` code, but do not override this contract.
 | R0 | Durable canonical roadmap and cross-agent handoff | This document, `AGENTS.md`, Claude warning, master issue, merged PR | Complete — merged in PR #319 |
 | R1 | Reconciliation audit | Every `/v2` route, module, schema, feature, and test mapped to keep/adapt/replace/defer with reasons and owning future sprint | Complete — merged in PR #322 |
 | R2 | Truthful deterministic CI baseline | Exact current commands recorded; live-provider tests removed from required CI; failures classified as regression or known debt | Complete — merged in PR #323 |
-| R3 | One canonical application path | Next.js/FastAPI/PostgreSQL skeleton is the named path; duplicate prototypes are clearly archived/reference-only; local smoke path is documented | Complete when this PR merges |
+| R3 | One canonical application path | Next.js/FastAPI/PostgreSQL skeleton is the named path; duplicate prototypes are clearly archived/reference-only; local smoke path is documented | Complete — merged in PR #324 |
 
 No gate may be marked complete until its PR is merged to `main` and linked in
 issue #318.
+
+**All recovery gates (R0-R3) are complete.** Numbered product sprints
+resume — see the live checkpoint below for the exact next action.
 
 ## Sprint ledger
 
@@ -427,21 +430,21 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged recovery PR: #323 (R2 — truthful deterministic CI baseline,
-  `1297922`, merged as `edb5e06`).
-- This PR delivers R3: [`docs/R3_CANONICAL_PATH.md`](R3_CANONICAL_PATH.md) —
-  a Next.js skeleton at `apps/web` and a FastAPI skeleton at `apps/api`,
+- Last merged recovery PR: #324 (R3 — one canonical application path,
+  `391bcac`, merged as `1290381`).
+- R3 delivered [`docs/R3_CANONICAL_PATH.md`](R3_CANONICAL_PATH.md) — a
+  Next.js skeleton at `apps/web` and a FastAPI skeleton at `apps/api`,
   both verified to actually boot and respond (see that doc §3); `/v2` and
   the legacy Flask app relabeled archived/reference-only at the top of
   their own READMEs, not moved or deleted (R1's classifications already
   live in `docs/R1_RECONCILIATION_AUDIT.md`, and physically relocating
   ~19k lines is a mechanical follow-up, not R3's job). No auth, database,
   ported domain logic, or CI for the new `apps/` tree — those are sprint 4
-  onward, deliberately out of scope here.
-- **This is the last recovery gate.** Once this PR merges, R0-R3 are all
-  complete and numbered product sprints resume.
+  onward, deliberately out of scope there.
+- **All recovery gates (R0-R3) are complete.** Numbered product sprints
+  resume.
 - Exact next action: sprint 4 (repository baseline / monorepo scaffold) —
-  give `apps/web`/`apps/api` a real build+smoke-test CI job (this PR
+  give `apps/web`/`apps/api` a real build+smoke-test CI job (R3
   intentionally shipped without one), and follow the sprint ledger's
   "definition of ready" (state outcome/non-goals, dependencies, acceptance
   criteria, and test commands in the sprint's own issue before starting).
@@ -454,7 +457,7 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 - Known baseline carried forward: per `docs/R2_CI_BASELINE.md`, the legacy
   `ruff check`/`ruff format --check`/`mypy` findings (~600 errors, ~65
   unformatted files, 23 mypy errors) remain known debt for sprint 6, not a
-  blocker for R3 or sprint 4 — `apps/web`/`apps/api` are new code with no
+  blocker for sprint 4 — `apps/web`/`apps/api` are new code with no
   relation to that backlog. R1's open product question is still
   unresolved: whether `services/{datagov,hdx_fao,arcgis_live_feeds,
   bathymetry}.py` (not named in the canonical contract's required
