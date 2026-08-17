@@ -1,5 +1,11 @@
 # Fishing Forecast
 
+> **Development handoff:** Active product work is governed by
+> [`docs/CANONICAL_ROADMAP.md`](docs/CANONICAL_ROADMAP.md) and
+> [master issue #318](https://github.com/ConnnnerDay/surf-pier-forecast/issues/318).
+> The legacy Flask app and merged `/v2` are reference implementations while
+> recovery gates R0-R3 establish one canonical product path.
+
 A self-hosted Flask web app that combines NOAA/NWS/NDBC marine data with species logic, rig guidance, and personal fishing preferences to generate a practical fishing game plan for any US coastal spot.
 
 ## Project status
