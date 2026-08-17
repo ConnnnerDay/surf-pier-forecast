@@ -1,5 +1,13 @@
 # v2 Plan: Mobile-First Fishing Forecast App
 
+> **ARCHIVED IMPLEMENTATION PLAN — NOT CANONICAL.** This file documents how
+> the current `/v2` prototype was built. Some decisions here conflict with the
+> user-approved product architecture. For all new work, use
+> [`CANONICAL_ROADMAP.md`](CANONICAL_ROADMAP.md) and
+> [master issue #318](https://github.com/ConnnnerDay/surf-pier-forecast/issues/318).
+> Do not continue the "what's still open" list below until recovery gates R0-R3
+> are merged.
+
 Status: **phases 1-7 complete** — scaffold, the v1 forecast-engine port,
 full backend auth (email/password + Google/Apple OAuth + passkeys +
 2FA + login-alert emails), a 4-hour TTL forecast cache, a full profile

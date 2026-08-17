@@ -2,6 +2,24 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+> **STOP — active product handoff:** Before making any change, read
+> [`AGENTS.md`](AGENTS.md),
+> [`docs/CANONICAL_ROADMAP.md`](docs/CANONICAL_ROADMAP.md), and
+> [master issue #318](https://github.com/ConnnnerDay/surf-pier-forecast/issues/318).
+> The legacy Flask notes below are reference material, not the active product
+> architecture. The merged `/v2` is also a prototype to reconcile, not the
+> canonical architecture. Work only on the gate/sprint named in the live
+> checkpoint, and merge it before starting dependent work.
+
+## Active architecture in one sentence
+
+The target is a Next.js backend-for-frontend with Better Auth, a signed
+internal FastAPI service, fresh PostgreSQL on Neon, Vercel web hosting, and an
+always-on Render API. Do not silently substitute React/Vite direct API calls,
+custom JWT authentication, SQLite, or self-hosting.
+
+## Legacy reference begins below
+
 ## Commands
 
 ```bash
