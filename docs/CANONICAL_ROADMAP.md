@@ -106,7 +106,7 @@ current `/v2` code, but do not override this contract.
 
 | Gate | Outcome | Acceptance evidence | State |
 |---|---|---|---|
-| R0 | Durable canonical roadmap and cross-agent handoff | This document, `AGENTS.md`, Claude warning, master issue, merged PR | In progress |
+| R0 | Durable canonical roadmap and cross-agent handoff | This document, `AGENTS.md`, Claude warning, master issue, merged PR | Complete when PR #319 merges |
 | R1 | Reconciliation audit | Every `/v2` route, module, schema, feature, and test mapped to keep/adapt/replace/defer with reasons and owning future sprint | Next |
 | R2 | Truthful deterministic CI baseline | Exact current commands recorded; live-provider tests removed from required CI; failures classified as regression or known debt | Blocked by R1 |
 | R3 | One canonical application path | Next.js/FastAPI/PostgreSQL skeleton is the named path; duplicate prototypes are clearly archived/reference-only; local smoke path is documented | Blocked by R2 |
@@ -266,9 +266,10 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged roadmap PR: not yet merged (R0 branch is active).
-- Current gate: R0 — canonical roadmap and agent handoff.
-- Next action after R0 merges: R1 — produce the reconciliation audit; do not
+- Roadmap PR: [#319](https://github.com/ConnnnerDay/surf-pier-forecast/pull/319);
+  it becomes the last merged roadmap PR when this file reaches `main`.
+- Current gate after PR #319 merges: R1 — merged-code reconciliation audit.
+- Exact next action: produce the R1 reconciliation audit; do not
   implement features or migrate architecture in that PR.
 - R1 required output: a file-level and endpoint-level inventory of merged
   `/v2`, each item labeled keep/adapt/replace/defer, with rationale, tests,
