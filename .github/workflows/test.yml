@@ -7,6 +7,12 @@ on:
     branches: ["main", "master"]
 
 jobs:
+  # Runs pytest only. Previously this job also ran `ruff check` as its own
+  # first step; when that step failed (it always has — see
+  # docs/R2_CI_BASELINE.md) GitHub Actions skipped every step after it,
+  # including "Run tests" itself. Pytest has therefore never actually
+  # executed in this workflow's history. Splitting linting out of this job
+  # is what makes its pass/fail a truthful signal about the test suite.
   test:
     runs-on: ubuntu-latest
     strategy:
@@ -25,14 +31,16 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements-dev.txt
 
-      - name: Lint with ruff
-        run: ruff check . --exclude v2
-
       - name: Run tests
         env:
           SECRET_KEY: ci-test-secret-key
         run: pytest tests/ -v --tb=short --cov=. --cov-report=term-missing
 
+  # All static analysis in one job. Each check uses `continue-on-error` so a
+  # failure doesn't skip the checks after it (the same masking bug as above
+  # previously hid the mypy step behind `ruff format --check`); the final
+  # step fails the job if any of them failed, so the job's overall
+  # conclusion is still accurate.
   lint:
     runs-on: ubuntu-latest
     steps:
@@ -47,8 +55,23 @@ jobs:
       - name: Install dev dependencies
         run: pip install -r requirements-dev.txt
 
+      - name: Lint with ruff
+        id: ruff_check
+        continue-on-error: true
+        run: ruff check . --exclude v2
+
       - name: Check formatting
+        id: ruff_format
+        continue-on-error: true
         run: ruff format --check . --exclude v2
 
       - name: Type check with mypy
+        id: mypy
+        continue-on-error: true
         run: mypy --ignore-missing-imports --exclude '(migrations?|migrate|^v2/)' .
+
+      - name: Fail if any static-analysis check failed
+        if: steps.ruff_check.outcome == 'failure' || steps.ruff_format.outcome == 'failure' || steps.mypy.outcome == 'failure'
+        run: |
+          echo "One or more static-analysis checks failed above (ruff check / ruff format / mypy) — see their step logs."
+          exit 1
