@@ -158,6 +158,46 @@ record; they do not reopen or contradict R0.
   collaborator could onboard without extra chat context, since collaborators
   may be added later.
 
+## Product decisions on record (2026-08-17, round 2)
+
+- **Positioning.** "Surfline, but for fishing" — a polished conditions/
+  forecast product purpose-built around "should I fish right now," not a
+  general-purpose fishing social app.
+- **Go/no-go presentation.** Lead the dashboard with a simple traffic-light
+  style (color + short label); numeric score and narrative detail are
+  supporting, expandable information, not the headline.
+- **Voice.** Clean, utility-first, data-forward. Closer to a marine
+  instrument than a lifestyle/social brand — not casual angler-buddy copy.
+- **Naming.** "Surf & Pier Forecast" is a placeholder only. The product name
+  itself, not just the visual identity, is open to a full rename during the
+  branding decision ahead of sprint 27.
+- **Paid-tier mechanism (informative, not yet built).** The most likely
+  ~$1/month lever is saved-location count: free tier is capped at **1**
+  saved (home) location; more locations is the paid unlock. Sprint 37
+  (saved locations) should build the ownership model so a cap/limit field is
+  natural to add later, without committing to billing now.
+- **Species photos.** Defer together with the rest of the species-scoring
+  feature — not worth decoupling for an early v1 win.
+- **Freshness TTL.** Keep the legacy app's 4-hour cache window as the v1
+  target for sprint 24 (snapshot caching); revisit only if real usage shows
+  it's wrong.
+- **Shareable forecast links.** Pull forward as a v1-required feature (not
+  just "later in phase 4"), since public non-personal forecast pages
+  (sprint 49) are direct organic-growth/SEO surface and growth is a stated
+  priority.
+- **Internationalization.** English-only content at v1, but build content/
+  copy in an i18n-ready structure (externalized strings, no hard-coded
+  English in logic) from the start, so Spanish-language support — relevant
+  given Gulf Coast and other US coastal Hispanic angling communities — isn't
+  a rewrite later. Actual Spanish translation stays out of v1 scope.
+- **Data-quality validation.** No personal regional expertise to anchor
+  testing on; rely on official upstream sources and general QA across all
+  launched coasts equally rather than a single home-region deep check.
+- **Alert channel (forward-looking).** Whenever notifications/alerts are
+  eventually built, prioritize web push over email, fitting the installable
+  mobile-first PWA product — this doesn't change notifications' deferred
+  status for v1.
+
 ## Canonical technical contract
 
 | Area | Required product architecture |
@@ -265,7 +305,7 @@ to reconciliation, not proof that the agreed outcome passed.
 | 21 | Forecast assembly | Independent sources and every present/absent matrix | Candidate in `/v2` |
 | 22 | Forecast scoring | Defensible stable score components with explanations | Candidate in `/v2` |
 | 23 | Confidence model | Predictable degradation by availability, distance, age, fallback | Not accepted |
-| 24 | Snapshot caching | Fresh/stale hit, miss, expiry, fallback, concurrency | Candidate in `/v2` |
+| 24 | Snapshot caching | Fresh/stale hit, miss, expiry, fallback, concurrency; target 4-hour freshness window, matching legacy cadence | Candidate in `/v2` |
 | 25 | Versioned API | Required endpoints, OpenAPI contract and breaking-change guard | Candidate in `/v2` |
 | 26 | Performance budget | Bounded parallel calls, no duplicates, warm p95 under 750 ms | Not accepted |
 
@@ -273,17 +313,17 @@ to reconciliation, not proof that the agreed outcome passed.
 
 | Sprint | Outcome | Acceptance focus | Current state |
 |---:|---|---|---|
-| 27 | Design system | Gallery at phone/desktop widths and accessible primitives; branding (name/domain/visual identity) decided first, since none is locked in | Candidate UI; not accepted |
+| 27 | Design system | Gallery at phone/desktop widths and accessible primitives; branding decided first (name included, not just visual identity — "Surf & Pier Forecast" is a placeholder); clean/utility-first tone, Surfline-for-fishing positioning | Candidate UI; not accepted |
 | 28 | Authentication | Email/password lifecycle, session rotation, bot/CAPTCHA defense on registration, abuse tests | Divergent auth exists; replace/adapt |
 | 29 | Account-required routing | Public exceptions and authorization/redirect tests | Candidate in `/v2` |
 | 30 | Onboarding shell | Mobile recording from registration to dashboard | Candidate in `/v2` |
 | 31 | Location search | Text, device, map, station preview, denial/ambiguity tests | Candidate in `/v2` |
-| 32 | Dashboard hierarchy | Go/no-go, best window, conditions, confidence, freshness first | Candidate in `/v2` |
+| 32 | Dashboard hierarchy | Go/no-go as a simple traffic-light headline (score/narrative expandable, not primary); best window, conditions, confidence, freshness first | Candidate in `/v2` |
 | 33 | Conditions experience | Full/partial/stale/unavailable source-attributed snapshots | Candidate in `/v2` |
 | 34 | Tides and timing | Accessible charts, text alternatives, timezone/DST tests | Candidate in `/v2` |
 | 35 | Fishing guidance | Limited supported suggestions; every recommendation explains why | Existing broad feature is out of scope; adapt |
 | 36 | Preferences | Units, thresholds, style, default location persistence | Candidate in `/v2` |
-| 37 | Saved locations | Ordered favorites, ownership, duplicates, deletion, empty state | Candidate in `/v2` |
+| 37 | Saved locations | Ordered favorites, ownership, duplicates, deletion, empty state; ownership model built so a free-tier cap (target: 1 location) is a natural later addition, without building billing now | Candidate in `/v2` |
 | 38 | PWA baseline | Installable shell with full offline navigation and graceful degradation, not just last-cached-forecast viewing; authenticated forecasts not cached forever | Candidate in `/v2` |
 | 39 | Responsive polish | Layout shift, assets, tap targets, Lighthouse, screenshot budgets | Not accepted |
 | 40 | Accessibility pass | WCAG 2.2 AA, axe plus keyboard/screen-reader evidence | Not accepted |
@@ -300,7 +340,7 @@ to reconciliation, not proof that the agreed outcome passed.
 | 46 | Database resilience | Migrations, constraints, indexes, pooling, backups, blank restore drill | Not accepted |
 | 47 | Degraded-mode UX | Database/API/email/upstream chaos yields actionable UI | Not accepted |
 | 48 | Release controls | Promotion, migration gate, smoke, rollback and staging drill | Not accepted |
-| 49 | SEO and sharing | Public non-personal forecast pages; private dashboards | Not accepted |
+| 49 | SEO and sharing | **Required for v1**, not just later phase-4 sequencing: public non-personal forecast pages (organic-growth surface); private dashboards | Not accepted |
 | 50 | Launch readiness | Cross-device, load, security, a11y, restore, outage evidence | Not accepted |
 | 51 | Limited beta | Small angler cohort recruited via personal network and local fishing communities (not a public open beta); severity/reproduction report | Not accepted |
 | 52 | Public-launch runbook | Owners, freeze rules, alerts, go/no-go and rollback triggers | Not accepted |
