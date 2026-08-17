@@ -198,6 +198,22 @@ record; they do not reopen or contradict R0.
   mobile-first PWA product — this doesn't change notifications' deferred
   status for v1.
 
+## Product decisions on record (2026-08-17, round 3)
+
+- **What's actually broken today.** The product owner rates the current app
+  as roughly equally broken across performance/reliability, UI/UX, and data
+  quality — no single dimension is the standout problem. R1's reconciliation
+  audit and the phase 1-3 sprints should treat this as a full rebuild, not a
+  targeted patch of one weak layer.
+- **Open source.** Not an active decision. Repo visibility (public vs.
+  eventually private) stays as-is; revisit only if it becomes relevant later
+  rather than deciding preemptively.
+- **Success target.** Directional goal for 6-12 months post-launch: low
+  thousands of active users — meaningful public traction, enough to
+  seriously validate the ~$1/month tier as real revenue, not just a proof of
+  concept. This is a directional target for calibrating sprints 57-59, not a
+  committed metric.
+
 ## Canonical technical contract
 
 | Area | Required product architecture |
@@ -349,7 +365,7 @@ to reconciliation, not proof that the agreed outcome passed.
 | 55 | First-hour observation | Live error, latency, source and database health review | Not accepted |
 | 56 | First-24-hour review | Health report and only launch-blocking remediation | Not accepted |
 | 57 | Reliability baseline | Actual p50/p95, upstream failure and forecast completion recorded | Not accepted |
-| 58 | Signup-funnel baseline | Registration and onboarding completion recorded | Not accepted |
+| 58 | Signup-funnel baseline | Registration and onboarding completion recorded; directional 6-12 month target is low thousands of active users | Not accepted |
 | 59 | Return-usage baseline | Privacy-safe early return-use evidence recorded | Not accepted |
 | 60 | Highest-impact reliability fix | One measured gap fixed with before/after evidence | Not accepted |
 | 61 | Expansion option studies | Recommendations, alerts, catches, regulations, native apps compared; leading candidates per owner intent are a ~$1/month subscription tier and paid growth acquisition | Not accepted |
