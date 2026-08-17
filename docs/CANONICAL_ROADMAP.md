@@ -31,10 +31,15 @@ user approval. Updating code alone does not change the decision.
 
 ## Product contract
 
-- Audience: recreational US surf and pier anglers.
+- Audience: recreational US surf and pier anglers — a public, general-
+  audience product intended to grow beyond a private circle, not a personal
+  or friends-only tool. Plan for real (if initially modest) public traffic.
 - Experience: polished, marine-utility, mobile-first installable web product.
+  Minimum support target: the latest two versions of Chrome, Safari, Firefox,
+  and Edge, on both mobile and desktop. No legacy-browser support.
 - Coverage: any valid US coastal coordinate, including Atlantic, Gulf,
-  Pacific, Alaska, and Hawaii.
+  Pacific, Alaska, and Hawaii, at v1 launch — coverage breadth is part of the
+  pitch and is not phased in regionally.
 - Access: an account is required for the core forecast experience.
 - First-run success: a new user can register, choose a coastal point, and
   quickly understand whether and when to fish.
@@ -45,13 +50,169 @@ user approval. Updating code alone does not change the decision.
 - Data minimization: save resolved location identifiers and appropriately
   rounded coordinates rather than unnecessary precise location history.
 - Cost: near-free is a target, but not at the expense of minute-long cold
-  starts or disposable production data.
+  starts or disposable production data. Observability/analytics tooling
+  should default to pragmatic, free-tier services rather than a named vendor
+  commitment.
+- Business model: v1 ships free. Don't build payment infrastructure or
+  subscription legal pages yet, but don't foreclose a future low-price
+  (~$1/month) subscription tier either. The expansion-decision sprints
+  (61-63) own the actual call.
+- Trust and liability: any fishing-regulations or legal-catch guidance must
+  carry a clear "informational only — verify with official sources"
+  disclaimer before it ships publicly. Treat the legacy 851-species/
+  regulations dataset as provisional; the long-term intent is to source
+  regulations data from official state/NOAA feeds rather than trust the
+  inherited dataset indefinitely.
+- Support: a minimal in-app feedback mechanism is part of the launch-
+  readiness bar (sprint 50), not an optional add-on.
+- Legacy app: the current self-hosted Flask app is retired outright,
+  effective immediately, not kept running in parallel during the rewrite. No
+  live accounts or catch data exist on it worth migrating.
 
 ### Deferred until production evidence supports them
 
 Payments, advertising, native clients, social features, catch logging, live
 cameras, notifications, passkeys, OAuth, a full regulations product, and the
-full 851-species experience are not v1 launch requirements.
+full 851-species experience are not v1 launch requirements. Self-service data
+export and account deletion (sprint 45) are the one carve-out from this list:
+required at v1 launch, not deferred, because this is a public product
+handling real accounts.
+
+## Product decisions on record (2026-08-17)
+
+These were made directly by the product owner (not inferred) and refine the
+product contract above. Per the source-of-truth order, explicit decisions
+recorded in this document are binding until superseded by a later decision
+record; they do not reopen or contradict R0.
+
+### Strategy and audience
+
+- **Audience and scale.** Public, general-audience product intended to grow
+  beyond a private circle. Plan for real public traffic, not a handful of
+  known users.
+- **Business model.** v1 is free, no payment processor or billing UI yet. The
+  long-term intent is a ~$1/month subscription tier once usage justifies it;
+  keep the account model tier-friendly without building billing now.
+- **Growth.** No hard launch deadline. Growth starts organic (SEO, shareable
+  forecast pages, word of mouth), but the product owner is willing to invest
+  in paid acquisition or other growth spend later — keep that option live in
+  the expansion-decision sprints.
+- **Timeline.** No hard deadline; work the gates/sprints at a sustainable
+  pace rather than compressing for speed.
+- **Hosting budget.** No fixed ceiling stated, but the ~$1/month target price
+  implies real cost-consciousness. Default to free/low-cost tiers where
+  reasonable and surface costs as they come up.
+
+### Legacy app
+
+- The current self-hosted Flask app is retired outright, effective
+  immediately. No real accounts or catch-log data exist on it worth
+  migrating or communicating a sunset to.
+- The merged `/v2` React/Vite prototype remains reference material for the R1
+  reconciliation audit only, per the existing canonical contract.
+
+### Trust, legal, and data sourcing
+
+- Any regulations/legal-catch guidance must carry a clear "informational
+  only — verify with official sources" disclaimer before shipping publicly.
+  Hard requirement, not a nice-to-have.
+- The legacy 851-species/regulations dataset is provisional. Long-term intent
+  is to source regulations data from official state/NOAA feeds rather than
+  trust the inherited hand-built dataset indefinitely; acceptable as a
+  stopgap only with the disclaimer above.
+- Self-service data export and account deletion (sprint 45) are required at
+  v1 launch, not deferred.
+
+### Product surface decisions
+
+- **Branding.** Name, domain, and visual identity are all still open. Sprint
+  27 needs an explicit branding decision as a prerequisite. No brainstorming
+  has happened yet — deliberately deferred to a later pass.
+- **Device/browser support.** Latest two versions of Chrome, Safari, Firefox,
+  Edge; mobile and desktop; no legacy-browser support.
+- **Offline/PWA depth.** Full app-shell navigation should work offline with
+  graceful degradation (sprint 38), not just "show the last cached forecast."
+- **Abuse hardening.** Public registration needs bot/CAPTCHA defense as a v1
+  requirement (sprints 28/44), not just rate limiting and email verification.
+- **Support channel.** A minimal in-app feedback widget is part of the
+  launch-readiness bar (sprint 50), not a post-launch add-on.
+- **Feature priority after v1.** None of the currently-deferred features
+  (notifications, catch logging, OAuth/passkeys, full species DB, full
+  regulations product, social, native apps, live cameras) are prioritized
+  over nailing the core forecast experience first.
+- **Beta recruiting (sprint 51).** Recruit the initial cohort through the
+  product owner's personal network and local surf/pier fishing communities,
+  not a fully public open beta.
+- **Observability/analytics tooling (sprints 41-43).** No named vendor
+  preference — choose pragmatic, free-tier-friendly tools rather than
+  spending a sprint deciding between options.
+- **Testing/CI rigor.** Keep the roadmap's definition-of-done as written in
+  full (accessibility passes, Lighthouse budgets, load tests, security
+  hardening) — not scaled back, since the audience is public, not private.
+
+### Team and process
+
+- Sole human reviewer/approver for the foreseeable future, with AI agents
+  doing implementation work under the existing AI-review-plus-human-approval
+  gate. Document the PR/roadmap process well enough that a future
+  collaborator could onboard without extra chat context, since collaborators
+  may be added later.
+
+## Product decisions on record (2026-08-17, round 2)
+
+- **Positioning.** "Surfline, but for fishing" — a polished conditions/
+  forecast product purpose-built around "should I fish right now," not a
+  general-purpose fishing social app.
+- **Go/no-go presentation.** Lead the dashboard with a simple traffic-light
+  style (color + short label); numeric score and narrative detail are
+  supporting, expandable information, not the headline.
+- **Voice.** Clean, utility-first, data-forward. Closer to a marine
+  instrument than a lifestyle/social brand — not casual angler-buddy copy.
+- **Naming.** "Surf & Pier Forecast" is a placeholder only. The product name
+  itself, not just the visual identity, is open to a full rename during the
+  branding decision ahead of sprint 27.
+- **Paid-tier mechanism (informative, not yet built).** The most likely
+  ~$1/month lever is saved-location count: free tier is capped at **1**
+  saved (home) location; more locations is the paid unlock. Sprint 37
+  (saved locations) should build the ownership model so a cap/limit field is
+  natural to add later, without committing to billing now.
+- **Species photos.** Defer together with the rest of the species-scoring
+  feature — not worth decoupling for an early v1 win.
+- **Freshness TTL.** Keep the legacy app's 4-hour cache window as the v1
+  target for sprint 24 (snapshot caching); revisit only if real usage shows
+  it's wrong.
+- **Shareable forecast links.** Pull forward as a v1-required feature (not
+  just "later in phase 4"), since public non-personal forecast pages
+  (sprint 49) are direct organic-growth/SEO surface and growth is a stated
+  priority.
+- **Internationalization.** English-only content at v1, but build content/
+  copy in an i18n-ready structure (externalized strings, no hard-coded
+  English in logic) from the start, so Spanish-language support — relevant
+  given Gulf Coast and other US coastal Hispanic angling communities — isn't
+  a rewrite later. Actual Spanish translation stays out of v1 scope.
+- **Data-quality validation.** No personal regional expertise to anchor
+  testing on; rely on official upstream sources and general QA across all
+  launched coasts equally rather than a single home-region deep check.
+- **Alert channel (forward-looking).** Whenever notifications/alerts are
+  eventually built, prioritize web push over email, fitting the installable
+  mobile-first PWA product — this doesn't change notifications' deferred
+  status for v1.
+
+## Product decisions on record (2026-08-17, round 3)
+
+- **What's actually broken today.** The product owner rates the current app
+  as roughly equally broken across performance/reliability, UI/UX, and data
+  quality — no single dimension is the standout problem. R1's reconciliation
+  audit and the phase 1-3 sprints should treat this as a full rebuild, not a
+  targeted patch of one weak layer.
+- **Open source.** Not an active decision. Repo visibility (public vs.
+  eventually private) stays as-is; revisit only if it becomes relevant later
+  rather than deciding preemptively.
+- **Success target.** Directional goal for 6-12 months post-launch: low
+  thousands of active users — meaningful public traction, enough to
+  seriously validate the ~$1/month tier as real revenue, not just a proof of
+  concept. This is a directional target for calibrating sprints 57-59, not a
+  committed metric.
 
 ## Canonical technical contract
 
@@ -160,7 +321,7 @@ to reconciliation, not proof that the agreed outcome passed.
 | 21 | Forecast assembly | Independent sources and every present/absent matrix | Candidate in `/v2` |
 | 22 | Forecast scoring | Defensible stable score components with explanations | Candidate in `/v2` |
 | 23 | Confidence model | Predictable degradation by availability, distance, age, fallback | Not accepted |
-| 24 | Snapshot caching | Fresh/stale hit, miss, expiry, fallback, concurrency | Candidate in `/v2` |
+| 24 | Snapshot caching | Fresh/stale hit, miss, expiry, fallback, concurrency; target 4-hour freshness window, matching legacy cadence | Candidate in `/v2` |
 | 25 | Versioned API | Required endpoints, OpenAPI contract and breaking-change guard | Candidate in `/v2` |
 | 26 | Performance budget | Bounded parallel calls, no duplicates, warm p95 under 750 ms | Not accepted |
 
@@ -168,18 +329,18 @@ to reconciliation, not proof that the agreed outcome passed.
 
 | Sprint | Outcome | Acceptance focus | Current state |
 |---:|---|---|---|
-| 27 | Design system | Gallery at phone/desktop widths and accessible primitives | Candidate UI; not accepted |
-| 28 | Authentication | Email/password lifecycle, session rotation, abuse tests | Divergent auth exists; replace/adapt |
+| 27 | Design system | Gallery at phone/desktop widths and accessible primitives; branding decided first (name included, not just visual identity — "Surf & Pier Forecast" is a placeholder); clean/utility-first tone, Surfline-for-fishing positioning | Candidate UI; not accepted |
+| 28 | Authentication | Email/password lifecycle, session rotation, bot/CAPTCHA defense on registration, abuse tests | Divergent auth exists; replace/adapt |
 | 29 | Account-required routing | Public exceptions and authorization/redirect tests | Candidate in `/v2` |
 | 30 | Onboarding shell | Mobile recording from registration to dashboard | Candidate in `/v2` |
 | 31 | Location search | Text, device, map, station preview, denial/ambiguity tests | Candidate in `/v2` |
-| 32 | Dashboard hierarchy | Go/no-go, best window, conditions, confidence, freshness first | Candidate in `/v2` |
+| 32 | Dashboard hierarchy | Go/no-go as a simple traffic-light headline (score/narrative expandable, not primary); best window, conditions, confidence, freshness first | Candidate in `/v2` |
 | 33 | Conditions experience | Full/partial/stale/unavailable source-attributed snapshots | Candidate in `/v2` |
 | 34 | Tides and timing | Accessible charts, text alternatives, timezone/DST tests | Candidate in `/v2` |
 | 35 | Fishing guidance | Limited supported suggestions; every recommendation explains why | Existing broad feature is out of scope; adapt |
 | 36 | Preferences | Units, thresholds, style, default location persistence | Candidate in `/v2` |
-| 37 | Saved locations | Ordered favorites, ownership, duplicates, deletion, empty state | Candidate in `/v2` |
-| 38 | PWA baseline | Installable offline shell; authenticated forecasts not cached forever | Candidate in `/v2` |
+| 37 | Saved locations | Ordered favorites, ownership, duplicates, deletion, empty state; ownership model built so a free-tier cap (target: 1 location) is a natural later addition, without building billing now | Candidate in `/v2` |
+| 38 | PWA baseline | Installable shell with full offline navigation and graceful degradation, not just last-cached-forecast viewing; authenticated forecasts not cached forever | Candidate in `/v2` |
 | 39 | Responsive polish | Layout shift, assets, tap targets, Lighthouse, screenshot budgets | Not accepted |
 | 40 | Accessibility pass | WCAG 2.2 AA, axe plus keyboard/screen-reader evidence | Not accepted |
 
@@ -191,23 +352,23 @@ to reconciliation, not proof that the agreed outcome passed.
 | 42 | Error monitoring | Frontend/API releases, source maps and secret redaction | Not accepted |
 | 43 | Privacy-safe analytics | Registration, resolution, forecast state, latency, return use | Not accepted |
 | 44 | Security hardening | CSP, CSRF, signed internal API, brute force, headers, threat model | Candidate pieces; not accepted |
-| 45 | Privacy and deletion | Legal pages, export, deletion/anonymization proof | Candidate in `/v2`; not accepted |
+| 45 | Privacy and deletion | **Required for v1 launch** (public product, real accounts): self-service export and account deletion/anonymization proof; legal pages | Candidate in `/v2`; not accepted |
 | 46 | Database resilience | Migrations, constraints, indexes, pooling, backups, blank restore drill | Not accepted |
 | 47 | Degraded-mode UX | Database/API/email/upstream chaos yields actionable UI | Not accepted |
 | 48 | Release controls | Promotion, migration gate, smoke, rollback and staging drill | Not accepted |
-| 49 | SEO and sharing | Public non-personal forecast pages; private dashboards | Not accepted |
+| 49 | SEO and sharing | **Required for v1**, not just later phase-4 sequencing: public non-personal forecast pages (organic-growth surface); private dashboards | Not accepted |
 | 50 | Launch readiness | Cross-device, load, security, a11y, restore, outage evidence | Not accepted |
-| 51 | Limited beta | Small angler cohort and severity/reproduction report | Not accepted |
+| 51 | Limited beta | Small angler cohort recruited via personal network and local fishing communities (not a public open beta); severity/reproduction report | Not accepted |
 | 52 | Public-launch runbook | Owners, freeze rules, alerts, go/no-go and rollback triggers | Not accepted |
 | 53 | Production promotion | Validated release promoted through the release controls | Not accepted |
 | 54 | Production smoke suite | Account, location, forecast and degraded-path smoke evidence | Not accepted |
 | 55 | First-hour observation | Live error, latency, source and database health review | Not accepted |
 | 56 | First-24-hour review | Health report and only launch-blocking remediation | Not accepted |
 | 57 | Reliability baseline | Actual p50/p95, upstream failure and forecast completion recorded | Not accepted |
-| 58 | Signup-funnel baseline | Registration and onboarding completion recorded | Not accepted |
+| 58 | Signup-funnel baseline | Registration and onboarding completion recorded; directional 6-12 month target is low thousands of active users | Not accepted |
 | 59 | Return-usage baseline | Privacy-safe early return-use evidence recorded | Not accepted |
 | 60 | Highest-impact reliability fix | One measured gap fixed with before/after evidence | Not accepted |
-| 61 | Expansion option studies | Recommendations, alerts, catches, regulations, native apps compared | Not accepted |
+| 61 | Expansion option studies | Recommendations, alerts, catches, regulations, native apps compared; leading candidates per owner intent are a ~$1/month subscription tier and paid growth acquisition | Not accepted |
 | 62 | Expansion decision record | Usage, value, risk, cost and architecture decision proposed | Not accepted |
 | 63 | Expansion commitment | User-approved next investment recorded as a new roadmap | Not accepted |
 
@@ -276,6 +437,14 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   risks, and the future sprint that owns the action.
 - Known blocker: none.
 - Unmerged work considered complete: none.
+- Product decisions on record 2026-08-17 (see that section above) refine the
+  product contract — public general-audience scope, ~$1/month subscription
+  intent deferred to sprints 61-63, legacy Flask app retired outright,
+  regulations disclaimer + official-source data sourcing requirement,
+  export/deletion pulled forward as a v1 requirement, device/browser and
+  offline/PWA targets, CAPTCHA-on-registration requirement, in-app feedback
+  as a launch requirement, and full (not scaled-back) CI rigor. These refine,
+  not reopen, R0's contract and do not change the current gate.
 
 This checkpoint must be updated through a merged PR whenever the active gate
 or sprint changes.
