@@ -1,6 +1,11 @@
 import { expect, test } from '@playwright/test'
 
-test('adds a location and sees a real forecast render', async ({ page }) => {
+// Tagged @live-network: excluded from the default `npm run test:e2e` run
+// (see package.json / v2-ci.yml) because it depends on live NOAA/NWS/NDBC
+// upstreams and is not deterministic enough for a required CI check. Run it
+// explicitly with `npm run test:e2e:live`, or via the CI workflow's manual
+// `workflow_dispatch` trigger. See docs/R2_CI_BASELINE.md.
+test('adds a location and sees a real forecast render @live-network', async ({ page }) => {
   // domain/forecast.py:generate_forecast() is a live multi-source fetch
   // (NOAA/NWS/NDBC/astro + per-species image lookups); give the whole test
   // real room rather than racing it. Typically completes in ~15-20s.

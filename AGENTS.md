@@ -23,6 +23,7 @@ reference material only.
 
 Do not add product features until recovery gates R0-R3 in the canonical
 roadmap are complete. R1 (the merged-code reconciliation audit, see
-[`docs/R1_RECONCILIATION_AUDIT.md`](docs/R1_RECONCILIATION_AUDIT.md)) is
-done. The next PR after this handoff is R2: the truthful deterministic CI
-baseline.
+[`docs/R1_RECONCILIATION_AUDIT.md`](docs/R1_RECONCILIATION_AUDIT.md)) and R2
+(the truthful deterministic CI baseline, see
+[`docs/R2_CI_BASELINE.md`](docs/R2_CI_BASELINE.md)) are done. The next PR
+after this handoff is R3: one canonical application path.
