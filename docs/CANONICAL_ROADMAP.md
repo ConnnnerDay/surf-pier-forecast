@@ -268,8 +268,8 @@ current `/v2` code, but do not override this contract.
 | Gate | Outcome | Acceptance evidence | State |
 |---|---|---|---|
 | R0 | Durable canonical roadmap and cross-agent handoff | This document, `AGENTS.md`, Claude warning, master issue, merged PR | Complete when PR #319 merges |
-| R1 | Reconciliation audit | Every `/v2` route, module, schema, feature, and test mapped to keep/adapt/replace/defer with reasons and owning future sprint | Next |
-| R2 | Truthful deterministic CI baseline | Exact current commands recorded; live-provider tests removed from required CI; failures classified as regression or known debt | Blocked by R1 |
+| R1 | Reconciliation audit | Every `/v2` route, module, schema, feature, and test mapped to keep/adapt/replace/defer with reasons and owning future sprint | Complete when this PR merges |
+| R2 | Truthful deterministic CI baseline | Exact current commands recorded; live-provider tests removed from required CI; failures classified as regression or known debt | Next |
 | R3 | One canonical application path | Next.js/FastAPI/PostgreSQL skeleton is the named path; duplicate prototypes are clearly archived/reference-only; local smoke path is documented | Blocked by R2 |
 
 No gate may be marked complete until its PR is merged to `main` and linked in
@@ -427,15 +427,30 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Roadmap PR: [#319](https://github.com/ConnnnerDay/surf-pier-forecast/pull/319);
-  it becomes the last merged roadmap PR when this file reaches `main`.
-- Current gate after PR #319 merges: R1 — merged-code reconciliation audit.
-- Exact next action: produce the R1 reconciliation audit; do not
-  implement features or migrate architecture in that PR.
-- R1 required output: a file-level and endpoint-level inventory of merged
-  `/v2`, each item labeled keep/adapt/replace/defer, with rationale, tests,
-  risks, and the future sprint that owns the action.
+- Last merged recovery PR: #319 (R0 — canonical roadmap and handoff,
+  `f10ae73`), plus decision-record PR #321 layering in the three rounds of
+  product-owner decisions above.
+- This PR delivers R1: [`docs/R1_RECONCILIATION_AUDIT.md`](R1_RECONCILIATION_AUDIT.md)
+  — a file-level and endpoint-level inventory of every merged `/v2` route,
+  module, schema, feature, and test, each labeled keep/adapt/replace/defer
+  with rationale, risk, and owning future sprint. No code changed; no
+  architecture migrated.
+- Current gate once this PR merges: **R2 — truthful deterministic CI
+  baseline.**
+- Exact next action: record the exact current CI commands, remove
+  live-provider-dependent tests from required checks (starting with
+  `v2/frontend/e2e/forecast.spec.ts`, the one concrete offender the R1 audit
+  found — everything else in both test suites already mocks network calls),
+  and classify every remaining CI failure as regression or known debt. Do
+  not implement product features or migrate architecture in the R2 PR.
 - Known blocker: none.
+- Known baseline carried into R2: the legacy CI workflow (`test.yml`) fails
+  on current `main` with pre-existing Ruff/format findings; R1 did not hide
+  or reformat them. R1 also surfaced an open product question for R2/Phase 2
+  to route to the product owner rather than decide unilaterally: whether
+  `services/{datagov,hdx_fao,arcgis_live_feeds,bathymetry}.py` (not named in
+  the canonical contract's required providers) are future enrichment or
+  scope creep to drop.
 - Unmerged work considered complete: none.
 - Product decisions on record 2026-08-17 (see that section above) refine the
   product contract — public general-audience scope, ~$1/month subscription

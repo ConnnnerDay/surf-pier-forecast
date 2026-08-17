@@ -22,5 +22,7 @@ reference material only.
 ## Current stop sign
 
 Do not add product features until recovery gates R0-R3 in the canonical
-roadmap are complete. The next PR after this handoff is R1: the merged-code
-reconciliation audit.
+roadmap are complete. R1 (the merged-code reconciliation audit, see
+[`docs/R1_RECONCILIATION_AUDIT.md`](docs/R1_RECONCILIATION_AUDIT.md)) is
+done. The next PR after this handoff is R2: the truthful deterministic CI
+baseline.
