@@ -73,10 +73,12 @@ Fix applied in `test.yml`:
   always run and report their own findings; the job's overall conclusion
   is still accurate.
 
-This is the first time this workflow will produce a real pytest result and
-a real mypy result. **Their outcome is unknown as of writing** — recorded
-as such in §2, to be updated once this PR's own CI run completes (this
-session is subscribed to the PR and will report back).
+This is the first time this workflow produced a real pytest result and a
+real mypy result. **Update: this PR's own CI run confirmed both** (job
+`32062644421`, commit `05106bd`): `pytest` passed cleanly on all three of
+3.10/3.11/3.12 — no regressions found by finally letting it run — and
+`mypy` failed with 23 errors in 6 files, matching this session's local
+reproduction exactly. See the now-filled-in §2.1 table.
 
 ## 2. Exact current commands and their classification
 
@@ -89,28 +91,23 @@ filter (runs on every change, including docs-only ones like R1's PR).
 | Command | Job (after this PR) | Result | Classification | Owning sprint |
 |---|---|---|---|---|
 | `pip install -r requirements-dev.txt` | `test` | N/A (setup) | — | — |
-| `pytest tests/ -v --tb=short --cov=. --cov-report=term-missing` | `test` (×3.10/3.11/3.12) | **Unknown — never executed before this PR** (see §1.2) | To be classified once this PR's CI produces a real result | 6 (quality gates) picks up any findings |
-| `ruff check . --exclude v2` | `lint` | **Failing.** Locally reproduced: 38 errors (ruff 0.15.8, unpinned — `requirements-dev.txt` pins `ruff>=0.4,<1.0`). CI's own last recorded run of this exact command (same commit) found **604 errors** — the discrepancy is version drift from the unpinned range, not a difference in the code (see §3). | Known debt, pre-existing (predates R0). Not fixed in this PR — reformatting/fixing ~600 lint findings is out of scope for a CI-plumbing PR. | 6 |
-| `ruff format --check . --exclude v2` | `lint` | **Failing.** CI's last recorded run: 65 files would be reformatted, 31 already formatted. | Known debt, pre-existing. Not fixed here (`ruff format` without `--check` would touch ~65 files, over any reasonable "small PR" line budget and unrelated to CI plumbing). | 6 |
-| `mypy --ignore-missing-imports --exclude '(migrations?|migrate|^v2/)' .` | `lint` | **Unknown — never executed before this PR** (see §1.2). Local reproduction (mypy 1.19.1): 23 errors. | To be classified once this PR's CI produces a real result | 6 |
+| `pytest tests/ -v --tb=short --cov=. --cov-report=term-missing` | `test` (×3.10/3.11/3.12) | **Passing.** Confirmed on this PR's own CI run (job `32062644421`, commit `05106bd`) — the first real execution of this command in the workflow's history (see §1.2). All three Python versions green, no regressions. | No action needed. | — |
+| `ruff check . --exclude v2` | `lint` | **Failing.** Locally reproduced: 38 errors (ruff 0.15.8, unpinned — `requirements-dev.txt` pins `ruff>=0.4,<1.0`). CI's own last recorded run of this exact command (same commit, run `32042545841`) found **604 errors** — the discrepancy is version drift from the unpinned range, not a difference in the code (see §3). | Known debt, pre-existing (predates R0). Not fixed in this PR — reformatting/fixing ~600 lint findings is out of scope for a CI-plumbing PR. | 6 |
+| `ruff format --check . --exclude v2` | `lint` | **Failing.** Confirmed on this PR's own CI run: 65 files would be reformatted, 32 already formatted. | Known debt, pre-existing. Not fixed here (`ruff format` without `--check` would touch ~65 files, over any reasonable "small PR" line budget and unrelated to CI plumbing). | 6 |
+| `mypy --ignore-missing-imports --exclude '(migrations?|migrate|^v2/)' .` | `lint` | **Failing.** Confirmed on this PR's own CI run — the first real execution of this command in the workflow's history (see §1.2): 23 errors in 6 files (checked 88 source files), matching this session's local reproduction exactly. Findings: `Name "Dict" is not defined` (missing `typing` import) in `scripts/add_species.py`, `services/arcgis_live_feeds.py` (×4), `regulations.py`, `domain/species.py` (×2); `Unsupported right operand type for in` in `domain/species.py` (×9, lines 2427-2436); an `Incompatible types in assignment` each in `domain/species.py:2452`, `web/helpers.py:21`, `domain/forecast.py` (×3, lines 1128/2985/2987). | Known debt, pre-existing (predates R0) — real type errors, not flakes, but fixing them is application-code work out of scope for a CI-plumbing PR. | 6 |
 
 ### 2.2 `.github/workflows/v2-ci.yml` (`/v2` prototype)
 
 Triggers: `push`/`pull_request` on paths `v2/**` or the workflow file
 itself; `workflow_dispatch` added by this PR.
 
-| Command | Job | Last known-good evidence | Classification |
+| Command | Job | Evidence | Classification |
 |---|---|---|---|
-| `ruff check .` / `ruff format --check .` / `mypy app` / `pytest -q` / `alembic upgrade head` (all in `v2/backend`) | `backend` | Passed on `main`@`d948a5e` (run `31838087785`, 2026-08-14) | No known failures; this PR doesn't touch `v2/backend`, so unaffected |
-| `npm run lint` / `npm run build` / `npm test` (in `v2/frontend`) | `frontend` | Passed on the same run | No known failures |
-| `npm run test:e2e` (now excludes `@live-network`, was previously the full suite including it) | `e2e` | Passed on the same run (before this PR's tag/exclusion existed, i.e. including the live-network test) | No known failures; behavior narrows (one fewer test) but doesn't newly fail anything |
-| `npm run test:e2e:live` (new) | `e2e-live-network` (new, `workflow_dispatch`-only) | Not yet run under this name; the same test previously ran inside `e2e` and passed there per R1's audit note ("live-verified... 8/9 e2e tests pass live... 9th is documented sandbox flakiness") | Known, documented flaky-under-sandbox-network-conditions test; intentionally kept out of the required path per §1.1 |
-| Deploy placeholder | `deploy` | Always succeeds (echoes only) | No real signal; owned by sprints 10/48 |
-
-This PR will re-trigger `v2-ci.yml` (it touches `v2/frontend/package.json`,
-`v2/frontend/e2e/forecast.spec.ts`, and the workflow file itself), giving a
-fresh confirmation of the `backend`/`frontend`/`e2e` jobs against current
-`main`.
+| `ruff check .` / `ruff format --check .` / `mypy app` / `pytest -q` / `alembic upgrade head` (all in `v2/backend`) | `backend` | **Passing.** Confirmed on this PR's own CI run (job `32062644440`, commit `05106bd`), consistent with the last prior run on `main`@`d948a5e`. | No known failures; this PR doesn't touch `v2/backend`. |
+| `npm run lint` / `npm run build` / `npm test` (in `v2/frontend`) | `frontend` | **Passing.** Confirmed on this PR's own CI run. | No known failures. |
+| `npm run test:e2e` (now excludes `@live-network`) | `e2e` | **Passing.** Confirmed on this PR's own CI run — the first run with the live-network test actually excluded. | No known failures; behavior narrows (one fewer test) but doesn't newly fail anything. |
+| `npm run test:e2e:live` (new) | `e2e-live-network` (new, `workflow_dispatch`-only) | Correctly `skipped` on this PR's push/pull_request-triggered runs (confirmed — it only fires on manual `workflow_dispatch`, not yet exercised). The same test previously ran inside `e2e` and passed there per R1's audit note ("live-verified... 8/9 e2e tests pass live... 9th is documented sandbox flakiness"). | Known, documented flaky-under-sandbox-network-conditions test; intentionally kept out of the required path per §1.1. |
+| Deploy placeholder | `deploy` | Correctly `skipped` (this PR is not a push to `main`). | No real signal; owned by sprints 10/48. |
 
 ### 2.3 Branch protection / required status checks
 
