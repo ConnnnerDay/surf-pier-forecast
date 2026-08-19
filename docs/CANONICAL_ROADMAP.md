@@ -313,7 +313,7 @@ to reconciliation, not proof that the agreed outcome passed.
 |---:|---|---|---|
 | 11 | Canonical domain model | Typed models, schema snapshots, serialization round trips | **Complete** — `apps/api/app/domain/models.py` (fresh Pydantic models per `docs/architecture.md`'s ADR-003, not ported from `v2/backend/app/schemas/`, which are auth-coupled DTOs per `docs/R1_RECONCILIATION_AUDIT.md`); schema-snapshot + round-trip tests in `apps/api/tests/test_domain_models.py`, drift-detection verified locally before commit |
 | 12 | HTTP client policy | Timeouts, bounded retries, user agent, size limit, structured errors | **Complete** — `apps/api/app/infra/http_client.py` (`BoundedHTTPClient` per `docs/architecture.md`'s ADR-003, provider-agnostic); `apps/api/tests/test_http_client.py` covers success, retries, retry exhaustion, no-retry-on-4xx, timeouts, connection errors, and oversized responses via `httpx.MockTransport` |
-| 13 | NWS adapter | Typed weather, wind, alerts, and grid contract fixtures | Candidate in `/v2` |
+| 13 | NWS adapter | Typed weather, wind, alerts, and grid contract fixtures | **Partially complete** — `apps/api/app/providers/nws.py`: marine-zone wind/wave/direction parsing and fetch, point/state active-alerts parsing and fetch, all behind `apps/api/tests/test_nws_provider.py` fixture tests. Gridpoint wind fallback and current-weather observations deliberately deferred (see module docstring) to keep the PR reviewable; tracked as follow-up before sprint 21 needs them |
 | 14 | NOAA CO-OPS adapter | Tide/water-temperature fixtures, missing values, DST | Candidate in `/v2` |
 | 15 | NDBC adapter | Buoy parsing, missing columns and markers | Candidate in `/v2` |
 | 16 | Astronomy adapter | Pure deterministic coast/season/timezone tests | Candidate in `/v2` |
@@ -430,8 +430,8 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #334 (sprint 11, canonical domain model, `cbfe0a9`,
-  merged as `9778cb8`).
+- Last merged PR: #335 (sprint 12, HTTP client policy, `59d3215`, merged
+  as `f2165b3`).
 - **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
   1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
   (#332). Phase 1's only remaining items (9, 10) need external accounts —
@@ -476,19 +476,41 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   `apps/api/pytest.ini` gained `asyncio_mode = auto` for the new
   `pytest-asyncio`-based async tests. All of `apps/api`'s checks (ruff,
   ruff format, mypy, pytest — 24 passed) pass clean.
+- This PR continues Phase 2 with **sprint 13** (NWS provider adapter,
+  partial — see the sprint-ledger row for the exact deferral):
+  `apps/api/app/providers/nws.py` — marine-zone wind/wave/direction
+  parsing (`parse_marine_zone_conditions`) and fetch
+  (`fetch_marine_zone_conditions`, propagates `ProviderError` since
+  marine conditions are decision-relevant), plus point and state
+  active-alerts parsing (`_parse_alerts`, unifying the legacy module's
+  two near-duplicate GeoJSON/JSON-LD parsers) and fetch
+  (`fetch_point_alerts`/`fetch_state_alerts`, catch `ProviderError` and
+  return `[]` since alerts are non-critical enrichment — matching the
+  legacy resilience posture). Ported from `services/nws.py` behind
+  `apps/api/tests/test_nws_provider.py`'s fixture-based characterization
+  tests (abbreviated/spelled-out wind direction, "around Nft" phrasing,
+  min/max across the first 3 periods, missing fields, both alert JSON
+  shapes, truncation/limit behavior, and fetch-layer error handling via
+  `httpx.MockTransport`) rather than a verbatim carry-over. Gridpoint
+  wind fallback and current-weather observations (heat index, recent
+  precipitation) are deliberately deferred — see the module docstring —
+  to keep this PR reviewable; tracked as follow-up before sprint 21
+  (forecast assembly) needs them. All of `apps/api`'s checks (ruff, ruff
+  format, mypy, pytest — 38 passed) pass clean.
 - **Incident (sprint 6, resolved earlier)**: a scratch branch explicitly
   titled `DO NOT MERGE` was merged into `main` under the repo owner's own
   account, landing deliberately-broken code; reverted within ~10 minutes
   in PR #330. Full account in `docs/SPRINT_6_CI_PROOF.md`. Sprint 7
   turned this into a documented branch-hygiene rule.
-- Exact next action: sprint 13 (NWS provider adapter, ported from
-  `services/nws.py` behind characterization tests, built on the sprint 12
-  `BoundedHTTPClient`) is the natural next Phase 2 pick, needs no
-  external accounts. Separately, sprint 9 (preview environments) and
-  sprint 10 (production skeleton) need real Vercel/Render/Neon accounts
-  this session has no credentials for — **flag to the product owner**
-  rather than attempting them blind; they can be done whenever those
-  credentials are available, in parallel with more Phase 2 sprints.
+- Exact next action: finish sprint 13's deferred scope (gridpoint wind
+  fallback, current-weather observations) or move to sprint 14 (NOAA
+  CO-OPS adapter — tide/water-temperature fixtures) — either is a valid
+  next Phase 2 pick, needs no external accounts. Separately, sprint 9
+  (preview environments) and sprint 10 (production skeleton) need real
+  Vercel/Render/Neon accounts this session has no credentials for —
+  **flag to the product owner** rather than attempting them blind; they
+  can be done whenever those credentials are available, in parallel with
+  more Phase 2 sprints.
 - Known blocker: sprints 9/10 need Vercel/Render/Neon account access not
   available to this session — needs the product owner to either provision
   and share access, or do that part directly.
