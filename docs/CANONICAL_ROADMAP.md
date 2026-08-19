@@ -299,11 +299,11 @@ to reconciliation, not proof that the agreed outcome passed.
 | 1 | Repository baseline | Reproducible legacy audit, routes, sources, failures, reusable modules | Closed PR #309; not accepted |
 | 2 | Product definition | Journey, non-goals, metrics, vocabulary, attribution | Closed PR #310; recovered here, not accepted |
 | 3 | Architecture decision | Boundaries, request path, records, hosting, data lifecycle | Closed PR #311; recovered here, not accepted |
-| 4 | Monorepo scaffold | Clean Next.js/FastAPI install, build, and smoke test | **Complete** — `apps/web`/`apps/api` skeletons (PR #324) plus their CI build/smoke-test evidence (this PR) |
-| 5 | Local developer workflow | One documented setup/run/check path from a fresh machine | Closed PR #313; not accepted — `apps/web`/`apps/api` each have a documented path in their own README, but no single unified fresh-machine script yet |
-| 6 | Quality gates | Frontend and Python lint, type, test, and intentionally failing proof | Not accepted — this PR adds real lint/type/test checks for `apps/`, but not yet the required intentionally-failing proof |
+| 4 | Monorepo scaffold | Clean Next.js/FastAPI install, build, and smoke test | **Complete** — `apps/web`/`apps/api` skeletons (PR #324) plus their CI build/smoke-test evidence (PR #326) |
+| 5 | Local developer workflow | One documented setup/run/check path from a fresh machine | **Complete** — `apps/setup.sh` and `apps/check.sh` (this PR), verified end-to-end from a genuinely clean state (no `.venv`/`node_modules` present beforehand) |
+| 6 | Quality gates | Frontend and Python lint, type, test, and intentionally failing proof | Not accepted — real lint/type/test checks for `apps/` exist (PR #326), but not yet the required intentionally-failing proof |
 | 7 | PR governance | Sprint/PR templates, ownership, dependency policy, AI review contract | Not accepted |
-| 8 | CI foundation | Checks, secret scan, dependency audit, builds | Partial — `apps/` build/lint/type/test checks added (this PR, `.github/workflows/apps-ci.yml`); secret scanning and dependency audit still open |
+| 8 | CI foundation | Checks, secret scan, dependency audit, builds | Partial — `apps/` build/lint/type/test checks added (PR #326, `.github/workflows/apps-ci.yml`); secret scanning and dependency audit still open |
 | 9 | Preview environments | Isolated web/API previews with URL and curl evidence | Not accepted |
 | 10 | Production skeleton | Vercel, always-on Render, pooled Neon connectivity and environment separation | Not accepted |
 
@@ -430,35 +430,25 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged recovery PR: #324 (R3 — one canonical application path,
-  `391bcac`, merged as `1290381`); checkpoint synced in #325.
+- Last merged PR: #326 (sprint 4 + partial sprint 8 — real CI for
+  `apps/web`/`apps/api`, `1bdde82`, merged as `55abaef`).
 - **All recovery gates (R0-R3) are complete.** Numbered product sprints
-  have resumed.
-- This PR closes out **sprint 4** (monorepo scaffold): adds
-  `.github/workflows/apps-ci.yml` with four jobs (`api-test`, `api-lint`,
-  `web-build`, `web-lint`), each check running in its own job/step so a
-  failure in one can never mask another (the same fix R2 applied to
-  `test.yml`). Also gives `apps/api` its own `requirements-dev.txt`
-  (ruff/mypy/pytest/httpx), a real health-endpoint test, and a scoped
-  `pytest.ini` (without one, pytest was walking up and picking up the
-  *repo root's* `pytest.ini`); and switches `apps/web`'s lint script from
-  `next lint` (removed entirely in Next.js 16 — confirmed via `npx next
-  --help`, no `lint` subcommand exists) to `oxlint`, matching
-  `v2/frontend`'s existing convention. Verified locally: `ruff check`,
-  `ruff format --check`, `mypy .`, and `pytest -q` all pass in `apps/api`;
-  `npm run lint` (2 informational warnings, exit 0) and `npm run build`
-  both pass in `apps/web`.
-- This PR also makes partial progress on **sprint 8** (CI foundation):
-  the `apps/` build/lint/type/test checks above. Secret scanning and
-  dependency audit are still open.
+  are in progress: sprint 4 complete (#326), sprint 8 partial (#326).
+- This PR closes out **sprint 5** (local developer workflow): adds
+  `apps/setup.sh` (creates `apps/api/.venv`, installs its dev
+  dependencies, runs `npm install` in `apps/web`) and `apps/check.sh`
+  (runs the same checks as `apps-ci.yml` for both apps, reporting every
+  failure instead of stopping at the first), plus `apps/README.md` as the
+  one documented entry point tying setup/run/check together. Verified
+  end-to-end from a genuinely clean state — confirmed no `apps/api/.venv`
+  or `apps/web/node_modules` existed beforehand, then ran `apps/setup.sh`
+  followed by `apps/check.sh`, which exited 0 with every check passing.
 - Exact next action: sprint 6 (quality gates) — add the required
-  intentionally-failing proof (a deliberately broken check that verifies
-  CI actually blocks bad code) for the `apps/` CI added here, or sprint 5
-  (local developer workflow) — unify `apps/web`+`apps/api`'s two
-  documented-but-separate local-dev paths into one fresh-machine script.
-  Either is a reasonable next pick; check the sprint ledger's "definition
-  of ready" before starting. Sprints 1-3 (repository baseline audit,
-  product definition, architecture decision) still have
+  intentionally-failing proof (a deliberately broken check, pushed and
+  observed to fail CI, then reverted before merge — not left in `main` —
+  that verifies the `apps/` CI actually blocks bad code) to close the one
+  remaining piece of sprint 6's outcome. Sprints 1-3 (repository baseline
+  audit, product definition, architecture decision) still have
   recovered-but-not-accepted evidence from closed PRs #309-#311 — check
   whether it still satisfies each outcome before redoing that work.
 - Known blocker: none.
@@ -466,13 +456,13 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   legacy (repo-root) `ruff check`/`ruff format --check`/`mypy` findings
   (~600 errors, ~65 unformatted files, 23 mypy errors) remain known debt
   for sprint 6 — unrelated to `apps/`, which lints/type-checks/tests
-  clean as of this PR. R1's open product question is still unresolved:
-  whether `services/{datagov,hdx_fao,arcgis_live_feeds,bathymetry}.py`
-  (not named in the canonical contract's required providers) are future
-  enrichment or scope creep — route to the product owner before Phase 2
-  sprints port providers wholesale. This session still could not verify
-  GitHub branch-protection/required-status-check configuration via
-  available tooling — a repo admin should configure it, now including
+  clean. R1's open product question is still unresolved: whether
+  `services/{datagov,hdx_fao,arcgis_live_feeds,bathymetry}.py` (not named
+  in the canonical contract's required providers) are future enrichment
+  or scope creep — route to the product owner before Phase 2 sprints port
+  providers wholesale. This session still could not verify GitHub
+  branch-protection/required-status-check configuration via available
+  tooling — a repo admin should configure it, now including
   `apps-ci.yml`'s four checks.
 - Unmerged work considered complete: none.
 - Product decisions on record 2026-08-17 (see that section above) refine the
