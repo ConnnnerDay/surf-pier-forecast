@@ -311,7 +311,7 @@ to reconciliation, not proof that the agreed outcome passed.
 
 | Sprint | Outcome | Acceptance focus | Current state |
 |---:|---|---|---|
-| 11 | Canonical domain model | Typed models, schema snapshots, serialization round trips | Candidate in `/v2` |
+| 11 | Canonical domain model | Typed models, schema snapshots, serialization round trips | **Complete** — `apps/api/app/domain/models.py` (fresh Pydantic models per `docs/architecture.md`'s ADR-003, not ported from `v2/backend/app/schemas/`, which are auth-coupled DTOs per `docs/R1_RECONCILIATION_AUDIT.md`); schema-snapshot + round-trip tests in `apps/api/tests/test_domain_models.py`, drift-detection verified locally before commit |
 | 12 | HTTP client policy | Timeouts, bounded retries, user agent, size limit, structured errors | Candidate in `/v2` |
 | 13 | NWS adapter | Typed weather, wind, alerts, and grid contract fixtures | Candidate in `/v2` |
 | 14 | NOAA CO-OPS adapter | Tide/water-temperature fixtures, missing values, DST | Candidate in `/v2` |
@@ -430,39 +430,43 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #332 (sprint 8 — secret scanning and dependency audit,
-  `3d97697`, merged as `af7bf47`).
-- **All recovery gates (R0-R3) are complete.** Numbered product sprints
-  complete: 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
-  (#332).
-- This PR closes out **sprints 1-3** (repository baseline, product
-  definition, architecture decision): recovers `docs/baseline-audit.md`,
-  `docs/product-definition.md`, and `docs/architecture.md` verbatim from
-  closed PRs #309/#310/#311, each reviewed line-by-line against every
-  decision recorded since (the "Product decisions on record" sections,
-  R1-R3, and everything merged in sprints 4-8) for conflicts. Found
-  exactly one: `docs/architecture.md`'s ADR-001 specifies `pnpm`/`uv`
-  tooling, but the already-merged `apps/web`/`apps/api` use plain
-  `npm`/`pip` with working CI — noted as superseded in the doc itself,
-  not silently rewritten and not used to justify migrating tooling that
-  already works. Everything else in all three documents held up with no
-  contradiction — they're accepted as-is, historical audit-date framing
-  intact (sprint 1's numbers are a 2026-08-07 snapshot, not re-run).
+- Last merged PR: #333 (sprints 1-3 evidence acceptance, `cf200ac`, merged
+  as `3254b02`).
+- **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
+  1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
+  (#332). Phase 1's only remaining items (9, 10) need external accounts —
+  see below.
+- This PR starts **Phase 2** with **sprint 11** (canonical domain
+  model): `apps/api/app/domain/models.py` — fresh Pydantic models
+  (`Location`, `Observation`, `SourceStatus`, `Confidence`, `Warning`,
+  `ForecastEnvelope`) per `docs/architecture.md`'s ADR-003, not ported
+  from `v2/backend/app/schemas/` (those are auth-coupled DTOs per
+  `docs/R1_RECONCILIATION_AUDIT.md`). `ForecastEnvelope.conditions`/
+  `tides`/`hourly_outlook`/`recommendations` are deliberately left as
+  opaque `dict[str, Any] | None` — designing those shapes belongs to the
+  sprints that own them (21, 22, 34, 35), each behind characterization
+  tests, not invented here without evidence. `apps/api/tests/
+  test_domain_models.py` covers serialization round trips and JSON
+  schema-snapshot drift detection (snapshots committed under
+  `apps/api/tests/schema_snapshots/`); drift detection verified locally
+  by deliberately adding a field, confirming the test failed, then
+  reverting — not just assumed to work. `apps/api/scripts/
+  generate_schema_snapshots.py` regenerates snapshots after a deliberate
+  model change. All of `apps/api`'s checks (ruff, ruff format, mypy,
+  pytest) pass clean.
 - **Incident (sprint 6, resolved earlier)**: a scratch branch explicitly
   titled `DO NOT MERGE` was merged into `main` under the repo owner's own
   account, landing deliberately-broken code; reverted within ~10 minutes
   in PR #330. Full account in `docs/SPRINT_6_CI_PROOF.md`. Sprint 7
   turned this into a documented branch-hygiene rule.
-- Exact next action: sprint 9 (preview environments) and sprint 10
-  (production skeleton) need real Vercel/Render/Neon accounts this
-  session has no credentials for — **flag to the product owner** rather
-  than attempting them blind. With sprints 1-8 all complete, the phase 1
-  ledger's only remaining items needing no external accounts are
-  exhausted; the next agent should ask the product owner for Vercel/
-  Render/Neon access (or have them do sprints 9/10 directly) before
-  Phase 1 can finish, or consider whether a Phase 2 sprint (11+, porting
-  characterized forecast logic into `apps/api`) is worth starting in
-  parallel — that also needs no external accounts.
+- Exact next action: sprint 12 (HTTP client policy — timeouts, bounded
+  retries, user agent, size limit, structured errors, in `apps/api`) is
+  the natural next Phase 2 pick, needs no external accounts. Separately,
+  sprint 9 (preview environments) and sprint 10 (production skeleton)
+  need real Vercel/Render/Neon accounts this session has no credentials
+  for — **flag to the product owner** rather than attempting them blind;
+  they can be done whenever those credentials are available, in parallel
+  with more Phase 2 sprints.
 - Known blocker: sprints 9/10 need Vercel/Render/Neon account access not
   available to this session — needs the product owner to either provision
   and share access, or do that part directly.

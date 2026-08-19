@@ -1,0 +1,46 @@
+{
+  "$defs": {
+    "SourceState": {
+      "enum": [
+        "ok",
+        "degraded",
+        "unavailable"
+      ],
+      "title": "SourceState",
+      "type": "string"
+    }
+  },
+  "properties": {
+    "as_of": {
+      "format": "date-time",
+      "title": "As Of",
+      "type": "string"
+    },
+    "detail": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Detail"
+    },
+    "provider": {
+      "title": "Provider",
+      "type": "string"
+    },
+    "state": {
+      "$ref": "#/$defs/SourceState"
+    }
+  },
+  "required": [
+    "provider",
+    "state",
+    "as_of"
+  ],
+  "title": "SourceStatus",
+  "type": "object"
+}

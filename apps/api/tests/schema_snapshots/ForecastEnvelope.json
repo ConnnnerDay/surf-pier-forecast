@@ -1,0 +1,264 @@
+{
+  "$defs": {
+    "Confidence": {
+      "properties": {
+        "level": {
+          "$ref": "#/$defs/ConfidenceLevel"
+        },
+        "reasons": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Reasons",
+          "type": "array"
+        }
+      },
+      "required": [
+        "level"
+      ],
+      "title": "Confidence",
+      "type": "object"
+    },
+    "ConfidenceLevel": {
+      "enum": [
+        "high",
+        "medium",
+        "low"
+      ],
+      "title": "ConfidenceLevel",
+      "type": "string"
+    },
+    "ForecastState": {
+      "description": "docs/product-definition.md \u00a7 Product vocabulary \u00a7 Forecast state.",
+      "enum": [
+        "fresh",
+        "stale",
+        "partial",
+        "unavailable"
+      ],
+      "title": "ForecastState",
+      "type": "string"
+    },
+    "Location": {
+      "description": "A resolved location. Coordinates are rounded before storage/transit\nper docs/CANONICAL_ROADMAP.md's data-minimization requirement \u2014 rounding\nitself happens at resolution time (sprint 18/19), not here.",
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "lat": {
+          "description": "Rounded, not precise \u2014 see module docstring.",
+          "title": "Lat",
+          "type": "number"
+        },
+        "lng": {
+          "description": "Rounded, not precise \u2014 see module docstring.",
+          "title": "Lng",
+          "type": "number"
+        },
+        "marine_zone": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Marine Zone"
+        },
+        "station_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Station Ids",
+          "type": "array"
+        },
+        "timezone": {
+          "title": "Timezone",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "lat",
+        "lng",
+        "timezone"
+      ],
+      "title": "Location",
+      "type": "object"
+    },
+    "SourceState": {
+      "enum": [
+        "ok",
+        "degraded",
+        "unavailable"
+      ],
+      "title": "SourceState",
+      "type": "string"
+    },
+    "SourceStatus": {
+      "properties": {
+        "as_of": {
+          "format": "date-time",
+          "title": "As Of",
+          "type": "string"
+        },
+        "detail": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Detail"
+        },
+        "provider": {
+          "title": "Provider",
+          "type": "string"
+        },
+        "state": {
+          "$ref": "#/$defs/SourceState"
+        }
+      },
+      "required": [
+        "provider",
+        "state",
+        "as_of"
+      ],
+      "title": "SourceStatus",
+      "type": "object"
+    },
+    "Warning": {
+      "properties": {
+        "code": {
+          "title": "Code",
+          "type": "string"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "severity": {
+          "$ref": "#/$defs/WarningSeverity"
+        }
+      },
+      "required": [
+        "code",
+        "message",
+        "severity"
+      ],
+      "title": "Warning",
+      "type": "object"
+    },
+    "WarningSeverity": {
+      "enum": [
+        "info",
+        "advisory",
+        "critical"
+      ],
+      "title": "WarningSeverity",
+      "type": "string"
+    }
+  },
+  "description": "The top-level response shape named in docs/CANONICAL_ROADMAP.md's\n\"Required API surface\" section. `conditions`, `tides`, `hourly_outlook`,\nand `recommendations` are opaque here on purpose \u2014 see module docstring.",
+  "properties": {
+    "conditions": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Conditions"
+    },
+    "confidence": {
+      "$ref": "#/$defs/Confidence"
+    },
+    "generated_at": {
+      "format": "date-time",
+      "title": "Generated At",
+      "type": "string"
+    },
+    "hourly_outlook": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Hourly Outlook"
+    },
+    "location": {
+      "$ref": "#/$defs/Location"
+    },
+    "recommendations": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Recommendations"
+    },
+    "sources": {
+      "items": {
+        "$ref": "#/$defs/SourceStatus"
+      },
+      "title": "Sources",
+      "type": "array"
+    },
+    "state": {
+      "$ref": "#/$defs/ForecastState"
+    },
+    "tides": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Tides"
+    },
+    "warnings": {
+      "items": {
+        "$ref": "#/$defs/Warning"
+      },
+      "title": "Warnings",
+      "type": "array"
+    }
+  },
+  "required": [
+    "location",
+    "generated_at",
+    "state",
+    "confidence"
+  ],
+  "title": "ForecastEnvelope",
+  "type": "object"
+}
