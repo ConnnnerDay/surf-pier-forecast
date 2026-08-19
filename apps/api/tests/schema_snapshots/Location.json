@@ -1,0 +1,55 @@
+{
+  "description": "A resolved location. Coordinates are rounded before storage/transit\nper docs/CANONICAL_ROADMAP.md's data-minimization requirement \u2014 rounding\nitself happens at resolution time (sprint 18/19), not here.",
+  "properties": {
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "label": {
+      "title": "Label",
+      "type": "string"
+    },
+    "lat": {
+      "description": "Rounded, not precise \u2014 see module docstring.",
+      "title": "Lat",
+      "type": "number"
+    },
+    "lng": {
+      "description": "Rounded, not precise \u2014 see module docstring.",
+      "title": "Lng",
+      "type": "number"
+    },
+    "marine_zone": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Marine Zone"
+    },
+    "station_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Station Ids",
+      "type": "array"
+    },
+    "timezone": {
+      "title": "Timezone",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "label",
+    "lat",
+    "lng",
+    "timezone"
+  ],
+  "title": "Location",
+  "type": "object"
+}

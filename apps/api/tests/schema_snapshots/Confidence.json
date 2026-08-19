@@ -1,0 +1,30 @@
+{
+  "$defs": {
+    "ConfidenceLevel": {
+      "enum": [
+        "high",
+        "medium",
+        "low"
+      ],
+      "title": "ConfidenceLevel",
+      "type": "string"
+    }
+  },
+  "properties": {
+    "level": {
+      "$ref": "#/$defs/ConfidenceLevel"
+    },
+    "reasons": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Reasons",
+      "type": "array"
+    }
+  },
+  "required": [
+    "level"
+  ],
+  "title": "Confidence",
+  "type": "object"
+}

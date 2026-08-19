@@ -1,0 +1,33 @@
+{
+  "$defs": {
+    "WarningSeverity": {
+      "enum": [
+        "info",
+        "advisory",
+        "critical"
+      ],
+      "title": "WarningSeverity",
+      "type": "string"
+    }
+  },
+  "properties": {
+    "code": {
+      "title": "Code",
+      "type": "string"
+    },
+    "message": {
+      "title": "Message",
+      "type": "string"
+    },
+    "severity": {
+      "$ref": "#/$defs/WarningSeverity"
+    }
+  },
+  "required": [
+    "code",
+    "message",
+    "severity"
+  ],
+  "title": "Warning",
+  "type": "object"
+}
