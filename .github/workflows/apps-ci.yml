@@ -1,0 +1,116 @@
+name: apps CI
+
+on:
+  push:
+    branches: ["main", "master", "claude/**"]
+    paths: ["apps/**", ".github/workflows/apps-ci.yml"]
+  pull_request:
+    branches: ["main", "master"]
+    paths: ["apps/**", ".github/workflows/apps-ci.yml"]
+
+jobs:
+  # Runs pytest only, in its own job, so a lint/type failure can never mask
+  # a real test result (see docs/R2_CI_BASELINE.md for why that matters).
+  api-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: apps/api/requirements-dev.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Run tests
+        run: pytest -q
+
+  # Each static-analysis check gets continue-on-error and a final
+  # aggregate step, so one failing check never hides the others.
+  api-lint:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: apps/api/requirements-dev.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Lint with ruff
+        id: ruff_check
+        continue-on-error: true
+        run: ruff check .
+
+      - name: Check formatting
+        id: ruff_format
+        continue-on-error: true
+        run: ruff format --check .
+
+      - name: Type check with mypy
+        id: mypy
+        continue-on-error: true
+        run: mypy .
+
+      - name: Fail if any static-analysis check failed
+        if: steps.ruff_check.outcome == 'failure' || steps.ruff_format.outcome == 'failure' || steps.mypy.outcome == 'failure'
+        run: |
+          echo "One or more static-analysis checks failed above (ruff check / ruff format / mypy) — see their step logs."
+          exit 1
+
+  web-build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check + build
+        run: npm run build
+
+  web-lint:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
