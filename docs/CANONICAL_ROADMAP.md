@@ -296,9 +296,9 @@ to reconciliation, not proof that the agreed outcome passed.
 
 | Sprint | Outcome | Acceptance focus | Current state |
 |---:|---|---|---|
-| 1 | Repository baseline | Reproducible legacy audit, routes, sources, failures, reusable modules | Closed PR #309; not accepted |
-| 2 | Product definition | Journey, non-goals, metrics, vocabulary, attribution | Closed PR #310; recovered here, not accepted |
-| 3 | Architecture decision | Boundaries, request path, records, hosting, data lifecycle | Closed PR #311; recovered here, not accepted |
+| 1 | Repository baseline | Reproducible legacy audit, routes, sources, failures, reusable modules | **Complete** — `docs/baseline-audit.md` (this PR), recovered verbatim from closed PR #309 and reviewed for conflicts with later decisions; none found |
+| 2 | Product definition | Journey, non-goals, metrics, vocabulary, attribution | **Complete** — `docs/product-definition.md` (this PR), recovered verbatim from closed PR #310; refined, not contradicted, by the later "Product decisions on record" sections above |
+| 3 | Architecture decision | Boundaries, request path, records, hosting, data lifecycle | **Complete** — `docs/architecture.md` (this PR), recovered verbatim from closed PR #311 except one reconciliation note: its `pnpm`/`uv` tooling choice is superseded by the already-merged `npm`/`pip` tooling in `apps/web`/`apps/api` |
 | 4 | Monorepo scaffold | Clean Next.js/FastAPI install, build, and smoke test | **Complete** — `apps/web`/`apps/api` skeletons (PR #324) plus their CI build/smoke-test evidence (PR #326) |
 | 5 | Local developer workflow | One documented setup/run/check path from a fresh machine | **Complete** — `apps/setup.sh` and `apps/check.sh` (PR #327), verified end-to-end from a genuinely clean state (no `.venv`/`node_modules` present beforehand) |
 | 6 | Quality gates | Frontend and Python lint, type, test, and intentionally failing proof | **Complete** — real lint/type/test checks for `apps/` (PR #326), plus the intentionally-failing proof (PR #329): a scratch branch that deliberately broke all five `apps-ci.yml` checks, pushed to observe a real red CI run. It was briefly and accidentally merged (see `docs/SPRINT_6_CI_PROOF.md`'s "Incident" section) and reverted in PR #330 — doesn't invalidate the proof itself, but is the direct motivation for sprint 7 |
@@ -430,59 +430,57 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #331 (sprint 7 — PR governance, `7128480`, merged as
-  `584e4fb`).
+- Last merged PR: #332 (sprint 8 — secret scanning and dependency audit,
+  `3d97697`, merged as `af7bf47`).
 - **All recovery gates (R0-R3) are complete.** Numbered product sprints
-  complete: 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331).
-- This PR closes out **sprint 8** (CI foundation): adds
-  `.github/workflows/security.yml` — a repo-wide `gitleaks` secret scan
-  (pinned binary v8.21.2, downloaded directly rather than via a
-  marketplace action to avoid that action's licensing terms) and
-  `pip-audit`/`npm audit` dependency checks for `apps/api`/`apps/web`.
-  Ran `gitleaks dir .` locally first against the whole working tree
-  before wiring it into CI (the sprint-6 lesson: verify before trusting a
-  new check not to be noisy) — found exactly two hits, both false
-  positives (`.env.example`'s commented-out `APPLE_PRIVATE_KEY` PEM
-  placeholder, and a `STORAGE_KEY` *variable name* in
-  `static/js/lure_bag.js` that isn't a secret at all), suppressed via a
-  documented `.gitleaksignore`. `pip-audit`/`npm audit` both currently
-  report zero known vulnerabilities for `apps/api`/`apps/web`'s real
-  dependencies. Combined with PR #326's build/lint/type/test checks,
-  sprint 8's full outcome ("checks, secret scan, dependency audit,
-  builds") is now delivered.
-- **Incident (sprint 6, resolved before this PR)**: a scratch branch
-  explicitly titled `DO NOT MERGE` was merged into `main` under the repo
-  owner's own account, landing deliberately-broken code; reverted within
-  ~10 minutes in PR #330. Full account in
-  `docs/SPRINT_6_CI_PROOF.md`. Sprint 7 turned this into a documented
-  branch-hygiene rule.
+  complete: 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
+  (#332).
+- This PR closes out **sprints 1-3** (repository baseline, product
+  definition, architecture decision): recovers `docs/baseline-audit.md`,
+  `docs/product-definition.md`, and `docs/architecture.md` verbatim from
+  closed PRs #309/#310/#311, each reviewed line-by-line against every
+  decision recorded since (the "Product decisions on record" sections,
+  R1-R3, and everything merged in sprints 4-8) for conflicts. Found
+  exactly one: `docs/architecture.md`'s ADR-001 specifies `pnpm`/`uv`
+  tooling, but the already-merged `apps/web`/`apps/api` use plain
+  `npm`/`pip` with working CI — noted as superseded in the doc itself,
+  not silently rewritten and not used to justify migrating tooling that
+  already works. Everything else in all three documents held up with no
+  contradiction — they're accepted as-is, historical audit-date framing
+  intact (sprint 1's numbers are a 2026-08-07 snapshot, not re-run).
+- **Incident (sprint 6, resolved earlier)**: a scratch branch explicitly
+  titled `DO NOT MERGE` was merged into `main` under the repo owner's own
+  account, landing deliberately-broken code; reverted within ~10 minutes
+  in PR #330. Full account in `docs/SPRINT_6_CI_PROOF.md`. Sprint 7
+  turned this into a documented branch-hygiene rule.
 - Exact next action: sprint 9 (preview environments) and sprint 10
   (production skeleton) need real Vercel/Render/Neon accounts this
   session has no credentials for — **flag to the product owner** rather
-  than attempting them blind. Sprints 1-3 (repository baseline audit,
-  product definition, architecture decision) still have
-  recovered-but-not-accepted evidence from closed PRs #309-#311 — check
-  whether it still satisfies each outcome before redoing that work; that
-  doesn't need external accounts and is a reasonable next pick.
+  than attempting them blind. With sprints 1-8 all complete, the phase 1
+  ledger's only remaining items needing no external accounts are
+  exhausted; the next agent should ask the product owner for Vercel/
+  Render/Neon access (or have them do sprints 9/10 directly) before
+  Phase 1 can finish, or consider whether a Phase 2 sprint (11+, porting
+  characterized forecast logic into `apps/api`) is worth starting in
+  parallel — that also needs no external accounts.
 - Known blocker: sprints 9/10 need Vercel/Render/Neon account access not
   available to this session — needs the product owner to either provision
   and share access, or do that part directly.
 - Known baseline carried forward: per `docs/R2_CI_BASELINE.md`, the
   legacy (repo-root) `ruff check`/`ruff format --check`/`mypy` findings
   (~600 errors, ~65 unformatted files, 23 mypy errors) remain known debt —
-  unrelated to `apps/`, which lints/type-checks/tests clean and now also
-  passes secret-scan/dependency-audit. R1's open product question is
-  still unresolved: whether
-  `services/{datagov,hdx_fao,arcgis_live_feeds,bathymetry}.py` (not named
-  in the canonical contract's required providers) are future enrichment
-  or scope creep — route to the product owner before Phase 2 sprints port
-  providers wholesale. This session still could not verify GitHub
-  branch-protection/required-status-check configuration via available
-  tooling, and separately could not delete a git branch via any available
-  tool — a repo admin should handle both, including configuring
-  `apps-ci.yml`/`security.yml`'s checks as required and deleting
-  `claude/sprint6-ci-failure-proof` (still on the remote, merged-and-
-  reverted, safe to delete).
+  unrelated to `apps/`, which lints/type-checks/tests clean and passes
+  secret-scan/dependency-audit. R1's open product question is still
+  unresolved: whether `services/{datagov,hdx_fao,arcgis_live_feeds,
+  bathymetry}.py` (not named in the canonical contract's required
+  providers) are future enrichment or scope creep — route to the product
+  owner before Phase 2 sprints port providers wholesale. This session
+  still could not verify GitHub branch-protection/required-status-check
+  configuration via available tooling, and separately could not delete a
+  git branch via any available tool — a repo admin should handle both,
+  including configuring `apps-ci.yml`/`security.yml`'s checks as required
+  and deleting `claude/sprint6-ci-failure-proof` (still on the remote,
+  merged-and-reverted, safe to delete).
 - Unmerged work considered complete: none.
 - Product decisions on record 2026-08-17 (see that section above) refine the
   product contract — public general-audience scope, ~$1/month subscription
