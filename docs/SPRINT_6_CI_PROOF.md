@@ -47,15 +47,21 @@ This document is that evidence.
 
 ## Incident: the scratch branch was merged to `main`
 
-Shortly after this proof was captured, GitHub auto-opened PR #328 from
-the pushed `claude/sprint6-ci-failure-proof` branch (visible in this
-session's own investigation as a `pull_request`-event CI run despite no
-PR existing moments earlier), and the repo owner merged it —
-`merged_by: ConnnnerDay`, at `2026-08-19T15:00:49Z` — despite the PR
+Shortly after this proof was captured, PR #328 — created and merged
+under the repo owner's own account (`user: ConnnnerDay`,
+`merged_by: ConnnnerDay`, at `2026-08-19T15:00:49Z`) from the pushed
+`claude/sprint6-ci-failure-proof` branch — was merged, despite the PR
 title reading `SCRATCH: ... DO NOT MERGE` and its body explaining why.
-This landed the deliberately-broken code on `main` as commit `e2d7165`,
-and `apps-ci.yml`'s push run against `main` (`32267479346`) correctly
-went red.
+**Correction**: this document originally speculated the PR was
+"auto-opened by GitHub"; a check of `.github/workflows/` found no
+automation in this repo that creates or merges PRs, so that claim was
+unfounded and is retracted. The far more likely explanation is GitHub's
+standard "Compare & pull request" banner, which appears for any recently
+pushed branch and creates a PR attributed to the pushing account on a
+single click — plausibly clicked through without reading the branch/PR
+title. This landed the deliberately-broken code on `main` as commit
+`e2d7165`, and `apps-ci.yml`'s push run against `main` (`32267479346`)
+correctly went red.
 
 **Fix**: reverted the merge on `main` via `git revert -m 1 e2d7165`
 (commit `d53ab0a`), restoring all four files to their pre-incident
@@ -72,14 +78,14 @@ instruction) and has now been reverted, rather than sitting unmerged
 forever as originally planned. Sprint 6's outcome — proof that CI blocks
 bad code — is still satisfied by the same run (`32267417356`).
 
-**Process gap this surfaces**: pushing a `claude/**`-prefixed branch is
-apparently enough to trigger automatic PR creation in this repo, which a
-human can then merge without necessarily reading the "DO NOT MERGE"
-warning. Future intentionally-failing-CI proofs (or any throwaway
-branch) should avoid the `claude/**` prefix pattern, or use a fully
-separate mechanism (e.g., a local-only CI dry run, or a fork) that
-cannot auto-open a mergeable PR against `main` at all. Worth a decision
-in sprint 7 (PR governance).
+**Process gap this surfaces**: pushing a throwaway branch to the shared
+remote at all creates an opening for exactly this — a one-click "Compare
+& pull request" merge that bypasses any read of the branch name or PR
+title. Fixed in sprint 7 (`docs/PR_GOVERNANCE.md`): future
+intentionally-failing-CI proofs should not push a scratch branch and
+leave it sitting; either close the resulting PR immediately and visibly
+(don't just assume it stays unopened), or capture the CI-failure
+evidence without ever pushing to the shared remote.
 
 ## Disposition of the scratch branch
 

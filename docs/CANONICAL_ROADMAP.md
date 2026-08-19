@@ -301,8 +301,8 @@ to reconciliation, not proof that the agreed outcome passed.
 | 3 | Architecture decision | Boundaries, request path, records, hosting, data lifecycle | Closed PR #311; recovered here, not accepted |
 | 4 | Monorepo scaffold | Clean Next.js/FastAPI install, build, and smoke test | **Complete** — `apps/web`/`apps/api` skeletons (PR #324) plus their CI build/smoke-test evidence (PR #326) |
 | 5 | Local developer workflow | One documented setup/run/check path from a fresh machine | **Complete** — `apps/setup.sh` and `apps/check.sh` (PR #327), verified end-to-end from a genuinely clean state (no `.venv`/`node_modules` present beforehand) |
-| 6 | Quality gates | Frontend and Python lint, type, test, and intentionally failing proof | **Complete** — real lint/type/test checks for `apps/` (PR #326), plus the intentionally-failing proof (this PR): a scratch branch that deliberately broke all five `apps-ci.yml` checks, pushed to observe a real red CI run, then never merged. See `docs/SPRINT_6_CI_PROOF.md` |
-| 7 | PR governance | Sprint/PR templates, ownership, dependency policy, AI review contract | Not accepted |
+| 6 | Quality gates | Frontend and Python lint, type, test, and intentionally failing proof | **Complete** — real lint/type/test checks for `apps/` (PR #326), plus the intentionally-failing proof (PR #329): a scratch branch that deliberately broke all five `apps-ci.yml` checks, pushed to observe a real red CI run. It was briefly and accidentally merged (see `docs/SPRINT_6_CI_PROOF.md`'s "Incident" section) and reverted in PR #330 — doesn't invalidate the proof itself, but is the direct motivation for sprint 7 |
+| 7 | PR governance | Sprint/PR templates, ownership, dependency policy, AI review contract | **Complete** — `.github/pull_request_template.md` and `docs/PR_GOVERNANCE.md` (this PR), consolidating ownership, one-PR-per-sprint policy, dependency policy, the AI review contract, and a branch-hygiene rule written directly from the sprint-6 incident |
 | 8 | CI foundation | Checks, secret scan, dependency audit, builds | Partial — `apps/` build/lint/type/test checks added (PR #326, `.github/workflows/apps-ci.yml`); secret scanning and dependency audit still open |
 | 9 | Preview environments | Isolated web/API previews with URL and curl evidence | Not accepted |
 | 10 | Production skeleton | Vercel, always-on Render, pooled Neon connectivity and environment separation | Not accepted |
@@ -430,33 +430,44 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #327 (sprint 5 — fresh-machine setup/check scripts,
-  `01239dd`, merged as `fed28ab`).
+- Last merged PR: #330 (urgent revert of an accidental scratch-branch
+  merge, `9400028`, merged as `7d13a21`) — see incident note below.
 - **All recovery gates (R0-R3) are complete.** Numbered product sprints
   in progress: sprint 4 complete (#326), sprint 5 complete (#327), sprint
-  8 partial (#326).
-- This PR closes out **sprint 6** (quality gates): the lint/type/test
-  checks themselves already existed (PR #326); this PR adds the required
-  intentionally-failing proof. See
-  [`docs/SPRINT_6_CI_PROOF.md`](SPRINT_6_CI_PROOF.md) for the full method
-  and evidence — summary: a scratch branch
-  (`claude/sprint6-ci-failure-proof`) deliberately broke all five
-  `apps-ci.yml` checks, was pushed to trigger a real CI run (`32267417356`,
-  conclusion `failure`, every job failed for the intended reason), and was
-  never opened as a PR or merged. `main` was unaffected throughout
-  (verified via `git log` before/after, both at `fed28ab`). That scratch
-  branch remains pushed to the remote — this session's git proxy access
-  returned HTTP 403 on `git push --delete`, and no available GitHub API
-  tool can delete a branch — but it holds one clearly-labeled
-  `DO NOT MERGE` commit with no PR against it, so it's inert; a repo
-  admin can delete it whenever convenient.
-- Exact next action: sprint 7 (PR governance — sprint/PR templates,
-  ownership, dependency policy, AI review contract) or sprint 9 (preview
-  environments). Sprints 1-3 (repository baseline audit, product
-  definition, architecture decision) still have recovered-but-not-accepted
-  evidence from closed PRs #309-#311 — check whether it still satisfies
-  each outcome before redoing that work.
-- Known blocker: none.
+  6 complete (#329 + the #330 revert), sprint 8 partial (#326).
+- This PR closes out **sprint 7** (PR governance): adds
+  `.github/pull_request_template.md` and
+  [`docs/PR_GOVERNANCE.md`](PR_GOVERNANCE.md), consolidating ownership
+  (sole human reviewer), the one-PR-per-sprint policy, dependency policy,
+  the AI review contract, and — written directly from the incident below
+  — a branch-hygiene rule that scratch/deliberately-broken branches don't
+  get pushed to the shared remote without immediately checking for and
+  closing any PR GitHub creates from them.
+- **Incident, resolved**: sprint 6's CI-failure-proof scratch branch
+  (`claude/sprint6-ci-failure-proof`, explicitly titled
+  `DO NOT MERGE`) was merged into `main` as PR #328 under the repo
+  owner's own account, landing deliberately-broken code. Reverted
+  cleanly in PR #330 (`git revert -m 1` the merge commit); verified
+  `apps/setup.sh` + `apps/check.sh` pass again post-revert, and PR #330's
+  own CI ran green. Full account, including a correction (no repo
+  automation caused this — most likely GitHub's "Compare & pull request"
+  banner clicked through without reading the title) in
+  `docs/SPRINT_6_CI_PROOF.md`'s "Incident" section. Sprint 6's actual
+  proof evidence (real CI run `32267417356` failing on genuinely broken
+  code) is unaffected by this.
+- Exact next action: sprint 9 (preview environments) or sprint 10
+  (production skeleton) need real Vercel/Render/Neon accounts this
+  session has no credentials for — flag that to the product owner rather
+  than attempting them blind. Sprint 8's remaining pieces (secret
+  scanning, dependency audit) or sprint 2/3-adjacent work not blocked on
+  external accounts are better next picks for an agent session. Sprints
+  1-3 (repository baseline audit, product definition, architecture
+  decision) still have recovered-but-not-accepted evidence from closed
+  PRs #309-#311 — check whether it still satisfies each outcome before
+  redoing that work.
+- Known blocker: sprints 9/10 need Vercel/Render/Neon account access not
+  available to this session — needs the product owner to either provision
+  and share access, or do that part directly.
 - Known baseline carried forward: per `docs/R2_CI_BASELINE.md`, the
   legacy (repo-root) `ruff check`/`ruff format --check`/`mypy` findings
   (~600 errors, ~65 unformatted files, 23 mypy errors) remain known debt —
@@ -468,9 +479,10 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   providers wholesale. This session still could not verify GitHub
   branch-protection/required-status-check configuration via available
   tooling, and separately could not delete a git branch via any available
-  tool (see above) — a repo admin should handle both, including
-  configuring `apps-ci.yml`'s four checks as required and deleting
-  `claude/sprint6-ci-failure-proof`.
+  tool — a repo admin should handle both, including configuring
+  `apps-ci.yml`'s checks as required and deleting
+  `claude/sprint6-ci-failure-proof` (still on the remote, merged-and-
+  reverted, safe to delete).
 - Unmerged work considered complete: none.
 - Product decisions on record 2026-08-17 (see that section above) refine the
   product contract — public general-audience scope, ~$1/month subscription
