@@ -1,0 +1,72 @@
+name: security
+
+on:
+  push:
+    branches: ["main", "master", "claude/**"]
+  pull_request:
+    branches: ["main", "master"]
+
+jobs:
+  # Repo-wide, no path filter — secrets aren't confined to any one
+  # directory. Downloads the pinned gitleaks binary directly rather than
+  # a marketplace action, to avoid depending on that action's licensing
+  # terms for org/private repos.
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install gitleaks
+        run: |
+          curl -sSL -o /tmp/gitleaks.tar.gz \
+            https://github.com/gitleaks/gitleaks/releases/download/v8.21.2/gitleaks_8.21.2_linux_x64.tar.gz
+          mkdir -p /tmp/gitleaks-bin
+          tar -xzf /tmp/gitleaks.tar.gz -C /tmp/gitleaks-bin
+          chmod +x /tmp/gitleaks-bin/gitleaks
+
+      - name: Scan for secrets
+        run: /tmp/gitleaks-bin/gitleaks dir . -v
+
+  api-dependency-audit:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: apps/api/requirements.txt
+
+      - name: Install dependencies + pip-audit
+        run: |
+          pip install -r requirements.txt
+          pip install pip-audit
+
+      - name: Audit dependencies
+        run: pip-audit -r requirements.txt
+
+  web-dependency-audit:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Audit dependencies
+        run: npm audit --audit-level=high

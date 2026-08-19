@@ -1,0 +1,11 @@
+# Verified false positives from `gitleaks dir .` — see docs/PR_GOVERNANCE.md
+# and the sprint 8 PR that added secret scanning for how these were checked.
+# Format: one fingerprint per line ("<file>:<rule-id>:<line>").
+
+# .env.example's APPLE_PRIVATE_KEY line is a commented-out placeholder
+# showing the PEM structure, not a real key.
+.env.example:private-key:62
+
+# A localStorage key *name* (not a secret value) — the "KEY" in the
+# variable name trips gitleaks' generic-api-key heuristic.
+static/js/lure_bag.js:generic-api-key:14
