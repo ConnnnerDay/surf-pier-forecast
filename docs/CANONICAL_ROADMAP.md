@@ -312,7 +312,7 @@ to reconciliation, not proof that the agreed outcome passed.
 | Sprint | Outcome | Acceptance focus | Current state |
 |---:|---|---|---|
 | 11 | Canonical domain model | Typed models, schema snapshots, serialization round trips | **Complete** — `apps/api/app/domain/models.py` (fresh Pydantic models per `docs/architecture.md`'s ADR-003, not ported from `v2/backend/app/schemas/`, which are auth-coupled DTOs per `docs/R1_RECONCILIATION_AUDIT.md`); schema-snapshot + round-trip tests in `apps/api/tests/test_domain_models.py`, drift-detection verified locally before commit |
-| 12 | HTTP client policy | Timeouts, bounded retries, user agent, size limit, structured errors | Candidate in `/v2` |
+| 12 | HTTP client policy | Timeouts, bounded retries, user agent, size limit, structured errors | **Complete** — `apps/api/app/infra/http_client.py` (`BoundedHTTPClient` per `docs/architecture.md`'s ADR-003, provider-agnostic); `apps/api/tests/test_http_client.py` covers success, retries, retry exhaustion, no-retry-on-4xx, timeouts, connection errors, and oversized responses via `httpx.MockTransport` |
 | 13 | NWS adapter | Typed weather, wind, alerts, and grid contract fixtures | Candidate in `/v2` |
 | 14 | NOAA CO-OPS adapter | Tide/water-temperature fixtures, missing values, DST | Candidate in `/v2` |
 | 15 | NDBC adapter | Buoy parsing, missing columns and markers | Candidate in `/v2` |
@@ -430,14 +430,14 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #333 (sprints 1-3 evidence acceptance, `cf200ac`, merged
-  as `3254b02`).
+- Last merged PR: #334 (sprint 11, canonical domain model, `cbfe0a9`,
+  merged as `9778cb8`).
 - **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
   1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
   (#332). Phase 1's only remaining items (9, 10) need external accounts —
   see below.
-- This PR starts **Phase 2** with **sprint 11** (canonical domain
-  model): `apps/api/app/domain/models.py` — fresh Pydantic models
+- **Phase 2** started with **sprint 11** (canonical domain
+  model, #334): `apps/api/app/domain/models.py` — fresh Pydantic models
   (`Location`, `Observation`, `SourceStatus`, `Confidence`, `Warning`,
   `ForecastEnvelope`) per `docs/architecture.md`'s ADR-003, not ported
   from `v2/backend/app/schemas/` (those are auth-coupled DTOs per
@@ -452,21 +452,43 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   by deliberately adding a field, confirming the test failed, then
   reverting — not just assumed to work. `apps/api/scripts/
   generate_schema_snapshots.py` regenerates snapshots after a deliberate
-  model change. All of `apps/api`'s checks (ruff, ruff format, mypy,
-  pytest) pass clean.
+  model change.
+- This PR continues Phase 2 with **sprint 12** (HTTP client policy):
+  `apps/api/app/infra/http_client.py` — `BoundedHTTPClient`, an async
+  context manager over `httpx.AsyncClient` per `docs/architecture.md`'s
+  ADR-003 ("bounded concurrency, explicit timeouts, limited retries, and
+  response-size limits"). Explicit connect/read/write/pool timeouts;
+  bounded exponential-backoff retries limited to transient failures
+  (connection errors, timeouts, 429/502/503/504 — never 4xx, which won't
+  succeed on retry); a response-size limit enforced by streaming and
+  counting bytes rather than trusting `Content-Length`; a fixed
+  identifying `User-Agent`; structured `ProviderError` subclasses
+  (`ProviderConnectionError`, `ProviderTimeoutError`,
+  `ProviderHTTPStatusError`, `ProviderResponseTooLargeError`) instead of
+  leaking raw `httpx` exceptions. Has no knowledge of any specific
+  provider's payload shape — every future provider adapter (NWS, NOAA
+  CO-OPS, NDBC — sprints 13-16) is built on this. `apps/api/tests/
+  test_http_client.py` covers success, retry-then-succeed on 503 and on
+  timeout, retry exhaustion raising `ProviderHTTPStatusError`, no retry
+  on 404, `ProviderTimeoutError`, `ProviderConnectionError`, and
+  oversized-response rejection — all via `httpx.MockTransport`, no live
+  network calls, per the R2 no-live-provider-dependence rule.
+  `apps/api/pytest.ini` gained `asyncio_mode = auto` for the new
+  `pytest-asyncio`-based async tests. All of `apps/api`'s checks (ruff,
+  ruff format, mypy, pytest — 24 passed) pass clean.
 - **Incident (sprint 6, resolved earlier)**: a scratch branch explicitly
   titled `DO NOT MERGE` was merged into `main` under the repo owner's own
   account, landing deliberately-broken code; reverted within ~10 minutes
   in PR #330. Full account in `docs/SPRINT_6_CI_PROOF.md`. Sprint 7
   turned this into a documented branch-hygiene rule.
-- Exact next action: sprint 12 (HTTP client policy — timeouts, bounded
-  retries, user agent, size limit, structured errors, in `apps/api`) is
-  the natural next Phase 2 pick, needs no external accounts. Separately,
-  sprint 9 (preview environments) and sprint 10 (production skeleton)
-  need real Vercel/Render/Neon accounts this session has no credentials
-  for — **flag to the product owner** rather than attempting them blind;
-  they can be done whenever those credentials are available, in parallel
-  with more Phase 2 sprints.
+- Exact next action: sprint 13 (NWS provider adapter, ported from
+  `services/nws.py` behind characterization tests, built on the sprint 12
+  `BoundedHTTPClient`) is the natural next Phase 2 pick, needs no
+  external accounts. Separately, sprint 9 (preview environments) and
+  sprint 10 (production skeleton) need real Vercel/Render/Neon accounts
+  this session has no credentials for — **flag to the product owner**
+  rather than attempting them blind; they can be done whenever those
+  credentials are available, in parallel with more Phase 2 sprints.
 - Known blocker: sprints 9/10 need Vercel/Render/Neon account access not
   available to this session — needs the product owner to either provision
   and share access, or do that part directly.

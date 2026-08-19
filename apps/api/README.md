@@ -8,14 +8,25 @@ never directly from a browser.
 
 ## Status
 
-Boots, has real CI, and now has the canonical typed domain models
-(`app/domain/models.py` — `Location`, `Observation`, `SourceStatus`,
-`Confidence`, `Warning`, `ForecastEnvelope`; see the module docstring and
-`docs/architecture.md`'s ADR-003). It does not yet have the `/v1` routes,
-the ported forecast domain *logic*, or a Postgres connection. Those land
-in the Phase 2 sprints listed in the roadmap's sprint ledger (12 onward),
-each behind its own characterization tests, porting from the
-reconciliation audit
+Boots, has real CI, and now has:
+
+- The canonical typed domain models (`app/domain/models.py` —
+  `Location`, `Observation`, `SourceStatus`, `Confidence`, `Warning`,
+  `ForecastEnvelope`; see the module docstring and `docs/architecture.md`'s
+  ADR-003).
+- A shared HTTP client policy for external providers
+  (`app/infra/http_client.py` — `BoundedHTTPClient`): explicit
+  connect/read timeouts, bounded exponential-backoff retries limited to
+  transient failures (connection errors, timeouts, 429/502/503/504 — never
+  4xx), a streamed response-size limit, a fixed identifying User-Agent,
+  and structured `ProviderError` subclasses instead of leaking raw
+  `httpx` exceptions. Every future provider adapter (NWS, NOAA CO-OPS,
+  NDBC — sprints 13-16) is built on this, per ADR-003.
+
+It does not yet have the `/v1` routes, the ported forecast domain
+*logic*, or a Postgres connection. Those land in the Phase 2 sprints
+listed in the roadmap's sprint ledger (13 onward), each behind its own
+characterization tests, porting from the reconciliation audit
 ([`docs/R1_RECONCILIATION_AUDIT.md`](../../docs/R1_RECONCILIATION_AUDIT.md))
 rather than copying `v2/backend` or the legacy Flask app verbatim.
 
