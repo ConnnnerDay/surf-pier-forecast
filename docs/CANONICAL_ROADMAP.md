@@ -300,8 +300,8 @@ to reconciliation, not proof that the agreed outcome passed.
 | 2 | Product definition | Journey, non-goals, metrics, vocabulary, attribution | Closed PR #310; recovered here, not accepted |
 | 3 | Architecture decision | Boundaries, request path, records, hosting, data lifecycle | Closed PR #311; recovered here, not accepted |
 | 4 | Monorepo scaffold | Clean Next.js/FastAPI install, build, and smoke test | **Complete** — `apps/web`/`apps/api` skeletons (PR #324) plus their CI build/smoke-test evidence (PR #326) |
-| 5 | Local developer workflow | One documented setup/run/check path from a fresh machine | **Complete** — `apps/setup.sh` and `apps/check.sh` (this PR), verified end-to-end from a genuinely clean state (no `.venv`/`node_modules` present beforehand) |
-| 6 | Quality gates | Frontend and Python lint, type, test, and intentionally failing proof | Not accepted — real lint/type/test checks for `apps/` exist (PR #326), but not yet the required intentionally-failing proof |
+| 5 | Local developer workflow | One documented setup/run/check path from a fresh machine | **Complete** — `apps/setup.sh` and `apps/check.sh` (PR #327), verified end-to-end from a genuinely clean state (no `.venv`/`node_modules` present beforehand) |
+| 6 | Quality gates | Frontend and Python lint, type, test, and intentionally failing proof | **Complete** — real lint/type/test checks for `apps/` (PR #326), plus the intentionally-failing proof (this PR): a scratch branch that deliberately broke all five `apps-ci.yml` checks, pushed to observe a real red CI run, then never merged. See `docs/SPRINT_6_CI_PROOF.md` |
 | 7 | PR governance | Sprint/PR templates, ownership, dependency policy, AI review contract | Not accepted |
 | 8 | CI foundation | Checks, secret scan, dependency audit, builds | Partial — `apps/` build/lint/type/test checks added (PR #326, `.github/workflows/apps-ci.yml`); secret scanning and dependency audit still open |
 | 9 | Preview environments | Isolated web/API previews with URL and curl evidence | Not accepted |
@@ -430,40 +430,47 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #326 (sprint 4 + partial sprint 8 — real CI for
-  `apps/web`/`apps/api`, `1bdde82`, merged as `55abaef`).
+- Last merged PR: #327 (sprint 5 — fresh-machine setup/check scripts,
+  `01239dd`, merged as `fed28ab`).
 - **All recovery gates (R0-R3) are complete.** Numbered product sprints
-  are in progress: sprint 4 complete (#326), sprint 8 partial (#326).
-- This PR closes out **sprint 5** (local developer workflow): adds
-  `apps/setup.sh` (creates `apps/api/.venv`, installs its dev
-  dependencies, runs `npm install` in `apps/web`) and `apps/check.sh`
-  (runs the same checks as `apps-ci.yml` for both apps, reporting every
-  failure instead of stopping at the first), plus `apps/README.md` as the
-  one documented entry point tying setup/run/check together. Verified
-  end-to-end from a genuinely clean state — confirmed no `apps/api/.venv`
-  or `apps/web/node_modules` existed beforehand, then ran `apps/setup.sh`
-  followed by `apps/check.sh`, which exited 0 with every check passing.
-- Exact next action: sprint 6 (quality gates) — add the required
-  intentionally-failing proof (a deliberately broken check, pushed and
-  observed to fail CI, then reverted before merge — not left in `main` —
-  that verifies the `apps/` CI actually blocks bad code) to close the one
-  remaining piece of sprint 6's outcome. Sprints 1-3 (repository baseline
-  audit, product definition, architecture decision) still have
-  recovered-but-not-accepted evidence from closed PRs #309-#311 — check
-  whether it still satisfies each outcome before redoing that work.
+  in progress: sprint 4 complete (#326), sprint 5 complete (#327), sprint
+  8 partial (#326).
+- This PR closes out **sprint 6** (quality gates): the lint/type/test
+  checks themselves already existed (PR #326); this PR adds the required
+  intentionally-failing proof. See
+  [`docs/SPRINT_6_CI_PROOF.md`](SPRINT_6_CI_PROOF.md) for the full method
+  and evidence — summary: a scratch branch
+  (`claude/sprint6-ci-failure-proof`) deliberately broke all five
+  `apps-ci.yml` checks, was pushed to trigger a real CI run (`32267417356`,
+  conclusion `failure`, every job failed for the intended reason), and was
+  never opened as a PR or merged. `main` was unaffected throughout
+  (verified via `git log` before/after, both at `fed28ab`). That scratch
+  branch remains pushed to the remote — this session's git proxy access
+  returned HTTP 403 on `git push --delete`, and no available GitHub API
+  tool can delete a branch — but it holds one clearly-labeled
+  `DO NOT MERGE` commit with no PR against it, so it's inert; a repo
+  admin can delete it whenever convenient.
+- Exact next action: sprint 7 (PR governance — sprint/PR templates,
+  ownership, dependency policy, AI review contract) or sprint 9 (preview
+  environments). Sprints 1-3 (repository baseline audit, product
+  definition, architecture decision) still have recovered-but-not-accepted
+  evidence from closed PRs #309-#311 — check whether it still satisfies
+  each outcome before redoing that work.
 - Known blocker: none.
 - Known baseline carried forward: per `docs/R2_CI_BASELINE.md`, the
   legacy (repo-root) `ruff check`/`ruff format --check`/`mypy` findings
-  (~600 errors, ~65 unformatted files, 23 mypy errors) remain known debt
-  for sprint 6 — unrelated to `apps/`, which lints/type-checks/tests
-  clean. R1's open product question is still unresolved: whether
+  (~600 errors, ~65 unformatted files, 23 mypy errors) remain known debt —
+  unrelated to `apps/`, which lints/type-checks/tests clean. R1's open
+  product question is still unresolved: whether
   `services/{datagov,hdx_fao,arcgis_live_feeds,bathymetry}.py` (not named
   in the canonical contract's required providers) are future enrichment
   or scope creep — route to the product owner before Phase 2 sprints port
   providers wholesale. This session still could not verify GitHub
   branch-protection/required-status-check configuration via available
-  tooling — a repo admin should configure it, now including
-  `apps-ci.yml`'s four checks.
+  tooling, and separately could not delete a git branch via any available
+  tool (see above) — a repo admin should handle both, including
+  configuring `apps-ci.yml`'s four checks as required and deleting
+  `claude/sprint6-ci-failure-proof`.
 - Unmerged work considered complete: none.
 - Product decisions on record 2026-08-17 (see that section above) refine the
   product contract — public general-audience scope, ~$1/month subscription
