@@ -30,10 +30,19 @@ Boots, has real CI, and now has:
   `services/nws.py` behind characterization tests, not a verbatim
   carry-over — see the module docstring for what's deliberately deferred
   (gridpoint wind fallback, current-weather observations).
+- The second provider adapter, NOAA CO-OPS
+  (`app/providers/noaa_coops.py`): water temperature
+  (`fetch_water_temperature`) and tide predictions
+  (`fetch_tide_predictions`), ported from the legacy `services/noaa.py`
+  behind characterization tests, including DST-transition timestamp
+  parsing via `zoneinfo`. See the module docstring for what's
+  deliberately deferred (wind/currents/environmental-metrics fetches,
+  the tide-chart SVG rendering helper) and why fallback-to-monthly-average
+  policy isn't ported here.
 
 It does not yet have the `/v1` routes, the ported forecast domain
 *logic*, or a Postgres connection. Those land in the Phase 2 sprints
-listed in the roadmap's sprint ledger (14 onward), each behind its own
+listed in the roadmap's sprint ledger (15 onward), each behind its own
 characterization tests, porting from the reconciliation audit
 ([`docs/R1_RECONCILIATION_AUDIT.md`](../../docs/R1_RECONCILIATION_AUDIT.md))
 rather than copying `v2/backend` or the legacy Flask app verbatim.

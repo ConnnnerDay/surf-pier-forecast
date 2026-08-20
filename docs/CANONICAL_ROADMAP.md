@@ -314,7 +314,7 @@ to reconciliation, not proof that the agreed outcome passed.
 | 11 | Canonical domain model | Typed models, schema snapshots, serialization round trips | **Complete** — `apps/api/app/domain/models.py` (fresh Pydantic models per `docs/architecture.md`'s ADR-003, not ported from `v2/backend/app/schemas/`, which are auth-coupled DTOs per `docs/R1_RECONCILIATION_AUDIT.md`); schema-snapshot + round-trip tests in `apps/api/tests/test_domain_models.py`, drift-detection verified locally before commit |
 | 12 | HTTP client policy | Timeouts, bounded retries, user agent, size limit, structured errors | **Complete** — `apps/api/app/infra/http_client.py` (`BoundedHTTPClient` per `docs/architecture.md`'s ADR-003, provider-agnostic); `apps/api/tests/test_http_client.py` covers success, retries, retry exhaustion, no-retry-on-4xx, timeouts, connection errors, and oversized responses via `httpx.MockTransport` |
 | 13 | NWS adapter | Typed weather, wind, alerts, and grid contract fixtures | **Partially complete** — `apps/api/app/providers/nws.py`: marine-zone wind/wave/direction parsing and fetch, point/state active-alerts parsing and fetch, all behind `apps/api/tests/test_nws_provider.py` fixture tests. Gridpoint wind fallback and current-weather observations deliberately deferred (see module docstring) to keep the PR reviewable; tracked as follow-up before sprint 21 needs them |
-| 14 | NOAA CO-OPS adapter | Tide/water-temperature fixtures, missing values, DST | Candidate in `/v2` |
+| 14 | NOAA CO-OPS adapter | Tide/water-temperature fixtures, missing values, DST | **Partially complete** — `apps/api/app/providers/noaa_coops.py`: water temperature and tide predictions, `zoneinfo`-based DST-safe timestamp parsing, missing-value/empty-row handling, all behind `apps/api/tests/test_noaa_coops_provider.py`. Wind/currents/environmental-metrics fetches and the tide-chart SVG helper deliberately deferred (see module docstring) |
 | 15 | NDBC adapter | Buoy parsing, missing columns and markers | Candidate in `/v2` |
 | 16 | Astronomy adapter | Pure deterministic coast/season/timezone tests | Candidate in `/v2` |
 | 17 | Station catalog | Provenance, timestamps, idempotent refresh | Candidate in `/v2` |
@@ -430,8 +430,8 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #335 (sprint 12, HTTP client policy, `59d3215`, merged
-  as `f2165b3`).
+- Last merged PR: #336 (sprint 13, NWS provider adapter, `943df08`,
+  merged as `e4f5aaf`).
 - **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
   1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
   (#332). Phase 1's only remaining items (9, 10) need external accounts —
@@ -497,20 +497,42 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   to keep this PR reviewable; tracked as follow-up before sprint 21
   (forecast assembly) needs them. All of `apps/api`'s checks (ruff, ruff
   format, mypy, pytest — 38 passed) pass clean.
+- This PR continues Phase 2 with **sprint 14** (NOAA CO-OPS adapter,
+  partial — see the sprint-ledger row): `apps/api/app/providers/
+  noaa_coops.py` — `fetch_water_temperature` and `fetch_tide_predictions`,
+  both raising `NoaaDataUnavailableError` (a `ProviderError` subclass) on
+  a valid response with no usable reading, since both are decision-relevant
+  (unlike sprint 13's non-critical alerts). The legacy module's
+  silent-failure/monthly-average-fallback (`get_water_temp`) is
+  deliberately not ported — deciding when to fall back, and recording it
+  on `Observation.is_fallback`, is forecast-assembly's job (sprint 21),
+  not a single provider adapter's. CO-OPS timestamps are in
+  station-local `lst_ldt` time; parsing uses `zoneinfo.ZoneInfo`, which
+  (unlike `pytz`) resolves the correct UTC offset via a plain
+  `.replace(tzinfo=...)`, verified in `apps/api/
+  tests/test_noaa_coops_provider.py` by asserting the correct UTC offset
+  on both sides of a DST transition (EDT vs. EST) and that parsing a
+  timestamp during the fall-back fold doesn't raise. Also covers missing
+  data rows/values (empty `data`/`predictions` lists, missing `v` or
+  `t` fields) raising or being skipped rather than silently substituting
+  a placeholder, unlike the legacy module's noon-hour fallback quirk.
+  Wind/currents/environmental-metrics fetches and the `build_tide_
+  chart_svg` rendering helper (not a provider concern) are deliberately
+  deferred — see the module docstring. All of `apps/api`'s checks (ruff,
+  ruff format, mypy, pytest — 49 passed) pass clean.
 - **Incident (sprint 6, resolved earlier)**: a scratch branch explicitly
   titled `DO NOT MERGE` was merged into `main` under the repo owner's own
   account, landing deliberately-broken code; reverted within ~10 minutes
   in PR #330. Full account in `docs/SPRINT_6_CI_PROOF.md`. Sprint 7
   turned this into a documented branch-hygiene rule.
-- Exact next action: finish sprint 13's deferred scope (gridpoint wind
-  fallback, current-weather observations) or move to sprint 14 (NOAA
-  CO-OPS adapter — tide/water-temperature fixtures) — either is a valid
-  next Phase 2 pick, needs no external accounts. Separately, sprint 9
-  (preview environments) and sprint 10 (production skeleton) need real
-  Vercel/Render/Neon accounts this session has no credentials for —
-  **flag to the product owner** rather than attempting them blind; they
-  can be done whenever those credentials are available, in parallel with
-  more Phase 2 sprints.
+- Exact next action: finish sprint 13/14's deferred scope, or move to
+  sprint 15 (NDBC adapter — buoy parsing, missing columns/markers) —
+  any is a valid next Phase 2 pick, needs no external accounts.
+  Separately, sprint 9 (preview environments) and sprint 10 (production
+  skeleton) need real Vercel/Render/Neon accounts this session has no
+  credentials for — **flag to the product owner** rather than
+  attempting them blind; they can be done whenever those credentials
+  are available, in parallel with more Phase 2 sprints.
 - Known blocker: sprints 9/10 need Vercel/Render/Neon account access not
   available to this session — needs the product owner to either provision
   and share access, or do that part directly.
