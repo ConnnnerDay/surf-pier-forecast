@@ -1,4 +1,5 @@
-"""Shared HTTP client policy for external providers (sprint 12).
+"""Shared HTTP client policy for external providers (sprint 12; `get_text`
+added in sprint 15 for NDBC's plain-text responses).
 
 Per docs/architecture.md's ADR-003: "Provider adapters use an async HTTP
 client with bounded concurrency, explicit timeouts, limited retries, and
@@ -115,6 +116,15 @@ class BoundedHTTPClient:
         """
         response = await self._request_with_retries("GET", url, **kwargs)
         return response.json()
+
+    async def get_text(self, url: str, **kwargs: object) -> str:
+        """GET `url`, retrying transient failures, and return the decoded
+        response body as text (e.g. NDBC's fixed-width realtime2 format,
+        which is not JSON). Raises a ProviderError subclass on any
+        failure that survives retries.
+        """
+        response = await self._request_with_retries("GET", url, **kwargs)
+        return response.text
 
     async def _request_with_retries(
         self, method: str, url: str, **kwargs: object
