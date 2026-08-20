@@ -1,0 +1,11 @@
+[tool.ruff]
+target-version = "py310"
+
+[tool.ruff.lint]
+# Explicitly pinned so ruff's rule selection is deterministic across
+# machines and ruff versions, instead of relying on whatever a given
+# ruff release treats as its implicit default when no config exists.
+# E4/E7/E9 (a curated pycodestyle subset) + F (pyflakes) is the set
+# docs/R2_CI_BASELINE.md's baseline audit and this codebase's cleanup
+# were both written against.
+select = ["E4", "E7", "E9", "F"]
