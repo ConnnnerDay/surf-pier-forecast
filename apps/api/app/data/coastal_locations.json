@@ -1,0 +1,1599 @@
+[
+  {
+    "id": "montauk-ny",
+    "name": "Montauk",
+    "state": "NY",
+    "lat": 41.0713,
+    "lng": -71.9544,
+    "timezone": "America/New_York",
+    "coops_station": "8510560",
+    "ndbc_stations": [
+      "44025",
+      "44017"
+    ],
+    "nws_zone": "ANZ338",
+    "temp_region": "northeast",
+    "conditions_region": "atlantic_north"
+  },
+  {
+    "id": "sandy-hook-nj",
+    "name": "Sandy Hook",
+    "state": "NJ",
+    "lat": 40.4669,
+    "lng": -74.0089,
+    "timezone": "America/New_York",
+    "coops_station": "8531680",
+    "ndbc_stations": [
+      "44025",
+      "44065"
+    ],
+    "nws_zone": "ANZ355",
+    "temp_region": "northeast",
+    "conditions_region": "atlantic_north"
+  },
+  {
+    "id": "long-beach-island-nj",
+    "name": "Long Beach Island",
+    "state": "NJ",
+    "lat": 39.6373,
+    "lng": -74.1895,
+    "timezone": "America/New_York",
+    "coops_station": "8534720",
+    "ndbc_stations": [
+      "44025",
+      "44009"
+    ],
+    "nws_zone": "ANZ450",
+    "temp_region": "northeast",
+    "conditions_region": "atlantic_north",
+    "temp_offset": 1
+  },
+  {
+    "id": "atlantic-city-nj",
+    "name": "Atlantic City",
+    "state": "NJ",
+    "lat": 39.3643,
+    "lng": -74.4229,
+    "timezone": "America/New_York",
+    "coops_station": "8534720",
+    "ndbc_stations": [
+      "44009",
+      "44025"
+    ],
+    "nws_zone": "ANZ451",
+    "temp_region": "northeast",
+    "conditions_region": "atlantic_north",
+    "temp_offset": 2
+  },
+  {
+    "id": "cape-may-nj",
+    "name": "Cape May",
+    "state": "NJ",
+    "lat": 38.9351,
+    "lng": -74.906,
+    "timezone": "America/New_York",
+    "coops_station": "8536110",
+    "ndbc_stations": [
+      "44009"
+    ],
+    "nws_zone": "ANZ452",
+    "temp_region": "midatlantic",
+    "conditions_region": "atlantic_north"
+  },
+  {
+    "id": "ocean-city-md",
+    "name": "Ocean City",
+    "state": "MD",
+    "lat": 38.3365,
+    "lng": -75.0849,
+    "timezone": "America/New_York",
+    "coops_station": "8570283",
+    "ndbc_stations": [
+      "44009",
+      "44014"
+    ],
+    "nws_zone": "AMZ158",
+    "temp_region": "midatlantic",
+    "conditions_region": "atlantic_mid"
+  },
+  {
+    "id": "virginia-beach-va",
+    "name": "Virginia Beach",
+    "state": "VA",
+    "lat": 36.8529,
+    "lng": -75.978,
+    "timezone": "America/New_York",
+    "coops_station": "8638610",
+    "ndbc_stations": [
+      "44014",
+      "44099"
+    ],
+    "nws_zone": "AMZ152",
+    "temp_region": "midatlantic",
+    "conditions_region": "atlantic_mid",
+    "temp_offset": 2
+  },
+  {
+    "id": "outer-banks-nc",
+    "name": "Outer Banks (Nags Head)",
+    "state": "NC",
+    "lat": 35.9582,
+    "lng": -75.6249,
+    "timezone": "America/New_York",
+    "coops_station": "8651370",
+    "ndbc_stations": [
+      "41025"
+    ],
+    "nws_zone": "AMZ150",
+    "temp_region": "nc_outer_banks",
+    "conditions_region": "atlantic_mid"
+  },
+  {
+    "id": "cape-hatteras-nc",
+    "name": "Cape Hatteras",
+    "state": "NC",
+    "lat": 35.223,
+    "lng": -75.635,
+    "timezone": "America/New_York",
+    "coops_station": "8654467",
+    "ndbc_stations": [
+      "41025"
+    ],
+    "nws_zone": "AMZ152",
+    "temp_region": "nc_outer_banks",
+    "conditions_region": "atlantic_mid",
+    "temp_offset": 1
+  },
+  {
+    "id": "atlantic-beach-nc",
+    "name": "Atlantic Beach / Morehead City",
+    "state": "NC",
+    "lat": 34.6984,
+    "lng": -76.7403,
+    "timezone": "America/New_York",
+    "coops_station": "8656483",
+    "ndbc_stations": [
+      "41036",
+      "41025"
+    ],
+    "nws_zone": "AMZ154",
+    "temp_region": "nc_south",
+    "conditions_region": "atlantic_mid",
+    "temp_offset": -1
+  },
+  {
+    "id": "wrightsville-beach-nc",
+    "name": "Wrightsville Beach",
+    "state": "NC",
+    "lat": 34.2104,
+    "lng": -77.7964,
+    "timezone": "America/New_York",
+    "coops_station": "8658163",
+    "ndbc_stations": [
+      "41110",
+      "41037"
+    ],
+    "nws_zone": "AMZ158",
+    "temp_region": "nc_south",
+    "conditions_region": "atlantic_mid"
+  },
+  {
+    "id": "carolina-beach-nc",
+    "name": "Carolina Beach / Kure Beach",
+    "state": "NC",
+    "lat": 34.0352,
+    "lng": -77.8936,
+    "timezone": "America/New_York",
+    "coops_station": "8658163",
+    "ndbc_stations": [
+      "41110",
+      "41037"
+    ],
+    "nws_zone": "AMZ158",
+    "temp_region": "nc_south",
+    "conditions_region": "atlantic_mid"
+  },
+  {
+    "id": "myrtle-beach-sc",
+    "name": "Myrtle Beach",
+    "state": "SC",
+    "lat": 33.6891,
+    "lng": -78.8867,
+    "timezone": "America/New_York",
+    "coops_station": "8661070",
+    "ndbc_stations": [
+      "41004"
+    ],
+    "nws_zone": "AMZ252",
+    "temp_region": "sc_ga",
+    "conditions_region": "atlantic_mid"
+  },
+  {
+    "id": "charleston-sc",
+    "name": "Charleston",
+    "state": "SC",
+    "lat": 32.7765,
+    "lng": -79.9311,
+    "timezone": "America/New_York",
+    "coops_station": "8665530",
+    "ndbc_stations": [
+      "41004"
+    ],
+    "nws_zone": "AMZ254",
+    "temp_region": "sc_ga",
+    "conditions_region": "atlantic_south"
+  },
+  {
+    "id": "hilton-head-sc",
+    "name": "Hilton Head",
+    "state": "SC",
+    "lat": 32.2163,
+    "lng": -80.7526,
+    "timezone": "America/New_York",
+    "coops_station": "8669100",
+    "ndbc_stations": [
+      "41004",
+      "41008"
+    ],
+    "nws_zone": "AMZ256",
+    "temp_region": "sc_ga",
+    "conditions_region": "atlantic_south"
+  },
+  {
+    "id": "tybee-island-ga",
+    "name": "Tybee Island (Savannah)",
+    "state": "GA",
+    "lat": 32.0004,
+    "lng": -80.8454,
+    "timezone": "America/New_York",
+    "coops_station": "8670870",
+    "ndbc_stations": [
+      "41008"
+    ],
+    "nws_zone": "AMZ330",
+    "temp_region": "sc_ga",
+    "conditions_region": "atlantic_south"
+  },
+  {
+    "id": "jacksonville-beach-fl",
+    "name": "Jacksonville Beach",
+    "state": "FL",
+    "lat": 30.2866,
+    "lng": -81.393,
+    "timezone": "America/New_York",
+    "coops_station": "8720218",
+    "ndbc_stations": [
+      "41112"
+    ],
+    "nws_zone": "AMZ450",
+    "temp_region": "fl_northeast",
+    "conditions_region": "atlantic_south"
+  },
+  {
+    "id": "st-augustine-fl",
+    "name": "St. Augustine",
+    "state": "FL",
+    "lat": 29.9012,
+    "lng": -81.3124,
+    "timezone": "America/New_York",
+    "coops_station": "8720587",
+    "ndbc_stations": [
+      "41112"
+    ],
+    "nws_zone": "AMZ452",
+    "temp_region": "fl_northeast",
+    "conditions_region": "atlantic_south"
+  },
+  {
+    "id": "daytona-beach-fl",
+    "name": "Daytona Beach",
+    "state": "FL",
+    "lat": 29.2108,
+    "lng": -81.0228,
+    "timezone": "America/New_York",
+    "coops_station": "8721120",
+    "ndbc_stations": [
+      "41009",
+      "41112"
+    ],
+    "nws_zone": "AMZ454",
+    "temp_region": "fl_northeast",
+    "conditions_region": "atlantic_south",
+    "temp_offset": 2
+  },
+  {
+    "id": "cocoa-beach-fl",
+    "name": "Cocoa Beach / Port Canaveral",
+    "state": "FL",
+    "lat": 28.32,
+    "lng": -80.6076,
+    "timezone": "America/New_York",
+    "coops_station": "8721604",
+    "ndbc_stations": [
+      "41009"
+    ],
+    "nws_zone": "AMZ550",
+    "temp_region": "fl_central_east",
+    "conditions_region": "atlantic_south"
+  },
+  {
+    "id": "fort-pierce-fl",
+    "name": "Fort Pierce",
+    "state": "FL",
+    "lat": 27.4467,
+    "lng": -80.3256,
+    "timezone": "America/New_York",
+    "coops_station": "8722670",
+    "ndbc_stations": [
+      "41114"
+    ],
+    "nws_zone": "AMZ552",
+    "temp_region": "fl_central_east",
+    "conditions_region": "atlantic_south",
+    "temp_offset": 2
+  },
+  {
+    "id": "palm-beach-fl",
+    "name": "Palm Beach / Jupiter",
+    "state": "FL",
+    "lat": 26.7056,
+    "lng": -80.0364,
+    "timezone": "America/New_York",
+    "coops_station": "8722588",
+    "ndbc_stations": [
+      "41114"
+    ],
+    "nws_zone": "AMZ554",
+    "temp_region": "fl_south",
+    "conditions_region": "atlantic_south",
+    "temp_offset": -2
+  },
+  {
+    "id": "fort-lauderdale-fl",
+    "name": "Fort Lauderdale",
+    "state": "FL",
+    "lat": 26.1224,
+    "lng": -80.1373,
+    "timezone": "America/New_York",
+    "coops_station": "8722956",
+    "ndbc_stations": [
+      "41114"
+    ],
+    "nws_zone": "AMZ556",
+    "temp_region": "fl_south",
+    "conditions_region": "atlantic_south"
+  },
+  {
+    "id": "miami-beach-fl",
+    "name": "Miami Beach",
+    "state": "FL",
+    "lat": 25.7907,
+    "lng": -80.13,
+    "timezone": "America/New_York",
+    "coops_station": "8723214",
+    "ndbc_stations": [
+      "41047"
+    ],
+    "nws_zone": "AMZ610",
+    "temp_region": "fl_south",
+    "conditions_region": "atlantic_south"
+  },
+  {
+    "id": "key-west-fl",
+    "name": "Key West",
+    "state": "FL",
+    "lat": 24.5551,
+    "lng": -81.78,
+    "timezone": "America/New_York",
+    "coops_station": "8724580",
+    "ndbc_stations": [
+      "SMKF1"
+    ],
+    "nws_zone": "AMZ651",
+    "temp_region": "fl_keys",
+    "conditions_region": "atlantic_south"
+  },
+  {
+    "id": "naples-fl",
+    "name": "Naples",
+    "state": "FL",
+    "lat": 26.142,
+    "lng": -81.7948,
+    "timezone": "America/New_York",
+    "coops_station": "8725110",
+    "ndbc_stations": [
+      "42013"
+    ],
+    "nws_zone": "GMZ830",
+    "temp_region": "fl_gulf_south",
+    "conditions_region": "gulf"
+  },
+  {
+    "id": "fort-myers-beach-fl",
+    "name": "Fort Myers Beach",
+    "state": "FL",
+    "lat": 26.452,
+    "lng": -81.9495,
+    "timezone": "America/New_York",
+    "coops_station": "8725520",
+    "ndbc_stations": [
+      "42013"
+    ],
+    "nws_zone": "GMZ830",
+    "temp_region": "fl_gulf_south",
+    "conditions_region": "gulf"
+  },
+  {
+    "id": "sarasota-fl",
+    "name": "Sarasota",
+    "state": "FL",
+    "lat": 27.3364,
+    "lng": -82.5307,
+    "timezone": "America/New_York",
+    "coops_station": "8726384",
+    "ndbc_stations": [
+      "42036"
+    ],
+    "nws_zone": "GMZ836",
+    "temp_region": "fl_gulf_south",
+    "conditions_region": "gulf"
+  },
+  {
+    "id": "clearwater-fl",
+    "name": "Clearwater / St. Petersburg",
+    "state": "FL",
+    "lat": 27.9659,
+    "lng": -82.8001,
+    "timezone": "America/New_York",
+    "coops_station": "8726724",
+    "ndbc_stations": [
+      "42036"
+    ],
+    "nws_zone": "GMZ850",
+    "temp_region": "fl_gulf_south",
+    "conditions_region": "gulf",
+    "temp_offset": -1
+  },
+  {
+    "id": "panama-city-beach-fl",
+    "name": "Panama City Beach",
+    "state": "FL",
+    "lat": 30.1766,
+    "lng": -85.8055,
+    "timezone": "America/Chicago",
+    "coops_station": "8729108",
+    "ndbc_stations": [
+      "42039"
+    ],
+    "nws_zone": "GMZ850",
+    "temp_region": "fl_gulf_north",
+    "conditions_region": "gulf"
+  },
+  {
+    "id": "destin-fl",
+    "name": "Destin / Fort Walton Beach",
+    "state": "FL",
+    "lat": 30.3935,
+    "lng": -86.4958,
+    "timezone": "America/Chicago",
+    "coops_station": "8729210",
+    "ndbc_stations": [
+      "42039"
+    ],
+    "nws_zone": "GMZ855",
+    "temp_region": "fl_gulf_north",
+    "conditions_region": "gulf"
+  },
+  {
+    "id": "pensacola-fl",
+    "name": "Pensacola",
+    "state": "FL",
+    "lat": 30.35,
+    "lng": -87.16,
+    "timezone": "America/Chicago",
+    "coops_station": "8729840",
+    "ndbc_stations": [
+      "42040",
+      "42039"
+    ],
+    "nws_zone": "GMZ855",
+    "temp_region": "fl_gulf_north",
+    "conditions_region": "gulf"
+  },
+  {
+    "id": "gulf-shores-al",
+    "name": "Gulf Shores / Orange Beach",
+    "state": "AL",
+    "lat": 30.246,
+    "lng": -87.7008,
+    "timezone": "America/Chicago",
+    "coops_station": "8735180",
+    "ndbc_stations": [
+      "42012",
+      "42040"
+    ],
+    "nws_zone": "GMZ630",
+    "temp_region": "gulf_central",
+    "conditions_region": "gulf"
+  },
+  {
+    "id": "biloxi-ms",
+    "name": "Biloxi / Gulfport",
+    "state": "MS",
+    "lat": 30.396,
+    "lng": -88.8853,
+    "timezone": "America/Chicago",
+    "coops_station": "8747437",
+    "ndbc_stations": [
+      "42007",
+      "42012"
+    ],
+    "nws_zone": "GMZ634",
+    "temp_region": "gulf_central",
+    "conditions_region": "gulf"
+  },
+  {
+    "id": "grand-isle-la",
+    "name": "Grand Isle",
+    "state": "LA",
+    "lat": 29.2633,
+    "lng": -89.9873,
+    "timezone": "America/Chicago",
+    "coops_station": "8761724",
+    "ndbc_stations": [
+      "42041",
+      "42007"
+    ],
+    "nws_zone": "GMZ536",
+    "temp_region": "gulf_central",
+    "conditions_region": "gulf"
+  },
+  {
+    "id": "galveston-tx",
+    "name": "Galveston",
+    "state": "TX",
+    "lat": 29.3013,
+    "lng": -94.7977,
+    "timezone": "America/Chicago",
+    "coops_station": "8771450",
+    "ndbc_stations": [
+      "42035"
+    ],
+    "nws_zone": "GMZ335",
+    "temp_region": "gulf_west",
+    "conditions_region": "gulf"
+  },
+  {
+    "id": "port-aransas-tx",
+    "name": "Port Aransas",
+    "state": "TX",
+    "lat": 27.8339,
+    "lng": -97.0611,
+    "timezone": "America/Chicago",
+    "coops_station": "8775241",
+    "ndbc_stations": [
+      "42020",
+      "42035"
+    ],
+    "nws_zone": "GMZ245",
+    "temp_region": "gulf_west",
+    "conditions_region": "gulf"
+  },
+  {
+    "id": "south-padre-island-tx",
+    "name": "South Padre Island",
+    "state": "TX",
+    "lat": 26.1118,
+    "lng": -97.1681,
+    "timezone": "America/Chicago",
+    "coops_station": "8779770",
+    "ndbc_stations": [
+      "42020"
+    ],
+    "nws_zone": "GMZ255",
+    "temp_region": "gulf_west",
+    "conditions_region": "gulf"
+  },
+  {
+    "id": "san-diego-ca",
+    "name": "San Diego / Ocean Beach",
+    "state": "CA",
+    "lat": 32.7496,
+    "lng": -117.2551,
+    "timezone": "America/Los_Angeles",
+    "coops_station": "9410170",
+    "ndbc_stations": [
+      "46258",
+      "46225"
+    ],
+    "nws_zone": "PZZ750",
+    "temp_region": "pacific_san_diego",
+    "conditions_region": "pacific_south"
+  },
+  {
+    "id": "imperial-beach-ca",
+    "name": "Imperial Beach",
+    "state": "CA",
+    "lat": 32.579,
+    "lng": -117.1342,
+    "timezone": "America/Los_Angeles",
+    "coops_station": "9410170",
+    "ndbc_stations": [
+      "46258",
+      "46225"
+    ],
+    "nws_zone": "PZZ750",
+    "temp_region": "pacific_san_diego",
+    "conditions_region": "pacific_south",
+    "temp_offset": -1
+  },
+  {
+    "id": "oceanside-ca",
+    "name": "Oceanside",
+    "state": "CA",
+    "lat": 33.1959,
+    "lng": -117.3795,
+    "timezone": "America/Los_Angeles",
+    "coops_station": "9410230",
+    "ndbc_stations": [
+      "46258",
+      "46225"
+    ],
+    "nws_zone": "PZZ750",
+    "temp_region": "pacific_san_diego",
+    "conditions_region": "pacific_south"
+  },
+  {
+    "id": "dana-point-ca",
+    "name": "Dana Point",
+    "state": "CA",
+    "lat": 33.4594,
+    "lng": -117.6981,
+    "timezone": "America/Los_Angeles",
+    "coops_station": "9410580",
+    "ndbc_stations": [
+      "46242",
+      "46225"
+    ],
+    "nws_zone": "PZZ750",
+    "temp_region": "pacific_socal",
+    "conditions_region": "pacific_south"
+  },
+  {
+    "id": "huntington-beach-ca",
+    "name": "Huntington Beach",
+    "state": "CA",
+    "lat": 33.6603,
+    "lng": -118.0009,
+    "timezone": "America/Los_Angeles",
+    "coops_station": "9410580",
+    "ndbc_stations": [
+      "46242",
+      "46222"
+    ],
+    "nws_zone": "PZZ670",
+    "temp_region": "pacific_socal",
+    "conditions_region": "pacific_south"
+  },
+  {
+    "id": "long-beach-ca",
+    "name": "Long Beach / Belmont Pier",
+    "state": "CA",
+    "lat": 33.7566,
+    "lng": -118.117,
+    "timezone": "America/Los_Angeles",
+    "coops_station": "9410660",
+    "ndbc_stations": [
+      "46222"
+    ],
+    "nws_zone": "PZZ670",
+    "temp_region": "pacific_socal",
+    "conditions_region": "pacific_south",
+    "temp_offset": 1
+  },
+  {
+    "id": "santa-monica-ca",
+    "name": "Santa Monica",
+    "state": "CA",
+    "lat": 34.0094,
+    "lng": -118.4973,
+    "timezone": "America/Los_Angeles",
+    "coops_station": "9410840",
+    "ndbc_stations": [
+      "46221",
+      "46222"
+    ],
+    "nws_zone": "PZZ670",
+    "temp_region": "pacific_socal",
+    "conditions_region": "pacific_south"
+  },
+  {
+    "id": "malibu-ca",
+    "name": "Malibu",
+    "state": "CA",
+    "lat": 34.0367,
+    "lng": -118.6884,
+    "timezone": "America/Los_Angeles",
+    "coops_station": "9410840",
+    "ndbc_stations": [
+      "46221"
+    ],
+    "nws_zone": "PZZ670",
+    "temp_region": "pacific_socal",
+    "conditions_region": "pacific_south",
+    "temp_offset": -1
+  },
+  {
+    "id": "ventura-ca",
+    "name": "Ventura",
+    "state": "CA",
+    "lat": 34.2746,
+    "lng": -119.2637,
+    "timezone": "America/Los_Angeles",
+    "coops_station": "9411270",
+    "ndbc_stations": [
+      "46053",
+      "46221"
+    ],
+    "nws_zone": "PZZ645",
+    "temp_region": "pacific_socal",
+    "conditions_region": "pacific_south",
+    "temp_offset": -2
+  },
+  {
+    "id": "santa-barbara-ca",
+    "name": "Santa Barbara",
+    "state": "CA",
+    "lat": 34.4048,
+    "lng": -119.6931,
+    "timezone": "America/Los_Angeles",
+    "coops_station": "9411340",
+    "ndbc_stations": [
+      "46053",
+      "46054"
+    ],
+    "nws_zone": "PZZ645",
+    "temp_region": "pacific_central_cal",
+    "conditions_region": "pacific_south",
+    "temp_offset": 2
+  },
+  {
+    "id": "pismo-beach-ca",
+    "name": "Pismo Beach",
+    "state": "CA",
+    "lat": 35.1428,
+    "lng": -120.6413,
+    "timezone": "America/Los_Angeles",
+    "coops_station": "9412110",
+    "ndbc_stations": [
+      "46011",
+      "46054"
+    ],
+    "nws_zone": "PZZ640",
+    "temp_region": "pacific_central_cal",
+    "conditions_region": "pacific_south"
+  },
+  {
+    "id": "morro-bay-ca",
+    "name": "Morro Bay",
+    "state": "CA",
+    "lat": 35.3659,
+    "lng": -120.8499,
+    "timezone": "America/Los_Angeles",
+    "coops_station": "9412110",
+    "ndbc_stations": [
+      "46011",
+      "46028"
+    ],
+    "nws_zone": "PZZ640",
+    "temp_region": "pacific_central_cal",
+    "conditions_region": "pacific_south"
+  },
+  {
+    "id": "monterey-ca",
+    "name": "Monterey",
+    "state": "CA",
+    "lat": 36.6002,
+    "lng": -121.8947,
+    "timezone": "America/Los_Angeles",
+    "coops_station": "9413450",
+    "ndbc_stations": [
+      "46042",
+      "46236"
+    ],
+    "nws_zone": "PZZ535",
+    "temp_region": "pacific_central_cal",
+    "conditions_region": "pacific"
+  },
+  {
+    "id": "santa-cruz-ca",
+    "name": "Santa Cruz",
+    "state": "CA",
+    "lat": 36.9624,
+    "lng": -122.0236,
+    "timezone": "America/Los_Angeles",
+    "coops_station": "9413745",
+    "ndbc_stations": [
+      "46042",
+      "46236"
+    ],
+    "nws_zone": "PZZ535",
+    "temp_region": "pacific_central_cal",
+    "conditions_region": "pacific",
+    "temp_offset": 1
+  },
+  {
+    "id": "half-moon-bay-ca",
+    "name": "Half Moon Bay",
+    "state": "CA",
+    "lat": 37.4636,
+    "lng": -122.4286,
+    "timezone": "America/Los_Angeles",
+    "coops_station": "9414290",
+    "ndbc_stations": [
+      "46012",
+      "46026"
+    ],
+    "nws_zone": "PZZ530",
+    "temp_region": "pacific_norcal",
+    "conditions_region": "pacific"
+  },
+  {
+    "id": "san-francisco-ca",
+    "name": "San Francisco / Pacifica",
+    "state": "CA",
+    "lat": 37.7604,
+    "lng": -122.5107,
+    "timezone": "America/Los_Angeles",
+    "coops_station": "9414290",
+    "ndbc_stations": [
+      "46026",
+      "46012"
+    ],
+    "nws_zone": "PZZ530",
+    "temp_region": "pacific_norcal",
+    "conditions_region": "pacific"
+  },
+  {
+    "id": "bodega-bay-ca",
+    "name": "Bodega Bay",
+    "state": "CA",
+    "lat": 38.3332,
+    "lng": -123.0481,
+    "timezone": "America/Los_Angeles",
+    "coops_station": "9415020",
+    "ndbc_stations": [
+      "46013",
+      "46014"
+    ],
+    "nws_zone": "PZZ455",
+    "temp_region": "pacific_norcal",
+    "conditions_region": "pacific"
+  },
+  {
+    "id": "eureka-ca",
+    "name": "Eureka / Trinidad",
+    "state": "CA",
+    "lat": 40.7668,
+    "lng": -124.2026,
+    "timezone": "America/Los_Angeles",
+    "coops_station": "9418767",
+    "ndbc_stations": [
+      "46022",
+      "46244"
+    ],
+    "nws_zone": "PZZ450",
+    "temp_region": "pacific_norcal",
+    "conditions_region": "pacific",
+    "temp_offset": -1
+  },
+  {
+    "id": "brookings-or",
+    "name": "Brookings",
+    "state": "OR",
+    "lat": 42.0526,
+    "lng": -124.284,
+    "timezone": "America/Los_Angeles",
+    "coops_station": "9430104",
+    "ndbc_stations": [
+      "46027",
+      "46015"
+    ],
+    "nws_zone": "PZZ350",
+    "temp_region": "pacific_nw",
+    "conditions_region": "pacific",
+    "temp_offset": 2
+  },
+  {
+    "id": "charleston-or",
+    "name": "Charleston / Coos Bay",
+    "state": "OR",
+    "lat": 43.3457,
+    "lng": -124.3326,
+    "timezone": "America/Los_Angeles",
+    "coops_station": "9432780",
+    "ndbc_stations": [
+      "46015",
+      "46229"
+    ],
+    "nws_zone": "PZZ350",
+    "temp_region": "pacific_nw",
+    "conditions_region": "pacific",
+    "temp_offset": 1
+  },
+  {
+    "id": "florence-or",
+    "name": "Florence",
+    "state": "OR",
+    "lat": 43.9826,
+    "lng": -124.1004,
+    "timezone": "America/Los_Angeles",
+    "coops_station": "9432780",
+    "ndbc_stations": [
+      "46229"
+    ],
+    "nws_zone": "PZZ350",
+    "temp_region": "pacific_nw",
+    "conditions_region": "pacific"
+  },
+  {
+    "id": "newport-or",
+    "name": "Newport",
+    "state": "OR",
+    "lat": 44.6368,
+    "lng": -124.0535,
+    "timezone": "America/Los_Angeles",
+    "coops_station": "9435380",
+    "ndbc_stations": [
+      "46050",
+      "46229"
+    ],
+    "nws_zone": "PZZ255",
+    "temp_region": "pacific_nw",
+    "conditions_region": "pacific"
+  },
+  {
+    "id": "lincoln-city-or",
+    "name": "Lincoln City",
+    "state": "OR",
+    "lat": 44.9582,
+    "lng": -124.0176,
+    "timezone": "America/Los_Angeles",
+    "coops_station": "9435380",
+    "ndbc_stations": [
+      "46050"
+    ],
+    "nws_zone": "PZZ255",
+    "temp_region": "pacific_nw",
+    "conditions_region": "pacific"
+  },
+  {
+    "id": "astoria-or",
+    "name": "Astoria / Fort Stevens",
+    "state": "OR",
+    "lat": 46.1879,
+    "lng": -123.8313,
+    "timezone": "America/Los_Angeles",
+    "coops_station": "9439040",
+    "ndbc_stations": [
+      "46029"
+    ],
+    "nws_zone": "PZZ250",
+    "temp_region": "pacific_nw",
+    "conditions_region": "pacific",
+    "temp_offset": -1
+  },
+  {
+    "id": "long-beach-wa",
+    "name": "Long Beach",
+    "state": "WA",
+    "lat": 46.3523,
+    "lng": -124.0543,
+    "timezone": "America/Los_Angeles",
+    "coops_station": "9440910",
+    "ndbc_stations": [
+      "46029"
+    ],
+    "nws_zone": "PZZ210",
+    "temp_region": "pacific_nw",
+    "conditions_region": "pacific"
+  },
+  {
+    "id": "westport-wa",
+    "name": "Westport",
+    "state": "WA",
+    "lat": 46.8879,
+    "lng": -124.1049,
+    "timezone": "America/Los_Angeles",
+    "coops_station": "9441102",
+    "ndbc_stations": [
+      "46029",
+      "46041"
+    ],
+    "nws_zone": "PZZ210",
+    "temp_region": "pacific_nw",
+    "conditions_region": "pacific"
+  },
+  {
+    "id": "la-push-wa",
+    "name": "La Push / Olympic Coast",
+    "state": "WA",
+    "lat": 47.9084,
+    "lng": -124.6355,
+    "timezone": "America/Los_Angeles",
+    "coops_station": "9442396",
+    "ndbc_stations": [
+      "46041",
+      "46087"
+    ],
+    "nws_zone": "PZZ150",
+    "temp_region": "pacific_nw",
+    "conditions_region": "pacific",
+    "temp_offset": -1
+  },
+  {
+    "id": "seattle-wa",
+    "name": "Seattle / Puget Sound",
+    "state": "WA",
+    "lat": 47.6023,
+    "lng": -122.3391,
+    "timezone": "America/Los_Angeles",
+    "coops_station": "9447130",
+    "ndbc_stations": [
+      "46120"
+    ],
+    "nws_zone": "PZZ135",
+    "temp_region": "pacific_nw",
+    "conditions_region": "pacific",
+    "temp_offset": 2
+  },
+  {
+    "id": "honolulu-hi",
+    "name": "Honolulu / Waikiki",
+    "state": "HI",
+    "lat": 21.3069,
+    "lng": -157.8583,
+    "timezone": "Pacific/Honolulu",
+    "coops_station": "1612340",
+    "ndbc_stations": [
+      "51201",
+      "51202"
+    ],
+    "nws_zone": "PHZ110",
+    "temp_region": "hawaii",
+    "conditions_region": "hawaii_conditions"
+  },
+  {
+    "id": "north-shore-hi",
+    "name": "North Shore (Oahu)",
+    "state": "HI",
+    "lat": 21.579,
+    "lng": -158.1041,
+    "timezone": "Pacific/Honolulu",
+    "coops_station": "1612340",
+    "ndbc_stations": [
+      "51201",
+      "51202"
+    ],
+    "nws_zone": "PHZ110",
+    "temp_region": "hawaii",
+    "conditions_region": "hawaii_conditions",
+    "temp_offset": -1
+  },
+  {
+    "id": "kailua-kona-hi",
+    "name": "Kailua-Kona (Big Island)",
+    "state": "HI",
+    "lat": 19.64,
+    "lng": -155.9969,
+    "timezone": "Pacific/Honolulu",
+    "coops_station": "1617433",
+    "ndbc_stations": [
+      "51003"
+    ],
+    "nws_zone": "PHZ120",
+    "temp_region": "hawaii",
+    "conditions_region": "hawaii_conditions",
+    "temp_offset": 1
+  },
+  {
+    "id": "kahului-hi",
+    "name": "Kahului (Maui)",
+    "state": "HI",
+    "lat": 20.8947,
+    "lng": -156.47,
+    "timezone": "Pacific/Honolulu",
+    "coops_station": "1615680",
+    "ndbc_stations": [
+      "51202"
+    ],
+    "nws_zone": "PHZ114",
+    "temp_region": "hawaii",
+    "conditions_region": "hawaii_conditions"
+  },
+  {
+    "id": "bar-harbor-me",
+    "name": "Bar Harbor / Acadia",
+    "state": "ME",
+    "lat": 44.3876,
+    "lng": -68.2039,
+    "timezone": "America/New_York",
+    "coops_station": "8413320",
+    "ndbc_stations": [
+      "44034",
+      "44007"
+    ],
+    "nws_zone": "ANZ151",
+    "temp_region": "northeast",
+    "conditions_region": "atlantic_north",
+    "temp_offset": -2
+  },
+  {
+    "id": "portland-me",
+    "name": "Portland / Old Orchard Beach",
+    "state": "ME",
+    "lat": 43.6591,
+    "lng": -70.2568,
+    "timezone": "America/New_York",
+    "coops_station": "8418150",
+    "ndbc_stations": [
+      "44007"
+    ],
+    "nws_zone": "ANZ150",
+    "temp_region": "northeast",
+    "conditions_region": "atlantic_north",
+    "temp_offset": -1
+  },
+  {
+    "id": "gloucester-ma",
+    "name": "Gloucester / Cape Ann",
+    "state": "MA",
+    "lat": 42.6159,
+    "lng": -70.6603,
+    "timezone": "America/New_York",
+    "coops_station": "8442645",
+    "ndbc_stations": [
+      "44013",
+      "44007"
+    ],
+    "nws_zone": "ANZ230",
+    "temp_region": "northeast",
+    "conditions_region": "atlantic_north"
+  },
+  {
+    "id": "cape-cod-ma",
+    "name": "Cape Cod / Chatham",
+    "state": "MA",
+    "lat": 41.6821,
+    "lng": -69.9597,
+    "timezone": "America/New_York",
+    "coops_station": "8447386",
+    "ndbc_stations": [
+      "44018",
+      "44013"
+    ],
+    "nws_zone": "ANZ234",
+    "temp_region": "northeast",
+    "conditions_region": "atlantic_north",
+    "temp_offset": 1
+  },
+  {
+    "id": "marthas-vineyard-ma",
+    "name": "Martha's Vineyard / Edgartown",
+    "state": "MA",
+    "lat": 41.3901,
+    "lng": -70.5133,
+    "timezone": "America/New_York",
+    "coops_station": "8449130",
+    "ndbc_stations": [
+      "44017",
+      "44018"
+    ],
+    "nws_zone": "ANZ236",
+    "temp_region": "northeast",
+    "conditions_region": "atlantic_north",
+    "temp_offset": 2
+  },
+  {
+    "id": "point-judith-ri",
+    "name": "Point Judith / Narragansett",
+    "state": "RI",
+    "lat": 41.3623,
+    "lng": -71.4809,
+    "timezone": "America/New_York",
+    "coops_station": "8452660",
+    "ndbc_stations": [
+      "44017",
+      "44097"
+    ],
+    "nws_zone": "ANZ330",
+    "temp_region": "northeast",
+    "conditions_region": "atlantic_north",
+    "temp_offset": 1
+  },
+  {
+    "id": "rehoboth-beach-de",
+    "name": "Rehoboth Beach / Dewey Beach",
+    "state": "DE",
+    "lat": 38.7169,
+    "lng": -75.076,
+    "timezone": "America/New_York",
+    "coops_station": "8557380",
+    "ndbc_stations": [
+      "44009"
+    ],
+    "nws_zone": "ANZ450",
+    "temp_region": "midatlantic",
+    "conditions_region": "atlantic_mid"
+  },
+  {
+    "id": "cbbt-va",
+    "name": "Chesapeake Bay Bridge-Tunnel",
+    "state": "VA",
+    "lat": 37.033,
+    "lng": -76.0836,
+    "timezone": "America/New_York",
+    "coops_station": "8638610",
+    "ndbc_stations": [
+      "44014"
+    ],
+    "nws_zone": "ANZ630",
+    "temp_region": "midatlantic",
+    "conditions_region": "atlantic_mid",
+    "temp_offset": 1
+  },
+  {
+    "id": "topsail-island-nc",
+    "name": "Topsail Island",
+    "state": "NC",
+    "lat": 34.3968,
+    "lng": -77.6364,
+    "timezone": "America/New_York",
+    "coops_station": "8658163",
+    "ndbc_stations": [
+      "41110",
+      "41037"
+    ],
+    "nws_zone": "AMZ158",
+    "temp_region": "nc_south",
+    "conditions_region": "atlantic_mid",
+    "temp_offset": -1
+  },
+  {
+    "id": "oak-island-nc",
+    "name": "Oak Island / Southport",
+    "state": "NC",
+    "lat": 33.9113,
+    "lng": -78.1131,
+    "timezone": "America/New_York",
+    "coops_station": "8659897",
+    "ndbc_stations": [
+      "41037"
+    ],
+    "nws_zone": "AMZ158",
+    "temp_region": "nc_south",
+    "conditions_region": "atlantic_mid"
+  },
+  {
+    "id": "pawleys-island-sc",
+    "name": "Pawleys Island / Murrells Inlet",
+    "state": "SC",
+    "lat": 33.4307,
+    "lng": -79.1199,
+    "timezone": "America/New_York",
+    "coops_station": "8661070",
+    "ndbc_stations": [
+      "41004"
+    ],
+    "nws_zone": "AMZ252",
+    "temp_region": "sc_ga",
+    "conditions_region": "atlantic_mid"
+  },
+  {
+    "id": "folly-beach-sc",
+    "name": "Folly Beach",
+    "state": "SC",
+    "lat": 32.6551,
+    "lng": -79.9403,
+    "timezone": "America/New_York",
+    "coops_station": "8665530",
+    "ndbc_stations": [
+      "41004"
+    ],
+    "nws_zone": "AMZ254",
+    "temp_region": "sc_ga",
+    "conditions_region": "atlantic_south"
+  },
+  {
+    "id": "st-simons-island-ga",
+    "name": "St. Simons Island / Jekyll Island",
+    "state": "GA",
+    "lat": 31.15,
+    "lng": -81.3691,
+    "timezone": "America/New_York",
+    "coops_station": "8677344",
+    "ndbc_stations": [
+      "41008"
+    ],
+    "nws_zone": "AMZ350",
+    "temp_region": "sc_ga",
+    "conditions_region": "atlantic_south"
+  },
+  {
+    "id": "amelia-island-fl",
+    "name": "Amelia Island / Fernandina Beach",
+    "state": "FL",
+    "lat": 30.6697,
+    "lng": -81.4626,
+    "timezone": "America/New_York",
+    "coops_station": "8720030",
+    "ndbc_stations": [
+      "41112"
+    ],
+    "nws_zone": "AMZ450",
+    "temp_region": "fl_northeast",
+    "conditions_region": "atlantic_south"
+  },
+  {
+    "id": "sebastian-inlet-fl",
+    "name": "Sebastian Inlet / Melbourne Beach",
+    "state": "FL",
+    "lat": 27.8576,
+    "lng": -80.4495,
+    "timezone": "America/New_York",
+    "coops_station": "8721604",
+    "ndbc_stations": [
+      "41009",
+      "41114"
+    ],
+    "nws_zone": "AMZ550",
+    "temp_region": "fl_central_east",
+    "conditions_region": "atlantic_south",
+    "temp_offset": 1
+  },
+  {
+    "id": "islamorada-fl",
+    "name": "Islamorada (Upper Keys)",
+    "state": "FL",
+    "lat": 24.9243,
+    "lng": -80.6278,
+    "timezone": "America/New_York",
+    "coops_station": "8723970",
+    "ndbc_stations": [
+      "SMKF1"
+    ],
+    "nws_zone": "AMZ651",
+    "temp_region": "fl_keys",
+    "conditions_region": "atlantic_south"
+  },
+  {
+    "id": "marathon-fl",
+    "name": "Marathon (Middle Keys)",
+    "state": "FL",
+    "lat": 24.7136,
+    "lng": -81.0905,
+    "timezone": "America/New_York",
+    "coops_station": "8724580",
+    "ndbc_stations": [
+      "SMKF1"
+    ],
+    "nws_zone": "AMZ651",
+    "temp_region": "fl_keys",
+    "conditions_region": "atlantic_south"
+  },
+  {
+    "id": "tampa-skyway-fl",
+    "name": "Tampa / Skyway Pier",
+    "state": "FL",
+    "lat": 27.6167,
+    "lng": -82.6539,
+    "timezone": "America/New_York",
+    "coops_station": "8726520",
+    "ndbc_stations": [
+      "42036"
+    ],
+    "nws_zone": "GMZ836",
+    "temp_region": "fl_gulf_south",
+    "conditions_region": "gulf"
+  },
+  {
+    "id": "cedar-key-fl",
+    "name": "Cedar Key",
+    "state": "FL",
+    "lat": 29.1353,
+    "lng": -83.0359,
+    "timezone": "America/New_York",
+    "coops_station": "8727520",
+    "ndbc_stations": [
+      "42036"
+    ],
+    "nws_zone": "GMZ850",
+    "temp_region": "fl_gulf_north",
+    "conditions_region": "gulf"
+  },
+  {
+    "id": "st-george-island-fl",
+    "name": "St. George Island / Apalachicola",
+    "state": "FL",
+    "lat": 29.6739,
+    "lng": -84.8624,
+    "timezone": "America/New_York",
+    "coops_station": "8728690",
+    "ndbc_stations": [
+      "42039"
+    ],
+    "nws_zone": "GMZ850",
+    "temp_region": "fl_gulf_north",
+    "conditions_region": "gulf"
+  },
+  {
+    "id": "dauphin-island-al",
+    "name": "Dauphin Island",
+    "state": "AL",
+    "lat": 30.2527,
+    "lng": -88.11,
+    "timezone": "America/Chicago",
+    "coops_station": "8735180",
+    "ndbc_stations": [
+      "42012"
+    ],
+    "nws_zone": "GMZ630",
+    "temp_region": "gulf_central",
+    "conditions_region": "gulf"
+  },
+  {
+    "id": "venice-la",
+    "name": "Venice / Port Eads",
+    "state": "LA",
+    "lat": 29.2747,
+    "lng": -89.3579,
+    "timezone": "America/Chicago",
+    "coops_station": "8760922",
+    "ndbc_stations": [
+      "42041",
+      "42007"
+    ],
+    "nws_zone": "GMZ536",
+    "temp_region": "gulf_central",
+    "conditions_region": "gulf"
+  },
+  {
+    "id": "surfside-beach-tx",
+    "name": "Surfside Beach / Freeport",
+    "state": "TX",
+    "lat": 28.9472,
+    "lng": -95.2879,
+    "timezone": "America/Chicago",
+    "coops_station": "8772447",
+    "ndbc_stations": [
+      "42035"
+    ],
+    "nws_zone": "GMZ335",
+    "temp_region": "gulf_west",
+    "conditions_region": "gulf"
+  },
+  {
+    "id": "corpus-christi-tx",
+    "name": "Corpus Christi / Mustang Island",
+    "state": "TX",
+    "lat": 27.6364,
+    "lng": -97.2253,
+    "timezone": "America/Chicago",
+    "coops_station": "8775237",
+    "ndbc_stations": [
+      "42020"
+    ],
+    "nws_zone": "GMZ245",
+    "temp_region": "gulf_west",
+    "conditions_region": "gulf"
+  },
+  {
+    "id": "newport-beach-ca",
+    "name": "Newport Beach / Balboa Pier",
+    "state": "CA",
+    "lat": 33.6032,
+    "lng": -117.9298,
+    "timezone": "America/Los_Angeles",
+    "coops_station": "9410580",
+    "ndbc_stations": [
+      "46242",
+      "46222"
+    ],
+    "nws_zone": "PZZ670",
+    "temp_region": "pacific_socal",
+    "conditions_region": "pacific_south"
+  },
+  {
+    "id": "redondo-beach-ca",
+    "name": "Redondo Beach / Manhattan Beach",
+    "state": "CA",
+    "lat": 33.8492,
+    "lng": -118.3884,
+    "timezone": "America/Los_Angeles",
+    "coops_station": "9410660",
+    "ndbc_stations": [
+      "46222",
+      "46221"
+    ],
+    "nws_zone": "PZZ670",
+    "temp_region": "pacific_socal",
+    "conditions_region": "pacific_south"
+  },
+  {
+    "id": "pacific-city-or",
+    "name": "Pacific City / Cape Kiwanda",
+    "state": "OR",
+    "lat": 45.2039,
+    "lng": -123.9634,
+    "timezone": "America/Los_Angeles",
+    "coops_station": "9435380",
+    "ndbc_stations": [
+      "46050"
+    ],
+    "nws_zone": "PZZ255",
+    "temp_region": "pacific_nw",
+    "conditions_region": "pacific"
+  },
+  {
+    "id": "seaside-or",
+    "name": "Seaside / Cannon Beach",
+    "state": "OR",
+    "lat": 45.9932,
+    "lng": -123.922,
+    "timezone": "America/Los_Angeles",
+    "coops_station": "9439040",
+    "ndbc_stations": [
+      "46029"
+    ],
+    "nws_zone": "PZZ250",
+    "temp_region": "pacific_nw",
+    "conditions_region": "pacific"
+  },
+  {
+    "id": "neah-bay-wa",
+    "name": "Neah Bay",
+    "state": "WA",
+    "lat": 48.3686,
+    "lng": -124.6159,
+    "timezone": "America/Los_Angeles",
+    "coops_station": "9443090",
+    "ndbc_stations": [
+      "46087",
+      "46041"
+    ],
+    "nws_zone": "PZZ150",
+    "temp_region": "pacific_nw",
+    "conditions_region": "pacific",
+    "temp_offset": -1
+  },
+  {
+    "id": "hilo-hi",
+    "name": "Hilo (Big Island)",
+    "state": "HI",
+    "lat": 19.7241,
+    "lng": -155.0868,
+    "timezone": "Pacific/Honolulu",
+    "coops_station": "1617760",
+    "ndbc_stations": [
+      "51003"
+    ],
+    "nws_zone": "PHZ126",
+    "temp_region": "hawaii",
+    "conditions_region": "hawaii_conditions"
+  },
+  {
+    "id": "poipu-hi",
+    "name": "Poipu (Kauai)",
+    "state": "HI",
+    "lat": 21.8781,
+    "lng": -159.4577,
+    "timezone": "Pacific/Honolulu",
+    "coops_station": "1611400",
+    "ndbc_stations": [
+      "51201"
+    ],
+    "nws_zone": "PHZ100",
+    "temp_region": "hawaii",
+    "conditions_region": "hawaii_conditions"
+  }
+]
