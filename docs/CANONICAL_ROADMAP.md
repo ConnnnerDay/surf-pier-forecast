@@ -430,8 +430,10 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #346 (sprint 23, confidence model, `df808d3`, merged
-  as `928eb29`).
+- Last merged PR: #348 (fix legacy lint CI's ruff rule-selection drift,
+  `e985be4`, merged as `b6056ce`). #347 (sprint 24, snapshot caching +
+  first legacy lint fix pass, `dac3c93`/`20a21cc`, merged as `cc121fa`)
+  landed just before it.
 - **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
   1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
   (#332). Phase 1's only remaining items (9, 10) need external accounts —
@@ -815,6 +817,26 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   serialization and different-key non-blocking) independently. All of
   `apps/api`'s checks (ruff, ruff format, mypy, pytest — 241 passed)
   pass clean.
+- **CI-health fix (PRs #347/#348, not a numbered sprint): legacy `lint`
+  job resolved.** Fixed the ~38 ruff errors, 65 unformatted files, and
+  23 mypy errors `docs/R2_CI_BASELINE.md` documented, plus a separate
+  workflow bug where mypy crashed on a duplicate `tests` module
+  colliding with `apps/api/tests` before it could check anything (fixed
+  by excluding `apps/` from the root job's ruff/mypy invocations, since
+  `apps/` already has its own dedicated CI). #347's fix passed every
+  local check yet the `lint` job still failed post-merge with 580
+  errors — root cause: neither the legacy repo-root nor `apps/api` had
+  a `pyproject.toml`/`ruff.toml`, so ruff's rule selection silently fell
+  back to an undocumented, version-dependent implicit default that
+  disagreed between environments even under the same pinned
+  `ruff>=0.4,<1.0` constraint. #348 fixed this at the root: an explicit
+  repo-root `pyproject.toml` pins `select = ["E4", "E7", "E9", "F"]`
+  (the set the cleanup was actually written against), and a separate
+  `apps/api/pyproject.toml` (no explicit `select`) stops `apps/api` from
+  inheriting that narrower selection while preserving the "clean under
+  ruff's implicit default" bar it's held since sprint 12. Verified via
+  the GitHub API that both `lint` job runs on #348's merge commit show
+  `conclusion: success` — not just a local re-check.
 - **Incident (sprint 6, resolved earlier)**: a scratch branch explicitly
   titled `DO NOT MERGE` was merged into `main` under the repo owner's own
   account, landing deliberately-broken code; reverted within ~10 minutes
@@ -837,11 +859,18 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 - Known blocker: sprints 9/10 need Vercel/Render/Neon account access not
   available to this session — needs the product owner to either provision
   and share access, or do that part directly.
-- Known baseline carried forward: per `docs/R2_CI_BASELINE.md`, the
-  legacy (repo-root) `ruff check`/`ruff format --check`/`mypy` findings
-  (~600 errors, ~65 unformatted files, 23 mypy errors) remain known debt —
-  unrelated to `apps/`, which lints/type-checks/tests clean and passes
-  secret-scan/dependency-audit. R1's open product question is still
+- **Resolved**: the legacy `lint` CI job (PRs #347/#348) — no longer
+  known baseline debt. `docs/R2_CI_BASELINE.md`'s legacy (repo-root)
+  `ruff check`/`ruff format --check`/`mypy` findings (~600 errors, ~65
+  unformatted files, 23 mypy errors) are fixed, and the underlying cause
+  of the workflow's own CI-vs-local drift — no `pyproject.toml`/`ruff.toml`
+  anywhere in the repo, so ruff's rule selection fell back to an
+  undocumented, version-dependent implicit default — is fixed too via an
+  explicit `select` pin at the repo root (`E4`/`E7`/`E9`/`F`) and a
+  separate `apps/api/pyproject.toml` insulating `apps/api` from that
+  narrower selection. Both `lint` job runs on PR #348's merge commit show
+  `conclusion: success`, confirmed via the GitHub API, not just a local
+  check. R1's open product question is still
   unresolved: whether `services/{datagov,hdx_fao,arcgis_live_feeds,
   bathymetry}.py` (not named in the canonical contract's required
   providers) are future enrichment or scope creep — route to the product
