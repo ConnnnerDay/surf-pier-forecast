@@ -49,10 +49,25 @@ Boots, has real CI, and now has:
   all) and missing-value markers (`MM`, `99.0`, ...) distinctly. See the
   module docstring for what's deliberately deferred (pressure trend and
   fishing-impact narrative — scoring concerns, not a provider adapter's).
+- The fourth provider adapter, astronomy (`app/providers/astronomy.py`):
+  sunrise/sunset, civil/nautical/astronomical twilight, lunar details,
+  and solunar major/minor fishing periods — pure math (NOAA's
+  simplified solar-position algorithm, a synodic-month lunar-phase
+  approximation), no network calls, unlike the other three adapters.
+  Ported from the legacy `services/astro.py` behind characterization
+  tests spanning coasts (Atlantic/Pacific), seasons, and timezones
+  (including a non-DST-observing zone and a polar-latitude clamping
+  case), with typed timezone-aware `datetime`s instead of pre-formatted
+  12-hour strings. See the module docstring for the other adaptations
+  (removed duplicate formula, removed a lat/lng-== 0 "unset" sentinel
+  that was a latent bug, and the day-boundary approximation carried
+  over unchanged from the legacy math). `app/infra/timezones.py` (new)
+  holds the `ZoneInfo`-with-fallback helper this adapter shares with
+  sprint 14's NOAA CO-OPS adapter, which was refactored to use it too.
 
 It does not yet have the `/v1` routes, the ported forecast domain
 *logic*, or a Postgres connection. Those land in the Phase 2 sprints
-listed in the roadmap's sprint ledger (16 onward), each behind its own
+listed in the roadmap's sprint ledger (17 onward), each behind its own
 characterization tests, porting from the reconciliation audit
 ([`docs/R1_RECONCILIATION_AUDIT.md`](../../docs/R1_RECONCILIATION_AUDIT.md))
 rather than copying `v2/backend` or the legacy Flask app verbatim.

@@ -30,7 +30,11 @@ time (`time_zone=lst_ldt`), not UTC. Parsing uses `zoneinfo.ZoneInfo`,
 which (unlike `pytz`) resolves the correct UTC offset for a given
 wall-clock instant via a plain `.replace(tzinfo=...)`, so a station's
 timestamps are interpreted with the right offset on both sides of a DST
-transition without a separate `.localize()` step.
+transition without a separate `.localize()` step. The
+`ZoneInfo`-with-fallback helper itself now lives in
+`app.infra.timezones` (extracted in sprint 16, once
+`app.providers.astronomy` needed the identical helper — a second copy
+was fine, a third wasn't).
 """
 
 from __future__ import annotations
@@ -38,15 +42,15 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 from typing import Any, Literal, cast
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel
 
 from app.infra.http_client import BoundedHTTPClient, ProviderError
+from app.infra.timezones import DEFAULT_TIMEZONE
+from app.infra.timezones import safe_zone as _safe_zone
 
 logger = logging.getLogger(__name__)
-
-DEFAULT_TIMEZONE = "America/New_York"
 
 _COOPS_HEADERS = {
     "User-Agent": "(SurfPierForecast, github.com/ConnnnerDay/surf-pier-forecast)",
@@ -74,13 +78,6 @@ class TidePrediction(BaseModel):
     time: datetime
     kind: Literal["high", "low"]
     height_ft: float
-
-
-def _safe_zone(tz_name: str) -> ZoneInfo:
-    try:
-        return ZoneInfo(tz_name)
-    except (ZoneInfoNotFoundError, ValueError):
-        return ZoneInfo(DEFAULT_TIMEZONE)
 
 
 def _parse_coops_time(raw: str, tz: ZoneInfo) -> datetime:
