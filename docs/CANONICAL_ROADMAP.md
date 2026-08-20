@@ -318,7 +318,7 @@ to reconciliation, not proof that the agreed outcome passed.
 | 15 | NDBC adapter | Buoy parsing, missing columns and markers | **Partially complete** — `apps/api/app/providers/ndbc.py`: wind/wave/pressure parsing from the fixed-width `realtime2` feed (`parse_realtime_text`) and fetch (`fetch_buoy_observation`), distinguishing missing columns from missing-value markers, behind `apps/api/tests/test_ndbc_provider.py`. `app/infra/http_client.py`'s `BoundedHTTPClient` gained `get_text` for this (NDBC is plain text, not JSON). Pressure-trend/fishing-impact narrative deliberately deferred to the scoring sprint (35) — see module docstring |
 | 16 | Astronomy adapter | Pure deterministic coast/season/timezone tests | **Complete** — `apps/api/app/providers/astronomy.py`: sunrise/sunset, twilight, lunar details, and solunar periods, all pure math (no network). Typed timezone-aware `datetime`s instead of formatted strings; enums for moon phase/rating. `apps/api/tests/test_astronomy_provider.py` covers Atlantic/Pacific coasts, summer/winter seasons, a non-DST timezone, and polar-latitude clamping |
 | 17 | Station catalog | Provenance, timestamps, idempotent refresh | **Complete** — `apps/api/app/providers/stations.py`: CO-OPS tide/water-temp and NDBC catalog fetch (degrades to `[]`, metadata not a reading), pure nearest-station distance ranking, and `StationCatalogCache` — an explicit, injectable-clock, idempotent TTL cache, tested without sleeping in `apps/api/tests/test_stations_provider.py` |
-| 18 | Coastal coordinate validation | Inland/out-of-range rejection and all-coast boundaries | Candidate in `/v2` |
+| 18 | Coastal coordinate validation | Inland/out-of-range rejection and all-coast boundaries | **Complete** (using only sprint 17's inputs — see the sprint's checkpoint entry for the curated-location fallback deferred to sprint 19) — `apps/api/app/providers/coastal_bounds.py`: `is_valid_coordinate`, `classify_coast_region` (bounding boxes for Atlantic/Gulf/Pacific/Alaska/Hawaii), and `gate_coastal_point` (the real inland-rejection mechanism, ported from `locations.py`'s `_DYN_GATE_MILES`), tested in `apps/api/tests/test_coastal_bounds.py` |
 | 19 | Location resolution | Timezone, zone, tide/temp station and buoy golden tests | Candidate in `/v2` |
 | 20 | Observation normalization | Canonical units/times with raw provenance retained | Candidate in `/v2` |
 | 21 | Forecast assembly | Independent sources and every present/absent matrix | Candidate in `/v2` |
@@ -430,8 +430,8 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #339 (sprint 16, astronomy provider adapter,
-  `c8e3db0`, merged as `129cbed`).
+- Last merged PR: #340 (sprint 17, station catalog provider, `237c169`,
+  merged as `a444a14`).
 - **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
   1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
   (#332). Phase 1's only remaining items (9, 10) need external accounts —
@@ -601,14 +601,39 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   negative TTL" deterministically instead of sleeping in tests. All
   of `apps/api`'s checks (ruff, ruff format, mypy, pytest — 90
   passed) pass clean.
+- This PR continues Phase 2 with **sprint 18** (coastal coordinate
+  validation, **complete** using only sprint 17's inputs):
+  `apps/api/app/providers/coastal_bounds.py` — `is_valid_coordinate`
+  (lat/lng range check) and `classify_coast_region` (a coarse bounding
+  box per supported coast — Atlantic, Gulf, Pacific, Alaska, Hawaii —
+  both pure and offline, rejecting obviously-wrong input before any
+  station lookup is worth doing), plus `gate_coastal_point`, the
+  actual inland-rejection mechanism ported from `locations.py`'s
+  `_resolve_dynamic_location`/`dynamic_location_for_point`
+  (`_DYN_GATE_MILES = 60.0`): a point counts as coastal only if it's
+  within `max_miles` of a real CO-OPS or NDBC station in sprint 17's
+  catalogs — a bounding box alone can't do inland rejection, since the
+  Atlantic-region box necessarily contains the Appalachians. The
+  legacy gate's additional curated-location fallback is deliberately
+  not ported: it needs the curated-locations dataset, sprint 19's job
+  (location resolution), not this one's — so this sprint's gate is a
+  strict subset of the legacy gate's inputs, which can only make it
+  stricter, never more permissive. `apps/api/tests/
+  test_coastal_bounds.py` covers boundary/out-of-range coordinates,
+  each of the five supported coast regions by a known city, landlocked
+  and far-outside-US rejection, and `gate_coastal_point` against
+  synthetic station catalogs (nearer-of-both-catalogs selection,
+  custom `max_miles`, empty-catalog handling). All of `apps/api`'s
+  checks (ruff, ruff format, mypy, pytest — 105 passed) pass clean.
 - **Incident (sprint 6, resolved earlier)**: a scratch branch explicitly
   titled `DO NOT MERGE` was merged into `main` under the repo owner's own
   account, landing deliberately-broken code; reverted within ~10 minutes
   in PR #330. Full account in `docs/SPRINT_6_CI_PROOF.md`. Sprint 7
   turned this into a documented branch-hygiene rule.
 - Exact next action: finish sprint 13/14/15's deferred scope, or move to
-  sprint 18 (coastal coordinate validation — inland/out-of-range
-  rejection and all-coast boundaries) — any is a valid next Phase 2
+  sprint 19 (location resolution — timezone, zone, tide/temp station
+  and buoy golden tests; this is where the curated-locations dataset
+  and the fuller legacy inland gate land) — any is a valid next Phase 2
   pick, needs no external accounts. Separately, sprint 9 (preview
   environments) and sprint 10 (production skeleton) need real
   Vercel/Render/Neon accounts this session has no credentials for —

@@ -78,10 +78,21 @@ Boots, has real CI, and now has:
   for a degraded one) replacing the legacy module's implicit
   module-level `dict` + lock, characterized in
   `apps/api/tests/test_stations_provider.py` without sleeping in tests.
+- Coastal coordinate validation (`app/providers/coastal_bounds.py`):
+  `is_valid_coordinate` (lat/lng range check) and
+  `classify_coast_region` (a coarse bounding box per supported coast —
+  Atlantic, Gulf, Pacific, Alaska, Hawaii — both pure, offline, no
+  station lookup needed), plus `gate_coastal_point`, the actual
+  inland-rejection mechanism ported from `locations.py`'s
+  `_DYN_GATE_MILES` gate: a point counts as coastal only if it's
+  within `max_miles` (default 60) of a real station in sprint 17's
+  catalogs. See the module docstring for what's deliberately deferred
+  (the legacy gate's additional curated-location fallback, which
+  needs the curated-locations dataset — sprint 19's job).
 
 It does not yet have the `/v1` routes, the ported forecast domain
 *logic*, or a Postgres connection. Those land in the Phase 2 sprints
-listed in the roadmap's sprint ledger (18 onward), each behind its own
+listed in the roadmap's sprint ledger (19 onward), each behind its own
 characterization tests, porting from the reconciliation audit
 ([`docs/R1_RECONCILIATION_AUDIT.md`](../../docs/R1_RECONCILIATION_AUDIT.md))
 rather than copying `v2/backend` or the legacy Flask app verbatim.
