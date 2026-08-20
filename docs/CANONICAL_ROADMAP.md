@@ -323,7 +323,7 @@ to reconciliation, not proof that the agreed outcome passed.
 | 20 | Observation normalization | Canonical units/times with raw provenance retained | **Complete** — `apps/api/app/domain/normalize.py`: wraps sprints 13-15's provider outputs into `Observation` (canonical `kt`/`ft`/`degF`/`mb` units, provider/station/observed_at retained); NWS forecast ranges become an `ObservationRange` (paired low/high) rather than a collapsed value; astronomy and categorical fields (wind direction) deliberately not wrapped; tested in `apps/api/tests/test_normalize.py` |
 | 21 | Forecast assembly | Independent sources and every present/absent matrix | **Complete** — `apps/api/app/domain/assembly.py`: concurrently fans out to NWS/NOAA CO-OPS/NDBC + astronomy, assembles `ForecastEnvelope` and designs `conditions`; water-temperature fallback-to-monthly-average finally lands (deferred since sprint 14); `apps/api/tests/test_assembly.py` exercises all 8 present/absent combinations of the 3 fallible sources |
 | 22 | Forecast scoring | Defensible stable score components with explanations | **Complete** — `apps/api/app/domain/scoring.py`: `score_conditions`, the 0-100 go/no-go index ported from `domain/forecast.py`, scores wind/wave/direction/water-temp/dawn-dusk/solunar factors with a sorted, plain-language summary; deliberately decoupled from sprint 21's `ForecastConditions` (takes a pre-reconciled `wind_range`/`wave_range`); tide, fishing-type/preference, and water-quality bonuses deliberately deferred (sprints 34/36, still-open product question); tested in `apps/api/tests/test_scoring.py` |
-| 23 | Confidence model | Predictable degradation by availability, distance, age, fallback | Not accepted |
+| 23 | Confidence model | Predictable degradation by availability, distance, age, fallback | **Complete** — `apps/api/app/domain/confidence.py`: `assess_confidence`, a 100-point four-factor score (source coverage, observation age, station distance, fallback use) with no legacy precedent, replacing sprint 21's interim liveness-only stub; each degrading factor reports an independent reason code; tested in `apps/api/tests/test_confidence.py` |
 | 24 | Snapshot caching | Fresh/stale hit, miss, expiry, fallback, concurrency; target 4-hour freshness window, matching legacy cadence | Candidate in `/v2` |
 | 25 | Versioned API | Required endpoints, OpenAPI contract and breaking-change guard | Candidate in `/v2` |
 | 26 | Performance budget | Bounded parallel calls, no duplicates, warm p95 under 750 ms | Not accepted |
@@ -430,8 +430,8 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #344 (sprint 21, forecast assembly, `037c331`, merged
-  as `b9b1c28`).
+- Last merged PR: #345 (sprint 22, forecast scoring, `cde13d7`, merged
+  as `a14d7ea`).
 - **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
   1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
   (#332). Phase 1's only remaining items (9, 10) need external accounts —
@@ -747,18 +747,50 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   wave_range is None` → `Unknown`-verdict early return. All of
   `apps/api`'s checks (ruff, ruff format, mypy, pytest — 203 passed)
   pass clean.
+- This PR continues Phase 2 with **sprint 23** (confidence model,
+  **complete**): `apps/api/app/domain/confidence.py`'s
+  `assess_confidence` has no legacy precedent — the legacy Flask app
+  never implemented a confidence concept at all, so this is this
+  recovery's own design against `docs/product-definition.md`'s
+  Confidence section ("derived from source coverage, observation age,
+  station distance, and fallback use"), replacing sprint 21's interim
+  HIGH/MEDIUM/LOW-from-liveness stub. Starts at 100 points and applies
+  an independent, documented penalty per degrading factor: an
+  unavailable/degraded `SourceStatus` per source; an aging/stale
+  observation per two age thresholds; a fallback-flagged observation
+  (penalized independently of *why* its source is unavailable, per the
+  product-definition text treating fallback use as its own axis); and
+  a far/very-far station distance (the "far" bound deliberately sits
+  inside sprint 18's 60-mile `gate_coastal_point` cutoff — a station
+  accepted as "coastal enough to use" can still be too far to fully
+  trust). Each penalty reports a plain reason code into
+  `Confidence.reasons`, giving the product contract's "always show the
+  reasons for reduced confidence" requirement something concrete to
+  render. Deliberately decoupled from `app.domain.assembly`, matching
+  sprint 22's scoring module's pattern: takes already-computed source
+  statuses, observations, and station distances as explicit parameters
+  rather than reaching into `ForecastEnvelope`/`ForecastConditions`
+  itself — wiring this into `assemble_forecast` in place of its
+  interim stub, alongside sprint 22's scoring wiring, remains an
+  unassigned follow-up. `apps/api/tests/test_confidence.py` covers
+  each factor independently, boundary ages/distances, mutual
+  exclusivity within each two-tier band, multiple factors combining on
+  one observation and across the whole assessment, and score clamping
+  at zero under compounded penalties. All of `apps/api`'s checks
+  (ruff, ruff format, mypy, pytest — 226 passed) pass clean.
 - **Incident (sprint 6, resolved earlier)**: a scratch branch explicitly
   titled `DO NOT MERGE` was merged into `main` under the repo owner's own
   account, landing deliberately-broken code; reverted within ~10 minutes
   in PR #330. Full account in `docs/SPRINT_6_CI_PROOF.md`. Sprint 7
   turned this into a documented branch-hygiene rule.
 - Exact next action: finish sprint 13/14/15's deferred scope, or move to
-  sprint 23 (confidence model — the fuller distance/age/fallback
-  degradation policy sprint 21 named as its own follow-up), or wire
-  sprint 22's `score_conditions` into `assemble_forecast`'s output
-  (picking a source when both NWS and NDBC report, still unassigned to
-  a numbered sprint) — any is a valid next Phase 2 pick, needs no
-  external accounts. Separately, sprint 9 (preview
+  sprint 24 (snapshot caching — fresh/stale hit, miss, expiry,
+  fallback, concurrency), or wire sprint 22's `score_conditions` and
+  sprint 23's `assess_confidence` into `assemble_forecast`'s output
+  (picking a source when both NWS and NDBC report, and computing real
+  station distances/observation ages for the confidence factors — both
+  still unassigned to a numbered sprint) — any is a valid next Phase 2
+  pick, needs no external accounts. Separately, sprint 9 (preview
   environments) and sprint 10 (production skeleton) need real
   Vercel/Render/Neon accounts this session has no credentials for —
   **flag to the product owner** rather than attempting them blind; they

@@ -156,9 +156,33 @@ Boots, has real CI, and now has:
   every threshold band, the four coastline orientations, the verdict
   tiers, and the `None`-input → `Unknown`-verdict path.
 
+- Confidence model (`app/domain/confidence.py`, `assess_confidence`): a
+  four-factor evidence-quality score with **no legacy precedent** —
+  `docs/product-definition.md`'s Confidence section ("derived from
+  source coverage, observation age, station distance, and fallback
+  use") was never implemented in the legacy Flask app at all, so this
+  is this recovery's own design against the product contract, replacing
+  sprint 21's interim HIGH/MEDIUM/LOW-from-liveness stub. Starts at 100
+  points and applies an independent, documented penalty per degrading
+  factor found — an unavailable/degraded `SourceStatus` per source, an
+  aging/stale observation per two age thresholds, a fallback-flagged
+  observation, and a far/very-far station distance (the "far" bound
+  deliberately sits inside sprint 18's 60-mile coastal-gate cutoff) —
+  reporting each as a reason code in `Confidence.reasons` so the
+  product contract's "always show the reasons for reduced confidence"
+  requirement has something to render. Deliberately decoupled from
+  `app.domain.assembly`, matching sprint 22's scoring module: takes
+  already-computed source statuses, observations, and station distances
+  as explicit parameters rather than reaching into `ForecastEnvelope`
+  itself — wiring this into `assemble_forecast` in place of its interim
+  stub is a follow-up, not this sprint's job. `apps/api/tests/
+  test_confidence.py` covers every factor independently, boundary ages
+  and distances, mutual exclusivity within each two-tier band, multiple
+  factors combining, and score clamping at zero.
+
 It does not yet have the `/v1` routes, the ported forecast domain
 *logic*, or a Postgres connection. Those land in the Phase 2 sprints
-listed in the roadmap's sprint ledger (23 onward), each behind its own
+listed in the roadmap's sprint ledger (24 onward), each behind its own
 characterization tests, porting from the reconciliation audit
 ([`docs/R1_RECONCILIATION_AUDIT.md`](../../docs/R1_RECONCILIATION_AUDIT.md))
 rather than copying `v2/backend` or the legacy Flask app verbatim.
