@@ -316,7 +316,7 @@ to reconciliation, not proof that the agreed outcome passed.
 | 13 | NWS adapter | Typed weather, wind, alerts, and grid contract fixtures | **Partially complete** — `apps/api/app/providers/nws.py`: marine-zone wind/wave/direction parsing and fetch, point/state active-alerts parsing and fetch, all behind `apps/api/tests/test_nws_provider.py` fixture tests. Gridpoint wind fallback and current-weather observations deliberately deferred (see module docstring) to keep the PR reviewable; tracked as follow-up before sprint 21 needs them |
 | 14 | NOAA CO-OPS adapter | Tide/water-temperature fixtures, missing values, DST | **Partially complete** — `apps/api/app/providers/noaa_coops.py`: water temperature and tide predictions, `zoneinfo`-based DST-safe timestamp parsing, missing-value/empty-row handling, all behind `apps/api/tests/test_noaa_coops_provider.py`. Wind/currents/environmental-metrics fetches and the tide-chart SVG helper deliberately deferred (see module docstring) |
 | 15 | NDBC adapter | Buoy parsing, missing columns and markers | **Partially complete** — `apps/api/app/providers/ndbc.py`: wind/wave/pressure parsing from the fixed-width `realtime2` feed (`parse_realtime_text`) and fetch (`fetch_buoy_observation`), distinguishing missing columns from missing-value markers, behind `apps/api/tests/test_ndbc_provider.py`. `app/infra/http_client.py`'s `BoundedHTTPClient` gained `get_text` for this (NDBC is plain text, not JSON). Pressure-trend/fishing-impact narrative deliberately deferred to the scoring sprint (35) — see module docstring |
-| 16 | Astronomy adapter | Pure deterministic coast/season/timezone tests | Candidate in `/v2` |
+| 16 | Astronomy adapter | Pure deterministic coast/season/timezone tests | **Complete** — `apps/api/app/providers/astronomy.py`: sunrise/sunset, twilight, lunar details, and solunar periods, all pure math (no network). Typed timezone-aware `datetime`s instead of formatted strings; enums for moon phase/rating. `apps/api/tests/test_astronomy_provider.py` covers Atlantic/Pacific coasts, summer/winter seasons, a non-DST timezone, and polar-latitude clamping |
 | 17 | Station catalog | Provenance, timestamps, idempotent refresh | Candidate in `/v2` |
 | 18 | Coastal coordinate validation | Inland/out-of-range rejection and all-coast boundaries | Candidate in `/v2` |
 | 19 | Location resolution | Timezone, zone, tide/temp station and buoy golden tests | Candidate in `/v2` |
@@ -430,8 +430,8 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #337 (sprint 14, NOAA CO-OPS provider adapter,
-  `6c286a9`, merged as `d857ce7`).
+- Last merged PR: #338 (sprint 15, NDBC provider adapter, `cb36540`,
+  merged as `e4660cb`).
 - **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
   1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
   (#332). Phase 1's only remaining items (9, 10) need external accounts —
@@ -543,14 +543,47 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   speed, missing column vs. missing value, first-usable-row-per-field,
   short-row skipping, too-few-lines raises). All of `apps/api`'s checks
   (ruff, ruff format, mypy, pytest — 62 passed) pass clean.
+- This PR continues Phase 2 with **sprint 16** (astronomy adapter,
+  **complete** — the first fully-complete Phase 2 provider sprint, since
+  it's pure math with no fetch layer): `apps/api/app/providers/
+  astronomy.py` — `compute_sun_times`, `compute_twilight_times`,
+  `compute_lunar_details`, `compute_solunar_times`, ported from
+  `services/astro.py`'s NOAA simplified solar-position algorithm and
+  synodic-month lunar-phase approximation. Returns typed timezone-aware
+  `datetime`s instead of the legacy module's pre-formatted 12-hour
+  strings, and enums (`MoonPhaseName`, `SolunarRating`) instead of loose
+  strings. Two behavior changes beyond typing, both documented in the
+  module docstring: the duplicate sunrise/sunset formula
+  (`_sun_times` vs. the parameterized `_sun_event_time`) is collapsed
+  into one; and the legacy `_sun_times`'s "lat/lng `== 0` means unset,
+  substitute a default location" sentinel is dropped as a latent bug
+  ((0, 0) is a real point, not a safe "unset" marker) — callers now pass
+  real coordinates, no silent fallback. The moonrise/moonset/solunar-
+  window day-boundary approximation (an hour-of-day wrapped `mod 24`,
+  stamped onto the same calendar date as the input, so a window that
+  crosses midnight doesn't roll onto the next day) is carried over
+  unchanged, since fixing it needs a materially different algorithm,
+  out of scope here. `apps/api/app/infra/timezones.py` (new) extracts
+  the `ZoneInfo`-with-fallback helper this adapter needs, shared with
+  sprint 14's NOAA CO-OPS adapter (refactored to use it, dropping its
+  own copy — two copies was fine, three wasn't). `apps/api/tests/
+  test_astronomy_provider.py` covers Atlantic and Pacific coasts,
+  summer vs. winter day length, a non-DST-observing timezone
+  (`America/Phoenix`), polar-latitude `acos` clamping, and exact
+  assertions at the lunar-phase reference instant (new moon → 0%
+  illumination, half a synodic month later → full moon) — structural/
+  exact assertions rather than pinned against an external ephemeris,
+  since the module's formulas are explicitly approximations. All of
+  `apps/api`'s checks (ruff, ruff format, mypy, pytest — 75 passed)
+  pass clean.
 - **Incident (sprint 6, resolved earlier)**: a scratch branch explicitly
   titled `DO NOT MERGE` was merged into `main` under the repo owner's own
   account, landing deliberately-broken code; reverted within ~10 minutes
   in PR #330. Full account in `docs/SPRINT_6_CI_PROOF.md`. Sprint 7
   turned this into a documented branch-hygiene rule.
 - Exact next action: finish sprint 13/14/15's deferred scope, or move to
-  sprint 16 (astronomy adapter — pure deterministic coast/season/
-  timezone tests) — any is a valid next Phase 2 pick, needs no external
+  sprint 17 (station catalog — provenance, timestamps, idempotent
+  refresh) — any is a valid next Phase 2 pick, needs no external
   accounts. Separately, sprint 9 (preview environments) and sprint 10
   (production skeleton) need real Vercel/Render/Neon accounts this
   session has no credentials for — **flag to the product owner** rather
