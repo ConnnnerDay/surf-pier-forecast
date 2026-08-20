@@ -3,17 +3,18 @@
 Targets lines: 44-45, 128, 148, 152-154, 156, 178, 183, 205, 319,
                467, 506-507, 522, 526-528, 620, 640, 662, 671-680.
 """
+
 from __future__ import annotations
 
 import json
-from pathlib import Path
 from unittest.mock import MagicMock
 
-import pytest
 
 import regulations as reg_module
 from regulations import (
     _bg_refresh_regulation,
+    _extract_gear_restrictions,
+    _extract_slot_limit,
     _load_data_file,
     _lookup_regulation_impl,
     _months_since,
@@ -176,7 +177,10 @@ class TestSeasonStatusUnknown:
     def test_text_without_open_keyword_returns_unknown(self):
         """Line 319: season text that has no year-round phrase, no closed/open month
         range, and no 'open' keyword → 'unknown'."""
-        reg = {"season": "Check regulations before fishing", "notes": "Size limit applies"}
+        reg = {
+            "season": "Check regulations before fishing",
+            "notes": "Size limit applies",
+        }
         assert season_status(reg, 6) == "unknown"
 
 
@@ -196,7 +200,11 @@ class TestClassifyLegalityPermitRequired:
         assert classify_legality(reg) == "restricted"
 
     def test_harvest_permit_required_returns_restricted(self):
-        reg = {"bag_limit": "1/day", "season": "Open", "notes": "Harvest permit required."}
+        reg = {
+            "bag_limit": "1/day",
+            "season": "Open",
+            "notes": "Harvest permit required.",
+        }
         assert classify_legality(reg) == "restricted"
 
     def test_tag_required_to_harvest_returns_restricted(self):
@@ -230,9 +238,7 @@ class TestBgRefreshRegulation:
     def test_scrape_exception_is_caught_and_pending_cleared(self, monkeypatch):
         """Lines 506-507: exception from _scrape_regulation is caught and logged;
         the pending entry is removed from _reg_refresh_pending in the finally block."""
-        monkeypatch.setattr(
-            "regulations._scrape_regulation", lambda *a: 1 / 0
-        )
+        monkeypatch.setattr("regulations._scrape_regulation", lambda *a: 1 / 0)
         reg_module._reg_refresh_pending.add(("TestFish", "NC"))
         _bg_refresh_regulation("TestFish", "NC")
         assert ("TestFish", "NC") not in reg_module._reg_refresh_pending
@@ -387,9 +393,6 @@ class TestLookupRegulationImplBlockingScrape:
 # Line 602: _extract_gear_restrictions empty-text early return
 # Line 624: slot enrichment in lookup_regulation
 # ---------------------------------------------------------------------------
-
-
-from regulations import _extract_gear_restrictions, _extract_slot_limit
 
 
 class TestExtractSlotLimit:

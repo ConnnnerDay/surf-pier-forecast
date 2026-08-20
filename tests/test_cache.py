@@ -13,7 +13,6 @@ from storage.cache import (
     _forecast_age_minutes,
     _human_age,
     _is_stale,
-    _load_json_fallback,
     _save_json,
     load_cached_forecast,
     prune_old_forecasts,
@@ -134,7 +133,9 @@ class TestSaveAndLoad:
         ts = (today_midnight - timedelta(seconds=1)).isoformat()
         data = {"generated_at": ts, "verdict": "yesterday"}
         save_forecast(data, "premidnight-include", user_id=8)
-        loaded = load_cached_forecast("premidnight-include", user_id=8, include_stale=True)
+        loaded = load_cached_forecast(
+            "premidnight-include", user_id=8, include_stale=True
+        )
         assert loaded == data
 
     def test_stale_cache_can_be_loaded_for_async_refresh(self):
@@ -182,7 +183,9 @@ class TestIsStale:
         assert _is_stale({"generated_at": ts}) is False
 
     def test_over_4h_stale(self):
-        ts = (datetime.now(timezone.utc) - timedelta(hours=CACHE_MAX_AGE_HOURS + 1)).isoformat()
+        ts = (
+            datetime.now(timezone.utc) - timedelta(hours=CACHE_MAX_AGE_HOURS + 1)
+        ).isoformat()
         assert _is_stale({"generated_at": ts}) is True
 
     def test_yesterday_stale_regardless_of_age(self):

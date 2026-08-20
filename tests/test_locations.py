@@ -151,7 +151,7 @@ class TestGeocodeZip:
         assert lng == pytest.approx(-77.8)
 
     def test_zip_plus_4_truncated(self):
-        with patch("locations.http_get", return_value=self._mock_resp(34.2, -77.8)) as mock_get:
+        with patch("locations.http_get", return_value=self._mock_resp(34.2, -77.8)):
             result = geocode_zip("28403-1234")
         # Should strip the +4 and succeed
         assert result is not None

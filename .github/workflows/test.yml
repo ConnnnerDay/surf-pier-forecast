@@ -58,17 +58,17 @@ jobs:
       - name: Lint with ruff
         id: ruff_check
         continue-on-error: true
-        run: ruff check . --exclude v2
+        run: ruff check . --exclude v2 --exclude apps
 
       - name: Check formatting
         id: ruff_format
         continue-on-error: true
-        run: ruff format --check . --exclude v2
+        run: ruff format --check . --exclude v2 --exclude apps
 
       - name: Type check with mypy
         id: mypy
         continue-on-error: true
-        run: mypy --ignore-missing-imports --exclude '(migrations?|migrate|^v2/)' .
+        run: mypy --ignore-missing-imports --exclude '(migrations?|migrate|^v2/|^apps/)' .
 
       - name: Fail if any static-analysis check failed
         if: steps.ruff_check.outcome == 'failure' || steps.ruff_format.outcome == 'failure' || steps.mypy.outcome == 'failure'

@@ -7,6 +7,7 @@ Missing lines from the full-suite report:
   62-63  is_rate_limited() expired-ip reset path
   78     record_attempt() expired-ip reset path
 """
+
 from __future__ import annotations
 
 import threading
@@ -23,6 +24,7 @@ import pytest
 @pytest.fixture(scope="module")
 def _app():
     from flask import Flask
+
     app = Flask(__name__)
     app.config["TESTING"] = True
     return app
@@ -60,9 +62,7 @@ class TestClientIp:
         import web.rate_limit as rl
 
         monkeypatch.setattr(rl, "_TRUST_PROXY", False)
-        with _app.test_request_context(
-            "/", headers={"X-Forwarded-For": "9.9.9.9"}
-        ):
+        with _app.test_request_context("/", headers={"X-Forwarded-For": "9.9.9.9"}):
             ip = rl.client_ip()
         assert ip != "9.9.9.9"
 
@@ -79,8 +79,8 @@ class TestPruneStore:
 
         now = time.time()
         store = {
-            "old.ip": (now - 1000, 5),   # expired
-            "new.ip": (now - 10, 2),     # still within window
+            "old.ip": (now - 1000, 5),  # expired
+            "new.ip": (now - 10, 2),  # still within window
         }
         prune_store(store, window_s=60)
         assert "old.ip" not in store

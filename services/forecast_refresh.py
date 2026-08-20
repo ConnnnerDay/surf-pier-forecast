@@ -22,6 +22,7 @@ _refreshing: set[QueueKey] = set()
 _enqueued: set[QueueKey] = set()
 _worker_thread: Optional[threading.Thread] = None
 
+
 def refresh_forecast(location_id: str, user_id: Optional[int] = None) -> bool:
     """Generate and persist a fresh forecast for a location."""
     location = get_location(location_id)
@@ -35,6 +36,7 @@ def refresh_forecast(location_id: str, user_id: Optional[int] = None) -> bool:
         "refresh.completed location_id=%s user_id=%s", location_id, user_id or 0
     )
     return True
+
 
 def _worker_loop() -> None:
     while True:
@@ -54,6 +56,7 @@ def _worker_loop() -> None:
                 _refreshing.discard(key)
             _refresh_queue.task_done()
 
+
 def _ensure_worker_started() -> None:
     global _worker_thread
     with _refresh_lock:
@@ -64,6 +67,7 @@ def _ensure_worker_started() -> None:
         )
         worker.start()
         _worker_thread = worker
+
 
 def enqueue_forecast_refresh(location_id: str, user_id: Optional[int] = None) -> bool:
     """Queue a refresh if one is not already queued/running for this location/user."""
@@ -76,6 +80,7 @@ def enqueue_forecast_refresh(location_id: str, user_id: Optional[int] = None) ->
     _refresh_queue.put(key)
     logger.info("refresh.enqueued location_id=%s user_id=%s", key[0], key[1])
     return True
+
 
 def is_refreshing(location_id: str, user_id: Optional[int] = None) -> bool:
     """Best-effort signal for UI/API polling."""

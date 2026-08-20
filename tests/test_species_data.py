@@ -7,17 +7,29 @@ from pathlib import Path
 
 import pytest
 
-_CLASSIFICATIONS_PATH = Path(__file__).parent.parent / "storage" / "species_classifications.json"
+_CLASSIFICATIONS_PATH = (
+    Path(__file__).parent.parent / "storage" / "species_classifications.json"
+)
 _REQUIRED_SPECIES_FIELDS = {
-    "name", "temp_min", "temp_max", "temp_ideal_low", "temp_ideal_high",
-    "peak_months", "good_months", "bait", "rig", "explanation_cold",
-    "explanation_warm", "coast",
+    "name",
+    "temp_min",
+    "temp_max",
+    "temp_ideal_low",
+    "temp_ideal_high",
+    "peak_months",
+    "good_months",
+    "bait",
+    "rig",
+    "explanation_cold",
+    "explanation_warm",
+    "coast",
 }
 
 
 @pytest.fixture(scope="module")
 def species_db():
     from storage.species_loader import SPECIES_DB
+
     return SPECIES_DB
 
 
@@ -85,7 +97,12 @@ def test_classifications_reference_known_species(classifications, species_db):
         if section_key == "species_categories":
             items = list(section.keys())
         elif isinstance(section, dict):
-            items = [name for lst in section.values() if isinstance(lst, list) for name in lst]
+            items = [
+                name
+                for lst in section.values()
+                if isinstance(lst, list)
+                for name in lst
+            ]
         elif isinstance(section, list):
             items = section
         else:

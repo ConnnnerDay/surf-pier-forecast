@@ -18,7 +18,7 @@ def get_prefs_cached(user_id: int) -> dict[str, Any]:
     view body) all need the same row, we cache it on ``g`` so the DB is read
     at most once per request.  The cache is per-request by nature of ``g``.
     """
-    cache: dict[int, dict[str, Any]] = getattr(g, "_prefs_cache", None)
+    cache: Optional[dict[int, dict[str, Any]]] = getattr(g, "_prefs_cache", None)
     if cache is None:
         cache = {}
         g._prefs_cache = cache

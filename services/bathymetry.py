@@ -23,9 +23,7 @@ from services.http_client import get as http_get
 
 logger = logging.getLogger(__name__)
 
-_DEM_IDENTIFY_URL = (
-    "https://gis.ngdc.noaa.gov/arcgis/rest/services/DEM_mosaics/DEM_all/ImageServer/identify"
-)
+_DEM_IDENTIFY_URL = "https://gis.ngdc.noaa.gov/arcgis/rest/services/DEM_mosaics/DEM_all/ImageServer/identify"
 _TIMEOUT: tuple[float, float] = (5, 15)
 
 _METERS_TO_FEET = 3.28084
@@ -127,7 +125,9 @@ def fetch_depth_at_point(lat: float, lng: float) -> Optional[float]:
     return feet
 
 
-def get_depth_profile(lat: float, lng: float, orientation: str = "east") -> dict[str, Any]:
+def get_depth_profile(
+    lat: float, lng: float, orientation: str = "east"
+) -> dict[str, Any]:
     """Return depth at a pier point plus a rough seaward drop-off profile.
 
     *orientation* should be one of the values returned by
@@ -146,8 +146,12 @@ def get_depth_profile(lat: float, lng: float, orientation: str = "east") -> dict
             points.append(_offset_point(lat, lng, bearing, nm))
             distances.append(nm)
 
-    with _cf.ThreadPoolExecutor(max_workers=len(points), thread_name_prefix="bathy") as pool:
-        futures = [pool.submit(fetch_depth_at_point, plat, plng) for plat, plng in points]
+    with _cf.ThreadPoolExecutor(
+        max_workers=len(points), thread_name_prefix="bathy"
+    ) as pool:
+        futures = [
+            pool.submit(fetch_depth_at_point, plat, plng) for plat, plng in points
+        ]
         depths = []
         for fut in futures:
             try:

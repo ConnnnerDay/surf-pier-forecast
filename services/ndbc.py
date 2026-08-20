@@ -21,6 +21,7 @@ _M_TO_FEET = 3.28084
 _NDBC_TIMEOUT_STATION: tuple[float, float] = (3.05, 15)
 _NDBC_TIMEOUT_PRESSURE: tuple[float, float] = (3.05, 10)
 
+
 def _deg_to_compass(deg: float) -> str:
     """Convert wind direction in degrees to a compass abbreviation."""
     _DEG_TO_DIR = [
@@ -43,6 +44,7 @@ def _deg_to_compass(deg: float) -> str:
     ]
     idx = round(deg / 22.5) % 16
     return _DEG_TO_DIR[idx]
+
 
 def _try_ndbc_station(
     station_id: str,
@@ -97,6 +99,7 @@ def _try_ndbc_station(
             break
 
     return wind_range, wave_range, wind_dir
+
 
 def fetch_barometric_pressure(
     location: Optional[dict[str, Any]] = None,

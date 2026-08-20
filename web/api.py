@@ -76,6 +76,11 @@ from web.schemas import (
     normalize_preferences,
     success_envelope,
 )
+from web.rate_limit import (
+    client_ip as _client_ip,
+    is_rate_limited as _is_rate_limited_ip,
+    record_attempt as _record_ip_attempt,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -94,13 +99,6 @@ _TZ_RATE_LIMIT_MAX = 5
 _TZ_RATE_LIMIT_WINDOW_S = 60 * 60  # 1 hour
 _tz_rate_store: dict[str, tuple[float, int]] = {}
 _tz_rate_lock = threading.Lock()
-
-
-from web.rate_limit import (
-    client_ip as _client_ip,
-    is_rate_limited as _is_rate_limited_ip,
-    record_attempt as _record_ip_attempt,
-)
 
 
 def _tz_is_rate_limited() -> bool:
@@ -403,7 +401,9 @@ def push_subscribe_v1() -> Any:
         return jsonify(error_envelope("unauthorized", "Not logged in")), 401
 
     data = request.get_json(silent=True) or {}
-    sub = data.get("subscription") if isinstance(data.get("subscription"), dict) else data
+    sub = (
+        data.get("subscription") if isinstance(data.get("subscription"), dict) else data
+    )
     endpoint = sub.get("endpoint") if isinstance(sub, dict) else None
     keys = sub.get("keys") if isinstance(sub, dict) else None
     if (
@@ -417,7 +417,12 @@ def push_subscribe_v1() -> Any:
         )
     p256dh = keys.get("p256dh")
     auth = keys.get("auth")
-    if not isinstance(p256dh, str) or not isinstance(auth, str) or not p256dh or not auth:
+    if (
+        not isinstance(p256dh, str)
+        or not isinstance(auth, str)
+        or not p256dh
+        or not auth
+    ):
         return _json_error(
             ApiError("invalid_subscription", "Subscription missing keys", status=400)
         )
@@ -561,7 +566,9 @@ def log_patterns_v1() -> Any:
     if g.user is None:
         return jsonify(error_envelope("unauthorized", "Not logged in")), 401
     uid = g.user["id"]
-    loc_id = (request.args.get("location_id") or request.args.get("location") or "").strip()
+    loc_id = (
+        request.args.get("location_id") or request.args.get("location") or ""
+    ).strip()
     catches = get_catch_conditions(uid, loc_id)
     # When scoped to a location, compare patterns against its current forecast.
     current = _catch_conditions_snapshot(loc_id) if loc_id else None
@@ -578,7 +585,9 @@ def community_activity_v1() -> Any:
     """
     if g.user is None:
         return jsonify(error_envelope("unauthorized", "Not logged in")), 401
-    loc_id = (request.args.get("location_id") or request.args.get("location") or "").strip()
+    loc_id = (
+        request.args.get("location_id") or request.args.get("location") or ""
+    ).strip()
     activity = get_recent_catch_activity(loc_id) if loc_id else None
     if not activity:
         return jsonify(success_envelope({"available": False}))
@@ -1013,13 +1022,15 @@ def map_stat_cards() -> Any:
         except Exception:
             areas = []
 
-    resp = jsonify({
-        "buoys": {"buoys": buoys, "count": len(buoys)},
-        "metar": {"stations": stations, "count": len(stations)},
-        "fires": {"fires": fires, "count": len(fires)},
-        "gauges": {"gauges": gauges, "count": len(gauges)},
-        "tropical": {"areas": areas, "count": len(areas)},
-    })
+    resp = jsonify(
+        {
+            "buoys": {"buoys": buoys, "count": len(buoys)},
+            "metar": {"stations": stations, "count": len(stations)},
+            "fires": {"fires": fires, "count": len(fires)},
+            "gauges": {"gauges": gauges, "count": len(gauges)},
+            "tropical": {"areas": areas, "count": len(areas)},
+        }
+    )
     resp.headers["Cache-Control"] = "public, max-age=900, stale-while-revalidate=120"
     return resp
 
@@ -1074,7 +1085,9 @@ def geo_environmental() -> Any:
         lat = float(request.args["lat"])
         lng = float(request.args["lng"])
     except (KeyError, ValueError, TypeError):
-        return jsonify(error_envelope("invalid_params", "lat and lng are required")), 400
+        return jsonify(
+            error_envelope("invalid_params", "lat and lng are required")
+        ), 400
 
     if not (-90 <= lat <= 90 and -180 <= lng <= 180):
         return jsonify(error_envelope("invalid_params", "lat/lng out of range")), 400
@@ -1098,15 +1111,20 @@ def geo_environmental() -> Any:
     except Exception:
         point_depth_ft = None
 
-    resp = jsonify({
-        "ok": True,
-        "data": {
-            "water_quality": wq_summary,
-            "beach_closures": beach_closures,
-            "river_discharge": river_discharge,
-            "bathymetry": {"available": point_depth_ft is not None, "point_depth_ft": point_depth_ft},
-            "location": {"lat": lat, "lng": lng},
-        },
-    })
+    resp = jsonify(
+        {
+            "ok": True,
+            "data": {
+                "water_quality": wq_summary,
+                "beach_closures": beach_closures,
+                "river_discharge": river_discharge,
+                "bathymetry": {
+                    "available": point_depth_ft is not None,
+                    "point_depth_ft": point_depth_ft,
+                },
+                "location": {"lat": lat, "lng": lng},
+            },
+        }
+    )
     resp.headers["Cache-Control"] = "public, max-age=1800, stale-while-revalidate=60"
     return resp

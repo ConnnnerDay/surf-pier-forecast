@@ -910,26 +910,43 @@ class TestGearRestrictions:
         assert "No snatch hooking" in out
 
     def test_gigging_and_spear(self):
-        assert "No gigging" in _extract_gear_restrictions({"notes": "Gigging is prohibited."})
-        assert "No spearfishing" in _extract_gear_restrictions({"notes": "Spearfishing prohibited."})
+        assert "No gigging" in _extract_gear_restrictions(
+            {"notes": "Gigging is prohibited."}
+        )
+        assert "No spearfishing" in _extract_gear_restrictions(
+            {"notes": "Spearfishing prohibited."}
+        )
 
     def test_no_false_positive_on_standard_limits(self):
-        assert _extract_gear_restrictions(
-            {"min_size": "18 in", "bag_limit": "3/day", "season": "Open", "notes": "Standard limits."}
-        ) == ""
+        assert (
+            _extract_gear_restrictions(
+                {
+                    "min_size": "18 in",
+                    "bag_limit": "3/day",
+                    "season": "Open",
+                    "notes": "Standard limits.",
+                }
+            )
+            == ""
+        )
 
     def test_none_and_empty_safe(self):
         assert _extract_gear_restrictions(None) == ""
         assert _extract_gear_restrictions({}) == ""
 
     def test_more_gear_methods(self):
-        assert "Natural bait only" in _extract_gear_restrictions({"notes": "Natural bait only."})
-        assert "No J-hooks" in _extract_gear_restrictions({"notes": "J-hooks are prohibited."})
-        assert "No chumming" in _extract_gear_restrictions({"notes": "No chumming permitted."})
+        assert "Natural bait only" in _extract_gear_restrictions(
+            {"notes": "Natural bait only."}
+        )
+        assert "No J-hooks" in _extract_gear_restrictions(
+            {"notes": "J-hooks are prohibited."}
+        )
+        assert "No chumming" in _extract_gear_restrictions(
+            {"notes": "No chumming permitted."}
+        )
         assert "Descending device required" in _extract_gear_restrictions(
             {"notes": "A descending device is required for reef fish."}
         )
-
 
 
 class TestSlotLimit:
@@ -941,7 +958,9 @@ class TestSlotLimit:
         assert _extract_slot_limit({"min_size": 'Slot: 15–23"'}) == "15-23 in"
 
     def test_protected_slot(self):
-        assert _extract_slot_limit({"notes": "Protected slot 20-28 inches"}) == "20-28 in"
+        assert (
+            _extract_slot_limit({"notes": "Protected slot 20-28 inches"}) == "20-28 in"
+        )
 
     def test_no_slot_keyword_no_match(self):
         # A plain range without 'slot'/'protected' is not a slot limit.
@@ -967,7 +986,9 @@ class TestClosureCapture:
             month=2, water_temp=58, coast="east", state="NC", closures_out=closures
         )
         # Closed species are hidden from the ranking but captured as closures.
-        assert ranking == [] or all(s.get("regulation_status") != "out_of_season" for s in ranking)
+        assert ranking == [] or all(
+            s.get("regulation_status") != "out_of_season" for s in ranking
+        )
         assert closures, "expected out-of-season species to be captured"
         assert all(c["status"] == "out_of_season" for c in closures)
         assert all("season" in c and "name" in c for c in closures)
@@ -985,7 +1006,10 @@ class TestClosureCapture:
     def test_closures_opt_in_only(self, monkeypatch):
         # Without closures_out, nothing breaks (back-compat).
         monkeypatch.setattr(
-            "domain.species.lookup_regulation", lambda n, s: _open_reg(season="Closed Jan-Apr")
+            "domain.species.lookup_regulation",
+            lambda n, s: _open_reg(season="Closed Jan-Apr"),
         )
-        ranking = build_species_ranking(month=2, water_temp=58, coast="east", state="NC")
+        ranking = build_species_ranking(
+            month=2, water_temp=58, coast="east", state="NC"
+        )
         assert isinstance(ranking, list)

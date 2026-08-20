@@ -25,14 +25,20 @@ class _FakeResponse:
         return self._payload
 
 
-def _noaa_html(image="https://www.fisheries.noaa.gov/s3/red-drum.jpg", title="Red Drum"):
+def _noaa_html(
+    image="https://www.fisheries.noaa.gov/s3/red-drum.jpg", title="Red Drum"
+):
     return (
         f'<html><head><meta property="og:image" content="{image}">'
         f'<meta property="og:title" content="{title}"></head><body></body></html>'
     ).encode()
 
 
-def _summary(title="Red drum", thumb="https://upload.wikimedia.org/thumb.jpg", page="https://en.wikipedia.org/wiki/Red_drum"):
+def _summary(
+    title="Red drum",
+    thumb="https://upload.wikimedia.org/thumb.jpg",
+    page="https://en.wikipedia.org/wiki/Red_drum",
+):
     return {
         "title": title,
         "thumbnail": {"source": thumb},
@@ -55,7 +61,9 @@ def test_resize_wikimedia_thumb_leaves_non_thumb_url_unchanged():
 def test_fetch_from_wikipedia_upsizes_thumbnail(db, monkeypatch):
     small_thumb = "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Red_drum.jpg/220px-Red_drum.jpg"
     monkeypatch.setattr(
-        si, "http_get", lambda url, **kw: _FakeResponse(200, _summary(thumb=small_thumb))
+        si,
+        "http_get",
+        lambda url, **kw: _FakeResponse(200, _summary(thumb=small_thumb)),
     )
     result = si._fetch_from_wikipedia("Red drum (puppy drum)")
     assert result["thumb_url"] == (
@@ -135,7 +143,9 @@ def test_fetch_falls_back_to_opensearch_when_no_thumbnail(db, monkeypatch):
 
 
 def test_fetch_from_wikipedia_returns_none_on_malformed_json(db, monkeypatch):
-    monkeypatch.setattr(si, "http_get", lambda url, **kw: _FakeResponse(200, ["unexpected", "shape"]))
+    monkeypatch.setattr(
+        si, "http_get", lambda url, **kw: _FakeResponse(200, ["unexpected", "shape"])
+    )
     assert si._fetch_from_wikipedia("Bluefish") is None
 
 
@@ -197,15 +207,21 @@ def test_fetch_from_noaa_resolves_relative_og_image_url(db, monkeypatch):
     monkeypatch.setattr(
         si,
         "http_get",
-        lambda url, **kw: _FakeResponse(200, content=_noaa_html(image="/s3/2021-05/red-drum.jpg")),
+        lambda url, **kw: _FakeResponse(
+            200, content=_noaa_html(image="/s3/2021-05/red-drum.jpg")
+        ),
     )
     result = si._fetch_from_noaa("Red drum")
-    assert result["thumb_url"] == "https://www.fisheries.noaa.gov/s3/2021-05/red-drum.jpg"
+    assert (
+        result["thumb_url"] == "https://www.fisheries.noaa.gov/s3/2021-05/red-drum.jpg"
+    )
 
 
 def test_fetch_from_noaa_returns_none_without_og_image(db, monkeypatch):
     monkeypatch.setattr(
-        si, "http_get", lambda url, **kw: _FakeResponse(200, content=b"<html><head></head></html>")
+        si,
+        "http_get",
+        lambda url, **kw: _FakeResponse(200, content=b"<html><head></head></html>"),
     )
     assert si._fetch_from_noaa("Bluefish") is None
 
@@ -219,7 +235,9 @@ def test_fetch_from_noaa_returns_none_on_oversized_response(db, monkeypatch):
     monkeypatch.setattr(
         si,
         "http_get",
-        lambda url, **kw: _FakeResponse(200, content=b"x" * (si._NOAA_MAX_RESPONSE_BYTES + 1)),
+        lambda url, **kw: _FakeResponse(
+            200, content=b"x" * (si._NOAA_MAX_RESPONSE_BYTES + 1)
+        ),
     )
     assert si._fetch_from_noaa("Bluefish") is None
 
@@ -339,7 +357,12 @@ def test_fetch_from_commons_returns_none_when_only_non_photo_results(db, monkeyp
             "1": {
                 "index": 1,
                 "title": "File:Bluefish distribution map.svg",
-                "imageinfo": [{"url": "https://upload.wikimedia.org/map.svg", "descriptionurl": "x"}],
+                "imageinfo": [
+                    {
+                        "url": "https://upload.wikimedia.org/map.svg",
+                        "descriptionurl": "x",
+                    }
+                ],
             }
         }
     )
@@ -362,11 +385,15 @@ def test_fetch_from_commons_returns_none_on_non_200(db, monkeypatch):
 def test_fetch_from_commons_returns_none_on_malformed_json(db, monkeypatch):
     """A non-dict JSON body (or a request exception) must degrade to None,
     not raise -- this is the bug caught while wiring the fallback chain."""
-    monkeypatch.setattr(si, "http_get", lambda url, **kw: _FakeResponse(200, ["unexpected", "shape"]))
+    monkeypatch.setattr(
+        si, "http_get", lambda url, **kw: _FakeResponse(200, ["unexpected", "shape"])
+    )
     assert si._fetch_from_commons("Bluefish") is None
 
 
-def test_get_species_image_falls_back_to_commons_when_wikipedia_has_nothing(db, monkeypatch):
+def test_get_species_image_falls_back_to_commons_when_wikipedia_has_nothing(
+    db, monkeypatch
+):
     def fake_get(url, **kwargs):
         if "en.wikipedia.org" in url:
             return _FakeResponse(404, {})

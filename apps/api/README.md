@@ -180,9 +180,39 @@ Boots, has real CI, and now has:
   and distances, mutual exclusivity within each two-tier band, multiple
   factors combining, and score clamping at zero.
 
+- Snapshot caching (`app/infra/snapshot_cache.py`, `SnapshotCache[T]`):
+  an injectable-clock, per-key, single-flight in-memory cache
+  generalizing sprint 17's `StationCatalogCache[T]` (single global
+  value, one TTL) to multiple keys and a two-tier freshness policy.
+  `fresh_ttl_seconds` defaults to 4 hours, matching the legacy
+  `forecast_cache` cadence named in the sprint ledger; `stale_ttl_seconds`
+  and everything below it have no legacy precedent — legacy's cache
+  only ever had "hit" or "miss," never a policy for what to serve when
+  a refresh itself fails. Built from `docs/product-definition.md`'s
+  Stale-state definition and the product contract's Reliability bullet,
+  extended from "one upstream source failing" (sprints 21-23) to "the
+  whole refresh failing": a cache entry younger than `fresh_ttl_seconds`
+  is a fresh hit (no fetch called); between the two TTLs it's a stale
+  hit that attempts a refresh; at or past `stale_ttl_seconds` it's
+  evicted and treated as a miss; and if a refresh fetch raises while a
+  still-eligible entry exists, that entry is returned labeled
+  `is_fallback=True` instead of propagating the error (a true miss, or
+  an entry already evicted for being past `stale_ttl_seconds`, has
+  nothing to fall back to and still propagates). `get_or_refresh` is
+  single-flight per key via a per-key `asyncio.Lock`. This sprint does
+  not replicate legacy's SQLite storage layer (no Postgres connection
+  yet) or its background-daemon refresh — see the module docstring —
+  and wiring this cache around `assemble_forecast`, keyed by location
+  id and producing `ForecastState.STALE` on a fallback hit, remains a
+  follow-up alongside sprints 22/23's scoring/confidence wiring.
+  `apps/api/tests/test_snapshot_cache.py` covers fresh hit, stale hit,
+  miss, expiry, fallback-on-fetch-failure, and single-flight
+  concurrency (both same-key serialization and different-key
+  non-blocking) independently.
+
 It does not yet have the `/v1` routes, the ported forecast domain
 *logic*, or a Postgres connection. Those land in the Phase 2 sprints
-listed in the roadmap's sprint ledger (24 onward), each behind its own
+listed in the roadmap's sprint ledger (25 onward), each behind its own
 characterization tests, porting from the reconciliation audit
 ([`docs/R1_RECONCILIATION_AUDIT.md`](../../docs/R1_RECONCILIATION_AUDIT.md))
 rather than copying `v2/backend` or the legacy Flask app verbatim.

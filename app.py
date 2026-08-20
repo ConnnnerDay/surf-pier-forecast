@@ -23,8 +23,10 @@ from __future__ import annotations
 
 import gzip as _gzip
 import mimetypes as _mimetypes
+
 try:
     import brotli as _brotli  # optional: pip install brotli
+
     _BROTLI_AVAILABLE = True
 except ImportError:
     _BROTLI_AVAILABLE = False
@@ -168,12 +170,14 @@ def create_app() -> Flask:
             return None
         if "gzip" not in request.headers.get("Accept-Encoding", ""):
             return None
-        rel = request.path[len("/static/"):]
+        rel = request.path[len("/static/") :]
         gz_path = _pathlib.Path(app.static_folder or "static") / (rel + ".gz")
         if not gz_path.is_file():
             return None
         mime = _mimetypes.guess_type(rel)[0] or "application/octet-stream"
-        resp = send_from_directory(app.static_folder or "static", rel + ".gz", mimetype=mime)
+        resp = send_from_directory(
+            app.static_folder or "static", rel + ".gz", mimetype=mime
+        )
         resp.headers["Content-Encoding"] = "gzip"
         resp.headers["Vary"] = "Accept-Encoding"
         resp.headers["Cache-Control"] = f"public, max-age={_STATIC_MAX_AGE}"
@@ -405,7 +409,13 @@ def create_app() -> Flask:
             )
         return response
 
-    _COMPRESSIBLE = ("application/json", "text/html", "text/css", "application/javascript", "text/javascript")
+    _COMPRESSIBLE = (
+        "application/json",
+        "text/html",
+        "text/css",
+        "application/javascript",
+        "text/javascript",
+    )
 
     @app.after_request
     def _gzip_response(response: Any) -> Any:
@@ -554,7 +564,9 @@ def create_app() -> Flask:
         try:
             _prune_old_forecasts(max_age_days=7)
         except Exception as _exc:
-            logging.getLogger(__name__).debug("cache prune failed (non-fatal): %s", _exc)
+            logging.getLogger(__name__).debug(
+                "cache prune failed (non-fatal): %s", _exc
+            )
 
     _threading.Thread(target=_prune_cache, daemon=True).start()
 

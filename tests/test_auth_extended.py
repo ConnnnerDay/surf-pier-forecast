@@ -5,26 +5,25 @@ Full-suite missing lines:
   231, 240, 245, 256-261, 278-302, 313, 316, 332, 339, 353,
   374-403, 409-410, 423, 441, 445, 448, 464
 """
+
 from __future__ import annotations
 
 import re
 import time
 
-import pytest
 
-import re
+from locations import all_locations_sorted
+from storage.sqlite import (
+    create_user,
+    get_preferences,
+    save_preferences,
+)
 
 
 def csrf_token_from_html(html: bytes) -> str:
     m = re.search(r'name="csrf_token" value="([^"]+)"', html.decode("utf-8"))
     assert m is not None, "No CSRF token found in HTML"
     return m.group(1)
-from storage.sqlite import (
-    create_user,
-    get_preferences,
-    save_preferences,
-)
-from locations import all_locations_sorted
 
 
 def _loc_id():
@@ -170,6 +169,7 @@ class TestPasswordComplexityError:
     def test_too_short_returns_error(self):
         """Line 217: password shorter than 8 chars returns an error message."""
         from web.auth import _password_complexity_error
+
         err = _password_complexity_error("abc")
         assert err != ""
         assert "8 characters" in err
@@ -177,6 +177,7 @@ class TestPasswordComplexityError:
     def test_no_uppercase_returns_error(self):
         """Password with no uppercase returns an error message."""
         from web.auth import _password_complexity_error
+
         err = _password_complexity_error("alllower1")
         assert err != ""
         assert "uppercase" in err.lower()
@@ -184,6 +185,7 @@ class TestPasswordComplexityError:
     def test_no_lowercase_returns_error(self):
         """Line 221: password with no lowercase returns an error message."""
         from web.auth import _password_complexity_error
+
         err = _password_complexity_error("ALLUPPER1")
         assert err != ""
         assert "lowercase" in err.lower()
@@ -191,6 +193,7 @@ class TestPasswordComplexityError:
     def test_no_digit_returns_error(self):
         """Line 223: password with no digit returns an error message."""
         from web.auth import _password_complexity_error
+
         err = _password_complexity_error("NoDigitHere")
         assert err != ""
         assert "number" in err.lower()
@@ -249,7 +252,11 @@ class TestLoginRoute:
         token = csrf_token_from_html(page.data)
         resp = client.post(
             "/login",
-            data={"csrf_token": token, "username": "locked_acct", "password": "Pass1234"},
+            data={
+                "csrf_token": token,
+                "username": "locked_acct",
+                "password": "Pass1234",
+            },
         )
         assert resp.status_code == 200
         assert b"30 minutes" in resp.data
@@ -289,6 +296,7 @@ class TestLoginRoute:
         authenticate_user() doesn't return default_location_id normally, so we patch it
         to simulate the case the login route was designed to handle."""
         from web import auth as am
+
         loc_id = _loc_id()
         create_user("default_loc_user", "Pass1234")
 
@@ -306,7 +314,11 @@ class TestLoginRoute:
         token = csrf_token_from_html(page.data)
         client.post(
             "/login",
-            data={"csrf_token": token, "username": "default_loc_user", "password": "Pass1234"},
+            data={
+                "csrf_token": token,
+                "username": "default_loc_user",
+                "password": "Pass1234",
+            },
         )
         with client.session_transaction() as sess:
             assert sess.get("location_id") == loc_id
@@ -324,7 +336,11 @@ class TestLoginRoute:
         token = csrf_token_from_html(page.data)
         resp = client.post(
             "/login",
-            data={"csrf_token": token, "username": "noloc_user", "password": "Pass1234"},
+            data={
+                "csrf_token": token,
+                "username": "noloc_user",
+                "password": "Pass1234",
+            },
             follow_redirects=False,
         )
         assert resp.status_code == 302

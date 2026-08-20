@@ -55,7 +55,9 @@ _lock = threading.Lock()
 _CACHES: dict[str, tuple[float, list[dict[str, Any]]]] = {}
 
 
-def _load_catalog(key: str, fetch: Callable[[], list[dict[str, Any]]]) -> list[dict[str, Any]]:
+def _load_catalog(
+    key: str, fetch: Callable[[], list[dict[str, Any]]]
+) -> list[dict[str, Any]]:
     """Return a cached catalog, fetching on miss; caches successes and failures.
 
     Successful (non-empty) results live for ``_CATALOG_TTL_S``; empty results

@@ -34,6 +34,7 @@ from domain.species import (
 # _get_explanation
 # ---------------------------------------------------------------------------
 
+
 class TestGetExplanation:
     """Lines 411-420 — never previously covered."""
 
@@ -70,12 +71,20 @@ class TestGetExplanation:
 
     def test_species_not_in_overrides_uses_warm(self):
         # Use a generic fake species not in SEASONAL_EXPLANATIONS
-        sp = {"name": "Fake Fish", "explanation_cold": "brrr", "explanation_warm": "hot"}
+        sp = {
+            "name": "Fake Fish",
+            "explanation_cold": "brrr",
+            "explanation_warm": "hot",
+        }
         result = _get_explanation(sp, month=6, water_temp=78)
         assert result == "hot"
 
     def test_species_not_in_overrides_uses_cold(self):
-        sp = {"name": "Fake Fish", "explanation_cold": "brrr", "explanation_warm": "hot"}
+        sp = {
+            "name": "Fake Fish",
+            "explanation_cold": "brrr",
+            "explanation_warm": "hot",
+        }
         result = _get_explanation(sp, month=1, water_temp=50)
         assert result == "brrr"
 
@@ -83,6 +92,7 @@ class TestGetExplanation:
 # ---------------------------------------------------------------------------
 # _get_technique_tip
 # ---------------------------------------------------------------------------
+
 
 class TestGetTechniqueTip:
     """Lines 444-528 — never previously covered."""
@@ -119,7 +129,9 @@ class TestGetTechniqueTip:
         assert "minnow" in tip.lower() or "incoming" in tip.lower()
 
     def test_flounder_default(self):
-        tip = _get_technique_tip("Flounder (summer flounder)", hour=12, tide_state="Slack")
+        tip = _get_technique_tip(
+            "Flounder (summer flounder)", hour=12, tide_state="Slack"
+        )
         assert "bucktail" in tip.lower() or "bottom" in tip.lower()
 
     # bluefish paths
@@ -203,7 +215,9 @@ class TestGetTechniqueTip:
     # generic tips
     def test_generic_dawn_dusk(self):
         tip = _get_technique_tip("Unknown Fish", hour=6)
-        assert "low-light" in tip.lower() or "dawn" in tip.lower() or "dusk" in tip.lower()
+        assert (
+            "low-light" in tip.lower() or "dawn" in tip.lower() or "dusk" in tip.lower()
+        )
 
     def test_generic_rising(self):
         tip = _get_technique_tip("Unknown Fish", hour=12, tide_state="Rising")
@@ -226,6 +240,7 @@ class TestGetTechniqueTip:
 # ---------------------------------------------------------------------------
 # _classify_rig
 # ---------------------------------------------------------------------------
+
 
 class TestClassifyRig:
     """Lines 762-817 — branches not previously triggered."""
@@ -367,7 +382,9 @@ class TestClassifyRig:
 
     def test_river_mouth_drift_routes_to_steelhead_drift(self):
         assert (
-            _classify_rig("Light jig below a small float; drift fishing near river mouths")
+            _classify_rig(
+                "Light jig below a small float; drift fishing near river mouths"
+            )
             == "steelhead_drift"
         )
 
@@ -385,16 +402,23 @@ class TestClassifyRig:
         # own text names a completely different technique should classify
         # by that technique, not get swept into the knocker bucket.
         assert (
-            _classify_rig("Medium to heavy spinning or conventional near pier structure")
+            _classify_rig(
+                "Medium to heavy spinning or conventional near pier structure"
+            )
             == "heavy_spin_cast"
         )
         assert (
-            _classify_rig("Hi-lo rig or Carolina rig; keep baits near bottom from piers")
+            _classify_rig(
+                "Hi-lo rig or Carolina rig; keep baits near bottom from piers"
+            )
             == "hi-lo"
         )
 
     def test_actual_knocker_rig_still_classifies_as_knocker(self):
-        assert _classify_rig("Knocker rig tight to pilings; short fluorocarbon leader") == "knocker"
+        assert (
+            _classify_rig("Knocker rig tight to pilings; short fluorocarbon leader")
+            == "knocker"
+        )
 
     def test_heavy_spinning_routes_to_heavy_spin_cast(self):
         assert (
@@ -421,7 +445,9 @@ class TestClassifyRig:
 
     def test_shark_name_still_wins_over_spinning_text(self):
         assert (
-            _classify_rig("Heavy surf or spinning rig; 100 lb leader", "Atlantic blacktip shark")
+            _classify_rig(
+                "Heavy surf or spinning rig; 100 lb leader", "Atlantic blacktip shark"
+            )
             == "shark"
         )
 
@@ -430,7 +456,9 @@ class TestClassifyRig:
         # to on spinning gear near mangroves shouldn't be swept into the
         # bottom rig bucket just because the location word matched.
         assert (
-            _classify_rig("Light to medium spinning near mangroves and freshwater canals")
+            _classify_rig(
+                "Light to medium spinning near mangroves and freshwater canals"
+            )
             == "light_spin_cast"
         )
         assert (
@@ -467,7 +495,9 @@ class TestClassifyRig:
 
     def test_plain_drift_rig_stays_drift_bottom(self):
         assert (
-            _classify_rig("Spreader bar rig or slip sinker with 80-150 lb leader; drift fishing")
+            _classify_rig(
+                "Spreader bar rig or slip sinker with 80-150 lb leader; drift fishing"
+            )
             == "drift_bottom"
         )
 
@@ -475,6 +505,7 @@ class TestClassifyRig:
 # ---------------------------------------------------------------------------
 # _condition_rig_tip — moderate wave path, pier gaff path
 # ---------------------------------------------------------------------------
+
 
 class TestConditionRigTipExtended:
     """Lines 892, 915."""
@@ -494,6 +525,7 @@ class TestConditionRigTipExtended:
 # build_rig_recommendations — type-specific prepend, duplicate skip, gear filter
 # ---------------------------------------------------------------------------
 
+
 class TestBuildRigRecommendations:
     """Lines 982-1045."""
 
@@ -505,12 +537,14 @@ class TestBuildRigRecommendations:
         rig_names = [r["name"] for r in recs]
         # fly_pattern rig should appear — possibly as first item
         from domain.species import RIG_CATEGORIES
+
         fly_name = RIG_CATEGORIES["fly_pattern"]["name"]
         assert any(fly_name in name for name in rig_names)
 
     def test_bridge_prepends_current_jig_rig(self):
         recs = build_rig_recommendations(self._ranking(), fishing_types=["bridge"])
         from domain.species import RIG_CATEGORIES
+
         cj_name = RIG_CATEGORIES["current_jig"]["name"]
         rig_names = [r["name"] for r in recs]
         assert any(cj_name in name for name in rig_names)
@@ -518,6 +552,7 @@ class TestBuildRigRecommendations:
     def test_wade_prepends_wade_light_rig(self):
         recs = build_rig_recommendations(self._ranking(), fishing_types=["wade"])
         from domain.species import RIG_CATEGORIES
+
         wl_name = RIG_CATEGORIES["wade_light"]["name"]
         rig_names = [r["name"] for r in recs]
         assert any(wl_name in name for name in rig_names)
@@ -525,6 +560,7 @@ class TestBuildRigRecommendations:
     def test_kayak_prepends_kayak_live_bait_rig(self):
         recs = build_rig_recommendations(self._ranking(), fishing_types=["kayak"])
         from domain.species import RIG_CATEGORIES
+
         klb_name = RIG_CATEGORIES["kayak_live_bait"]["name"]
         rig_names = [r["name"] for r in recs]
         assert any(klb_name in name for name in rig_names)
@@ -536,8 +572,10 @@ class TestBuildRigRecommendations:
             live_bait="yes",
         )
         from domain.species import RIG_CATEGORIES, _RIG_GEAR_TYPE
+
         lure_names = {
-            cat["name"] for k, cat in RIG_CATEGORIES.items()
+            cat["name"]
+            for k, cat in RIG_CATEGORIES.items()
             if _RIG_GEAR_TYPE.get(k) == "lure"
         }
         rig_names = [r["name"] for r in recs_no_lure]
@@ -564,7 +602,8 @@ class TestBuildRigRecommendations:
             (i for i, g in enumerate(gear_types) if g == "bait"), len(gear_types)
         )
         first_lure = next(
-            (i for i, g in enumerate(gear_types) if g in ("lure", "mixed")), len(gear_types)
+            (i for i, g in enumerate(gear_types) if g in ("lure", "mixed")),
+            len(gear_types),
         )
         assert first_lure <= first_bait
 
@@ -585,6 +624,7 @@ class TestBuildRigRecommendations:
 # _species_matches_profile — charter-only and fly-only gates
 # ---------------------------------------------------------------------------
 
+
 class TestSpeciesMatchesProfileCharter:
     """Lines 110, 125 — charter/fly-only gates."""
 
@@ -595,6 +635,7 @@ class TestSpeciesMatchesProfileCharter:
 
     def test_charter_only_allows_charter_species(self):
         from domain.species import _CHARTER_SPECIES
+
         charter_sp = next(iter(_CHARTER_SPECIES))
         result = _species_matches_profile(charter_sp, fishing_types=["charter"])
         assert result is True
@@ -615,12 +656,14 @@ class TestSpeciesMatchesProfileAccessibleSets:
 
     def test_kayak_adds_kayak_species(self):
         from domain.species import _KAYAK_SPECIES
+
         sp = next(iter(_KAYAK_SPECIES))
         result = _species_matches_profile(sp, fishing_types=["kayak"])
         assert result is True
 
     def test_charter_adds_charter_species(self):
         from domain.species import _CHARTER_SPECIES
+
         sp = next(iter(_CHARTER_SPECIES))
         result = _species_matches_profile(sp, fishing_types=["kayak", "charter"])
         assert result is True
@@ -636,18 +679,21 @@ class TestSpeciesMatchesProfileTargetFlags:
 
     def test_pelagic_target_matches_pelagic_species(self):
         from domain.species import _PELAGIC_SPECIES
+
         sp = next(iter(_PELAGIC_SPECIES))
         result = _species_matches_profile(sp, targets=["pelagic"])
         assert result is True
 
     def test_structure_target_matches_structure_species(self):
         from domain.species import _STRUCTURE_SPECIES
+
         sp = next(iter(_STRUCTURE_SPECIES))
         result = _species_matches_profile(sp, targets=["structure"])
         assert result is True
 
     def test_gamefish_target_matches_gamefish_species(self):
         from domain.species import _GAMEFISH_SPECIES
+
         sp = next(iter(_GAMEFISH_SPECIES))
         result = _species_matches_profile(sp, targets=["gamefish"])
         assert result is True
@@ -660,6 +706,7 @@ class TestSpeciesMatchesProfileTargetFlags:
 # ---------------------------------------------------------------------------
 # _conditions_modifier — calm water wind direction and speed, wave, daytime
 # ---------------------------------------------------------------------------
+
 
 class TestConditionsModifier:
     """Lines 1685-1726 — calm water conditions modifier.
@@ -774,8 +821,8 @@ class TestConditionsModifier:
         result = _conditions_modifier(
             sp={"name": "Red drum (puppy drum)"},
             wind_dir=None,
-            wind_range=(2, 4),   # avg=3 < 5 → -2
-            wave_range=(2, 3),   # avg=2.5 → +4
+            wind_range=(2, 4),  # avg=3 < 5 → -2
+            wave_range=(2, 3),  # avg=2.5 → +4
             hour=9,
             coast="east",
         )
@@ -800,6 +847,7 @@ class TestConditionsModifier:
 # ---------------------------------------------------------------------------
 # _build_conditions_modifier closure — rough surf low wind/wave paths
 # ---------------------------------------------------------------------------
+
 
 class TestBuildConditionsModifier:
     """Lines 1773, 1785 — rough surf species when wind < 5 or wave < 1.
@@ -837,6 +885,7 @@ class TestBuildConditionsModifier:
 # _parse_closed_months
 # ---------------------------------------------------------------------------
 
+
 class TestParseClosedMonths:
     """Lines 1837-1852 — never previously covered."""
 
@@ -873,6 +922,7 @@ class TestParseClosedMonths:
 # _retention_prohibited — empty combined, month-specific closure
 # ---------------------------------------------------------------------------
 
+
 class TestRetentionProhibitedExtended:
     """Lines 1886, 1909-1910."""
 
@@ -895,6 +945,7 @@ class TestRetentionProhibitedExtended:
 # ---------------------------------------------------------------------------
 # _build_profile_filter via build_species_ranking — charter/fly-only closure
 # ---------------------------------------------------------------------------
+
 
 class TestBuildProfileFilter:
     """Lines 1965-1973, 1985-1993, 2002, 2004."""
@@ -939,6 +990,7 @@ class TestBuildProfileFilter:
             targets=["pelagic"],
         )
         from domain.species import _PELAGIC_SPECIES
+
         names = {r["name"] for r in ranking}
         assert names.issubset(_PELAGIC_SPECIES | {"Cobia"})  # cobia can be pelagic
 
@@ -950,6 +1002,7 @@ class TestBuildProfileFilter:
             targets=["gamefish"],
         )
         from domain.species import _GAMEFISH_SPECIES
+
         names = {r["name"] for r in ranking}
         assert all(n in _GAMEFISH_SPECIES for n in names)
 
@@ -961,6 +1014,7 @@ class TestBuildProfileFilter:
             targets=["structure"],
         )
         from domain.species import _STRUCTURE_SPECIES
+
         names = {r["name"] for r in ranking}
         assert all(n in _STRUCTURE_SPECIES for n in names)
 
@@ -983,6 +1037,7 @@ class TestBuildProfileFilter:
             targets=["bottom"],
         )
         from domain.species import _BOTTOM_SPECIES
+
         names = {r["name"] for r in ranking}
         assert all(n in _BOTTOM_SPECIES for n in names)
 
@@ -995,6 +1050,7 @@ class TestBuildProfileFilter:
             targets=["inshore_slam"],
         )
         from domain.species import _INSHORE_SLAM_SPECIES
+
         names = {r["name"] for r in ranking}
         assert all(n in _INSHORE_SLAM_SPECIES for n in names)
 
@@ -1002,6 +1058,7 @@ class TestBuildProfileFilter:
 # ---------------------------------------------------------------------------
 # build_bait_ranking — out-of-season penalty and seasonal notes
 # ---------------------------------------------------------------------------
+
 
 class TestBuildBaitRanking:
     """Lines 2209, 2215."""
@@ -1024,12 +1081,15 @@ class TestBuildBaitRanking:
         shrimp = next((r for r in result if r["bait"] == "Live shrimp"), None)
         assert shrimp is not None
         # The winter note mentions "scarce" or "winter"
-        assert "winter" in shrimp["notes"].lower() or "scarce" in shrimp["notes"].lower()
+        assert (
+            "winter" in shrimp["notes"].lower() or "scarce" in shrimp["notes"].lower()
+        )
 
 
 # ---------------------------------------------------------------------------
 # build_lure_recommendations — seasonal notes
 # ---------------------------------------------------------------------------
+
 
 class TestBuildLureRecommendations:
     """Line 2500."""
@@ -1037,9 +1097,7 @@ class TestBuildLureRecommendations:
     def test_winter_seasonal_notes_for_topwater(self):
         ranking = build_species_ranking(month=1, water_temp=52, coast="east")
         result = build_lure_recommendations(ranking, month=1)
-        topwater = next(
-            (r for r in result if "topwater" in r["lure"].lower()), None
-        )
+        topwater = next((r for r in result if "topwater" in r["lure"].lower()), None)
         assert topwater is not None
         # winter note mentions cold water or below 60
         assert "cold" in topwater["notes"].lower() or "60" in topwater["notes"]
@@ -1048,6 +1106,7 @@ class TestBuildLureRecommendations:
 # ---------------------------------------------------------------------------
 # _format_spawn_window
 # ---------------------------------------------------------------------------
+
 
 class TestFormatSpawnWindow:
     """Lines 3584, 3586, 3605-3610."""
@@ -1080,6 +1139,7 @@ class TestFormatSpawnWindow:
 # build_spawning_report — regulation lookup raises exception
 # ---------------------------------------------------------------------------
 
+
 class TestBuildSpawningReport:
     """Lines 3708-3709."""
 
@@ -1091,7 +1151,9 @@ class TestBuildSpawningReport:
 
         monkeypatch.setattr(_sp_mod, "lookup_regulation", _raise)
         # Red drum spawns in summer; use month=7, warm water, east coast
-        results = build_spawning_report(month=7, water_temp=78, coast="east", state="NC")
+        results = build_spawning_report(
+            month=7, water_temp=78, coast="east", state="NC"
+        )
         # Should not crash; regulation field for entries should be None
         for entry in results:
             assert entry["regulation"] is None
@@ -1100,6 +1162,7 @@ class TestBuildSpawningReport:
 # ---------------------------------------------------------------------------
 # build_species_calendar — species not in db_map skipped
 # ---------------------------------------------------------------------------
+
 
 class TestBuildSpeciesCalendar:
     """Line 3914."""

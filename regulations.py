@@ -34,6 +34,7 @@ _reg_refresh_lock = Lock()
 
 _STALE_MONTHS = 6  # snapshot data older than this is flagged as potentially outdated
 
+
 def _months_since(date_str: str) -> float:
     """Return approximate months since a 'YYYY-MM' date string. Returns inf on error."""
     try:
@@ -43,6 +44,7 @@ def _months_since(date_str: str) -> float:
         return (today.year - year) * 12 + (today.month - month)
     except Exception:
         return float("inf")
+
 
 logger = logging.getLogger(__name__)
 
@@ -79,6 +81,7 @@ _STATE_REGULATION_SOURCES: dict[str, str] = {
 
 _FALLBACK_SOURCE = "https://www.fisheries.noaa.gov/recreational-fishing-rules"
 
+
 class _RegData:
     def __init__(self) -> None:
         self.name_map: dict[str, str] = {}
@@ -87,6 +90,7 @@ class _RegData:
         self.last_updated: str = ""
         self.snapshot_source: str = ""
         self.source_file: str = ""
+
 
 def _normalize_species_name(name: str) -> str:
     return (
@@ -100,6 +104,7 @@ def _normalize_species_name(name: str) -> str:
         .strip()
         .replace(" ", "_")
     )
+
 
 def _species_name_variants(name: str) -> list[str]:
     raw = str(name or "").strip()
@@ -116,9 +121,11 @@ def _species_name_variants(name: str) -> list[str]:
 
     return variants
 
+
 _REG_DATA = _RegData()
 _REG_LOCK = Lock()
 _LAST_LOADED_MONO = -_RELOAD_INTERVAL_SECONDS  # ensure first call always loads
+
 
 def _build_default_name_map() -> dict[str, str]:
     default_map: dict[str, str] = {}
@@ -130,9 +137,11 @@ def _build_default_name_map() -> dict[str, str]:
         default_map[name] = key
     return default_map
 
+
 def _resolve_path() -> Path:
     custom = os.getenv("REGULATIONS_DATA_PATH", "").strip()
     return Path(custom) if custom else _DEFAULT_REGULATIONS_PATH
+
 
 def _load_data_file() -> _RegData:
     data = _RegData()
@@ -194,6 +203,7 @@ def _load_data_file() -> _RegData:
     data.snapshot_source = str(raw.get("snapshot_source") or "").strip()
     return data
 
+
 def _ensure_data_loaded() -> None:
     global _LAST_LOADED_MONO
     now = monotonic()
@@ -212,6 +222,7 @@ def _ensure_data_loaded() -> None:
         _REG_DATA.source_file = loaded.source_file
         _LAST_LOADED_MONO = now
 
+
 def _base_payload(state: str) -> dict[str, Any]:
     source = _STATE_REGULATION_SOURCES.get(state, _FALLBACK_SOURCE)
     return {
@@ -227,6 +238,7 @@ def _base_payload(state: str) -> dict[str, Any]:
         "is_stale": _months_since(_REG_DATA.last_updated) >= _STALE_MONTHS,
         "fetched_at": "",
     }
+
 
 # ---------------------------------------------------------------------------
 # Month abbreviations for closed-season parsing in classify_legality
@@ -268,6 +280,7 @@ _QUALIFIER_WORDS = frozenset(
     ("some", "certain", "have", "having", "with", "may", "areas")
 )
 
+
 def _parse_closed_months_text(text: str) -> set:
     """Parse month ranges from text like 'closed Jan-May'.
 
@@ -288,6 +301,7 @@ def _parse_closed_months_text(text: str) -> set:
                 closed.update(range(start, 13))
                 closed.update(range(1, end + 1))
     return closed
+
 
 def season_status(reg: Optional[dict], month: int) -> str:
     """Return 'open' / 'closed' / 'unknown' for a regulation in a given month.
@@ -318,6 +332,7 @@ def season_status(reg: Optional[dict], month: int) -> str:
         return "open"
     return "unknown"
 
+
 def _parse_open_months_text(text: str) -> set:
     """Parse open-season month ranges from text like 'open May-September'.
 
@@ -336,6 +351,7 @@ def _parse_open_months_text(text: str) -> set:
                 open_months.update(range(1, end + 1))
     return open_months
 
+
 def get_official_regulations_url(state: str) -> str:
     """Return the official state fishing regulations URL for *state* (2-letter code).
 
@@ -346,7 +362,8 @@ def get_official_regulations_url(state: str) -> str:
         (state or "").upper().strip(), _FALLBACK_SOURCE
     )
 
-def classify_legality(reg: Optional[Dict], month: int = 0) -> str:
+
+def classify_legality(reg: Optional[dict], month: int = 0) -> str:
     """Return a normalised legality status for a regulation payload.
 
     Returns one of::
@@ -480,6 +497,7 @@ def classify_legality(reg: Optional[Dict], month: int = 0) -> str:
 
     return "legal"
 
+
 def should_hide_from_forecast(status: str) -> bool:
     """Return True when a species should be suppressed from 'What\'s Biting',
     'What\'s Spawning Now', and all other ranked forecast surfaces.
@@ -498,6 +516,7 @@ def should_hide_from_forecast(status: str) -> bool:
     the angler can lawfully target and keep the species at the current time.
     """
     return status != "legal"
+
 
 def _bg_refresh_regulation(species_name: str, state_key: str) -> None:
     """Background task: scrape and cache; remove from pending set when done."""
@@ -545,8 +564,7 @@ def _extract_slot_limit(reg: Optional[dict]) -> str:
     if not reg:
         return ""
     text = " ".join(
-        str(reg.get(k, "") or "")
-        for k in ("min_size", "notes", "season", "bag_limit")
+        str(reg.get(k, "") or "") for k in ("min_size", "notes", "season", "bag_limit")
     )
     low = text.lower()
     if "slot" not in low and "protected" not in low:
@@ -568,19 +586,53 @@ _GEAR_RULES: list[tuple] = [
     (re.compile(r"circle\s+hook", re.I), "Circle hooks"),
     (re.compile(r"barbless", re.I), "Barbless hooks"),
     (re.compile(r"single[-\s]hook|single\s+barbless", re.I), "Single hook"),
-    (re.compile(r"no\s+treble|treble\s+hooks?\s+(?:are\s+)?prohibit", re.I), "No treble hooks"),
+    (
+        re.compile(r"no\s+treble|treble\s+hooks?\s+(?:are\s+)?prohibit", re.I),
+        "No treble hooks",
+    ),
     (re.compile(r"hook[-\s]and[-\s]line\s+only", re.I), "Hook and line only"),
-    (re.compile(r"artificial\s+(?:lures?|baits?)\s+only|artificials?\s+only", re.I), "Artificial lures only"),
-    (re.compile(r"(?:no\s+gigging|gigging\s+(?:is\s+)?prohibit|no\s+gig\b)", re.I), "No gigging"),
-    (re.compile(r"(?:snatch|snag)\w*\s+(?:hook\w*\s+)?(?:is\s+)?prohibit|no\s+(?:snatch|snag)", re.I), "No snatch hooking"),
+    (
+        re.compile(r"artificial\s+(?:lures?|baits?)\s+only|artificials?\s+only", re.I),
+        "Artificial lures only",
+    ),
+    (
+        re.compile(r"(?:no\s+gigging|gigging\s+(?:is\s+)?prohibit|no\s+gig\b)", re.I),
+        "No gigging",
+    ),
+    (
+        re.compile(
+            r"(?:snatch|snag)\w*\s+(?:hook\w*\s+)?(?:is\s+)?prohibit|no\s+(?:snatch|snag)",
+            re.I,
+        ),
+        "No snatch hooking",
+    ),
     (re.compile(r"spear\w*\s+(?:is\s+)?prohibit|no\s+spear", re.I), "No spearfishing"),
-    (re.compile(r"no\s+live\s+bait|live\s+bait\s+(?:is\s+)?prohibit", re.I), "No live bait"),
+    (
+        re.compile(r"no\s+live\s+bait|live\s+bait\s+(?:is\s+)?prohibit", re.I),
+        "No live bait",
+    ),
     (re.compile(r"natural\s+bait\s+only", re.I), "Natural bait only"),
-    (re.compile(r"j[-\s]?hooks?\s+(?:are\s+)?prohibit|no\s+j[-\s]?hooks?", re.I), "No J-hooks"),
-    (re.compile(r"no\s+(?:multiple|treble|gang)\s+hooks?|single\s+hook\s+only", re.I), "Single hook only"),
+    (
+        re.compile(r"j[-\s]?hooks?\s+(?:are\s+)?prohibit|no\s+j[-\s]?hooks?", re.I),
+        "No J-hooks",
+    ),
+    (
+        re.compile(
+            r"no\s+(?:multiple|treble|gang)\s+hooks?|single\s+hook\s+only", re.I
+        ),
+        "Single hook only",
+    ),
     (re.compile(r"no\s+chumming|chumming\s+(?:is\s+)?prohibit", re.I), "No chumming"),
-    (re.compile(r"no\s+gaff(?:ing)?|gaff(?:ing)?\s+(?:is\s+)?prohibit", re.I), "No gaffing"),
-    (re.compile(r"(?:venting|descend\w*)\s+(?:tool|device)\s+(?:is\s+)?required", re.I), "Descending device required"),
+    (
+        re.compile(r"no\s+gaff(?:ing)?|gaff(?:ing)?\s+(?:is\s+)?prohibit", re.I),
+        "No gaffing",
+    ),
+    (
+        re.compile(
+            r"(?:venting|descend\w*)\s+(?:tool|device)\s+(?:is\s+)?required", re.I
+        ),
+        "Descending device required",
+    ),
     (re.compile(r"cast\s+net\s+(?:only|required)", re.I), "Cast net only"),
 ]
 
@@ -595,8 +647,7 @@ def _extract_gear_restrictions(reg: Optional[dict]) -> str:
     if not reg:
         return ""
     text = " ".join(
-        str(reg.get(k, "") or "")
-        for k in ("min_size", "bag_limit", "season", "notes")
+        str(reg.get(k, "") or "") for k in ("min_size", "bag_limit", "season", "notes")
     )
     if not text.strip():
         return ""

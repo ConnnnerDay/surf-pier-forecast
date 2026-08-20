@@ -70,7 +70,9 @@ _VALID_TARGETS = frozenset(
 )
 _VALID_EXPERIENCE = frozenset({"beginner", "intermediate", "experienced"})
 _VALID_BAIT_PREF = frozenset({"yes", "sometimes", "no", "skip"})
-_VALID_PREFERRED_TIMES = frozenset({"dawn", "morning", "afternoon", "evening", "night", "anytime"})
+_VALID_PREFERRED_TIMES = frozenset(
+    {"dawn", "morning", "afternoon", "evening", "night", "anytime"}
+)
 _VALID_PRIMARY_GOAL = frozenset({"action", "trophy", "relaxing", "exploring"})
 _VALID_CONDITION_TOLERANCE = frozenset({"calm", "moderate", "rough"})
 _VALID_TIDE_PREFERENCE = frozenset({"incoming", "outgoing", "high", "low", "any"})
@@ -133,7 +135,9 @@ def _validate_notification_prefs(value: Any) -> dict[str, Any]:
 
 
 def _validate_enum_list(field: str, value: Any, valid: frozenset) -> None:
-    if not isinstance(value, list) or not all(isinstance(x, str) and x in valid for x in value):
+    if not isinstance(value, list) or not all(
+        isinstance(x, str) and x in valid for x in value
+    ):
         raise ApiError(
             f"invalid_{field}",
             f"{field} must be a list of: {sorted(valid)}",
@@ -206,7 +210,10 @@ class ProfilePayload:
                     f"favorites may not contain more than {_MAX_FAVORITES} entries",
                     status=400,
                 )
-            if not all(isinstance(x, str) and len(x) <= _MAX_FAVORITES_ENTRY_LEN for x in favorites):
+            if not all(
+                isinstance(x, str) and len(x) <= _MAX_FAVORITES_ENTRY_LEN
+                for x in favorites
+            ):
                 raise ApiError(
                     "invalid_favorites",
                     f"favorites must be a list of strings (max {_MAX_FAVORITES_ENTRY_LEN} characters each)",
@@ -242,7 +249,9 @@ class ProfilePayload:
                     )
             fp_preferred_times = fishing_profile.get("preferred_times")
             if fp_preferred_times is not None:
-                _validate_enum_list("preferred_times", fp_preferred_times, _VALID_PREFERRED_TIMES)
+                _validate_enum_list(
+                    "preferred_times", fp_preferred_times, _VALID_PREFERRED_TIMES
+                )
             fp_primary_goal = fishing_profile.get("primary_goal")
             if (
                 fp_primary_goal is not None
@@ -384,32 +393,44 @@ class LogCreatePayload:
             raise ApiError("missing_species", "species is required", status=400)
         if len(species) > _MAX_SPECIES_LEN:
             raise ApiError(
-                "invalid_species", f"species must be {_MAX_SPECIES_LEN} characters or fewer", status=400
+                "invalid_species",
+                f"species must be {_MAX_SPECIES_LEN} characters or fewer",
+                status=400,
             )
         size = str(data.get("size", "")).strip()
         if len(size) > _MAX_SIZE_LEN:
             raise ApiError(
-                "invalid_size", f"size must be {_MAX_SIZE_LEN} characters or fewer", status=400
+                "invalid_size",
+                f"size must be {_MAX_SIZE_LEN} characters or fewer",
+                status=400,
             )
         notes = str(data.get("notes", "")).strip()
         if len(notes) > _MAX_NOTES_LEN:
             raise ApiError(
-                "invalid_notes", f"notes must be {_MAX_NOTES_LEN} characters or fewer", status=400
+                "invalid_notes",
+                f"notes must be {_MAX_NOTES_LEN} characters or fewer",
+                status=400,
             )
         bait = str(data.get("bait", "")).strip()
         if len(bait) > _MAX_BAIT_LEN:
             raise ApiError(
-                "invalid_bait", f"bait must be {_MAX_BAIT_LEN} characters or fewer", status=400
+                "invalid_bait",
+                f"bait must be {_MAX_BAIT_LEN} characters or fewer",
+                status=400,
             )
         rig = str(data.get("rig", "")).strip()
         if len(rig) > _MAX_BAIT_LEN:
             raise ApiError(
-                "invalid_rig", f"rig must be {_MAX_BAIT_LEN} characters or fewer", status=400
+                "invalid_rig",
+                f"rig must be {_MAX_BAIT_LEN} characters or fewer",
+                status=400,
             )
         loc = str(data.get("location_id", "")).strip() or location_id
         if not loc:
             raise ApiError("missing_location", "location_id is required", status=400)
-        return cls(species=species, size=size, notes=notes, bait=bait, rig=rig, location_id=loc)
+        return cls(
+            species=species, size=size, notes=notes, bait=bait, rig=rig, location_id=loc
+        )
 
 
 def normalize_log_stats(stats: dict[str, Any]) -> dict[str, Any]:

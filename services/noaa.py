@@ -57,6 +57,7 @@ MONTHLY_AVG_WATER_TEMP_F = {
     12: 54,
 }
 
+
 def fetch_water_temperature(station_id: str = "") -> Optional[float]:
     """Fetch the latest water temperature (F) from NOAA CO-OPS.
 
@@ -81,6 +82,7 @@ def fetch_water_temperature(station_id: str = "") -> Optional[float]:
         logger.debug("Water temperature fetch failed", exc_info=True)
     return None
 
+
 def fetch_latest_coops_product(
     station_id: str, product: str, units: str = "english"
 ) -> Optional[float]:
@@ -97,7 +99,10 @@ def fetch_latest_coops_product(
             "&time_zone=lst_ldt&format=json"
         )
         resp = http_get(
-            url, endpoint=f"noaa.{product}", headers=_COOPS_HEADERS, timeout=_COOPS_TIMEOUT
+            url,
+            endpoint=f"noaa.{product}",
+            headers=_COOPS_HEADERS,
+            timeout=_COOPS_TIMEOUT,
         )
         resp.raise_for_status()
         payload = resp.json()
@@ -109,6 +114,7 @@ def fetch_latest_coops_product(
     except Exception:
         logger.debug("NOAA CO-OPS product %r fetch failed", product, exc_info=True)
         return None
+
 
 def fetch_coops_environmental_metrics(station_id: str) -> dict[str, float]:
     """Fetch optional NOAA CO-OPS environmental products for a station."""
@@ -123,7 +129,9 @@ def fetch_coops_environmental_metrics(station_id: str) -> dict[str, float]:
     metrics: dict[str, float] = {}
     with _cf.ThreadPoolExecutor(max_workers=6, thread_name_prefix="coops-env") as pool:
         futures = {
-            pool.submit(fetch_latest_coops_product, station_id, product, units=units): key
+            pool.submit(
+                fetch_latest_coops_product, station_id, product, units=units
+            ): key
             for product, (key, units) in products.items()
         }
         for fut, key in futures.items():
@@ -134,6 +142,7 @@ def fetch_coops_environmental_metrics(station_id: str) -> dict[str, float]:
             except Exception:
                 pass
     return metrics
+
 
 def fetch_currents_predictions(
     station_id: str, tz_name: str = "America/New_York"
@@ -172,7 +181,9 @@ def fetch_currents_predictions(
             except Exception:
                 when = raw
             try:
-                speed_kt = f"{float(velocity):.2f}" if velocity not in (None, "") else "0.00"
+                speed_kt = (
+                    f"{float(velocity):.2f}" if velocity not in (None, "") else "0.00"
+                )
             except (ValueError, TypeError):
                 speed_kt = "0.00"
             out.append(
@@ -191,6 +202,7 @@ def fetch_currents_predictions(
         )
         return []
 
+
 def fetch_currents_observation(
     station_id: str, tz_name: str = "America/New_York"
 ) -> Optional[dict[str, str]]:
@@ -204,7 +216,10 @@ def fetch_currents_observation(
     )
     try:
         resp = http_get(
-            url, endpoint="noaa.currents", headers=_COOPS_HEADERS, timeout=_COOPS_TIMEOUT
+            url,
+            endpoint="noaa.currents",
+            headers=_COOPS_HEADERS,
+            timeout=_COOPS_TIMEOUT,
         )
         resp.raise_for_status()
         rows = resp.json().get("data", [])
@@ -238,6 +253,7 @@ def fetch_currents_observation(
         )
         return None
 
+
 def get_water_temp(
     month: int,
     location: Optional[dict[str, Any]] = None,
@@ -253,9 +269,7 @@ def get_water_temp(
     # nearest sensor-equipped station separately); fall back to the tide station.
     loc = location or {}
     station_id = (
-        loc.get("water_temp_station")
-        or loc.get("coops_station")
-        or WATER_TEMP_STATION
+        loc.get("water_temp_station") or loc.get("coops_station") or WATER_TEMP_STATION
     )
     live = fetch_water_temperature(station_id)
     if live is not None:
@@ -271,7 +285,9 @@ def get_water_temp(
         fallbacks_triggered.append("monthly_regional_water_temp")
     return float(MONTHLY_AVG_WATER_TEMP_F[month]), False
 
+
 # -- Source 3: NOAA CO-OPS wind data (same station as water temp) -----------
+
 
 def _try_coops_wind(
     station_id: str = "",
@@ -303,6 +319,7 @@ def _try_coops_wind(
     wind_dir = direction if direction else None
 
     return wind_range, None, wind_dir
+
 
 def fetch_tide_predictions(
     station_id: str,
@@ -365,6 +382,7 @@ def fetch_tide_predictions(
     except Exception:
         logger.debug("Tide predictions fetch failed", exc_info=True)
         return []
+
 
 def build_tide_chart_svg(
     tides: list[dict[str, Any]], now_hour: Optional[float] = None

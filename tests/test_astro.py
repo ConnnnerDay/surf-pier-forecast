@@ -6,7 +6,6 @@ from datetime import datetime
 from unittest.mock import patch
 from zoneinfo import ZoneInfo
 
-import pytest
 
 import services.astro as astro_mod
 from services.astro import (
@@ -133,8 +132,16 @@ class TestComputeTwilightTimes:
     def test_returns_all_expected_keys(self):
         dt = datetime(2026, 6, 21, tzinfo=ZoneInfo("America/New_York"))
         result = compute_twilight_times(dt, 34.2, -77.8, "America/New_York")
-        for key in ("civil_dawn", "civil_dusk", "nautical_dawn", "nautical_dusk",
-                    "astronomical_dawn", "astronomical_dusk", "golden_am", "golden_pm"):
+        for key in (
+            "civil_dawn",
+            "civil_dusk",
+            "nautical_dawn",
+            "nautical_dusk",
+            "astronomical_dawn",
+            "astronomical_dusk",
+            "golden_am",
+            "golden_pm",
+        ):
             assert key in result
 
     def test_golden_hour_format(self):
@@ -240,7 +247,9 @@ class TestComputeSolunarTimes:
     def test_naive_datetime_handled(self):
         dt_naive = datetime(2026, 6, 21)
         with patch.object(astro_mod, "_moon_phase", return_value=0.50):
-            result = compute_solunar_times(dt_naive, 34.2, self._LNG, "America/New_York")
+            result = compute_solunar_times(
+                dt_naive, 34.2, self._LNG, "America/New_York"
+            )
         assert "moon_phase" in result
 
     def test_illumination_new_moon_near_zero(self):

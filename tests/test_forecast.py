@@ -81,24 +81,30 @@ class TestClassifyConditions:
 
     def test_east_coast_ne_wind_is_onshore(self):
         # NE is onshore on the Atlantic coast — should score worse than NW (offshore).
-        nw = classify_conditions((6, 10), (1, 2), wind_dir="NW", coast="east", water_temp_f=65)
-        ne = classify_conditions((6, 10), (1, 2), wind_dir="NE", coast="east", water_temp_f=65)
+        nw = classify_conditions(
+            (6, 10), (1, 2), wind_dir="NW", coast="east", water_temp_f=65
+        )
+        ne = classify_conditions(
+            (6, 10), (1, 2), wind_dir="NE", coast="east", water_temp_f=65
+        )
         order = {"Poor": 1, "Challenging": 2, "Fair": 3, "Good": 4, "Excellent": 5}
         assert order[nw] >= order[ne]
 
     def test_east_coast_sw_wind_is_offshore(self):
         # SW is offshore on the Atlantic coast — should score better than SE (onshore).
-        sw = classify_conditions((6, 10), (1, 2), wind_dir="SW", coast="east", water_temp_f=65)
-        se = classify_conditions((6, 10), (1, 2), wind_dir="SE", coast="east", water_temp_f=65)
+        sw = classify_conditions(
+            (6, 10), (1, 2), wind_dir="SW", coast="east", water_temp_f=65
+        )
+        se = classify_conditions(
+            (6, 10), (1, 2), wind_dir="SE", coast="east", water_temp_f=65
+        )
         order = {"Poor": 1, "Challenging": 2, "Fair": 3, "Good": 4, "Excellent": 5}
         assert order[sw] >= order[se]
 
 
 class TestScoreConditions:
     def test_returns_index_verdict_and_explanation(self):
-        result = score_conditions(
-            (4, 8), (1, 1.5), wind_dir="NW", water_temp_f=68
-        )
+        result = score_conditions((4, 8), (1, 1.5), wind_dir="NW", water_temp_f=68)
         assert isinstance(result["score"], int)
         assert 0 <= result["score"] <= 100
         assert result["verdict"] in {"Excellent", "Good"}
@@ -141,8 +147,12 @@ class TestScoreConditions:
 
     def test_threshold_not_exceeded_no_warning(self):
         ok = score_conditions(
-            (4, 8), (1, 2), wind_dir="NW", water_temp_f=68,
-            max_wind_kt=20, max_wave_ft=5,
+            (4, 8),
+            (1, 2),
+            wind_dir="NW",
+            water_temp_f=68,
+            max_wind_kt=20,
+            max_wave_ft=5,
         )
         assert ok["exceeds"] == []
 
@@ -158,11 +168,17 @@ class TestScoreConditions:
 
     def test_hab_watch_penalises_less_than_danger(self):
         base_watch = score_conditions(
-            (4, 8), (1, 1.5), wind_dir="NW", water_temp_f=68,
+            (4, 8),
+            (1, 1.5),
+            wind_dir="NW",
+            water_temp_f=68,
             water_quality={"available": True, "hab_risk": "watch"},
         )
         base_danger = score_conditions(
-            (4, 8), (1, 1.5), wind_dir="NW", water_temp_f=68,
+            (4, 8),
+            (1, 1.5),
+            wind_dir="NW",
+            water_temp_f=68,
             water_quality={"available": True, "hab_risk": "danger"},
         )
         assert base_watch["score"] > base_danger["score"]
@@ -172,7 +188,10 @@ class TestScoreConditions:
     def test_low_dissolved_oxygen_penalises_and_notes_factor(self):
         base = score_conditions((4, 8), (1, 1.5), wind_dir="NW", water_temp_f=68)
         result = score_conditions(
-            (4, 8), (1, 1.5), wind_dir="NW", water_temp_f=68,
+            (4, 8),
+            (1, 1.5),
+            wind_dir="NW",
+            water_temp_f=68,
             water_quality={"available": True, "do_mg_l": "3.5"},
         )
         assert result["score"] < base["score"]
@@ -181,7 +200,10 @@ class TestScoreConditions:
     def test_unavailable_water_quality_has_no_effect(self):
         base = score_conditions((4, 8), (1, 1.5), wind_dir="NW", water_temp_f=68)
         result = score_conditions(
-            (4, 8), (1, 1.5), wind_dir="NW", water_temp_f=68,
+            (4, 8),
+            (1, 1.5),
+            wind_dir="NW",
+            water_temp_f=68,
             water_quality={"available": False, "hab_risk": "danger"},
         )
         assert result["score"] == base["score"]
@@ -564,8 +586,12 @@ def test_generate_forecast_surfaces_hab_danger_without_a_profile(monkeypatch):
     monkeypatch.setattr(fc, "build_activity_timeline", lambda *_args, **_kwargs: [])
     monkeypatch.setattr(fc, "build_multiday_outlook", lambda *_args, **_kwargs: [])
     monkeypatch.setattr(fc, "_get_wq", lambda *_args, **_kwargs: wq_danger)
-    monkeypatch.setattr(fc, "_get_river", lambda *_args, **_kwargs: {"available": False})
-    monkeypatch.setattr(fc, "_get_bathy", lambda *_args, **_kwargs: {"available": False})
+    monkeypatch.setattr(
+        fc, "_get_river", lambda *_args, **_kwargs: {"available": False}
+    )
+    monkeypatch.setattr(
+        fc, "_get_bathy", lambda *_args, **_kwargs: {"available": False}
+    )
 
     out = fc.generate_forecast({"id": "test-loc", "name": "Test", "state": "NC"})
     assert out["water_quality"]["hab_risk"] == "danger"
@@ -1204,10 +1230,17 @@ def test_personalize_caught_here_boost(monkeypatch):
     # Stub the species-dependent section rebuilds (and the networked outlook)
     # so the test isolates the caught-here boost.
     for name in (
-        "build_rig_recommendations", "build_bait_ranking", "build_lure_recommendations",
-        "build_species_calendar", "build_bite_alerts", "build_gear_checklist",
-        "build_safety_checklist", "build_spot_tips", "build_best_times",
-        "build_multiday_outlook", "pick_best_fishing_day",
+        "build_rig_recommendations",
+        "build_bait_ranking",
+        "build_lure_recommendations",
+        "build_species_calendar",
+        "build_bite_alerts",
+        "build_gear_checklist",
+        "build_safety_checklist",
+        "build_spot_tips",
+        "build_best_times",
+        "build_multiday_outlook",
+        "pick_best_fishing_day",
     ):
         monkeypatch.setattr(fc, name, lambda *a, **k: [])
     monkeypatch.setattr(fc, "_get_technique_tip", lambda *a, **k: "")
@@ -1215,24 +1248,47 @@ def test_personalize_caught_here_boost(monkeypatch):
 
     forecast = {
         "generated_at": "2026-06-10T10:00:00",
-        "conditions": {"verdict": "Good", "water_temp_f": 70, "wind": "NE 6-10 kt",
-                       "waves": "1-2 ft", "wind_dir": "NE"},
+        "conditions": {
+            "verdict": "Good",
+            "water_temp_f": 70,
+            "wind": "NE 6-10 kt",
+            "waves": "1-2 ft",
+            "wind_dir": "NE",
+        },
         "tide_state": "Rising",
         "solunar": {},
         "species": [
-            {"name": "Bluefish", "score": 80, "rank": 1, "rig": "x", "hook_size": "2/0",
-             "sinker": "2 oz", "bait": "cut", "activity": "Hot", "explanation": "",
-             "categories": [], "lures": ""},
-            {"name": "Red drum", "score": 70, "rank": 2, "rig": "x", "hook_size": "2/0",
-             "sinker": "2 oz", "bait": "cut", "activity": "Active", "explanation": "",
-             "categories": [], "lures": ""},
+            {
+                "name": "Bluefish",
+                "score": 80,
+                "rank": 1,
+                "rig": "x",
+                "hook_size": "2/0",
+                "sinker": "2 oz",
+                "bait": "cut",
+                "activity": "Hot",
+                "explanation": "",
+                "categories": [],
+                "lures": "",
+            },
+            {
+                "name": "Red drum",
+                "score": 70,
+                "rank": 2,
+                "rig": "x",
+                "hook_size": "2/0",
+                "sinker": "2 oz",
+                "bait": "cut",
+                "activity": "Active",
+                "explanation": "",
+                "categories": [],
+                "lures": "",
+            },
         ],
     }
     loc = {"id": "loc", "conditions_region": "atlantic", "timezone": "America/New_York"}
 
-    out = fc.personalize_forecast(
-        forecast, {}, loc, caught_species={"red drum"}
-    )
+    out = fc.personalize_forecast(forecast, {}, loc, caught_species={"red drum"})
     by_name = {s["name"]: s for s in out["species"]}
     assert by_name["Red drum"].get("caught_here") is True
     assert by_name["Red drum"]["score"] == 78  # 70 + 8
@@ -1242,9 +1298,7 @@ def test_personalize_caught_here_boost(monkeypatch):
     # A bigger boost would overtake — verify reranking happens when it does.
     fc._PERSONALIZE_CACHE.clear()  # same generated_at would otherwise cache-hit
     forecast["species"][1]["score"] = 75
-    out2 = fc.personalize_forecast(
-        forecast, {}, loc, caught_species={"red drum"}
-    )
+    out2 = fc.personalize_forecast(forecast, {}, loc, caught_species={"red drum"})
     assert out2["species"][0]["name"] == "Red drum"  # 75+8=83 > 80
     assert out2["species"][0]["rank"] == 1
 
@@ -1252,6 +1306,7 @@ def test_personalize_caught_here_boost(monkeypatch):
 class TestPickBestFishingDay:
     def test_tier_dominates_score(self):
         from domain.forecast import pick_best_fishing_day
+
         # Excellent (low score) beats Good (high score) — tier wins.
         out = pick_best_fishing_day(
             "Fair",
@@ -1266,6 +1321,7 @@ class TestPickBestFishingDay:
 
     def test_numeric_score_breaks_tie_within_tier(self):
         from domain.forecast import pick_best_fishing_day
+
         out = pick_best_fishing_day(
             "Fair",
             [
@@ -1278,6 +1334,7 @@ class TestPickBestFishingDay:
 
     def test_today_can_win(self):
         from domain.forecast import pick_best_fishing_day
+
         out = pick_best_fishing_day(
             "Excellent",
             [{"day": "Sat", "verdict": "Fair", "score": 50, "top_species": []}],
@@ -1293,15 +1350,24 @@ class TestSafetyChecklistPFD:
 
     def test_heavy_surf_adds_pfd_for_shore_angler(self):
         from domain.forecast import build_safety_checklist
-        assert self._has_pfd(build_safety_checklist(wave_range=(4, 5), fishing_types=["surf"]))
-        assert self._has_pfd(build_safety_checklist(wave_range=(5, 7), fishing_types=["jetty"]))
+
+        assert self._has_pfd(
+            build_safety_checklist(wave_range=(4, 5), fishing_types=["surf"])
+        )
+        assert self._has_pfd(
+            build_safety_checklist(wave_range=(5, 7), fishing_types=["jetty"])
+        )
 
     def test_calm_surf_no_pfd(self):
         from domain.forecast import build_safety_checklist
-        assert not self._has_pfd(build_safety_checklist(wave_range=(1, 2), fishing_types=["surf"]))
+
+        assert not self._has_pfd(
+            build_safety_checklist(wave_range=(1, 2), fishing_types=["surf"])
+        )
 
     def test_kayak_not_duplicated(self):
         from domain.forecast import build_safety_checklist
+
         items = build_safety_checklist(wave_range=(4, 5), fishing_types=["kayak"])
         assert sum("inflatable PFD" in i["text"] for i in items) == 0
 
@@ -1312,36 +1378,42 @@ class TestSafetyChecklistHab:
 
     def test_hab_danger_adds_warning(self):
         from domain.forecast import build_safety_checklist
+
         wq = {"available": True, "hab_risk": "danger", "hab_message": "Danger msg"}
         items = build_safety_checklist(water_quality=wq)
         assert any("Danger msg" == t for t in self._texts(items))
 
     def test_hab_danger_adds_extra_item_for_wade_anglers(self):
         from domain.forecast import build_safety_checklist
+
         wq = {"available": True, "hab_risk": "danger"}
         items = build_safety_checklist(water_quality=wq, fishing_types=["wade"])
         assert any("Skip wading" in t for t in self._texts(items))
 
     def test_hab_danger_no_wade_item_for_non_wade_anglers(self):
         from domain.forecast import build_safety_checklist
+
         wq = {"available": True, "hab_risk": "danger"}
         items = build_safety_checklist(water_quality=wq, fishing_types=["surf"])
         assert not any("Skip wading" in t for t in self._texts(items))
 
     def test_hab_watch_adds_caution_item(self):
         from domain.forecast import build_safety_checklist
+
         wq = {"available": True, "hab_risk": "watch"}
         items = build_safety_checklist(water_quality=wq)
         assert any("rinse hands" in t.lower() for t in self._texts(items))
 
     def test_hab_low_risk_adds_nothing(self):
         from domain.forecast import build_safety_checklist
+
         wq = {"available": True, "hab_risk": "low"}
         items = build_safety_checklist(water_quality=wq)
         assert not any("algal bloom" in t.lower() for t in self._texts(items))
 
     def test_unavailable_water_quality_adds_nothing(self):
         from domain.forecast import build_safety_checklist
+
         wq = {"available": False, "hab_risk": "danger"}
         items = build_safety_checklist(water_quality=wq)
         assert not any("algal bloom" in t.lower() for t in self._texts(items))
@@ -1353,21 +1425,25 @@ class TestRecentRainTips:
 
     def test_heavy_rain_muddy_water_tip(self):
         from domain.forecast import build_spot_tips
+
         tips = build_spot_tips(recent_rain_in=1.3, coast="east")
         assert any("Muddy Water" in t for t in self._titles(tips))
 
     def test_moderate_rain_runoff_tip(self):
         from domain.forecast import build_spot_tips
+
         tips = build_spot_tips(recent_rain_in=0.6, coast="east")
         assert any("Runoff" in t for t in self._titles(tips))
 
     def test_light_rain_no_tip(self):
         from domain.forecast import build_spot_tips
+
         tips = build_spot_tips(recent_rain_in=0.2, coast="east")
         assert not any("Runoff" in t or "Muddy" in t for t in self._titles(tips))
 
     def test_none_rain_safe(self):
         from domain.forecast import build_spot_tips
+
         assert isinstance(build_spot_tips(recent_rain_in=None, coast="east"), list)
 
 
@@ -1376,10 +1452,16 @@ class TestHabRiskTips:
         return [t["title"] for t in tips]
 
     def test_hab_watch_adds_warning_tip(self):
-        wq = {"available": True, "hab_risk": "watch", "hab_message": "Elevated bloom risk"}
+        wq = {
+            "available": True,
+            "hab_risk": "watch",
+            "hab_message": "Elevated bloom risk",
+        }
         tips = build_spot_tips(water_quality=wq, coast="east")
         assert any("Harmful Algal Bloom Watch" in t for t in self._titles(tips))
-        detail = next(t["detail"] for t in tips if t["title"] == "Harmful Algal Bloom Watch")
+        detail = next(
+            t["detail"] for t in tips if t["title"] == "Harmful Algal Bloom Watch"
+        )
         assert detail == "Elevated bloom risk"
 
     def test_hab_danger_adds_danger_tip(self):

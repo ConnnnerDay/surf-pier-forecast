@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 import smtplib
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
-import pytest
 
 from services import email as email_mod
 from services.email import send_email
@@ -126,7 +125,11 @@ class TestStarttlsPath:
         monkeypatch.setattr(email_mod, "_SMTP_USE_TLS", "1")
         monkeypatch.setattr(email_mod, "_SMTP_USER", "")
         monkeypatch.setattr(email_mod, "_SMTP_PASS", "")
-        monkeypatch.setattr(smtplib, "SMTP", lambda *a, **kw: (_ for _ in ()).throw(smtplib.SMTPException("refused")))
+        monkeypatch.setattr(
+            smtplib,
+            "SMTP",
+            lambda *a, **kw: (_ for _ in ()).throw(smtplib.SMTPException("refused")),
+        )
         result = send_email("to@example.com", "Subject", "body")
         assert result is False
 

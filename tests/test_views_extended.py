@@ -4,6 +4,7 @@ Targets the lines missing from the full-suite report:
 100, 163-165, 176-180, 273, 298, 317, 373-390, 435, 453-454,
 483, 485, 487-489, 494-497, 514-516, 551, 569-571, 703, 737.
 """
+
 from __future__ import annotations
 
 import json
@@ -104,9 +105,7 @@ class TestIndexLoggedInNoLocation:
 
 
 class TestRequireLoginProfileSetupRedirects:
-    def test_public_endpoint_with_user_needing_profile_redirects(
-        self, client, loc_id
-    ):
+    def test_public_endpoint_with_user_needing_profile_redirects(self, client, loc_id):
         """Line 306: a public but non-profile-exempt endpoint (live-cams) with a
         logged-in user who has a location but no fishing profile → /profile."""
         uid = create_user("pub_needs_profile", "pass1234")
@@ -133,9 +132,7 @@ class TestRequireLoginProfileSetupRedirects:
         # Remove setup_favorite from the exempt set so the non-exempt branch fires.
         monkeypatch.setattr("web.views._PROFILE_SETUP_EXEMPT_ENDPOINTS", set())
 
-        with app.test_request_context(
-            f"/setup/favorite/{loc_id}", method="POST"
-        ):
+        with app.test_request_context(f"/setup/favorite/{loc_id}", method="POST"):
             flask.g.user = {"id": uid, "username": "nonpub_needs_profile"}
             result = _require_login()
 
@@ -211,7 +208,8 @@ class TestLogStatsException:
         fc = _fake_forecast(loc_id)
         monkeypatch.setattr("web.views.load_cached_forecast", lambda *a, **kw: fc)
         monkeypatch.setattr(
-            "web.views.get_log_stats", lambda *a, **kw: (_ for _ in ()).throw(RuntimeError("db"))
+            "web.views.get_log_stats",
+            lambda *a, **kw: (_ for _ in ()).throw(RuntimeError("db")),
         )
         _patch_cam_and_uv(monkeypatch)
         _patch_render(monkeypatch)
@@ -347,17 +345,20 @@ class TestConvertWindTextUnits:
     def test_non_mph_units_returns_unchanged(self):
         """Line 100: when wind_units is not 'mph', the text is returned unchanged."""
         from web.views import _convert_wind_text_units
+
         text = "10-15 kt"
         assert _convert_wind_text_units(text, "knots") == text
 
     def test_empty_text_returns_unchanged(self):
         """Line 100: empty text is returned unchanged regardless of units."""
         from web.views import _convert_wind_text_units
+
         assert _convert_wind_text_units("", "mph") == ""
 
     def test_kt_range_converted_to_mph(self):
         """Lines 103-105: a '10-15 kt' range is converted to mph."""
         from web.views import _convert_wind_text_units
+
         result = _convert_wind_text_units("Winds 10-15 kt", "mph")
         assert "mph" in result
         assert "kt" not in result
@@ -365,6 +366,7 @@ class TestConvertWindTextUnits:
     def test_single_kt_value_converted(self):
         """Lines 109-112: a single '20 kt' value is converted to mph."""
         from web.views import _convert_wind_text_units
+
         result = _convert_wind_text_units("Gusts 20 kt", "mph")
         assert "mph" in result
 
@@ -373,16 +375,21 @@ class TestFetchCamStatus:
     def test_live_cam_is_live(self, monkeypatch):
         """Lines 163-165: a successful HTTP probe marks cam as live."""
         import requests
-        from web.views import _fetch_cam_status, _cam_status_cache
+        from web.views import _fetch_cam_status
         import web.views as views_mod
 
         mock_resp = type("R", (), {"status_code": 200})()
-        monkeypatch.setattr("web.views.requests", type(
-            "Mod", (), {
-                "get": lambda *a, **kw: mock_resp,
-                "RequestException": requests.RequestException,
-            }
-        )())
+        monkeypatch.setattr(
+            "web.views.requests",
+            type(
+                "Mod",
+                (),
+                {
+                    "get": lambda *a, **kw: mock_resp,
+                    "RequestException": requests.RequestException,
+                },
+            )(),
+        )
         # Use a unique URL to avoid cache hits from other tests.
         url = "http://test-cam-live.example/stream"
         with views_mod._cam_status_lock:
@@ -407,21 +414,28 @@ class TestFetchCamStatus:
         with views_mod._cam_status_lock:
             views_mod._cam_status_cache.clear()
             views_mod._cam_status_cache["http://old.example/"] = {
-                "is_live": False, "checked_at_ts": now - 1000
+                "is_live": False,
+                "checked_at_ts": now - 1000,
             }
             views_mod._cam_status_cache["http://new.example/"] = {
-                "is_live": False, "checked_at_ts": now
+                "is_live": False,
+                "checked_at_ts": now,
             }
 
         import requests
 
         mock_resp = type("R", (), {"status_code": 200})()
-        monkeypatch.setattr("web.views.requests", type(
-            "Mod", (), {
-                "get": lambda *a, **kw: mock_resp,
-                "RequestException": requests.RequestException,
-            }
-        )())
+        monkeypatch.setattr(
+            "web.views.requests",
+            type(
+                "Mod",
+                (),
+                {
+                    "get": lambda *a, **kw: mock_resp,
+                    "RequestException": requests.RequestException,
+                },
+            )(),
+        )
         # Adding a third URL exceeds the max and should evict the oldest.
         _fetch_cam_status("http://evict-trigger.example/")
 
@@ -471,9 +485,7 @@ class TestSetupFavoriteGuard:
         from web.views import setup_favorite
         import flask
 
-        with app.test_request_context(
-            f"/setup/favorite/{loc_id}", method="POST"
-        ):
+        with app.test_request_context(f"/setup/favorite/{loc_id}", method="POST"):
             flask.g.user = None
             resp = setup_favorite(loc_id)
         assert resp.status_code == 302

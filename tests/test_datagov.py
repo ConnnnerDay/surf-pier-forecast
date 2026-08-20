@@ -134,7 +134,9 @@ class TestFetchWaterQuality:
 
     def test_second_call_uses_cache(self):
         rows = []
-        with patch.object(datagov._HTTP, "get", return_value=_mock_resp(rows)) as mock_get:
+        with patch.object(
+            datagov._HTTP, "get", return_value=_mock_resp(rows)
+        ) as mock_get:
             datagov.fetch_water_quality(34.2, -77.8)
             datagov.fetch_water_quality(34.2, -77.8)
         assert mock_get.call_count == 1
@@ -142,14 +144,16 @@ class TestFetchWaterQuality:
     def test_failed_fetch_uses_shorter_retry_ttl(self):
         with patch.object(
             datagov._HTTP, "get", side_effect=requests.ConnectionError("down")
-        ) as mock_get:
+        ):
             datagov.fetch_water_quality(34.2, -77.8)
         cache_key = ("wq", round(34.2, 2), round(-77.8, 2), 50, 7)
         entry = datagov._CACHE[cache_key]
         assert entry["failed"] is True
         # Backdate past the normal TTL but within the failure TTL.
         entry["ts"] -= datagov._CACHE_TTL_FAIL + 1
-        with patch.object(datagov._HTTP, "get", return_value=_mock_resp([])) as mock_get2:
+        with patch.object(
+            datagov._HTTP, "get", return_value=_mock_resp([])
+        ) as mock_get2:
             datagov.fetch_water_quality(34.2, -77.8)
         assert mock_get2.call_count == 1
 
@@ -180,7 +184,9 @@ class TestFetchBeachClosures:
         assert result == []
 
     def test_non_list_response_returns_empty(self):
-        with patch.object(datagov._HTTP, "get", return_value=_mock_resp({"not": "a list"})):
+        with patch.object(
+            datagov._HTTP, "get", return_value=_mock_resp({"not": "a list"})
+        ):
             result = datagov.fetch_beach_closures("NC")
         assert result == []
 
@@ -206,13 +212,17 @@ class TestFetchBeachClosures:
         assert len(result) == 50
 
     def test_unknown_state_code_uses_fallback_fips(self):
-        with patch.object(datagov._HTTP, "get", return_value=_mock_resp([])) as mock_get:
+        with patch.object(
+            datagov._HTTP, "get", return_value=_mock_resp([])
+        ) as mock_get:
             datagov.fetch_beach_closures("ZZ")
         params = mock_get.call_args.kwargs["params"]
         assert params["statecode"] == "US:00"
 
     def test_second_call_uses_cache(self):
-        with patch.object(datagov._HTTP, "get", return_value=_mock_resp([])) as mock_get:
+        with patch.object(
+            datagov._HTTP, "get", return_value=_mock_resp([])
+        ) as mock_get:
             datagov.fetch_beach_closures("NC")
             datagov.fetch_beach_closures("NC")
         assert mock_get.call_count == 1

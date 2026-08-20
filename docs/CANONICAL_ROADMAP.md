@@ -324,7 +324,7 @@ to reconciliation, not proof that the agreed outcome passed.
 | 21 | Forecast assembly | Independent sources and every present/absent matrix | **Complete** — `apps/api/app/domain/assembly.py`: concurrently fans out to NWS/NOAA CO-OPS/NDBC + astronomy, assembles `ForecastEnvelope` and designs `conditions`; water-temperature fallback-to-monthly-average finally lands (deferred since sprint 14); `apps/api/tests/test_assembly.py` exercises all 8 present/absent combinations of the 3 fallible sources |
 | 22 | Forecast scoring | Defensible stable score components with explanations | **Complete** — `apps/api/app/domain/scoring.py`: `score_conditions`, the 0-100 go/no-go index ported from `domain/forecast.py`, scores wind/wave/direction/water-temp/dawn-dusk/solunar factors with a sorted, plain-language summary; deliberately decoupled from sprint 21's `ForecastConditions` (takes a pre-reconciled `wind_range`/`wave_range`); tide, fishing-type/preference, and water-quality bonuses deliberately deferred (sprints 34/36, still-open product question); tested in `apps/api/tests/test_scoring.py` |
 | 23 | Confidence model | Predictable degradation by availability, distance, age, fallback | **Complete** — `apps/api/app/domain/confidence.py`: `assess_confidence`, a 100-point four-factor score (source coverage, observation age, station distance, fallback use) with no legacy precedent, replacing sprint 21's interim liveness-only stub; each degrading factor reports an independent reason code; tested in `apps/api/tests/test_confidence.py` |
-| 24 | Snapshot caching | Fresh/stale hit, miss, expiry, fallback, concurrency; target 4-hour freshness window, matching legacy cadence | Candidate in `/v2` |
+| 24 | Snapshot caching | Fresh/stale hit, miss, expiry, fallback, concurrency; target 4-hour freshness window, matching legacy cadence | **Complete** — `apps/api/app/infra/snapshot_cache.py`: `SnapshotCache[T]`, an injectable-clock, per-key, single-flight in-memory cache; `fresh_ttl_seconds` defaults to 4h matching legacy cadence, `stale_ttl_seconds` + fallback-on-fetch-failure are new (no legacy precedent); tested in `apps/api/tests/test_snapshot_cache.py` |
 | 25 | Versioned API | Required endpoints, OpenAPI contract and breaking-change guard | Candidate in `/v2` |
 | 26 | Performance budget | Bounded parallel calls, no duplicates, warm p95 under 750 ms | Not accepted |
 
@@ -430,8 +430,8 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #345 (sprint 22, forecast scoring, `cde13d7`, merged
-  as `a14d7ea`).
+- Last merged PR: #346 (sprint 23, confidence model, `df808d3`, merged
+  as `928eb29`).
 - **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
   1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
   (#332). Phase 1's only remaining items (9, 10) need external accounts —
@@ -778,17 +778,55 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   one observation and across the whole assessment, and score clamping
   at zero under compounded penalties. All of `apps/api`'s checks
   (ruff, ruff format, mypy, pytest — 226 passed) pass clean.
+- This PR continues Phase 2 with **sprint 24** (snapshot caching,
+  **complete**): `apps/api/app/infra/snapshot_cache.py`'s
+  `SnapshotCache[T]` generalizes sprint 17's `StationCatalogCache[T]`
+  (single global value, one TTL) to multiple keys and a two-tier
+  freshness policy: `fresh_ttl_seconds` defaults to 4 hours, matching
+  the legacy `forecast_cache` cadence the sprint ledger names;
+  `stale_ttl_seconds` and the fallback-on-fetch-failure behavior below
+  it have no legacy precedent — legacy's cache only ever had "hit" or
+  "miss," never a policy for what to serve when a refresh itself
+  fails. Built from `docs/product-definition.md`'s Stale-state
+  definition ("a previously valid snapshot outside its freshness
+  window... still useful as clearly aged fallback information") and
+  the product contract's Reliability bullet, extended from "one
+  upstream source failing" (sprints 21-23) to "the whole refresh
+  failing." A cache entry younger than `fresh_ttl_seconds` is a fresh
+  hit (`fetch` never called); between the two TTLs it's a stale hit
+  that attempts a refresh; at or past `stale_ttl_seconds` it's evicted
+  and behaves exactly like a miss, including that a subsequent fetch
+  failure has nothing left to fall back to and propagates; and if a
+  refresh fetch raises while a still-eligible entry exists, that entry
+  is returned labeled `is_fallback=True` instead of propagating.
+  `get_or_refresh` is single-flight per key via a per-key
+  `asyncio.Lock` — concurrent callers for the same key share one
+  fetch, callers for different keys never block each other. This
+  sprint deliberately doesn't replicate legacy's SQLite storage layer
+  (no Postgres connection yet, per this README's own "does not yet
+  have... a Postgres connection" line) or its background-daemon
+  refresh — see the module docstring — and wiring this cache around
+  `assemble_forecast`, keyed by location id and producing
+  `ForecastState.STALE` on a fallback hit, remains a follow-up
+  alongside sprints 22/23's still-unwired scoring/confidence. `apps/api/
+  tests/test_snapshot_cache.py` covers fresh hit, stale hit, miss,
+  expiry (both successful-refresh and no-fallback-available cases),
+  fallback-on-fetch-failure, and single-flight concurrency (same-key
+  serialization and different-key non-blocking) independently. All of
+  `apps/api`'s checks (ruff, ruff format, mypy, pytest — 241 passed)
+  pass clean.
 - **Incident (sprint 6, resolved earlier)**: a scratch branch explicitly
   titled `DO NOT MERGE` was merged into `main` under the repo owner's own
   account, landing deliberately-broken code; reverted within ~10 minutes
   in PR #330. Full account in `docs/SPRINT_6_CI_PROOF.md`. Sprint 7
   turned this into a documented branch-hygiene rule.
 - Exact next action: finish sprint 13/14/15's deferred scope, or move to
-  sprint 24 (snapshot caching — fresh/stale hit, miss, expiry,
-  fallback, concurrency), or wire sprint 22's `score_conditions` and
-  sprint 23's `assess_confidence` into `assemble_forecast`'s output
-  (picking a source when both NWS and NDBC report, and computing real
-  station distances/observation ages for the confidence factors — both
+  sprint 25 (versioned API — required endpoints, OpenAPI contract,
+  breaking-change guard), or wire sprints 22/23/24's
+  `score_conditions`/`assess_confidence`/`SnapshotCache` into
+  `assemble_forecast`'s output (picking a source when both NWS and
+  NDBC report, computing real station distances/observation ages for
+  the confidence factors, and keying the cache by location id — all
   still unassigned to a numbered sprint) — any is a valid next Phase 2
   pick, needs no external accounts. Separately, sprint 9 (preview
   environments) and sprint 10 (production skeleton) need real

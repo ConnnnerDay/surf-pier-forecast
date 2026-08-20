@@ -62,10 +62,10 @@ class TestGetWaterTemp:
     def test_falls_back_to_location_monthly_avg(self):
         fallbacks: list[str] = []
         location = {"temp_region": "nc_south", "coops_station": "1234567"}
-        with patch.object(noaa, "fetch_water_temperature", return_value=None), \
-                patch.object(
-                    noaa, "get_monthly_water_temps", return_value={6: 75.0}
-                ):
+        with (
+            patch.object(noaa, "fetch_water_temperature", return_value=None),
+            patch.object(noaa, "get_monthly_water_temps", return_value={6: 75.0}),
+        ):
             temp, is_live = noaa.get_water_temp(
                 6, location=location, fallbacks_triggered=fallbacks
             )
@@ -168,7 +168,9 @@ class TestFetchTidePredictions:
         assert tides == []
 
     def test_empty_predictions_returns_empty_list(self):
-        with patch.object(noaa, "http_get", return_value=_mock_resp({"predictions": []})):
+        with patch.object(
+            noaa, "http_get", return_value=_mock_resp({"predictions": []})
+        ):
             tides = noaa.fetch_tide_predictions("8658163")
         assert tides == []
 
@@ -194,7 +196,11 @@ class TestFetchCurrentsPredictions:
         assert events == []
 
     def test_invalid_velocity_defaults_to_zero(self):
-        body = {"cp": [{"Time": "2024-06-01 06:30", "Velocity_Major": "bad", "Type": "flood"}]}
+        body = {
+            "cp": [
+                {"Time": "2024-06-01 06:30", "Velocity_Major": "bad", "Type": "flood"}
+            ]
+        }
         with patch.object(noaa, "http_get", return_value=_mock_resp(body)):
             events = noaa.fetch_currents_predictions("ACT1234")
         assert events[0]["speed_kt"] == "0.00"
@@ -239,22 +245,62 @@ class TestBuildTideChartSvg:
     def test_returns_none_with_fewer_than_two_tides(self):
         assert noaa.build_tide_chart_svg([]) is None
         assert (
-            noaa.build_tide_chart_svg([{"hour": 6, "height_num": 1.0, "type": "High", "time": "6 AM", "height_ft": "1.0"}])
+            noaa.build_tide_chart_svg(
+                [
+                    {
+                        "hour": 6,
+                        "height_num": 1.0,
+                        "type": "High",
+                        "time": "6 AM",
+                        "height_ft": "1.0",
+                    }
+                ]
+            )
             is None
         )
 
     def test_returns_none_when_fewer_than_two_in_window(self):
         tides = [
-            {"hour": 6, "height_num": 1.0, "type": "High", "time": "6 AM", "height_ft": "1.0"},
-            {"hour": 40, "height_num": 2.0, "type": "Low", "time": "4 PM next", "height_ft": "2.0"},
+            {
+                "hour": 6,
+                "height_num": 1.0,
+                "type": "High",
+                "time": "6 AM",
+                "height_ft": "1.0",
+            },
+            {
+                "hour": 40,
+                "height_num": 2.0,
+                "type": "Low",
+                "time": "4 PM next",
+                "height_ft": "2.0",
+            },
         ]
         assert noaa.build_tide_chart_svg(tides) is None
 
     def test_builds_chart_with_valid_points(self):
         tides = [
-            {"hour": 2.0, "height_num": 1.0, "type": "Low", "time": "2:00 AM", "height_ft": "1.0"},
-            {"hour": 8.0, "height_num": 5.0, "type": "High", "time": "8:00 AM", "height_ft": "5.0"},
-            {"hour": 14.0, "height_num": 1.5, "type": "Low", "time": "2:00 PM", "height_ft": "1.5"},
+            {
+                "hour": 2.0,
+                "height_num": 1.0,
+                "type": "Low",
+                "time": "2:00 AM",
+                "height_ft": "1.0",
+            },
+            {
+                "hour": 8.0,
+                "height_num": 5.0,
+                "type": "High",
+                "time": "8:00 AM",
+                "height_ft": "5.0",
+            },
+            {
+                "hour": 14.0,
+                "height_num": 1.5,
+                "type": "Low",
+                "time": "2:00 PM",
+                "height_ft": "1.5",
+            },
         ]
         result = noaa.build_tide_chart_svg(tides)
         assert result is not None
@@ -265,8 +311,20 @@ class TestBuildTideChartSvg:
 
     def test_markers_carry_hour_for_frontend_matching(self):
         tides = [
-            {"hour": 2.0, "height_num": 1.0, "type": "Low", "time": "2:00 AM", "height_ft": "1.0"},
-            {"hour": 8.0, "height_num": 5.0, "type": "High", "time": "8:00 AM", "height_ft": "5.0"},
+            {
+                "hour": 2.0,
+                "height_num": 1.0,
+                "type": "Low",
+                "time": "2:00 AM",
+                "height_ft": "1.0",
+            },
+            {
+                "hour": 8.0,
+                "height_num": 5.0,
+                "type": "High",
+                "time": "8:00 AM",
+                "height_ft": "5.0",
+            },
         ]
         result = noaa.build_tide_chart_svg(tides)
         hours = [m["hour"] for m in result["markers"]]
@@ -274,9 +332,27 @@ class TestBuildTideChartSvg:
 
     def test_curve_is_dense_monotonic_and_spans_the_full_range(self):
         tides = [
-            {"hour": 2.0, "height_num": 1.0, "type": "Low", "time": "2:00 AM", "height_ft": "1.0"},
-            {"hour": 8.0, "height_num": 5.0, "type": "High", "time": "8:00 AM", "height_ft": "5.0"},
-            {"hour": 14.0, "height_num": 1.5, "type": "Low", "time": "2:00 PM", "height_ft": "1.5"},
+            {
+                "hour": 2.0,
+                "height_num": 1.0,
+                "type": "Low",
+                "time": "2:00 AM",
+                "height_ft": "1.0",
+            },
+            {
+                "hour": 8.0,
+                "height_num": 5.0,
+                "type": "High",
+                "time": "8:00 AM",
+                "height_ft": "5.0",
+            },
+            {
+                "hour": 14.0,
+                "height_num": 1.5,
+                "type": "Low",
+                "time": "2:00 PM",
+                "height_ft": "1.5",
+            },
         ]
         result = noaa.build_tide_chart_svg(tides)
         curve = result["curve"]
@@ -293,8 +369,20 @@ class TestBuildTideChartSvg:
 
     def test_curve_used_for_now_marker_matches_height_interpolation(self):
         tides = [
-            {"hour": 2.0, "height_num": 1.0, "type": "Low", "time": "2:00 AM", "height_ft": "1.0"},
-            {"hour": 8.0, "height_num": 5.0, "type": "High", "time": "8:00 AM", "height_ft": "5.0"},
+            {
+                "hour": 2.0,
+                "height_num": 1.0,
+                "type": "Low",
+                "time": "2:00 AM",
+                "height_ft": "1.0",
+            },
+            {
+                "hour": 8.0,
+                "height_num": 5.0,
+                "type": "High",
+                "time": "8:00 AM",
+                "height_ft": "5.0",
+            },
         ]
         result = noaa.build_tide_chart_svg(tides, now_hour=5.0)
         # Midpoint of a half-cosine ramp is exactly the midpoint height.
@@ -303,8 +391,20 @@ class TestBuildTideChartSvg:
 
     def test_includes_now_marker_when_now_hour_in_range(self):
         tides = [
-            {"hour": 2.0, "height_num": 1.0, "type": "Low", "time": "2:00 AM", "height_ft": "1.0"},
-            {"hour": 8.0, "height_num": 5.0, "type": "High", "time": "8:00 AM", "height_ft": "5.0"},
+            {
+                "hour": 2.0,
+                "height_num": 1.0,
+                "type": "Low",
+                "time": "2:00 AM",
+                "height_ft": "1.0",
+            },
+            {
+                "hour": 8.0,
+                "height_num": 5.0,
+                "type": "High",
+                "time": "8:00 AM",
+                "height_ft": "5.0",
+            },
         ]
         result = noaa.build_tide_chart_svg(tides, now_hour=5.0)
         assert result["now_marker"] is not None
@@ -313,24 +413,60 @@ class TestBuildTideChartSvg:
 
     def test_now_marker_omitted_when_outside_range(self):
         tides = [
-            {"hour": 2.0, "height_num": 1.0, "type": "Low", "time": "2:00 AM", "height_ft": "1.0"},
-            {"hour": 8.0, "height_num": 5.0, "type": "High", "time": "8:00 AM", "height_ft": "5.0"},
+            {
+                "hour": 2.0,
+                "height_num": 1.0,
+                "type": "Low",
+                "time": "2:00 AM",
+                "height_ft": "1.0",
+            },
+            {
+                "hour": 8.0,
+                "height_num": 5.0,
+                "type": "High",
+                "time": "8:00 AM",
+                "height_ft": "5.0",
+            },
         ]
         result = noaa.build_tide_chart_svg(tides, now_hour=20.0)
         assert result["now_marker"] is None
 
     def test_handles_equal_heights_without_division_error(self):
         tides = [
-            {"hour": 2.0, "height_num": 3.0, "type": "Low", "time": "2:00 AM", "height_ft": "3.0"},
-            {"hour": 8.0, "height_num": 3.0, "type": "High", "time": "8:00 AM", "height_ft": "3.0"},
+            {
+                "hour": 2.0,
+                "height_num": 3.0,
+                "type": "Low",
+                "time": "2:00 AM",
+                "height_ft": "3.0",
+            },
+            {
+                "hour": 8.0,
+                "height_num": 3.0,
+                "type": "High",
+                "time": "8:00 AM",
+                "height_ft": "3.0",
+            },
         ]
         result = noaa.build_tide_chart_svg(tides)
         assert result is not None
 
     def test_handles_equal_hours_without_division_error(self):
         tides = [
-            {"hour": 5.0, "height_num": 1.0, "type": "Low", "time": "5:00 AM", "height_ft": "1.0"},
-            {"hour": 5.0, "height_num": 4.0, "type": "High", "time": "5:00 AM", "height_ft": "4.0"},
+            {
+                "hour": 5.0,
+                "height_num": 1.0,
+                "type": "Low",
+                "time": "5:00 AM",
+                "height_ft": "1.0",
+            },
+            {
+                "hour": 5.0,
+                "height_num": 4.0,
+                "type": "High",
+                "time": "5:00 AM",
+                "height_ft": "4.0",
+            },
         ]
         result = noaa.build_tide_chart_svg(tides)
         assert result is not None

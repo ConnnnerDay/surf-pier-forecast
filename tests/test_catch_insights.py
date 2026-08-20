@@ -8,8 +8,17 @@ from storage.sqlite import (
 )
 
 
-def _catch(species="Red drum", tide="Rising", wind="NE", temp=66.0, moon="Full Moon",
-           bait="Live shrimp", rig="Hi-lo", hab_risk=None, river_discharge_cfs=None):
+def _catch(
+    species="Red drum",
+    tide="Rising",
+    wind="NE",
+    temp=66.0,
+    moon="Full Moon",
+    bait="Live shrimp",
+    rig="Hi-lo",
+    hab_risk=None,
+    river_discharge_cfs=None,
+):
     return {
         "species": species,
         "tide_state": tide,
@@ -69,13 +78,17 @@ class TestAnalyzeCatchPatterns:
         ]
         out = analyze_catch_patterns(catches)
         assert out["factors"]["top_bait"][0]["bait"] == "Live shrimp"
-        assert any("Live shrimp" in i and "productive bait" in i for i in out["insights"])
+        assert any(
+            "Live shrimp" in i and "productive bait" in i for i in out["insights"]
+        )
 
     def test_top_rig(self):
         catches = [_catch(rig="Fish-finder") for _ in range(4)] + [_catch(rig="Hi-lo")]
         out = analyze_catch_patterns(catches)
         assert out["factors"]["top_rig"][0]["rig"] == "Fish-finder"
-        assert any("Fish-finder" in i and "productive rig" in i for i in out["insights"])
+        assert any(
+            "Fish-finder" in i and "productive rig" in i for i in out["insights"]
+        )
 
     def test_no_bait_no_insight(self):
         catches = [_catch(bait="") for _ in range(5)]
@@ -126,7 +139,9 @@ class TestAnalyzeCatchPatterns:
         assert not any("algal bloom" in i.lower() for i in out["insights"])
 
     def test_river_discharge_band(self):
-        catches = [_catch(river_discharge_cfs=cfs) for cfs in (80, 100, 120, 140, 160, 180)]
+        catches = [
+            _catch(river_discharge_cfs=cfs) for cfs in (80, 100, 120, 140, 160, 180)
+        ]
         out = analyze_catch_patterns(catches)
         assert "river_discharge_cfs" in out["factors"]
         band = out["factors"]["river_discharge_cfs"]
@@ -183,12 +198,16 @@ class TestConditionSnapshotStorage:
 class TestCommunityActivity:
     def _user_with_share(self, idx, share):
         from storage.sqlite import create_user, save_preferences
+
         uid = create_user(f"comm{idx}", "pass1234")
-        save_preferences(uid, fishing_profile={"share_catches": share, "completed": True})
+        save_preferences(
+            uid, fishing_profile={"share_catches": share, "completed": True}
+        )
         return uid
 
     def test_below_threshold_returns_none(self, app):
         from storage.sqlite import add_log_entry, get_recent_catch_activity
+
         # Two opted-in contributors — below the default min of 3.
         for i in range(2):
             uid = self._user_with_share(i, True)
@@ -197,6 +216,7 @@ class TestCommunityActivity:
 
     def test_threshold_met_aggregates(self, app):
         from storage.sqlite import add_log_entry, get_recent_catch_activity
+
         for i in range(3):
             uid = self._user_with_share(i, True)
             add_log_entry(uid, "loc-b", "Red drum")
@@ -209,6 +229,7 @@ class TestCommunityActivity:
 
     def test_opt_out_users_excluded(self, app):
         from storage.sqlite import add_log_entry, get_recent_catch_activity
+
         # 3 contributors but only 2 opted in → below threshold.
         for i in range(2):
             uid = self._user_with_share(i, True)

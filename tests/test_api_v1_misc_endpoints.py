@@ -197,9 +197,7 @@ class TestMapStatCards:
         monkeypatch.setattr(
             "web.api.fetch_metar_stations", lambda s, w, n, e: [{"id": "m1"}]
         )
-        monkeypatch.setattr(
-            "web.api.fetch_wildfire_incidents", lambda s, w, n, e: []
-        )
+        monkeypatch.setattr("web.api.fetch_wildfire_incidents", lambda s, w, n, e: [])
         monkeypatch.setattr(
             "web.api.fetch_stream_gauges", lambda s, w, n, e: [{"id": "g1"}]
         )
@@ -213,7 +211,9 @@ class TestMapStatCards:
         assert body["fires"]["count"] == 0
         assert body["tropical"]["count"] == 0
 
-    def test_individual_source_failure_does_not_break_response(self, client, monkeypatch):
+    def test_individual_source_failure_does_not_break_response(
+        self, client, monkeypatch
+    ):
         def _boom(*args, **kwargs):
             raise RuntimeError("down")
 

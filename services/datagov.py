@@ -45,8 +45,12 @@ logger = logging.getLogger(__name__)
 
 # ── HTTP session ──────────────────────────────────────────────────────────────
 _HTTP: requests.Session = requests.Session()
-_WQP_RETRY = Retry(total=1, backoff_factor=0.5, status_forcelist=[502, 503, 504], raise_on_status=False)
-_HTTP.mount("https://", HTTPAdapter(pool_connections=2, pool_maxsize=4, max_retries=_WQP_RETRY))
+_WQP_RETRY = Retry(
+    total=1, backoff_factor=0.5, status_forcelist=[502, 503, 504], raise_on_status=False
+)
+_HTTP.mount(
+    "https://", HTTPAdapter(pool_connections=2, pool_maxsize=4, max_retries=_WQP_RETRY)
+)
 
 # ── In-process result cache ───────────────────────────────────────────────────
 _CACHE: dict[tuple, dict[str, Any]] = {}
@@ -84,6 +88,7 @@ _CHLOROPHYLL_BLOOM_UG_L = 20.0
 # ─────────────────────────────────────────────────────────────────────────────
 # Public API
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def fetch_water_quality(
     lat: float,
@@ -195,6 +200,7 @@ def fetch_water_quality(
     _cache_set(cache_key, result)
     return result
 
+
 def fetch_beach_closures(state_code: str) -> list[dict[str, Any]]:
     """Fetch active beach-closure / advisory records for a US state.
 
@@ -262,6 +268,7 @@ def fetch_beach_closures(state_code: str) -> list[dict[str, Any]]:
     _cache_set(cache_key, closures)
     return closures[:50]  # cap at 50
 
+
 def _hab_risk(summary: dict[str, Any]) -> tuple[str, str]:
     """Classify harmful-algal-bloom risk from available WQP indicators.
 
@@ -285,7 +292,10 @@ def _hab_risk(summary: dict[str, Any]) -> tuple[str, str]:
                 f"Microcystin at {microcystin:.1f} µg/L exceeds EPA's recreational "
                 "watch threshold — avoid swallowing water or handling algal scum.",
             )
-        return "low", f"Microcystin at {microcystin:.1f} µg/L is below EPA advisory thresholds."
+        return (
+            "low",
+            f"Microcystin at {microcystin:.1f} µg/L is below EPA advisory thresholds.",
+        )
 
     chlorophyll = summary.get("chlorophyll_a")
     if chlorophyll is not None and chlorophyll >= _CHLOROPHYLL_BLOOM_UG_L:
@@ -296,6 +306,7 @@ def _hab_risk(summary: dict[str, Any]) -> tuple[str, str]:
         )
 
     return "unknown", ""
+
 
 def get_water_quality_summary(lat: float, lng: float) -> dict[str, Any]:
     """Return a simplified water-quality summary for template rendering.
@@ -348,9 +359,11 @@ def get_water_quality_summary(lat: float, lng: float) -> dict[str, Any]:
         "station_count": len(raw.get("stations", [])),
     }
 
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Internal helpers
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def _build_summary(stations: list[dict[str, Any]]) -> dict[str, Any]:
     """Aggregate measurements across stations into a single summary dict."""
@@ -377,22 +390,27 @@ def _build_summary(stations: list[dict[str, Any]]) -> dict[str, Any]:
 
     return {k: round(sum(v) / len(v), 3) for k, v in accum.items() if v}
 
+
 def _safe_float(val: Any) -> Optional[float]:
     try:
         return float(val)
     except (TypeError, ValueError):
         return None
 
+
 def _fmt(val: Optional[float], decimals: int) -> Optional[str]:
     if val is None:
         return None
     return f"{val:.{decimals}f}"
 
+
 def _c_to_f(c: Optional[float]) -> Optional[float]:
     return c * 9 / 5 + 32 if c is not None else None
 
+
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
+
 
 def _cache_get(key: tuple) -> Optional[Any]:
     entry = _CACHE.get(key)
@@ -403,11 +421,13 @@ def _cache_get(key: tuple) -> Optional[Any]:
         return entry["data"]
     return None
 
+
 def _cache_set(key: tuple, data: Any, failed: bool = False) -> None:
     if len(_CACHE) >= _CACHE_MAX:
         oldest = min(_CACHE, key=lambda k: _CACHE[k]["ts"])
         _CACHE.pop(oldest, None)
     _CACHE[key] = {"ts": time.time(), "data": data, "failed": failed}
+
 
 # ── FIPS codes for US states (needed for WQP state queries) ──────────────────
 _STATE_FIPS: dict[str, str] = {

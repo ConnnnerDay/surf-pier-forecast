@@ -81,6 +81,7 @@ FORECAST_VERSION = "v1.0.0"
 _PERSONALIZE_CACHE: dict[tuple, dict] = {}
 _PERSONALIZE_CACHE_MAX = 64
 
+
 def _profile_cache_key(forecast: dict, location: dict | None, profile: dict) -> tuple:
     """Build a hashable cache key for a personalized forecast."""
     loc_id = (location or {}).get("id", "")
@@ -94,10 +95,9 @@ def _profile_cache_key(forecast: dict, location: dict | None, profile: dict) -> 
             return tuple(v)
         return v
 
-    profile_tuple = tuple(
-        sorted((_freeze(k), _freeze(v)) for k, v in profile.items())
-    )
+    profile_tuple = tuple(sorted((_freeze(k), _freeze(v)) for k, v in profile.items()))
     return (loc_id, generated_at, hour, profile_tuple)
+
 
 # Shared pool for all forecast requests.  Creating a new executor per request
 # wastes time spawning/tearing down threads; a module-level pool keeps workers
@@ -132,6 +132,7 @@ def _attach_species_images(species: list[dict[str, Any]]) -> None:
             sp["image_url"] = image["thumb_url"]
             sp["image_credit_url"] = image["page_url"]
             sp["image_credit_label"] = image.get("credit", "")
+
 
 # Generic mid-Atlantic historical monthly averages used as the absolute
 # last resort when no location is set.
@@ -198,6 +199,7 @@ _DIR_MAP: dict[str, str] = {
 
 # -- Source 5: Seasonal averages (ALWAYS succeeds) --------------------------
 
+
 def _seasonal_averages(
     month: int,
 ) -> tuple[tuple[float, float], tuple[float, float], str]:
@@ -208,7 +210,9 @@ def _seasonal_averages(
         MONTHLY_AVG_WIND_DIR[month],
     )
 
+
 # -- Combined fetcher -------------------------------------------------------
+
 
 def get_marine_conditions(
     month: int,
@@ -295,6 +299,7 @@ def get_marine_conditions(
 
     return wind_range, wave_range, wind_dir
 
+
 class ExternalDataService:
     """Base service with consistent retries and logging for upstream calls."""
 
@@ -311,6 +316,7 @@ class ExternalDataService:
                 if attempt >= self.retries + 1:
                     return default
                 time.sleep(self.retry_delay_s)
+
 
 class MarineForecastService(ExternalDataService):
     def get_marine_forecast(
@@ -330,6 +336,7 @@ class MarineForecastService(ExternalDataService):
             ),
             default=_seasonal_averages(month),
         )
+
 
 class TidePredictionService(ExternalDataService):
     def get_tide_predictions(
@@ -384,6 +391,7 @@ class TidePredictionService(ExternalDataService):
             result["tide_state"] = tide_state
         return result
 
+
 class BuoyDataService(ExternalDataService):
     def get_barometric_pressure(
         self, location: Optional[dict[str, Any]] = None
@@ -393,6 +401,7 @@ class BuoyDataService(ExternalDataService):
             lambda: fetch_barometric_pressure(location),
             default=None,
         )
+
 
 class WeatherDataService(ExternalDataService):
     def get_weather_alerts(self, lat: float, lng: float) -> list[dict[str, Any]]:
@@ -421,6 +430,7 @@ class WeatherDataService(ExternalDataService):
             lambda: fetch_current_weather(lat, lng),
             default=None,
         )
+
 
 class EnvironmentalDataService(ExternalDataService):
     def get_coops_environmental(self, station_id: str) -> dict[str, float]:
@@ -451,6 +461,7 @@ class EnvironmentalDataService(ExternalDataService):
             lambda: fetch_currents_observation(station_id, tz_name),
             default=None,
         )
+
 
 class AstronomyService(ExternalDataService):
     def get_sun_times(
@@ -510,6 +521,7 @@ class AstronomyService(ExternalDataService):
             or {}
         )
 
+
 class ForecastBuilder:
     """Central forecast orchestrator for external services + domain assembly."""
 
@@ -520,6 +532,7 @@ class ForecastBuilder:
         self.weather_service = WeatherDataService()
         self.environment_service = EnvironmentalDataService()
         self.astro_service = AstronomyService()
+
 
 # ---------------------------------------------------------------------------
 # Fishability scoring constants
@@ -550,6 +563,7 @@ _VERDICT_CHALLENGING = 32
 # Canonical coast derivation
 # ---------------------------------------------------------------------------
 
+
 def _derive_coast(location: Optional[dict[str, Any]]) -> Optional[str]:
     """Return the canonical coast string for a location, or ``None`` if unknown.
 
@@ -578,6 +592,7 @@ def _derive_coast(location: Optional[dict[str, Any]]) -> Optional[str]:
         return "east"
     return None
 
+
 def _wind_orientation(location: Optional[dict[str, Any]]) -> str:
     """Return the coastline orientation used for wind-direction scoring.
 
@@ -598,6 +613,7 @@ def _wind_orientation(location: Optional[dict[str, Any]]) -> str:
     if cr.startswith("hawaii"):
         return "hawaii"
     return "east"
+
 
 def score_conditions(
     wind_range: Optional[tuple[float, float]],
@@ -911,7 +927,9 @@ def score_conditions(
             do_num = None
         if do_num is not None and do_num < 5.0:
             score -= 6
-            factors.append((-6, f"Low dissolved oxygen ({do_num:.1f} mg/L) — fish stressed"))
+            factors.append(
+                (-6, f"Low dissolved oxygen ({do_num:.1f} mg/L) — fish stressed")
+            )
 
     score = max(0, min(100, score))
     if score >= _VERDICT_EXCELLENT:
@@ -938,6 +956,7 @@ def score_conditions(
         "summary": summary,
         "exceeds": exceeds,
     }
+
 
 def classify_conditions(
     wind_range: Optional[tuple[float, float]],
@@ -980,6 +999,7 @@ def classify_conditions(
         max_wave_ft=max_wave_ft,
         water_quality=water_quality,
     )["verdict"]
+
 
 def build_multiday_outlook(
     now: datetime,
@@ -1036,7 +1056,7 @@ def build_multiday_outlook(
 
         # --- Wind from NWS or fallback ---
         wind_str = ""
-        wind_range = None
+        wind_range: Optional[tuple[float, float]] = None
         wind_dir_day = ""
         day_period = None
         if nws_periods:
@@ -1244,7 +1264,9 @@ def build_multiday_outlook(
 
     return days
 
+
 # -- Spot-specific fishing tips based on conditions -------------------------
+
 
 def build_spot_tips(
     wind_range: Optional[tuple[float, float]] = None,
@@ -1286,7 +1308,7 @@ def build_spot_tips(
                     "icon": "water",
                     "title": "Muddy Water After Heavy Rain",
                     "detail": (
-                        f"About {recent_rain_in:.1f}\" of rain recently — inlets and the "
+                        f'About {recent_rain_in:.1f}" of rain recently — inlets and the '
                         "surf zone will be stained and full of runoff. Fish scent-heavy "
                         "cut/natural bait over lures, work the cleaner edges where muddy "
                         "and clear water meet, and bump up to darker, high-vibration "
@@ -1300,7 +1322,7 @@ def build_spot_tips(
                     "icon": "water",
                     "title": "Some Runoff From Recent Rain",
                     "detail": (
-                        f"Around {recent_rain_in:.1f}\" of recent rain may cloud the water "
+                        f'Around {recent_rain_in:.1f}" of recent rain may cloud the water '
                         "near inlets and creek mouths. Lean on scent and contrast — "
                         "chartreuse or dark baits — and target the clearer water just "
                         "outside the stained plume."
@@ -1746,6 +1768,7 @@ def build_spot_tips(
     # Prepend type-specific tips, then fill remaining slots with generic tips
     return (type_tips + tips)[: max(5, len(type_tips) + 2)]
 
+
 def build_bite_alerts(
     verdict: str,
     species: list[dict[str, Any]],
@@ -1790,6 +1813,7 @@ def build_bite_alerts(
 
     return alerts[:3]
 
+
 def pick_best_fishing_day(
     today_verdict: str,
     outlook: list[dict[str, Any]],
@@ -1816,7 +1840,11 @@ def pick_best_fishing_day(
         # Tier dominates (×1000); numeric score breaks ties within a tier;
         # species count is the final, smallest tiebreaker.
         tier = verdict_scores.get(verdict, 2) * 1000
-        num = score if isinstance(score, (int, float)) else verdict_scores.get(verdict, 2) * 20
+        num = (
+            score
+            if isinstance(score, (int, float))
+            else verdict_scores.get(verdict, 2) * 20
+        )
         return tier + num + min(n_species, 5) * 0.1
 
     best_day = "Today"
@@ -1853,6 +1881,7 @@ def pick_best_fishing_day(
         "verdict": best_verdict,
         "recommendation": recommendation,
     }
+
 
 def build_gear_checklist(
     species: list[dict[str, Any]],
@@ -2024,6 +2053,7 @@ def build_gear_checklist(
 
     return items
 
+
 def build_conditions_explainer(
     wind_range: Optional[tuple[float, float]] = None,
     wave_range: Optional[tuple[float, float]] = None,
@@ -2164,6 +2194,7 @@ def build_conditions_explainer(
             )
 
     return bullets[:5]
+
 
 def build_safety_checklist(
     wind_range: Optional[tuple[float, float]] = None,
@@ -2412,6 +2443,7 @@ def build_safety_checklist(
 
     return items
 
+
 def _uv_category(uv_index: float) -> dict[str, str]:
     if uv_index <= 2:
         return {
@@ -2427,6 +2459,7 @@ def _uv_category(uv_index: float) -> dict[str, str]:
         "level": "Very High to Extreme",
         "advice": "Limit direct midday exposure and reapply SPF often.",
     }
+
 
 def _estimate_uv_index(
     now: datetime,
@@ -2444,6 +2477,7 @@ def _estimate_uv_index(
     peak = max(3.0, 11.0 - 0.1 * abs(lat))
     uv = peak * max(0.0, 1 - (2 * pct - 1) ** 2)
     return round(uv, 1)
+
 
 def recompute_current_uv(location: Optional[dict[str, Any]] = None) -> dict[str, Any]:
     """Compute UV index for the current time at the given location.
@@ -2463,6 +2497,7 @@ def recompute_current_uv(location: Optional[dict[str, Any]] = None) -> dict[str,
         sunrise, sunset = None, None
     uv_index = _estimate_uv_index(now, sunrise, sunset, lat)
     return {"index": uv_index, **_uv_category(uv_index)}
+
 
 def _rip_risk_from_conditions(
     wave_range: Optional[tuple[float, float]], wind_range: Optional[tuple[float, float]]
@@ -2484,6 +2519,7 @@ def _rip_risk_from_conditions(
         "guidance": "Risk still exists near piers and cuts. Never fish or swim alone in surf.",
     }
 
+
 def _dew_point_f(
     temp_f: Optional[float], humidity_pct: Optional[float]
 ) -> Optional[float]:
@@ -2496,6 +2532,7 @@ def _dew_point_f(
     alpha = ((a * temp_c) / (b + temp_c)) + math.log(rh / 100.0)
     dew_c = (b * alpha) / (a - alpha)
     return round(dew_c * 9 / 5 + 32, 1)
+
 
 def _heat_index_f(
     temp_f: Optional[float], humidity_pct: Optional[float]
@@ -2519,6 +2556,7 @@ def _heat_index_f(
     )
     return round(hi, 1)
 
+
 def _wind_chill_f(temp_f: Optional[float], wind_kt: Optional[float]) -> Optional[float]:
     if temp_f is None or wind_kt is None:
         return None
@@ -2528,6 +2566,7 @@ def _wind_chill_f(temp_f: Optional[float], wind_kt: Optional[float]) -> Optional
         return None
     wc = 35.74 + 0.6215 * t - 35.75 * (wind_mph**0.16) + 0.4275 * t * (wind_mph**0.16)
     return round(wc, 1)
+
 
 def _build_pier_info(location: Optional[dict[str, Any]]) -> dict[str, Any]:
     """Return location-aware planning details without requiring APIs."""
@@ -2566,6 +2605,7 @@ def _build_pier_info(location: Optional[dict[str, Any]]) -> dict[str, Any]:
             ["No alcohol on pier", "Respect casting lanes", "Check local drone policy"],
         ),
     }
+
 
 def _build_education_cards(
     profile: dict[str, Any],
@@ -2687,6 +2727,7 @@ def _build_education_cards(
         )
     return cards
 
+
 def _seasonality_highlights(forecast: dict[str, Any]) -> list[dict[str, str]]:
     """Summarize active calendar windows for top species with regulation hints."""
     highlights: list[dict[str, str]] = []
@@ -2712,6 +2753,7 @@ def _seasonality_highlights(forecast: dict[str, Any]) -> list[dict[str, str]]:
             }
         )
     return highlights
+
 
 def generate_forecast(
     location: Optional[dict[str, Any]] = None,
@@ -2755,17 +2797,25 @@ def generate_forecast(
     # Uses _FORECAST_POOL (module-level) to avoid per-request thread creation.
     _marine_fut = _FORECAST_POOL.submit(
         builder.marine_service.get_marine_forecast,
-        month, location, sources_used, fallbacks_triggered,
+        month,
+        location,
+        sources_used,
+        fallbacks_triggered,
     )
     _wtemp_fut = _FORECAST_POOL.submit(
-        get_water_temp, month, location, sources_used, fallbacks_triggered,
+        get_water_temp,
+        month,
+        location,
+        sources_used,
+        fallbacks_triggered,
     )
     _alerts_fut = _FORECAST_POOL.submit(
         builder.weather_service.get_weather_alerts, loc_lat, loc_lng
     )
     _state_alerts_fut = (
         _FORECAST_POOL.submit(builder.weather_service.get_state_alerts, loc_state)
-        if loc_state else None
+        if loc_state
+        else None
     )
     _pressure_fut = _FORECAST_POOL.submit(
         builder.buoy_service.get_barometric_pressure, location
@@ -2982,9 +3032,13 @@ def generate_forecast(
     if env_metrics:
         if weather:
             if "air_temp_f" not in env_metrics:
-                env_metrics["air_temp_f"] = weather.get("air_temp_f")
+                air_temp_f = weather.get("air_temp_f")
+                if air_temp_f is not None:
+                    env_metrics["air_temp_f"] = air_temp_f
             if "humidity_pct" not in env_metrics:
-                env_metrics["humidity_pct"] = weather.get("humidity")
+                humidity_pct = weather.get("humidity")
+                if humidity_pct is not None:
+                    env_metrics["humidity_pct"] = humidity_pct
         forecast["environment"] = env_metrics
         sources_used.append("NOAA CO-OPS environmental")
 
@@ -3307,6 +3361,7 @@ def generate_forecast(
     )
     return forecast
 
+
 # ---------------------------------------------------------------------------
 # Profile personalization helpers
 # ---------------------------------------------------------------------------
@@ -3378,6 +3433,7 @@ _TOLERANCE_SHIFT: dict[str, dict[str, str]] = {
 # Modest by design — a local track record is a nudge, not an override.
 _CAUGHT_HERE_BOOST = 8
 
+
 def _coerce_threshold(value: Any) -> Optional[float]:
     """Parse a user-supplied comfort threshold to a float, or ``None``.
 
@@ -3391,6 +3447,7 @@ def _coerce_threshold(value: Any) -> Optional[float]:
     except (TypeError, ValueError):
         return None
     return f if f > 0 else None
+
 
 def _apply_primary_goal_boost(
     species: list[dict[str, Any]], primary_goal: str
@@ -3409,6 +3466,7 @@ def _apply_primary_goal_boost(
     for i, sp in enumerate(species):
         sp["rank"] = i + 1
     return species
+
 
 def personalize_forecast(
     forecast: dict[str, Any],
@@ -3722,6 +3780,7 @@ def personalize_forecast(
     _PERSONALIZE_CACHE[cache_key] = forecast
     return forecast
 
+
 def _parse_time_str(s: str) -> float:
     """Parse a time string like '6:32 AM' to decimal hour."""
     try:
@@ -3737,6 +3796,7 @@ def _parse_time_str(s: str) -> float:
         return h + m / 60.0
     except Exception:
         return 12.0
+
 
 def build_best_times(
     forecast: dict[str, Any],
@@ -3989,6 +4049,7 @@ def build_best_times(
 
     return selected
 
+
 def build_activity_timeline(
     forecast: dict[str, Any], now_hour: int = -1
 ) -> list[dict[str, Any]]:
@@ -4224,6 +4285,7 @@ def build_activity_timeline(
 
     return timeline
 
+
 def build_share_text(forecast: dict[str, Any]) -> str:
     """Build a plain-text summary of the forecast for sharing."""
     lines = []
@@ -4259,6 +4321,7 @@ def build_share_text(forecast: dict[str, Any]) -> str:
             lines.append(f"  • {sp['name']}{tag}")
 
     return "\n".join(lines)
+
 
 def build_trip_setup(
     forecast: dict[str, Any],
@@ -4527,5 +4590,3 @@ def build_trip_setup(
         "rows": rows,
         "species_names": [sp["name"] for sp in working],
     }
-
-
