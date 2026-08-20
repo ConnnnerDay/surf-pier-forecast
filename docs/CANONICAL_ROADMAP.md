@@ -321,7 +321,7 @@ to reconciliation, not proof that the agreed outcome passed.
 | 18 | Coastal coordinate validation | Inland/out-of-range rejection and all-coast boundaries | **Complete** (using only sprint 17's inputs — see the sprint's checkpoint entry for the curated-location fallback deferred to sprint 19) — `apps/api/app/providers/coastal_bounds.py`: `is_valid_coordinate`, `classify_coast_region` (bounding boxes for Atlantic/Gulf/Pacific/Alaska/Hawaii), and `gate_coastal_point` (the real inland-rejection mechanism, ported from `locations.py`'s `_DYN_GATE_MILES`), tested in `apps/api/tests/test_coastal_bounds.py` |
 | 19 | Location resolution | Timezone, zone, tide/temp station and buoy golden tests | **Complete** — `apps/api/app/providers/locations.py`: curated 101-spot dataset (`app/data/coastal_locations.json`/`water_temps.json`, `ast.literal_eval`-extracted from the legacy source, a documented mechanical move), `find_nearest_locations`, `timezone_for_point`, `resolve_dynamic_location` (composes sprint 17's station catalogs), golden-tested in `apps/api/tests/test_locations_provider.py` against Montauk NY/Wrightsville Beach NC/Poipu HI |
 | 20 | Observation normalization | Canonical units/times with raw provenance retained | **Complete** — `apps/api/app/domain/normalize.py`: wraps sprints 13-15's provider outputs into `Observation` (canonical `kt`/`ft`/`degF`/`mb` units, provider/station/observed_at retained); NWS forecast ranges become an `ObservationRange` (paired low/high) rather than a collapsed value; astronomy and categorical fields (wind direction) deliberately not wrapped; tested in `apps/api/tests/test_normalize.py` |
-| 21 | Forecast assembly | Independent sources and every present/absent matrix | Candidate in `/v2` |
+| 21 | Forecast assembly | Independent sources and every present/absent matrix | **Complete** — `apps/api/app/domain/assembly.py`: concurrently fans out to NWS/NOAA CO-OPS/NDBC + astronomy, assembles `ForecastEnvelope` and designs `conditions`; water-temperature fallback-to-monthly-average finally lands (deferred since sprint 14); `apps/api/tests/test_assembly.py` exercises all 8 present/absent combinations of the 3 fallible sources |
 | 22 | Forecast scoring | Defensible stable score components with explanations | Candidate in `/v2` |
 | 23 | Confidence model | Predictable degradation by availability, distance, age, fallback | Not accepted |
 | 24 | Snapshot caching | Fresh/stale hit, miss, expiry, fallback, concurrency; target 4-hour freshness window, matching legacy cadence | Candidate in `/v2` |
@@ -430,8 +430,8 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #342 (sprint 19, location resolution, `79e75c7`,
-  merged as `0d671a3`).
+- Last merged PR: #343 (sprint 20, observation normalization,
+  `6117995`, merged as `ac13a1e`).
 - **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
   1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
   (#332). Phase 1's only remaining items (9, 10) need external accounts —
@@ -678,15 +678,48 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   station/zone, observed_at) are populated correctly. All of
   `apps/api`'s checks (ruff, ruff format, mypy, pytest — 136 passed)
   pass clean.
+- This PR continues Phase 2 with **sprint 21** (forecast assembly,
+  **complete**): `apps/api/app/domain/assembly.py`'s
+  `assemble_forecast` concurrently fans out to NWS marine-zone
+  conditions, NOAA CO-OPS water temperature, and NDBC buoy readings
+  (each independently fallible, caught individually — one upstream
+  failure never blanks the forecast, per the product contract's
+  Reliability bullet), plus astronomy (no failure mode given a
+  resolved location). Designs `ForecastEnvelope.conditions` — sprint
+  11 named sprints 21/22/34/35 as the owners of `conditions`/`tides`/
+  `hourly_outlook`/`recommendations`; `tides` is deliberately untouched
+  here (a distinct time-series concern, sprint 34's job), and
+  `hourly_outlook`/`recommendations` stay opaque too. Each provider's
+  normalized output is its own field on `ForecastConditions`, not
+  merged into one reconciled value — that reconciliation is forecast
+  *scoring*'s job (sprint 22). Water temperature finally gets the
+  fallback-to-monthly-average substitution repeatedly deferred to
+  "forecast assembly" since sprint 14: when the live CO-OPS fetch
+  fails, sprint 19's `monthly_water_temps_for_region` supplies the
+  value, labeled via `Observation.is_fallback=True` and
+  `fallback_reason` — never presented as a live reading, satisfying
+  the product contract's Integrity bullet ("missing observations are
+  never turned into invented measurements"). `ForecastState`/
+  `Confidence` are intentionally basic (FRESH/PARTIAL from wind-wave
+  availability; HIGH/MEDIUM/LOW confidence from source liveness) —
+  `ForecastState.STALE` isn't produced (no cache yet, sprint 24's job)
+  and the fuller distance/age/fallback confidence-degradation policy is
+  sprint 23's job; this sprint only needed something defensible enough
+  to react to its own matrix. `apps/api/tests/test_assembly.py`
+  exercises the full 2**3 = 8 present/absent matrix across the three
+  fallible sources (the sprint's named acceptance criterion), plus
+  astronomy-always-present, location-field mapping, and the
+  no-stations-assigned edge case. All of `apps/api`'s checks (ruff,
+  ruff format, mypy, pytest — 148 passed) pass clean.
 - **Incident (sprint 6, resolved earlier)**: a scratch branch explicitly
   titled `DO NOT MERGE` was merged into `main` under the repo owner's own
   account, landing deliberately-broken code; reverted within ~10 minutes
   in PR #330. Full account in `docs/SPRINT_6_CI_PROOF.md`. Sprint 7
   turned this into a documented branch-hygiene rule.
 - Exact next action: finish sprint 13/14/15's deferred scope, or move to
-  sprint 21 (forecast assembly — independent sources and every
-  present/absent matrix; this is where fallback-substitution policy,
-  deferred since sprint 14, finally lands) — any is a valid next Phase
+  sprint 22 (forecast scoring — defensible stable score components
+  with explanations; this is where the redundant wind/wave sources
+  finally get reconciled into one score) — any is a valid next Phase
   2 pick, needs no external accounts. Separately, sprint 9 (preview
   environments) and sprint 10 (production skeleton) need real
   Vercel/Render/Neon accounts this session has no credentials for —
