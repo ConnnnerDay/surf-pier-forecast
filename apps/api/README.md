@@ -20,8 +20,10 @@ Boots, has real CI, and now has:
   transient failures (connection errors, timeouts, 429/502/503/504 — never
   4xx), a streamed response-size limit, a fixed identifying User-Agent,
   and structured `ProviderError` subclasses instead of leaking raw
-  `httpx` exceptions. Every future provider adapter (NWS, NOAA CO-OPS,
-  NDBC — sprints 13-16) is built on this, per ADR-003.
+  `httpx` exceptions, plus `get_json`/`get_text` for JSON and plain-text
+  providers alike (`get_text` added in sprint 15 for NDBC). Every future
+  provider adapter (NWS, NOAA CO-OPS, NDBC — sprints 13-15) is built on
+  this, per ADR-003.
 - The first provider adapter, NWS (`app/providers/nws.py`): typed
   marine-zone wind/wave/direction parsing and fetch
   (`parse_marine_zone_conditions`/`fetch_marine_zone_conditions`), and
@@ -39,10 +41,18 @@ Boots, has real CI, and now has:
   deliberately deferred (wind/currents/environmental-metrics fetches,
   the tide-chart SVG rendering helper) and why fallback-to-monthly-average
   policy isn't ported here.
+- The third provider adapter, NDBC (`app/providers/ndbc.py`): buoy
+  wind/wave/pressure parsing (`parse_realtime_text`) and fetch
+  (`fetch_buoy_observation`) from the fixed-width `realtime2` text feed,
+  ported from the legacy `services/ndbc.py` behind characterization
+  tests covering missing columns (a buoy that doesn't report a field at
+  all) and missing-value markers (`MM`, `99.0`, ...) distinctly. See the
+  module docstring for what's deliberately deferred (pressure trend and
+  fishing-impact narrative — scoring concerns, not a provider adapter's).
 
 It does not yet have the `/v1` routes, the ported forecast domain
 *logic*, or a Postgres connection. Those land in the Phase 2 sprints
-listed in the roadmap's sprint ledger (15 onward), each behind its own
+listed in the roadmap's sprint ledger (16 onward), each behind its own
 characterization tests, porting from the reconciliation audit
 ([`docs/R1_RECONCILIATION_AUDIT.md`](../../docs/R1_RECONCILIATION_AUDIT.md))
 rather than copying `v2/backend` or the legacy Flask app verbatim.

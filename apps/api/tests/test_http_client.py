@@ -31,6 +31,33 @@ async def test_get_json_success() -> None:
 
 
 @pytest.mark.asyncio
+async def test_get_text_success() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200, text="#YY MM DD hh mm WDIR WSPD\n#yr mo dy hr mn degT m/s\n"
+        )
+
+    transport = httpx.MockTransport(handler)
+    async with BoundedHTTPClient(transport=transport) as client:
+        result = await client.get_text("https://example.test/data.txt")
+
+    assert result.startswith("#YY MM DD")
+
+
+@pytest.mark.asyncio
+async def test_get_text_propagates_provider_error() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(503)
+
+    transport = httpx.MockTransport(handler)
+    async with BoundedHTTPClient(
+        transport=transport, max_retries=0, backoff_base_seconds=0.0
+    ) as client:
+        with pytest.raises(ProviderHTTPStatusError):
+            await client.get_text("https://example.test/data.txt")
+
+
+@pytest.mark.asyncio
 async def test_get_json_sends_user_agent() -> None:
     seen_headers: dict[str, str] = {}
 

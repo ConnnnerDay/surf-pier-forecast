@@ -315,7 +315,7 @@ to reconciliation, not proof that the agreed outcome passed.
 | 12 | HTTP client policy | Timeouts, bounded retries, user agent, size limit, structured errors | **Complete** — `apps/api/app/infra/http_client.py` (`BoundedHTTPClient` per `docs/architecture.md`'s ADR-003, provider-agnostic); `apps/api/tests/test_http_client.py` covers success, retries, retry exhaustion, no-retry-on-4xx, timeouts, connection errors, and oversized responses via `httpx.MockTransport` |
 | 13 | NWS adapter | Typed weather, wind, alerts, and grid contract fixtures | **Partially complete** — `apps/api/app/providers/nws.py`: marine-zone wind/wave/direction parsing and fetch, point/state active-alerts parsing and fetch, all behind `apps/api/tests/test_nws_provider.py` fixture tests. Gridpoint wind fallback and current-weather observations deliberately deferred (see module docstring) to keep the PR reviewable; tracked as follow-up before sprint 21 needs them |
 | 14 | NOAA CO-OPS adapter | Tide/water-temperature fixtures, missing values, DST | **Partially complete** — `apps/api/app/providers/noaa_coops.py`: water temperature and tide predictions, `zoneinfo`-based DST-safe timestamp parsing, missing-value/empty-row handling, all behind `apps/api/tests/test_noaa_coops_provider.py`. Wind/currents/environmental-metrics fetches and the tide-chart SVG helper deliberately deferred (see module docstring) |
-| 15 | NDBC adapter | Buoy parsing, missing columns and markers | Candidate in `/v2` |
+| 15 | NDBC adapter | Buoy parsing, missing columns and markers | **Partially complete** — `apps/api/app/providers/ndbc.py`: wind/wave/pressure parsing from the fixed-width `realtime2` feed (`parse_realtime_text`) and fetch (`fetch_buoy_observation`), distinguishing missing columns from missing-value markers, behind `apps/api/tests/test_ndbc_provider.py`. `app/infra/http_client.py`'s `BoundedHTTPClient` gained `get_text` for this (NDBC is plain text, not JSON). Pressure-trend/fishing-impact narrative deliberately deferred to the scoring sprint (35) — see module docstring |
 | 16 | Astronomy adapter | Pure deterministic coast/season/timezone tests | Candidate in `/v2` |
 | 17 | Station catalog | Provenance, timestamps, idempotent refresh | Candidate in `/v2` |
 | 18 | Coastal coordinate validation | Inland/out-of-range rejection and all-coast boundaries | Candidate in `/v2` |
@@ -430,8 +430,8 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #336 (sprint 13, NWS provider adapter, `943df08`,
-  merged as `e4f5aaf`).
+- Last merged PR: #337 (sprint 14, NOAA CO-OPS provider adapter,
+  `6c286a9`, merged as `d857ce7`).
 - **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
   1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
   (#332). Phase 1's only remaining items (9, 10) need external accounts —
@@ -520,19 +520,42 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   chart_svg` rendering helper (not a provider concern) are deliberately
   deferred — see the module docstring. All of `apps/api`'s checks (ruff,
   ruff format, mypy, pytest — 49 passed) pass clean.
+- This PR continues Phase 2 with **sprint 15** (NDBC adapter, partial —
+  see the sprint-ledger row): `apps/api/app/providers/ndbc.py` —
+  `parse_realtime_text`/`fetch_buoy_observation` for NDBC's fixed-width
+  `realtime2` text feed (not JSON), so `app/infra/http_client.py`'s
+  `BoundedHTTPClient` gained a `get_text` method alongside `get_json`
+  (small, tested addition to sprint 12's infra, needed by this sprint).
+  Wind speed/gust/direction, wave height, and pressure are each parsed
+  independently, taking the first non-missing reading per field across
+  the 10 most recent rows — a buoy missing a column (e.g. a wave-only
+  buoy has no `WSPD`) leaves that field `None` rather than raising,
+  while a provider-specific missing-value marker (`MM`, `99.0`, `999`,
+  ...) in a present column is treated the same way; only a station with
+  *no* usable reading for *any* tracked field raises
+  `NdbcDataUnavailableError`. The legacy module's pressure-trend
+  computation and fishing-impact narrative (`fetch_barometric_pressure`)
+  are deliberately not ported — those are scoring/narrative concerns
+  for sprint 35, not a provider adapter's. Ported from
+  `services/ndbc.py` behind `apps/api/tests/test_ndbc_provider.py`'s
+  fixture-based characterization tests (full row, all-missing raises,
+  partial-missing leaves only those fields `None`, gust-falls-back-to-
+  speed, missing column vs. missing value, first-usable-row-per-field,
+  short-row skipping, too-few-lines raises). All of `apps/api`'s checks
+  (ruff, ruff format, mypy, pytest — 62 passed) pass clean.
 - **Incident (sprint 6, resolved earlier)**: a scratch branch explicitly
   titled `DO NOT MERGE` was merged into `main` under the repo owner's own
   account, landing deliberately-broken code; reverted within ~10 minutes
   in PR #330. Full account in `docs/SPRINT_6_CI_PROOF.md`. Sprint 7
   turned this into a documented branch-hygiene rule.
-- Exact next action: finish sprint 13/14's deferred scope, or move to
-  sprint 15 (NDBC adapter — buoy parsing, missing columns/markers) —
-  any is a valid next Phase 2 pick, needs no external accounts.
-  Separately, sprint 9 (preview environments) and sprint 10 (production
-  skeleton) need real Vercel/Render/Neon accounts this session has no
-  credentials for — **flag to the product owner** rather than
-  attempting them blind; they can be done whenever those credentials
-  are available, in parallel with more Phase 2 sprints.
+- Exact next action: finish sprint 13/14/15's deferred scope, or move to
+  sprint 16 (astronomy adapter — pure deterministic coast/season/
+  timezone tests) — any is a valid next Phase 2 pick, needs no external
+  accounts. Separately, sprint 9 (preview environments) and sprint 10
+  (production skeleton) need real Vercel/Render/Neon accounts this
+  session has no credentials for — **flag to the product owner** rather
+  than attempting them blind; they can be done whenever those
+  credentials are available, in parallel with more Phase 2 sprints.
 - Known blocker: sprints 9/10 need Vercel/Render/Neon account access not
   available to this session — needs the product owner to either provision
   and share access, or do that part directly.
