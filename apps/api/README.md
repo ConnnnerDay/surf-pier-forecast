@@ -132,9 +132,33 @@ Boots, has real CI, and now has:
   test_assembly.py` exercises the full 2**3 = 8 present/absent matrix
   across the three fallible sources.
 
+- Forecast scoring (`app/domain/scoring.py`, `score_conditions`): the
+  0-100 go/no-go index and plain-language explanation, ported from the
+  legacy `domain/forecast.py:score_conditions` plus the wind-orientation/
+  onshore-offshore-direction mapping from `domain/species.py` (carried
+  over verbatim per that module's own "single authoritative function"
+  warning). Deliberately decoupled from sprint 21's `ForecastConditions`:
+  it scores an already-reconciled `wind_range`/`wave_range` pair (plus
+  optional wind direction, water temperature, sun times, and solunar
+  data), not the assembly envelope directly — picking a source when both
+  NWS and NDBC report is a future wiring step, not this sprint's job.
+  Scores wind speed, wave height, wind direction (onshore/offshore by
+  coastline orientation), water-temperature comfort band (with a small
+  bonus for a live, non-fallback reading), dawn/dusk light window, and
+  solunar rating/illumination — all thresholds and verdict tiers
+  unchanged from the legacy function. See the module docstring for what's
+  deliberately deferred and why: tide-based bonuses (sprint 34, no tide
+  data fetched yet), fishing-type personalization and angler comfort
+  thresholds (sprint 36, no user preferences yet), and water-quality/HAB
+  signals (still-open product question from
+  `docs/R1_RECONCILIATION_AUDIT.md`, re-flagged rather than silently
+  ported or dropped). `apps/api/tests/test_scoring.py` characterizes
+  every threshold band, the four coastline orientations, the verdict
+  tiers, and the `None`-input → `Unknown`-verdict path.
+
 It does not yet have the `/v1` routes, the ported forecast domain
 *logic*, or a Postgres connection. Those land in the Phase 2 sprints
-listed in the roadmap's sprint ledger (22 onward), each behind its own
+listed in the roadmap's sprint ledger (23 onward), each behind its own
 characterization tests, porting from the reconciliation audit
 ([`docs/R1_RECONCILIATION_AUDIT.md`](../../docs/R1_RECONCILIATION_AUDIT.md))
 rather than copying `v2/backend` or the legacy Flask app verbatim.

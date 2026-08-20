@@ -322,7 +322,7 @@ to reconciliation, not proof that the agreed outcome passed.
 | 19 | Location resolution | Timezone, zone, tide/temp station and buoy golden tests | **Complete** — `apps/api/app/providers/locations.py`: curated 101-spot dataset (`app/data/coastal_locations.json`/`water_temps.json`, `ast.literal_eval`-extracted from the legacy source, a documented mechanical move), `find_nearest_locations`, `timezone_for_point`, `resolve_dynamic_location` (composes sprint 17's station catalogs), golden-tested in `apps/api/tests/test_locations_provider.py` against Montauk NY/Wrightsville Beach NC/Poipu HI |
 | 20 | Observation normalization | Canonical units/times with raw provenance retained | **Complete** — `apps/api/app/domain/normalize.py`: wraps sprints 13-15's provider outputs into `Observation` (canonical `kt`/`ft`/`degF`/`mb` units, provider/station/observed_at retained); NWS forecast ranges become an `ObservationRange` (paired low/high) rather than a collapsed value; astronomy and categorical fields (wind direction) deliberately not wrapped; tested in `apps/api/tests/test_normalize.py` |
 | 21 | Forecast assembly | Independent sources and every present/absent matrix | **Complete** — `apps/api/app/domain/assembly.py`: concurrently fans out to NWS/NOAA CO-OPS/NDBC + astronomy, assembles `ForecastEnvelope` and designs `conditions`; water-temperature fallback-to-monthly-average finally lands (deferred since sprint 14); `apps/api/tests/test_assembly.py` exercises all 8 present/absent combinations of the 3 fallible sources |
-| 22 | Forecast scoring | Defensible stable score components with explanations | Candidate in `/v2` |
+| 22 | Forecast scoring | Defensible stable score components with explanations | **Complete** — `apps/api/app/domain/scoring.py`: `score_conditions`, the 0-100 go/no-go index ported from `domain/forecast.py`, scores wind/wave/direction/water-temp/dawn-dusk/solunar factors with a sorted, plain-language summary; deliberately decoupled from sprint 21's `ForecastConditions` (takes a pre-reconciled `wind_range`/`wave_range`); tide, fishing-type/preference, and water-quality bonuses deliberately deferred (sprints 34/36, still-open product question); tested in `apps/api/tests/test_scoring.py` |
 | 23 | Confidence model | Predictable degradation by availability, distance, age, fallback | Not accepted |
 | 24 | Snapshot caching | Fresh/stale hit, miss, expiry, fallback, concurrency; target 4-hour freshness window, matching legacy cadence | Candidate in `/v2` |
 | 25 | Versioned API | Required endpoints, OpenAPI contract and breaking-change guard | Candidate in `/v2` |
@@ -430,8 +430,8 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #343 (sprint 20, observation normalization,
-  `6117995`, merged as `ac13a1e`).
+- Last merged PR: #344 (sprint 21, forecast assembly, `037c331`, merged
+  as `b9b1c28`).
 - **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
   1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
   (#332). Phase 1's only remaining items (9, 10) need external accounts —
@@ -711,16 +711,54 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   astronomy-always-present, location-field mapping, and the
   no-stations-assigned edge case. All of `apps/api`'s checks (ruff,
   ruff format, mypy, pytest — 148 passed) pass clean.
+- This PR continues Phase 2 with **sprint 22** (forecast scoring,
+  **complete**): `apps/api/app/domain/scoring.py`'s `score_conditions`
+  — the 0-100 go/no-go index and plain-language explanation, ported
+  from the legacy `domain/forecast.py:score_conditions` plus the
+  wind-orientation/onshore-offshore-direction mapping from
+  `domain/species.py` (`wind_orientation_for_region`/
+  `onshore_offshore_dirs`, carried over verbatim per that module's own
+  "single authoritative function, do not reimplement elsewhere"
+  warning). Deliberately decoupled from sprint 21's
+  `ForecastConditions`: it takes an already-reconciled `wind_range`/
+  `wave_range` pair (plus optional wind direction, water temperature,
+  sun times, and solunar data) as explicit parameters rather than
+  reading sprint 21's still-separate NWS/NDBC fields directly —
+  picking a source when both report is a future wiring step this
+  sprint doesn't own. Scores wind speed, wave height, wind direction
+  (onshore/offshore by coastline orientation), water-temperature
+  comfort band (with a small bonus for a live, non-fallback reading),
+  dawn/dusk light window, and solunar rating/illumination — all
+  thresholds, point values, and verdict tiers unchanged from the
+  legacy function. Deliberately not ported, each named in the module
+  docstring with its blocking dependency: tide state/range/turn-
+  proximity bonuses (need tide predictions, sprint 34's job); fishing-
+  type-specific modifiers and angler comfort thresholds (need user
+  preferences data, sprint 36's job); water-quality/HAB signals from
+  `services/datagov.py` (R1's still-open product question — enrichment
+  vs. scope creep — re-flagged rather than silently ported or
+  dropped). `apps/api/tests/test_scoring.py` characterizes every
+  wind/wave threshold band, wind-direction onshore/offshore bonus
+  (including Hawaii's deliberate no-op), all four coastline
+  orientations via `wind_orientation_for_region`, water-temperature
+  comfort bands and the live-vs-fallback bonus, the dawn/dusk window,
+  solunar rating/illumination bonuses, verdict-tier boundaries,
+  factor-sorted summary generation, and the `wind_range is None or
+  wave_range is None` → `Unknown`-verdict early return. All of
+  `apps/api`'s checks (ruff, ruff format, mypy, pytest — 203 passed)
+  pass clean.
 - **Incident (sprint 6, resolved earlier)**: a scratch branch explicitly
   titled `DO NOT MERGE` was merged into `main` under the repo owner's own
   account, landing deliberately-broken code; reverted within ~10 minutes
   in PR #330. Full account in `docs/SPRINT_6_CI_PROOF.md`. Sprint 7
   turned this into a documented branch-hygiene rule.
 - Exact next action: finish sprint 13/14/15's deferred scope, or move to
-  sprint 22 (forecast scoring — defensible stable score components
-  with explanations; this is where the redundant wind/wave sources
-  finally get reconciled into one score) — any is a valid next Phase
-  2 pick, needs no external accounts. Separately, sprint 9 (preview
+  sprint 23 (confidence model — the fuller distance/age/fallback
+  degradation policy sprint 21 named as its own follow-up), or wire
+  sprint 22's `score_conditions` into `assemble_forecast`'s output
+  (picking a source when both NWS and NDBC report, still unassigned to
+  a numbered sprint) — any is a valid next Phase 2 pick, needs no
+  external accounts. Separately, sprint 9 (preview
   environments) and sprint 10 (production skeleton) need real
   Vercel/Render/Neon accounts this session has no credentials for —
   **flag to the product owner** rather than attempting them blind; they
