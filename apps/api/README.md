@@ -116,10 +116,25 @@ Boots, has real CI, and now has:
   low/high `Observation`s rather than one lossily-collapsed value;
   fallback-value substitution stays forecast-assembly's job, sprint
   21, as repeatedly deferred since sprint 14).
+- Forecast assembly (`app/domain/assembly.py`, `assemble_forecast`):
+  concurrently fans out to NWS, NOAA CO-OPS, and NDBC (sprints 13-15)
+  plus astronomy (sprint 16), and assembles a typed `ForecastEnvelope`
+  — the "one upstream failure doesn't blank the forecast" mechanism.
+  Designs `ForecastEnvelope.conditions` (sprint 11 left it opaque for
+  this sprint to own): each provider's normalized output as its own
+  field, not merged into one reconciled value — that's forecast
+  *scoring*'s job (sprint 22). Water temperature finally gets the
+  fallback-to-monthly-average substitution repeatedly deferred here
+  since sprint 14, labeled via `Observation.is_fallback`/
+  `fallback_reason`, never presented as a live reading. `ForecastState`/
+  `Confidence` are intentionally basic — full distance/age/fallback
+  degradation policy is sprint 23's job. `apps/api/tests/
+  test_assembly.py` exercises the full 2**3 = 8 present/absent matrix
+  across the three fallible sources.
 
 It does not yet have the `/v1` routes, the ported forecast domain
 *logic*, or a Postgres connection. Those land in the Phase 2 sprints
-listed in the roadmap's sprint ledger (21 onward), each behind its own
+listed in the roadmap's sprint ledger (22 onward), each behind its own
 characterization tests, porting from the reconciliation audit
 ([`docs/R1_RECONCILIATION_AUDIT.md`](../../docs/R1_RECONCILIATION_AUDIT.md))
 rather than copying `v2/backend` or the legacy Flask app verbatim.
