@@ -320,7 +320,7 @@ to reconciliation, not proof that the agreed outcome passed.
 | 17 | Station catalog | Provenance, timestamps, idempotent refresh | **Complete** — `apps/api/app/providers/stations.py`: CO-OPS tide/water-temp and NDBC catalog fetch (degrades to `[]`, metadata not a reading), pure nearest-station distance ranking, and `StationCatalogCache` — an explicit, injectable-clock, idempotent TTL cache, tested without sleeping in `apps/api/tests/test_stations_provider.py` |
 | 18 | Coastal coordinate validation | Inland/out-of-range rejection and all-coast boundaries | **Complete** (using only sprint 17's inputs — see the sprint's checkpoint entry for the curated-location fallback deferred to sprint 19) — `apps/api/app/providers/coastal_bounds.py`: `is_valid_coordinate`, `classify_coast_region` (bounding boxes for Atlantic/Gulf/Pacific/Alaska/Hawaii), and `gate_coastal_point` (the real inland-rejection mechanism, ported from `locations.py`'s `_DYN_GATE_MILES`), tested in `apps/api/tests/test_coastal_bounds.py` |
 | 19 | Location resolution | Timezone, zone, tide/temp station and buoy golden tests | **Complete** — `apps/api/app/providers/locations.py`: curated 101-spot dataset (`app/data/coastal_locations.json`/`water_temps.json`, `ast.literal_eval`-extracted from the legacy source, a documented mechanical move), `find_nearest_locations`, `timezone_for_point`, `resolve_dynamic_location` (composes sprint 17's station catalogs), golden-tested in `apps/api/tests/test_locations_provider.py` against Montauk NY/Wrightsville Beach NC/Poipu HI |
-| 20 | Observation normalization | Canonical units/times with raw provenance retained | Candidate in `/v2` |
+| 20 | Observation normalization | Canonical units/times with raw provenance retained | **Complete** — `apps/api/app/domain/normalize.py`: wraps sprints 13-15's provider outputs into `Observation` (canonical `kt`/`ft`/`degF`/`mb` units, provider/station/observed_at retained); NWS forecast ranges become an `ObservationRange` (paired low/high) rather than a collapsed value; astronomy and categorical fields (wind direction) deliberately not wrapped; tested in `apps/api/tests/test_normalize.py` |
 | 21 | Forecast assembly | Independent sources and every present/absent matrix | Candidate in `/v2` |
 | 22 | Forecast scoring | Defensible stable score components with explanations | Candidate in `/v2` |
 | 23 | Confidence model | Predictable degradation by availability, distance, age, fallback | Not accepted |
@@ -430,8 +430,8 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #341 (sprint 18, coastal coordinate validation,
-  `d1e74db`, merged as `05a91ff`).
+- Last merged PR: #342 (sprint 19, location resolution, `79e75c7`,
+  merged as `0d671a3`).
 - **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
   1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
   (#332). Phase 1's only remaining items (9, 10) need external accounts —
@@ -651,14 +651,43 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   location exists, so nothing inherited, exercising the all-defaults
   path). All of `apps/api`'s checks (ruff, ruff format, mypy, pytest —
   127 passed) pass clean.
+- This PR continues Phase 2 with **sprint 20** (observation
+  normalization, **complete**): `apps/api/app/domain/normalize.py` —
+  wraps sprints 13-15's provider-specific typed outputs (NWS, NOAA
+  CO-OPS, NDBC) into `app.domain.models.Observation` (sprint 11's
+  ADR-003 canonical vocabulary), a domain-layer concern rather than a
+  provider one. Canonical units (`kt` wind, `ft` height, `degF` temp,
+  `mb` pressure) were already what every provider emitted since
+  sprints 13-15, so this sprint's actual job was consistent labeling
+  and typed wrapping, not unit conversion. Deliberately not wrapped:
+  astronomy (sprint 16) — computed, not measured, no provenance/
+  freshness story to attribute; categorical fields like wind direction
+  — no meaningful unit for a `float` value; NWS's marine-zone
+  wind/wave data, which is a forecast *range* — collapsed to one
+  `ObservationRange` of paired low/high `Observation`s rather than one
+  lossily-averaged value, since picking a single representative number
+  is an interpretation decision for forecast assembly (sprint 21), not
+  this sprint. Every function leaves `is_fallback`/`fallback_reason` at
+  their defaults — these are live readings, and deciding when to
+  substitute (and mark) a fallback value is forecast-assembly's job,
+  as repeatedly deferred there since sprint 14. `apps/api/tests/
+  test_normalize.py` covers all three providers' happy paths, `None`
+  propagation (a buoy field or NWS range component with no parseable
+  source data yields no `Observation`, not an invented one), and that
+  the `Observation`/`ObservationRange` provenance fields (provider,
+  station/zone, observed_at) are populated correctly. All of
+  `apps/api`'s checks (ruff, ruff format, mypy, pytest — 136 passed)
+  pass clean.
 - **Incident (sprint 6, resolved earlier)**: a scratch branch explicitly
   titled `DO NOT MERGE` was merged into `main` under the repo owner's own
   account, landing deliberately-broken code; reverted within ~10 minutes
   in PR #330. Full account in `docs/SPRINT_6_CI_PROOF.md`. Sprint 7
   turned this into a documented branch-hygiene rule.
 - Exact next action: finish sprint 13/14/15's deferred scope, or move to
-  sprint 20 (observation normalization) — any is a valid next Phase 2
-  pick, needs no external accounts. Separately, sprint 9 (preview
+  sprint 21 (forecast assembly — independent sources and every
+  present/absent matrix; this is where fallback-substitution policy,
+  deferred since sprint 14, finally lands) — any is a valid next Phase
+  2 pick, needs no external accounts. Separately, sprint 9 (preview
   environments) and sprint 10 (production skeleton) need real
   Vercel/Render/Neon accounts this session has no credentials for —
   **flag to the product owner** rather than attempting them blind; they
