@@ -83,7 +83,7 @@ def expand(raw: dict[str, Any]) -> dict[str, Any]:
 
 
 def add_species(entries: list[dict[str, Any]]) -> None:
-    db: list[Dict] = json.loads(DB_PATH.read_text())
+    db: list[dict] = json.loads(DB_PATH.read_text())
     existing = {s["name"] for s in db}
 
     added, skipped = [], []

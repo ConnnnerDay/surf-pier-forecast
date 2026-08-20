@@ -49,7 +49,9 @@ _RATING_ORDER: dict[str, int] = {
 # Activity-timeline tags that count as a genuinely good upcoming window.
 _GOOD_TAGS = frozenset({"high", "prime"})
 
-ForecastLoader = Callable[[str, dict[str, Any], dict[str, Any]], Optional[dict[str, Any]]]
+ForecastLoader = Callable[
+    [str, dict[str, Any], dict[str, Any]], Optional[dict[str, Any]]
+]
 EmailSender = Callable[[str, str, str, str], bool]
 PushSender = Callable[[dict[str, str], str, str, str], bool]
 
@@ -216,8 +218,8 @@ def build_email(
     text_body = "\n".join(lines)
 
     wins_html = "".join(
-        f"<li><strong>{bt.get('window','')}</strong>"
-        f"{(' — ' + bt.get('reason','')) if bt.get('reason') else ''}</li>"
+        f"<li><strong>{bt.get('window', '')}</strong>"
+        f"{(' — ' + bt.get('reason', '')) if bt.get('reason') else ''}</li>"
         for bt in decision.get("best_times", [])
     )
     next_tide_html = (
@@ -238,7 +240,7 @@ def build_email(
     )
     hab_html = (
         f'<p style="color:#b45309"><strong>⚠ '
-        f'{decision.get("hab_message") or "Harmful algal bloom risk nearby."}</strong></p>'
+        f"{decision.get('hab_message') or 'Harmful algal bloom risk nearby.'}</strong></p>"
         if hab_risk in ("watch", "danger")
         else ""
     )
@@ -247,7 +249,11 @@ def build_email(
         + hab_html
         + (f"<p>{decision['summary']}</p>" if decision.get("summary") else "")
         + next_tide_html
-        + (f"<p><strong>Best windows:</strong></p><ul>{wins_html}</ul>" if wins_html else "")
+        + (
+            f"<p><strong>Best windows:</strong></p><ul>{wins_html}</ul>"
+            if wins_html
+            else ""
+        )
         + gear_html
         + "<p>Tight lines! — Surf &amp; Pier Fishing Forecast</p>"
         + manage_html
@@ -273,7 +279,11 @@ def build_digest_email(
     for name, decision in items:
         score = decision.get("score")
         score_str = f" ({score}/100)" if score is not None else ""
-        hab_flag = " ⚠ algal bloom risk" if decision.get("hab_risk") in ("watch", "danger") else ""
+        hab_flag = (
+            " ⚠ algal bloom risk"
+            if decision.get("hab_risk") in ("watch", "danger")
+            else ""
+        )
         lines.append(f"- {name}: {decision['verdict']}{score_str}{hab_flag}")
         if decision.get("window"):
             lines.append(f"    Best window: {decision['window']}")

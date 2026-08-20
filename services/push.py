@@ -88,7 +88,9 @@ def send_push(subscription: dict[str, str], title: str, body: str, url: str) -> 
     except WebPushException as exc:
         status = getattr(getattr(exc, "response", None), "status_code", None)
         if status in (404, 410):
-            logger.info("push.subscription_gone endpoint=%s status=%s", endpoint, status)
+            logger.info(
+                "push.subscription_gone endpoint=%s status=%s", endpoint, status
+            )
             delete_push_subscription(endpoint)
         else:
             logger.warning("push.send_failed status=%s: %s", status, exc)

@@ -26,12 +26,16 @@ def _mock_resp(json_body, status_code: int = 200) -> MagicMock:
 
 class TestFetchDepthAtPoint:
     def test_returns_feet_for_underwater_point(self):
-        with patch("services.bathymetry.http_get", return_value=_mock_resp({"value": "-12.5"})):
+        with patch(
+            "services.bathymetry.http_get", return_value=_mock_resp({"value": "-12.5"})
+        ):
             depth = bathymetry.fetch_depth_at_point(34.2, -77.8)
         assert depth == round(-12.5 * 3.28084, 1)
 
     def test_returns_none_for_nodata(self):
-        with patch("services.bathymetry.http_get", return_value=_mock_resp({"value": "NoData"})):
+        with patch(
+            "services.bathymetry.http_get", return_value=_mock_resp({"value": "NoData"})
+        ):
             assert bathymetry.fetch_depth_at_point(34.2, -77.8) is None
 
     def test_returns_none_on_missing_value_key(self):

@@ -124,8 +124,12 @@ class TestSetupSearch:
         uid = create_user("setupsearch_noresults", "pass1234")
         _login_session(client, uid)
         monkeypatch.setattr("web.views.geocode_zip", lambda zipcode: (0.0, 0.0))
-        monkeypatch.setattr("web.views.find_nearest_locations", lambda lat, lng, n=6: [])
-        monkeypatch.setattr("web.views.dynamic_location_for_point", lambda lat, lng: None)
+        monkeypatch.setattr(
+            "web.views.find_nearest_locations", lambda lat, lng, n=6: []
+        )
+        monkeypatch.setattr(
+            "web.views.dynamic_location_for_point", lambda lat, lng: None
+        )
         token = _set_csrf(client)
         resp = client.post(
             "/setup/search", data={"csrf_token": token, "zipcode": "12345"}
@@ -139,7 +143,9 @@ class TestSetupSearch:
         uid = create_user("setupsearch_exact", "pass1234")
         _login_session(client, uid)
         monkeypatch.setattr("web.views.geocode_zip", lambda zipcode: (41.3, -72.9))
-        monkeypatch.setattr("web.views.find_nearest_locations", lambda lat, lng, n=6: [])
+        monkeypatch.setattr(
+            "web.views.find_nearest_locations", lambda lat, lng, n=6: []
+        )
         monkeypatch.setattr(
             "web.views.dynamic_location_for_point",
             lambda lat, lng: {
@@ -250,8 +256,12 @@ class TestSetupCoords:
         # Inland point: no curated spot and no coastal anchor → graceful error.
         uid = create_user("setupcoords_noresults", "pass1234")
         _login_session(client, uid)
-        monkeypatch.setattr("web.views.find_nearest_locations", lambda lat, lng, n=6: [])
-        monkeypatch.setattr("web.views.dynamic_location_for_point", lambda lat, lng: None)
+        monkeypatch.setattr(
+            "web.views.find_nearest_locations", lambda lat, lng, n=6: []
+        )
+        monkeypatch.setattr(
+            "web.views.dynamic_location_for_point", lambda lat, lng: None
+        )
         token = _set_csrf(client)
         resp = client.post(
             "/setup/coords",
@@ -497,9 +507,7 @@ class TestRenderForecastBranches:
     def test_background_refresh_shows_loading_page(
         self, client, sample_location_id, monkeypatch
     ):
-        _login_with_completed_profile(
-            client, "render_loading_user", sample_location_id
-        )
+        _login_with_completed_profile(client, "render_loading_user", sample_location_id)
         monkeypatch.setattr("web.views.load_cached_forecast", lambda *a, **kw: None)
         monkeypatch.setattr("web.views._is_refreshing", lambda loc_id: True)
         resp = client.get("/")
@@ -508,9 +516,7 @@ class TestRenderForecastBranches:
     def test_generate_failure_renders_error_page(
         self, client, sample_location_id, monkeypatch
     ):
-        _login_with_completed_profile(
-            client, "render_failure_user", sample_location_id
-        )
+        _login_with_completed_profile(client, "render_failure_user", sample_location_id)
         monkeypatch.setattr("web.views.load_cached_forecast", lambda *a, **kw: None)
         monkeypatch.setattr("web.views._is_refreshing", lambda loc_id: False)
 
@@ -528,9 +534,7 @@ class TestRenderForecastBranches:
         # Populate the cache via the real cache-miss -> generate_forecast path
         # first (proven to work offline elsewhere, e.g. test_app.py), then
         # re-request with the age check forced over the staleness threshold.
-        _login_with_completed_profile(
-            client, "render_stale_user", sample_location_id
-        )
+        _login_with_completed_profile(client, "render_stale_user", sample_location_id)
         first = client.get("/")
         assert first.status_code == 200
 

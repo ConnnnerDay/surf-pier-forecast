@@ -49,8 +49,6 @@ _RING = [[[-77.8, 34.2], [-77.7, 34.2], [-77.7, 34.3], [-77.8, 34.2]]]
 
 
 class TestPureHelpers:
-
-
     def test_ms_to_iso_valid(self):
         out = feeds._ms_to_iso(1700000000000)
         assert out.startswith("2023-11-")
@@ -80,7 +78,6 @@ class TestPureHelpers:
         cache = {"a": {"ts": 1.0}}
         feeds._evict_oldest(cache, 5)
         assert "a" in cache
-
 
     def test_deg_to_compass_none_returns_empty(self):
         assert feeds._deg_to_compass(None) == ""
@@ -162,7 +159,14 @@ class TestFetchWindForecast:
 
     def test_caps_at_eight_intervals(self, monkeypatch):
         feats = [
-            {"attributes": {"IntervalStart": i * 1000, "WindDir": 0, "WindSpeed": 5, "WindGust": 0}}
+            {
+                "attributes": {
+                    "IntervalStart": i * 1000,
+                    "WindDir": 0,
+                    "WindSpeed": 5,
+                    "WindGust": 0,
+                }
+            }
             for i in range(12)
         ]
         monkeypatch.setattr(
@@ -281,7 +285,16 @@ class TestFetchDrought:
             "get",
             Mock(
                 return_value=_resp(
-                    [{"D0": 100, "D1": 80, "D2": 40, "D3": 0, "D4": 0, "MapDate": "20240101"}]
+                    [
+                        {
+                            "D0": 100,
+                            "D1": 80,
+                            "D2": 40,
+                            "D3": 0,
+                            "D4": 0,
+                            "MapDate": "20240101",
+                        }
+                    ]
                 )
             ),
         )
@@ -366,7 +379,13 @@ class TestFetchStreamGauges:
                             },
                         },
                         "variable": {"variableCode": [{"value": "00065"}]},
-                        "values": [{"value": [{"value": "5.2", "dateTime": "2024-01-01T00:00:00Z"}]}],
+                        "values": [
+                            {
+                                "value": [
+                                    {"value": "5.2", "dateTime": "2024-01-01T00:00:00Z"}
+                                ]
+                            }
+                        ],
                     },
                     {
                         "sourceInfo": {
@@ -377,7 +396,16 @@ class TestFetchStreamGauges:
                             },
                         },
                         "variable": {"variableCode": [{"value": "00060"}]},
-                        "values": [{"value": [{"value": "120.5", "dateTime": "2024-01-01T00:00:00Z"}]}],
+                        "values": [
+                            {
+                                "value": [
+                                    {
+                                        "value": "120.5",
+                                        "dateTime": "2024-01-01T00:00:00Z",
+                                    }
+                                ]
+                            }
+                        ],
                     },
                 ]
             }
@@ -409,10 +437,18 @@ class TestGetNearestRiverDischarge:
                     "sourceInfo": {
                         "siteCode": [{"value": site_id}],
                         "siteName": f"Gauge {site_id}",
-                        "geoLocation": {"geogLocation": {"latitude": lat, "longitude": lng}},
+                        "geoLocation": {
+                            "geogLocation": {"latitude": lat, "longitude": lng}
+                        },
                     },
                     "variable": {"variableCode": [{"value": "00060"}]},
-                    "values": [{"value": [{"value": str(flow), "dateTime": "2024-01-01T00:00:00Z"}]}],
+                    "values": [
+                        {
+                            "value": [
+                                {"value": str(flow), "dateTime": "2024-01-01T00:00:00Z"}
+                            ]
+                        }
+                    ],
                 }
             )
         if stage is not None:
@@ -421,10 +457,21 @@ class TestGetNearestRiverDischarge:
                     "sourceInfo": {
                         "siteCode": [{"value": site_id}],
                         "siteName": f"Gauge {site_id}",
-                        "geoLocation": {"geogLocation": {"latitude": lat, "longitude": lng}},
+                        "geoLocation": {
+                            "geogLocation": {"latitude": lat, "longitude": lng}
+                        },
                     },
                     "variable": {"variableCode": [{"value": "00065"}]},
-                    "values": [{"value": [{"value": str(stage), "dateTime": "2024-01-01T00:00:00Z"}]}],
+                    "values": [
+                        {
+                            "value": [
+                                {
+                                    "value": str(stage),
+                                    "dateTime": "2024-01-01T00:00:00Z",
+                                }
+                            ]
+                        }
+                    ],
                 }
             )
         return {"value": {"timeSeries": series}}
@@ -476,7 +523,20 @@ class TestFetchNdbcBuoys:
                 "bar",
             ],
             "rows": [
-                ["44025", 34.2, -77.8, "2024-01-01T00:00:00Z", 90, 5.0, 7.0, 1.0, 8.0, 15.0, 16.0, 1015.0]
+                [
+                    "44025",
+                    34.2,
+                    -77.8,
+                    "2024-01-01T00:00:00Z",
+                    90,
+                    5.0,
+                    7.0,
+                    1.0,
+                    8.0,
+                    15.0,
+                    16.0,
+                    1015.0,
+                ]
             ],
         }
         monkeypatch.setattr(

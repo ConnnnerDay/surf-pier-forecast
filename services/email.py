@@ -99,5 +99,3 @@ def send_email(to: str, subject: str, body_text: str, body_html: str = "") -> bo
     except Exception:
         logger.exception("Failed to send email '%s' to %s", subject, to)
         return False
-
-

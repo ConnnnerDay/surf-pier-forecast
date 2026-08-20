@@ -44,7 +44,8 @@ class TestDegToCompass:
 # ---------------------------------------------------------------------------
 
 _HEADER = "#YY  MM DD hh mm WDIR WSPD GST  WVHT  DPD APD MWD   PRES  ATMP  WTMP  DEWP  VIS PTDY  TIDE"
-_UNITS  = "#yr  mo dy hr mn degT m/s  m/s     m  sec  sec degT   hPa  degC  degC  degC   mi  hPa    ft"
+_UNITS = "#yr  mo dy hr mn degT m/s  m/s     m  sec  sec degT   hPa  degC  degC  degC   mi  hPa    ft"
+
 
 def _make_resp(lines: list[str]) -> MagicMock:
     m = MagicMock()
@@ -97,6 +98,7 @@ class TestTryNdbcStation:
 
     def test_propagates_http_error(self):
         import requests
+
         m = MagicMock()
         m.raise_for_status.side_effect = requests.HTTPError("503")
         with patch("services.ndbc.http_get", return_value=m):
@@ -104,7 +106,9 @@ class TestTryNdbcStation:
                 _try_ndbc_station("41110")
 
     def test_uses_gust_for_high_end_wind_range(self):
-        with patch("services.ndbc.http_get", return_value=_buoy_resp(wspd="5.0", gst="10.0")):
+        with patch(
+            "services.ndbc.http_get", return_value=_buoy_resp(wspd="5.0", gst="10.0")
+        ):
             wind, _wave, _dir = _try_ndbc_station("41110")
         # high end should be gust converted to knots
         assert wind is not None
@@ -116,7 +120,7 @@ class TestTryNdbcStation:
 # ---------------------------------------------------------------------------
 
 _PRES_HEADER = "#YY  MM DD hh mm WDIR WSPD GST  WVHT  DPD APD MWD   PRES  ATMP  WTMP  DEWP  VIS PTDY  TIDE"
-_PRES_UNITS  = "#yr  mo dy hr mn degT m/s  m/s     m  sec  sec degT   hPa  degC  degC  degC   mi  hPa    ft"
+_PRES_UNITS = "#yr  mo dy hr mn degT m/s  m/s     m  sec  sec degT   hPa  degC  degC  degC   mi  hPa    ft"
 
 
 def _pres_line(pres: str = "1015.0") -> str:
@@ -157,7 +161,10 @@ class TestFetchBarometricPressure:
             result = fetch_barometric_pressure()
         assert result is not None
         assert result["trend"] == "Falling"
-        assert "dropping" in result["fishing_impact"].lower() or "feed" in result["fishing_impact"].lower()
+        assert (
+            "dropping" in result["fishing_impact"].lower()
+            or "feed" in result["fishing_impact"].lower()
+        )
 
     def test_medium_pressure_falling(self):
         # current ≥1010 but <1020; falling trend
@@ -166,7 +173,10 @@ class TestFetchBarometricPressure:
             result = fetch_barometric_pressure()
         assert result is not None
         assert result["trend"] == "Falling"
-        assert "frenzy" in result["fishing_impact"].lower() or "dropping" in result["fishing_impact"].lower()
+        assert (
+            "frenzy" in result["fishing_impact"].lower()
+            or "dropping" in result["fishing_impact"].lower()
+        )
 
     def test_medium_pressure_rising(self):
         resp = _pres_resp(["1013.0", "1011.5", "1010.0"])
@@ -182,7 +192,10 @@ class TestFetchBarometricPressure:
             result = fetch_barometric_pressure()
         assert result is not None
         assert result["trend"] == "Steady"
-        assert "average" in result["fishing_impact"].lower() or "normal" in result["fishing_impact"].lower()
+        assert (
+            "average" in result["fishing_impact"].lower()
+            or "normal" in result["fishing_impact"].lower()
+        )
 
     def test_low_pressure_rising(self):
         resp = _pres_resp(["1005.0", "1003.5", "1002.0"])
@@ -190,7 +203,10 @@ class TestFetchBarometricPressure:
             result = fetch_barometric_pressure()
         assert result is not None
         assert result["trend"] == "Rising"
-        assert "improving" in result["fishing_impact"].lower() or "recovering" in result["fishing_impact"].lower()
+        assert (
+            "improving" in result["fishing_impact"].lower()
+            or "recovering" in result["fishing_impact"].lower()
+        )
 
     def test_low_pressure_steady(self):
         resp = _pres_resp(["1005.0", "1005.0", "1005.0"])
@@ -198,7 +214,10 @@ class TestFetchBarometricPressure:
             result = fetch_barometric_pressure()
         assert result is not None
         assert result["trend"] == "Steady"
-        assert "below average" in result["fishing_impact"].lower() or "low pressure" in result["fishing_impact"].lower()
+        assert (
+            "below average" in result["fishing_impact"].lower()
+            or "low pressure" in result["fishing_impact"].lower()
+        )
 
     def test_too_few_lines_skipped(self):
         """A station response with < 3 lines triggers continue → tries next station."""

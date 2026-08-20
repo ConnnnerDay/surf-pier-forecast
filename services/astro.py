@@ -17,9 +17,9 @@ _LAT = 34.2104
 _LNG = -77.7964
 
 # Astronomical constants
-_SYNODIC_MONTH_DAYS = 29.53058867   # Synodic month (new moon to new moon)
-_MOON_RISE_SET_OFFSET = 6.2         # Hours from moon transit to moonrise/moonset
-_EARTH_MOON_DISTANCE_KM = 384400    # Mean Earth-Moon distance
+_SYNODIC_MONTH_DAYS = 29.53058867  # Synodic month (new moon to new moon)
+_MOON_RISE_SET_OFFSET = 6.2  # Hours from moon transit to moonrise/moonset
+_EARTH_MOON_DISTANCE_KM = 384400  # Mean Earth-Moon distance
 _MOON_ANOMALY_COEFFICIENT_KM = 20905  # Lunar distance variation amplitude
 
 
@@ -93,6 +93,7 @@ def _sun_times(
 
     return sunrise.astimezone(tz), sunset.astimezone(tz)
 
+
 def _moon_phase(dt: datetime) -> float:
     """Return the moon phase as a fraction (0.0 = new, 0.5 = full)."""
     # Reference new moon: 2000-01-06 18:14 UTC
@@ -103,6 +104,7 @@ def _moon_phase(dt: datetime) -> float:
     synodic = _SYNODIC_MONTH_DAYS
     phase = (diff / (synodic * 86400)) % 1.0
     return phase
+
 
 def _moon_transit_hours(dt: datetime, lng: float) -> tuple[float, float]:
     """Approximate moon overhead and underfoot times (local hour of day).
@@ -129,6 +131,7 @@ def _moon_transit_hours(dt: datetime, lng: float) -> tuple[float, float]:
     underfoot = (overhead + 12.0) % 24.0
     return overhead, underfoot
 
+
 def _sun_event_time(
     dt: datetime,
     lat: float,
@@ -154,6 +157,7 @@ def _sun_event_time(
     event_utc = 720 - 4 * (lng + ha if rising else lng - ha) - eqtime
     base = datetime(dt.year, dt.month, dt.day, tzinfo=ZoneInfo("UTC"))
     return (base + timedelta(minutes=event_utc)).astimezone(tz)
+
 
 def compute_twilight_times(
     dt: datetime, lat: float, lng: float, tz_name: str
@@ -185,6 +189,7 @@ def compute_twilight_times(
         "golden_pm": f"{fmt(sunset)} - {fmt(civil_dusk)}",
     }
 
+
 def compute_lunar_details(dt: datetime, lng: float, tz_name: str) -> dict[str, Any]:
     """Compute moonrise/moonset plus simple phase-age-distance info."""
     tz = _safe_zone(tz_name)
@@ -206,7 +211,9 @@ def compute_lunar_details(dt: datetime, lng: float, tz_name: str) -> dict[str, A
 
     # Approximate geocentric moon distance in km with simple anomaly model.
     anomaly = 2 * math.pi * phase_frac
-    distance_km = _EARTH_MOON_DISTANCE_KM - _MOON_ANOMALY_COEFFICIENT_KM * math.cos(anomaly)
+    distance_km = _EARTH_MOON_DISTANCE_KM - _MOON_ANOMALY_COEFFICIENT_KM * math.cos(
+        anomaly
+    )
 
     return {
         "moonrise": hour_to_str(moonrise_h),
@@ -214,6 +221,7 @@ def compute_lunar_details(dt: datetime, lng: float, tz_name: str) -> dict[str, A
         "age_days": round(age_days, 1),
         "distance_km": round(distance_km),
     }
+
 
 def compute_solunar_times(
     dt: datetime,

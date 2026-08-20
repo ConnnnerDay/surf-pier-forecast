@@ -132,7 +132,9 @@ class TestBuildSpotTipsFishingTypeJetty:
         assert "Jetty Tip Position" in _titles(tips)
 
     def test_no_jetty_tip_when_calm_and_slack(self):
-        tips = build_spot_tips(fishing_types=["jetty"], wave_range=(0.5, 1), tide_state="")
+        tips = build_spot_tips(
+            fishing_types=["jetty"], wave_range=(0.5, 1), tide_state=""
+        )
         assert "Jetty: Work the Wash" not in _titles(tips)
         assert "Jetty Tip Position" not in _titles(tips)
 
@@ -179,9 +181,7 @@ class TestBuildSpotTipsFishingTypeCharter:
 
 class TestBuildSpotTipsMultipleTypes:
     def test_combines_tips_across_types(self):
-        tips = build_spot_tips(
-            fishing_types=["kayak", "fly"], wind_range=(3, 4)
-        )
+        tips = build_spot_tips(fishing_types=["kayak", "fly"], wind_range=(3, 4))
         titles = _titles(tips)
         assert "Kayak: Drift Tactics" in titles
         assert "Fly: Sight-Casting Setup" in titles

@@ -94,7 +94,11 @@ def analyze_catch_patterns(
     if len(temps) >= _MIN_SAMPLES:
         lo = temps[len(temps) // 4]
         hi = temps[(len(temps) * 3) // 4]
-        factors["water_temp_f"] = {"low": round(lo), "high": round(hi), "sample": len(temps)}
+        factors["water_temp_f"] = {
+            "low": round(lo),
+            "high": round(hi),
+            "sample": len(temps),
+        }
         if round(hi) > round(lo):
             insights.append(
                 f"Most of your catches landed between {round(lo)}-{round(hi)}°F water."
@@ -113,7 +117,9 @@ def analyze_catch_patterns(
         lo = flows[len(flows) // 4]
         hi = flows[(len(flows) * 3) // 4]
         factors["river_discharge_cfs"] = {
-            "low": round(lo), "high": round(hi), "sample": len(flows)
+            "low": round(lo),
+            "high": round(hi),
+            "sample": len(flows),
         }
         if round(hi) > round(lo):
             insights.append(
@@ -170,9 +176,15 @@ def analyze_catch_patterns(
     matches: list[str] = []
     if current:
         _match_labels = {
-            "tide_state": lambda v: f"Today's {v.lower()} tide matches your most productive pattern.",
-            "wind_dir": lambda v: f"Today's {v} wind matches your most productive pattern.",
-            "moon_phase": lambda v: f"Tonight's {v.lower()} moon matches your most productive pattern.",
+            "tide_state": lambda v: (
+                f"Today's {v.lower()} tide matches your most productive pattern."
+            ),
+            "wind_dir": lambda v: (
+                f"Today's {v} wind matches your most productive pattern."
+            ),
+            "moon_phase": lambda v: (
+                f"Tonight's {v.lower()} moon matches your most productive pattern."
+            ),
         }
         for key, label in _match_labels.items():
             fac = factors.get(key)

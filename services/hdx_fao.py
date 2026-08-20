@@ -54,8 +54,12 @@ logger = logging.getLogger(__name__)
 
 # ── HTTP session ──────────────────────────────────────────────────────────────
 _HTTP: requests.Session = requests.Session()
-_HDX_RETRY = Retry(total=1, backoff_factor=0.5, status_forcelist=[502, 503, 504], raise_on_status=False)
-_HTTP.mount("https://", HTTPAdapter(pool_connections=2, pool_maxsize=4, max_retries=_HDX_RETRY))
+_HDX_RETRY = Retry(
+    total=1, backoff_factor=0.5, status_forcelist=[502, 503, 504], raise_on_status=False
+)
+_HTTP.mount(
+    "https://", HTTPAdapter(pool_connections=2, pool_maxsize=4, max_retries=_HDX_RETRY)
+)
 
 # ── In-process cache ──────────────────────────────────────────────────────────
 _CACHE: dict[str, dict[str, Any]] = {}
@@ -197,6 +201,7 @@ _FAO_MAJOR_AREAS: list[dict[str, Any]] = [
 # Public API
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 def search_hdx_datasets(
     query: str = "fisheries coastal",
     rows: int = 5,
@@ -251,6 +256,7 @@ def search_hdx_datasets(
     _cache_set(cache_key, results, ttl=ttl)
     return results
 
+
 def fetch_fao_fisheries_zones(lat: float, lng: float) -> dict[str, Any]:
     """Identify the FAO Major Fishing Area and sub-area for a coordinate.
 
@@ -277,6 +283,7 @@ def fetch_fao_fisheries_zones(lat: float, lng: float) -> dict[str, Any]:
 
     _cache_set(cache_key, result, ttl=_CACHE_FAO_ZONE_TTL)
     return result
+
 
 def fetch_fao_species_info(common_name: str) -> Optional[dict[str, Any]]:
     """Look up ASFIS species metadata from FAO's fisheries species list.
@@ -317,6 +324,7 @@ def fetch_fao_species_info(common_name: str) -> Optional[dict[str, Any]]:
     _cache_set(cache_key, None, ttl=_CACHE_SPECIES_TTL)
     return None
 
+
 def get_hdx_fao_enrichment(
     lat: float,
     lng: float,
@@ -346,7 +354,9 @@ def get_hdx_fao_enrichment(
 
     # Run FAO zone + HDX search + per-species lookups concurrently.
     names = list((species_names or [])[:3])
-    with _cf.ThreadPoolExecutor(max_workers=2 + len(names), thread_name_prefix="hdx-fao") as pool:
+    with _cf.ThreadPoolExecutor(
+        max_workers=2 + len(names), thread_name_prefix="hdx-fao"
+    ) as pool:
         zone_fut = pool.submit(fetch_fao_fisheries_zones, lat, lng)
         species_futs = {pool.submit(fetch_fao_species_info, n): n for n in names}
 
@@ -385,9 +395,11 @@ def get_hdx_fao_enrichment(
     _cache_set(cache_key, result, ttl=_CACHE_ENRICHMENT_TTL)
     return result
 
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Internal helpers
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def _fetch_fao_zone_wfs(lat: float, lng: float) -> Optional[dict[str, Any]]:
     """Query FAO GeoServer WFS for the fishing zone at a coordinate."""
@@ -422,6 +434,7 @@ def _fetch_fao_zone_wfs(lat: float, lng: float) -> Optional[dict[str, Any]]:
         logger.debug("hdx_fao: FAO WFS error: %s", exc)
     return None
 
+
 def _lookup_fao_area(lat: float, lng: float) -> dict[str, Any]:
     """Coordinate-range fallback for FAO area identification."""
     # Normalise longitude to [-180, 180]
@@ -449,6 +462,7 @@ def _lookup_fao_area(lat: float, lng: float) -> dict[str, Any]:
         "fao_url": "https://www.fao.org/fishery/en/collection/cwp",
         "method": "lookup_table",
     }
+
 
 def _parse_hdx_package(pkg: dict[str, Any]) -> dict[str, Any]:
     """Extract key fields from an HDX CKAN package record."""
@@ -478,6 +492,7 @@ def _parse_hdx_package(pkg: dict[str, Any]) -> dict[str, Any]:
         "last_modified": pkg.get("last_modified", ""),
     }
 
+
 def _parse_fao_species(item: dict[str, Any]) -> dict[str, Any]:
     """Parse FAO species API result into a simplified dict."""
     return {
@@ -491,6 +506,7 @@ def _parse_fao_species(item: dict[str, Any]) -> dict[str, Any]:
         ),
     }
 
+
 def _cache_get(key: str) -> Optional[Any]:
     entry = _CACHE.get(key)
     if not entry:
@@ -498,6 +514,7 @@ def _cache_get(key: str) -> Optional[Any]:
     if time.time() - entry["ts"] < entry["ttl"]:
         return entry["data"]
     return None
+
 
 def _cache_set(key: str, data: Any, ttl: int = _CACHE_HDX_TTL) -> None:
     if len(_CACHE) >= _CACHE_MAX:

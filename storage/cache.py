@@ -70,7 +70,10 @@ def _is_stale(forecast: dict[str, Any]) -> bool:
         generated = datetime.fromisoformat(forecast["generated_at"])
         if generated.tzinfo is None:
             generated = generated.replace(tzinfo=timezone.utc)
-        return generated.astimezone(timezone.utc).date() < datetime.now(timezone.utc).date()
+        return (
+            generated.astimezone(timezone.utc).date()
+            < datetime.now(timezone.utc).date()
+        )
     except Exception:
         return False
 

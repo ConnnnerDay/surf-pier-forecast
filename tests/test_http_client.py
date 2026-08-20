@@ -30,7 +30,9 @@ class TestGetSuccess:
     def test_returns_response_on_first_success(self):
         resp = _mock_response(200)
         with patch.object(http_client._session, "get", return_value=resp) as mock_get:
-            result = http_client.get("https://example.com/a", endpoint="test", use_cache=False)
+            result = http_client.get(
+                "https://example.com/a", endpoint="test", use_cache=False
+            )
         assert result.status_code == 200
         mock_get.assert_called_once()
 
@@ -52,7 +54,9 @@ class TestGetSuccess:
     def test_4xx_status_is_returned_without_retry(self):
         resp = _mock_response(404)
         with patch.object(http_client._session, "get", return_value=resp) as mock_get:
-            result = http_client.get("https://example.com/missing", endpoint="test", use_cache=False)
+            result = http_client.get(
+                "https://example.com/missing", endpoint="test", use_cache=False
+            )
         assert result.status_code == 404
         mock_get.assert_called_once()
 
@@ -67,8 +71,12 @@ class TestRetryOnTransientStatus:
     def test_retries_on_503_then_succeeds(self):
         bad = _mock_response(503)
         good = _mock_response(200)
-        with patch.object(http_client._session, "get", side_effect=[bad, good]) as mock_get, \
-                patch.object(http_client.time, "sleep") as mock_sleep:
+        with (
+            patch.object(
+                http_client._session, "get", side_effect=[bad, good]
+            ) as mock_get,
+            patch.object(http_client.time, "sleep") as mock_sleep,
+        ):
             result = http_client.get(
                 "https://example.com/a", endpoint="test", retries=2, use_cache=False
             )
@@ -78,8 +86,10 @@ class TestRetryOnTransientStatus:
 
     def test_exhausts_retries_and_returns_last_transient_response(self):
         bad = _mock_response(500)
-        with patch.object(http_client._session, "get", return_value=bad) as mock_get, \
-                patch.object(http_client.time, "sleep"):
+        with (
+            patch.object(http_client._session, "get", return_value=bad) as mock_get,
+            patch.object(http_client.time, "sleep"),
+        ):
             result = http_client.get(
                 "https://example.com/a", endpoint="test", retries=2, use_cache=False
             )
@@ -99,8 +109,12 @@ class TestRetryOnTransientStatus:
     def test_backoff_uses_exponential_delay(self):
         bad = _mock_response(502)
         good = _mock_response(200)
-        with patch.object(http_client._session, "get", side_effect=[bad, bad, good]) as mock_get, \
-                patch.object(http_client.time, "sleep") as mock_sleep:
+        with (
+            patch.object(
+                http_client._session, "get", side_effect=[bad, bad, good]
+            ) as mock_get,
+            patch.object(http_client.time, "sleep") as mock_sleep,
+        ):
             http_client.get(
                 "https://example.com/a",
                 endpoint="test",
@@ -116,11 +130,14 @@ class TestRetryOnTransientStatus:
 class TestRetryOnException:
     def test_retries_on_connection_error_then_succeeds(self):
         good = _mock_response(200)
-        with patch.object(
-            http_client._session,
-            "get",
-            side_effect=[requests.ConnectionError("boom"), good],
-        ) as mock_get, patch.object(http_client.time, "sleep"):
+        with (
+            patch.object(
+                http_client._session,
+                "get",
+                side_effect=[requests.ConnectionError("boom"), good],
+            ) as mock_get,
+            patch.object(http_client.time, "sleep"),
+        ):
             result = http_client.get(
                 "https://example.com/a", endpoint="test", retries=2, use_cache=False
             )
@@ -128,9 +145,12 @@ class TestRetryOnException:
         assert mock_get.call_count == 2
 
     def test_raises_after_exhausting_retries_on_exception(self):
-        with patch.object(
-            http_client._session, "get", side_effect=requests.Timeout("slow")
-        ) as mock_get, patch.object(http_client.time, "sleep"):
+        with (
+            patch.object(
+                http_client._session, "get", side_effect=requests.Timeout("slow")
+            ) as mock_get,
+            patch.object(http_client.time, "sleep"),
+        ):
             with pytest.raises(requests.Timeout):
                 http_client.get(
                     "https://example.com/a", endpoint="test", retries=1, use_cache=False
@@ -152,8 +172,12 @@ class TestResponseCache:
     def test_second_call_with_cache_hits_cache_not_network(self):
         resp = _mock_response(200, content=b"cached-body")
         with patch.object(http_client._session, "get", return_value=resp) as mock_get:
-            first = http_client.get("https://example.com/cacheme", endpoint="test", use_cache=True)
-            second = http_client.get("https://example.com/cacheme", endpoint="test", use_cache=True)
+            first = http_client.get(
+                "https://example.com/cacheme", endpoint="test", use_cache=True
+            )
+            second = http_client.get(
+                "https://example.com/cacheme", endpoint="test", use_cache=True
+            )
         assert mock_get.call_count == 1
         assert first.content == b"cached-body"
         assert second.content == b"cached-body"
@@ -161,8 +185,12 @@ class TestResponseCache:
     def test_use_cache_false_always_hits_network(self):
         resp = _mock_response(200)
         with patch.object(http_client._session, "get", return_value=resp) as mock_get:
-            http_client.get("https://example.com/nocache", endpoint="test", use_cache=False)
-            http_client.get("https://example.com/nocache", endpoint="test", use_cache=False)
+            http_client.get(
+                "https://example.com/nocache", endpoint="test", use_cache=False
+            )
+            http_client.get(
+                "https://example.com/nocache", endpoint="test", use_cache=False
+            )
         assert mock_get.call_count == 2
 
     def test_non_2xx_response_is_not_cached(self):
@@ -180,15 +208,23 @@ class TestResponseCache:
         resp = _mock_response(200)
         with patch.object(http_client._session, "get", return_value=resp) as mock_get:
             http_client.get(
-                "https://example.com/h", endpoint="test", headers={"A": "1"}, use_cache=True
+                "https://example.com/h",
+                endpoint="test",
+                headers={"A": "1"},
+                use_cache=True,
             )
             http_client.get(
-                "https://example.com/h", endpoint="test", headers={"A": "2"}, use_cache=True
+                "https://example.com/h",
+                endpoint="test",
+                headers={"A": "2"},
+                use_cache=True,
             )
         assert mock_get.call_count == 2
 
     def test_oversized_response_is_not_cached(self):
-        big = _mock_response(200, content=b"x" * (http_client._RESPONSE_CACHE_MAX_BYTES + 1))
+        big = _mock_response(
+            200, content=b"x" * (http_client._RESPONSE_CACHE_MAX_BYTES + 1)
+        )
         with patch.object(http_client._session, "get", return_value=big) as mock_get:
             http_client.get("https://example.com/big", endpoint="test", use_cache=True)
             http_client.get("https://example.com/big", endpoint="test", use_cache=True)
@@ -214,16 +250,22 @@ class TestResponseCache:
         resp = _mock_response(200)
         with patch.object(http_client._session, "get", return_value=resp):
             for i in range(http_client._RESPONSE_CACHE_MAX):
-                http_client.get(f"https://example.com/{i}", endpoint="test", use_cache=True)
+                http_client.get(
+                    f"https://example.com/{i}", endpoint="test", use_cache=True
+                )
         assert len(http_client._RESPONSE_CACHE) == http_client._RESPONSE_CACHE_MAX
         with patch.object(http_client._session, "get", return_value=resp):
-            http_client.get("https://example.com/overflow", endpoint="test", use_cache=True)
+            http_client.get(
+                "https://example.com/overflow", endpoint="test", use_cache=True
+            )
         assert len(http_client._RESPONSE_CACHE) == http_client._RESPONSE_CACHE_MAX
 
 
 class TestCacheKey:
     def test_no_headers_key_is_url_tuple(self):
-        assert http_client._cache_key("https://example.com", None) == ("https://example.com",)
+        assert http_client._cache_key("https://example.com", None) == (
+            "https://example.com",
+        )
 
     def test_headers_are_order_independent(self):
         key_a = http_client._cache_key("https://example.com", {"A": "1", "B": "2"})

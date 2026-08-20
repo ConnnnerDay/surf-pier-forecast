@@ -13,8 +13,6 @@ from urllib.parse import urlparse
 
 import requests
 
-_CAM_CHECK_TIMEOUT: tuple[float, float] = (2.5, 7.0)
-
 from flask import (
     Blueprint,
     g,
@@ -40,7 +38,10 @@ from domain.forecast import (
     recompute_current_uv,
     build_trip_setup,
 )
-from services.forecast_refresh import enqueue_forecast_refresh, is_refreshing as _is_refreshing
+from services.forecast_refresh import (
+    enqueue_forecast_refresh,
+    is_refreshing as _is_refreshing,
+)
 from services.nws import _KT_TO_MPH
 from storage.cache import (
     CACHE_MAX_AGE_HOURS,
@@ -57,6 +58,8 @@ from web.rate_limit import (
 )
 from regulations import get_official_regulations_url as _get_official_regulations_url
 
+_CAM_CHECK_TIMEOUT: tuple[float, float] = (2.5, 7.0)
+
 bp = Blueprint("views", __name__)
 logger = logging.getLogger(__name__)
 
@@ -72,11 +75,15 @@ _setup_rate_limit_lock = threading.Lock()
 
 def _setup_is_rate_limited() -> bool:
     if _rl_is_rate_limited(
-        _setup_rate_limit_store, _setup_rate_limit_lock,
-        _SETUP_RATE_LIMIT_MAX, _SETUP_RATE_LIMIT_WINDOW_S,
+        _setup_rate_limit_store,
+        _setup_rate_limit_lock,
+        _SETUP_RATE_LIMIT_MAX,
+        _SETUP_RATE_LIMIT_WINDOW_S,
     ):
         return True
-    _rl_record_attempt(_setup_rate_limit_store, _setup_rate_limit_lock, _SETUP_RATE_LIMIT_WINDOW_S)
+    _rl_record_attempt(
+        _setup_rate_limit_store, _setup_rate_limit_lock, _SETUP_RATE_LIMIT_WINDOW_S
+    )
     return False
 
 
@@ -93,8 +100,10 @@ _gen_rate_limit_lock = threading.Lock()
 
 def _generation_is_rate_limited() -> bool:
     if _rl_is_rate_limited(
-        _gen_rate_limit_store, _gen_rate_limit_lock,
-        _GEN_RATE_LIMIT_MAX, _GEN_RATE_LIMIT_WINDOW_S,
+        _gen_rate_limit_store,
+        _gen_rate_limit_lock,
+        _GEN_RATE_LIMIT_MAX,
+        _GEN_RATE_LIMIT_WINDOW_S,
     ):
         return True
     _rl_record_attempt(
@@ -110,7 +119,9 @@ _CAM_CHECK_POOL_WORKERS = 6
 _cam_status_cache: dict[str, dict[str, Any]] = {}
 _cam_status_lock = threading.Lock()
 # Shared daemon pool for background cam probes — never blocks a WSGI worker.
-_cam_check_pool = ThreadPoolExecutor(max_workers=_CAM_CHECK_POOL_WORKERS, thread_name_prefix="cam-check")
+_cam_check_pool = ThreadPoolExecutor(
+    max_workers=_CAM_CHECK_POOL_WORKERS, thread_name_prefix="cam-check"
+)
 _CAM_STATUS_UNKNOWN: dict[str, Any] = {"is_live": False, "status_label": "Checking…"}
 
 _KT_RANGE_RE = re.compile(
@@ -439,11 +450,7 @@ def _render_forecast(
             )
         # Throttle expensive cache-miss generation of dynamic points by
         # anonymous clients so crafted coordinate ids can't amplify upstream load.
-        if (
-            location.get("dynamic")
-            and g.user is None
-            and _generation_is_rate_limited()
-        ):
+        if location.get("dynamic") and g.user is None and _generation_is_rate_limited():
             logger.warning("cache.miss.rate_limited location_id=%s", loc_id)
             return render_template(
                 "error.html",

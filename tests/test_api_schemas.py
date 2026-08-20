@@ -374,6 +374,7 @@ def test_profile_payload_rejects_non_string_location_id():
 def test_profile_payload_rejects_too_long_location_id():
     """Lines 333-338: location_id longer than _MAX_LOCATION_ID_LEN raises ApiError."""
     from web.schemas import _MAX_LOCATION_ID_LEN
+
     _raises({"location_id": "x" * (_MAX_LOCATION_ID_LEN + 1)}, "invalid_location_id")
 
 
@@ -403,6 +404,7 @@ def test_log_payload_rejects_empty_species():
 def test_log_payload_rejects_too_long_bait():
     """Line 401: bait longer than _MAX_BAIT_LEN raises ApiError."""
     from web.schemas import _MAX_BAIT_LEN
+
     try:
         LogCreatePayload.from_json(
             {"species": "Bass", "bait": "x" * (_MAX_BAIT_LEN + 1)}, location_id="loc1"
@@ -415,6 +417,7 @@ def test_log_payload_rejects_too_long_bait():
 def test_log_payload_rejects_too_long_rig():
     """Line 406: rig longer than _MAX_BAIT_LEN raises ApiError."""
     from web.schemas import _MAX_BAIT_LEN
+
     try:
         LogCreatePayload.from_json(
             {"species": "Bass", "rig": "x" * (_MAX_BAIT_LEN + 1)}, location_id="loc1"

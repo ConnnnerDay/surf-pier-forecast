@@ -71,13 +71,17 @@ class TestParseFlPage:
         assert out["scraped_source"] == "myfwc.com"
 
     def test_returns_none_when_no_bag_or_size(self):
-        assert rs._parse_fl_page("<html><body>No regulations here.</body></html>") is None
+        assert (
+            rs._parse_fl_page("<html><body>No regulations here.</body></html>") is None
+        )
 
 
 class TestScrapeFl:
     def test_unknown_species_returns_none_without_fetch(self, monkeypatch):
         called = []
-        monkeypatch.setattr(rs, "_fetch_page", lambda url: called.append(url) or _FL_HTML)
+        monkeypatch.setattr(
+            rs, "_fetch_page", lambda url: called.append(url) or _FL_HTML
+        )
         assert rs._scrape_fl("Some Random Fish") is None
         assert called == []
 
@@ -126,7 +130,9 @@ class TestParseVaPage:
 class TestScrapeVa:
     def test_uses_cached_html_across_calls(self, monkeypatch):
         calls = []
-        monkeypatch.setattr(rs, "_fetch_page", lambda url: calls.append(url) or _VA_HTML)
+        monkeypatch.setattr(
+            rs, "_fetch_page", lambda url: calls.append(url) or _VA_HTML
+        )
         rs._scrape_va("Red drum")
         rs._scrape_va("Red drum")
         assert len(calls) == 1
@@ -153,7 +159,9 @@ _GA_HTML = """
 
 class TestParseGaDd:
     def test_extracts_season_limit_size(self):
-        out = rs._parse_ga_dd('Season: All year  Limit: 5  Minimum size: 14" TL (Maximum 23" TL)')
+        out = rs._parse_ga_dd(
+            'Season: All year  Limit: 5  Minimum size: 14" TL (Maximum 23" TL)'
+        )
         assert out["season"] == "All year"
         assert out["bag_limit"] == "5"
         assert out["min_size"] == '14" TL (Maximum 23" TL)'
@@ -228,7 +236,9 @@ class TestParseNcPage:
         assert rs._parse_nc_page(_NC_HTML_SKIP, "Tautog") is None
 
     def test_no_tables_returns_none(self):
-        assert rs._parse_nc_page("<html><body>nothing</body></html>", "Red drum") is None
+        assert (
+            rs._parse_nc_page("<html><body>nothing</body></html>", "Red drum") is None
+        )
 
     def test_unknown_species_returns_none(self):
         assert rs._parse_nc_page(_NC_HTML_4COL, "Tilapia") is None
@@ -500,7 +510,9 @@ class TestParseMsPage:
         assert out["min_size"] == "16 in"
 
     def test_fewer_than_two_tables_returns_none(self):
-        assert rs._parse_ms_page("<table><tr><td>x</td></tr></table>", "Red drum") is None
+        assert (
+            rs._parse_ms_page("<table><tr><td>x</td></tr></table>", "Red drum") is None
+        )
 
     def test_unknown_species_returns_none(self):
         assert rs._parse_ms_page(_MS_HTML_4COL, "Tilapia") is None
@@ -534,6 +546,7 @@ class TestScrapeMs:
 # ──────────────────────────────────────────────────────────────────
 # SQLite cache layer + public API
 # ──────────────────────────────────────────────────────────────────
+
 
 class TestCacheGetSet:
     def test_set_then_get_round_trips(self, db):
@@ -603,6 +616,7 @@ class TestScrapeRegulation:
         monkeypatch.setattr(rs, "_fetch_page", lambda url: _FL_HTML)
         out1 = rs.scrape_regulation("Red drum", "FL")
         assert out1 is not None
+
         # Second call should hit the SQLite cache, not the live scraper.
         def _fail(name):
             raise AssertionError("should not be called")

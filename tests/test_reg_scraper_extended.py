@@ -32,9 +32,9 @@ Missing lines from full-suite report:
   1573    scrape_regulation() empty species → return None
   1610-11 invalidate_cache() DB exception → return 0
 """
+
 from __future__ import annotations
 
-import json
 
 import pytest
 
@@ -153,7 +153,9 @@ class TestGetGaHtmlCacheHit:
     def test_second_call_returns_from_cache(self, monkeypatch):
         """Line 399: when _ga_page_cache is populated, skip _fetch_page."""
         calls = []
-        monkeypatch.setattr(rs, "_fetch_page", lambda url: calls.append(url) or _FAKE_HTML)
+        monkeypatch.setattr(
+            rs, "_fetch_page", lambda url: calls.append(url) or _FAKE_HTML
+        )
         # First call populates the cache.
         rs._get_ga_html()
         # Second call must not touch _fetch_page.
@@ -192,7 +194,9 @@ class TestGetNcHtmlCacheHit:
     def test_second_call_returns_from_cache(self, monkeypatch):
         """Line 541: _nc_page_cache populated → skip fetch on second call."""
         calls = []
-        monkeypatch.setattr(rs, "_fetch_page", lambda url: calls.append(url) or _FAKE_HTML)
+        monkeypatch.setattr(
+            rs, "_fetch_page", lambda url: calls.append(url) or _FAKE_HTML
+        )
         rs._get_nc_html()
         rs._get_nc_html()
         assert len(calls) == 1
@@ -245,7 +249,9 @@ class TestGetNyHtmlCacheHit:
     def test_second_call_returns_from_cache(self, monkeypatch):
         """Line 647: _ny_page_cache populated → skip fetch."""
         calls = []
-        monkeypatch.setattr(rs, "_fetch_page", lambda url: calls.append(url) or _FAKE_HTML)
+        monkeypatch.setattr(
+            rs, "_fetch_page", lambda url: calls.append(url) or _FAKE_HTML
+        )
         rs._get_ny_html()
         rs._get_ny_html()
         assert len(calls) == 1
@@ -255,7 +261,9 @@ class TestGetAlHtmlCacheHit:
     def test_second_call_returns_from_cache(self, monkeypatch):
         """Line 738: _al_page_cache populated → skip fetch."""
         calls = []
-        monkeypatch.setattr(rs, "_fetch_page", lambda url: calls.append(url) or _FAKE_HTML)
+        monkeypatch.setattr(
+            rs, "_fetch_page", lambda url: calls.append(url) or _FAKE_HTML
+        )
         rs._get_al_html()
         rs._get_al_html()
         assert len(calls) == 1
@@ -265,7 +273,9 @@ class TestGetRiHtmlCacheHit:
     def test_second_call_returns_from_cache(self, monkeypatch):
         """Line 815: _ri_page_cache populated → skip fetch."""
         calls = []
-        monkeypatch.setattr(rs, "_fetch_page", lambda url: calls.append(url) or _FAKE_HTML)
+        monkeypatch.setattr(
+            rs, "_fetch_page", lambda url: calls.append(url) or _FAKE_HTML
+        )
         rs._get_ri_html()
         rs._get_ri_html()
         assert len(calls) == 1
@@ -455,7 +465,9 @@ _TABLE_SHORT_ROW = """
 class TestParseRegTableShortRow:
     def test_row_with_one_td_skipped(self):
         """Line 1205: row with < 2 tds is skipped; matching row below still found."""
-        out = rs._parse_reg_table(_TABLE_SHORT_ROW, "Red drum", rs._COMMON_NAMES, "src", "n")
+        out = rs._parse_reg_table(
+            _TABLE_SHORT_ROW, "Red drum", rs._COMMON_NAMES, "src", "n"
+        )
         assert out is not None
         assert out["min_size"] == "15 in"
 
@@ -483,7 +495,9 @@ class TestParseRegLabels:
 
     def test_unknown_species_returns_none(self):
         """Line 1258: species key not in names_map → return None."""
-        result = rs._parse_reg_labels(_LABEL_HTML, "Tilapia", self._NAMES, "src", "note")
+        result = rs._parse_reg_labels(
+            _LABEL_HTML, "Tilapia", self._NAMES, "src", "note"
+        )
         assert result is None
 
     def test_species_absent_from_text_returns_none(self):
@@ -506,7 +520,9 @@ class TestParseRegLabels:
 
     def test_labels_found_returns_data(self):
         """Sanity: when labels are present, the dict is returned."""
-        result = rs._parse_reg_labels(_LABEL_HTML, "Red drum", self._NAMES, "src", "note")
+        result = rs._parse_reg_labels(
+            _LABEL_HTML, "Red drum", self._NAMES, "src", "note"
+        )
         assert result is not None
         assert result["min_size"] == "18 inches"
         assert result["bag_limit"] == "3 per day"

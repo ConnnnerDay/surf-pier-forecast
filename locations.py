@@ -506,6 +506,7 @@ _FALLBACK_WIND_DIR: dict[str, dict[int, str]] = {
     },
 }
 
+
 def get_water_temp(
     temp_region: str, month: int, offset: float = 0.0
 ) -> Optional[float]:
@@ -518,6 +519,7 @@ def get_water_temp(
     if base is None:
         return None
     return float(base + offset)
+
 
 # ---------------------------------------------------------------------------
 # Coastal location database
@@ -2106,14 +2108,25 @@ _NWS_ZONE_INHERIT_MILES = 75.0
 # Central while the rest is Eastern — resolved by longitude in
 # :func:`timezone_for_point`.
 _STATE_TIMEZONE: dict[str, str] = {
-    "ME": "America/New_York", "NH": "America/New_York", "MA": "America/New_York",
-    "RI": "America/New_York", "CT": "America/New_York", "NY": "America/New_York",
-    "NJ": "America/New_York", "DE": "America/New_York", "MD": "America/New_York",
-    "VA": "America/New_York", "NC": "America/New_York", "SC": "America/New_York",
+    "ME": "America/New_York",
+    "NH": "America/New_York",
+    "MA": "America/New_York",
+    "RI": "America/New_York",
+    "CT": "America/New_York",
+    "NY": "America/New_York",
+    "NJ": "America/New_York",
+    "DE": "America/New_York",
+    "MD": "America/New_York",
+    "VA": "America/New_York",
+    "NC": "America/New_York",
+    "SC": "America/New_York",
     "GA": "America/New_York",
-    "AL": "America/Chicago", "MS": "America/Chicago", "LA": "America/Chicago",
+    "AL": "America/Chicago",
+    "MS": "America/Chicago",
+    "LA": "America/Chicago",
     "TX": "America/Chicago",
-    "CA": "America/Los_Angeles", "OR": "America/Los_Angeles",
+    "CA": "America/Los_Angeles",
+    "OR": "America/Los_Angeles",
     "WA": "America/Los_Angeles",
     "AK": "America/Anchorage",
     "HI": "Pacific/Honolulu",
@@ -2129,9 +2142,7 @@ def timezone_for_point(state: str, lng: float) -> Optional[str]:
     """
     state = (state or "").upper()
     if state == "FL":
-        return (
-            "America/Chicago" if lng < _FL_TZ_BOUNDARY_LNG else "America/New_York"
-        )
+        return "America/Chicago" if lng < _FL_TZ_BOUNDARY_LNG else "America/New_York"
     return _STATE_TIMEZONE.get(state)
 
 
@@ -2165,9 +2176,7 @@ def parse_dynamic_id(location_id: str) -> Optional[tuple[float, float]]:
     return lat, lng
 
 
-def _resolve_dynamic_location(
-    lat: float, lng: float
-) -> tuple[dict[str, Any], float]:
+def _resolve_dynamic_location(lat: float, lng: float) -> tuple[dict[str, Any], float]:
     """Assemble a dynamic location dict and report its coastal-anchor distance.
 
     Returns ``(location, anchor_miles)`` where ``anchor_miles`` is the distance
@@ -2287,6 +2296,7 @@ def get_location(location_id: str) -> Optional[dict[str, Any]]:
         return build_dynamic_location(coords[0], coords[1])
     return None
 
+
 def get_monthly_water_temps(location: dict[str, Any]) -> dict[int, float]:
     """Return the monthly average water temp dict for a location.
 
@@ -2298,6 +2308,7 @@ def get_monthly_water_temps(location: dict[str, Any]) -> dict[int, float]:
     if offset:
         return {m: t + offset for m, t in base.items()}
     return dict(base)
+
 
 def get_fallback_conditions(
     location: dict[str, Any],
@@ -2312,9 +2323,11 @@ def get_fallback_conditions(
     wind, waves = cond[safe_month]
     return wind, waves, dirs[safe_month]
 
+
 # ---------------------------------------------------------------------------
 # Geocoding + nearest location search
 # ---------------------------------------------------------------------------
+
 
 def _haversine_miles(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
     """Great-circle distance in miles between two lat/lng points."""
@@ -2328,6 +2341,7 @@ def _haversine_miles(lat1: float, lng1: float, lat2: float, lng2: float) -> floa
         * math.sin(dlng / 2) ** 2
     )
     return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
 
 def geocode_zip(zipcode: str) -> Optional[tuple[float, float]]:
     """Convert a US zip code to (latitude, longitude).
@@ -2360,6 +2374,7 @@ def geocode_zip(zipcode: str) -> Optional[tuple[float, float]]:
         logger.debug("geocode_zip failed for %r", zipcode, exc_info=True)
         return None
 
+
 def find_nearest_locations(
     lat: float,
     lng: float,
@@ -2381,6 +2396,7 @@ def find_nearest_locations(
 
     results.sort(key=lambda x: x["distance_miles"])
     return results[:n]
+
 
 def find_nearby_live_cams(
     lat: float,
@@ -2405,6 +2421,7 @@ def find_nearby_live_cams(
 
     results.sort(key=lambda x: x["distance_miles"])
     return results
+
 
 @lru_cache(maxsize=1)
 def all_locations_sorted() -> list[dict[str, Any]]:

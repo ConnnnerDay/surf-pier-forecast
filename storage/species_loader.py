@@ -34,6 +34,7 @@ _REQUIRED_FIELDS: frozenset = frozenset(
 
 _VALID_COASTS: frozenset = frozenset({"east", "west", "hawaii"})
 
+
 def _validate(entries: list[dict[str, Any]]) -> None:
     """Raise ValueError with a descriptive message if any entry is malformed."""
     if not isinstance(entries, list) or len(entries) == 0:
@@ -103,6 +104,7 @@ def _validate(entries: list[dict[str, Any]]) -> None:
                     f"Species '{name}': 'categories' must be a list of strings"
                 )
 
+
 def load_species_db(path: pathlib.Path | None = None) -> list[dict[str, Any]]:
     """Read, parse, and validate the species JSON file.
 
@@ -134,6 +136,7 @@ def load_species_db(path: pathlib.Path | None = None) -> list[dict[str, Any]]:
 
     _validate(entries)
     return entries
+
 
 # Module-level singleton — loaded once at import time.
 SPECIES_DB: list[dict[str, Any]] = load_species_db()

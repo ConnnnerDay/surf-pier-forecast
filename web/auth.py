@@ -104,6 +104,7 @@ _refresh_rate_limit_lock = threading.Lock()
 _account_lockout_store: dict[str, tuple[float, int]] = {}
 _account_lockout_lock = threading.Lock()
 
+
 def _login_is_rate_limited() -> bool:
     return _is_rate_limited(
         _rate_limit_store,

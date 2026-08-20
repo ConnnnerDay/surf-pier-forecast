@@ -16,13 +16,20 @@ EAST = ZoneInfo("America/New_York")
 
 
 def _forecast(
-    verdict="Good", score=72, tags=None, best_times=None, tides=None, gear=None,
+    verdict="Good",
+    score=72,
+    tags=None,
+    best_times=None,
+    tides=None,
+    gear=None,
     water_quality=None,
 ):
     timeline = []
     for h in range(24):
         tag = (tags or {}).get(h, "low")
-        timeline.append({"hour": h, "tag": tag, "level": 80 if tag in ("high", "prime") else 20})
+        timeline.append(
+            {"hour": h, "tag": tag, "level": 80 if tag in ("high", "prime") else 20}
+        )
     fc = {
         "conditions": {
             "verdict": verdict,
@@ -31,14 +38,18 @@ def _forecast(
             "summary": "Light wind, flat surf",
         },
         "activity_timeline": timeline,
-        "best_times": best_times if best_times is not None else [
-            {"window": "5:30 - 7:30 AM", "reason": "Dawn bite", "quality": "Prime"}
-        ],
-        "tides": tides if tides is not None else [
+        "best_times": best_times
+        if best_times is not None
+        else [{"window": "5:30 - 7:30 AM", "reason": "Dawn bite", "quality": "Prime"}],
+        "tides": tides
+        if tides is not None
+        else [
             {"hour": 14.5, "type": "High", "time": "2:30 PM"},
             {"hour": 8.0, "type": "Low", "time": "8:00 AM"},
         ],
-        "gear_checklist": gear if gear is not None else [
+        "gear_checklist": gear
+        if gear is not None
+        else [
             {"category": "Rigs", "item": "Hi-lo rig"},
             {"category": "Bait", "item": "Fresh shrimp"},
         ],
@@ -63,20 +74,36 @@ class TestEvaluateForecast:
 
     def test_excellent_threshold_requires_excellent(self):
         now = datetime(2026, 6, 9, 5, 0, tzinfo=EAST)
-        assert notif.evaluate_forecast(_forecast("Good"), {"min_rating": "Excellent"}, now) is None
-        assert notif.evaluate_forecast(_forecast("Excellent"), {"min_rating": "Excellent"}, now) is not None
+        assert (
+            notif.evaluate_forecast(_forecast("Good"), {"min_rating": "Excellent"}, now)
+            is None
+        )
+        assert (
+            notif.evaluate_forecast(
+                _forecast("Excellent"), {"min_rating": "Excellent"}, now
+            )
+            is not None
+        )
 
     def test_lead_hours_requires_upcoming_window(self):
         now = datetime(2026, 6, 9, 5, 0, tzinfo=EAST)
         # Prime window at hour 7 → within a 4h lead from 5 AM.
         fc = _forecast("Good", tags={7: "prime"})
-        assert notif.evaluate_forecast(fc, {"min_rating": "Good", "lead_hours": 4}, now) is not None
+        assert (
+            notif.evaluate_forecast(fc, {"min_rating": "Good", "lead_hours": 4}, now)
+            is not None
+        )
         # No good window in the next 1h → suppressed despite a qualifying day.
-        assert notif.evaluate_forecast(fc, {"min_rating": "Good", "lead_hours": 1}, now) is None
+        assert (
+            notif.evaluate_forecast(fc, {"min_rating": "Good", "lead_hours": 1}, now)
+            is None
+        )
 
     def test_unknown_verdict_skipped(self):
         now = datetime(2026, 6, 9, 5, 0, tzinfo=EAST)
-        assert notif.evaluate_forecast(_forecast(""), {"min_rating": "Good"}, now) is None
+        assert (
+            notif.evaluate_forecast(_forecast(""), {"min_rating": "Good"}, now) is None
+        )
 
     def test_hab_risk_passed_through_when_present(self):
         now = datetime(2026, 6, 9, 5, 0, tzinfo=EAST)
@@ -97,7 +124,8 @@ class TestEvaluateForecast:
 class TestBuildEmail:
     def test_subject_and_bodies(self):
         d = notif.evaluate_forecast(
-            _forecast("Excellent", 91), {"min_rating": "Good"},
+            _forecast("Excellent", 91),
+            {"min_rating": "Good"},
             datetime(2026, 6, 9, 5, 0, tzinfo=EAST),
         )
         subject, text, html = notif.build_email("Montauk", d)
@@ -108,7 +136,8 @@ class TestBuildEmail:
 
     def test_includes_next_tide_and_gear(self):
         d = notif.evaluate_forecast(
-            _forecast("Good"), {"min_rating": "Good"},
+            _forecast("Good"),
+            {"min_rating": "Good"},
             datetime(2026, 6, 9, 5, 0, tzinfo=EAST),
         )
         assert d["next_tide"] == "Low tide at 8:00 AM"  # 8 AM is the next after 5 AM
@@ -120,10 +149,13 @@ class TestBuildEmail:
 
     def test_manage_link_included_when_url_given(self):
         d = notif.evaluate_forecast(
-            _forecast("Good"), {"min_rating": "Good"},
+            _forecast("Good"),
+            {"min_rating": "Good"},
             datetime(2026, 6, 9, 5, 0, tzinfo=EAST),
         )
-        _s, text, html = notif.build_email("Montauk", d, manage_url="https://x.test/account")
+        _s, text, html = notif.build_email(
+            "Montauk", d, manage_url="https://x.test/account"
+        )
         assert "https://x.test/account" in text
         assert "https://x.test/account" in html
         # Omitted when no URL is supplied.
@@ -133,7 +165,8 @@ class TestBuildEmail:
     def test_hab_danger_adds_caveat_to_email(self):
         wq = {"available": True, "hab_risk": "danger", "hab_message": "Toxin danger"}
         d = notif.evaluate_forecast(
-            _forecast("Good", water_quality=wq), {"min_rating": "Good"},
+            _forecast("Good", water_quality=wq),
+            {"min_rating": "Good"},
             datetime(2026, 6, 9, 5, 0, tzinfo=EAST),
         )
         _s, text, html = notif.build_email("Montauk", d)
@@ -142,7 +175,8 @@ class TestBuildEmail:
 
     def test_no_hab_risk_no_caveat_in_email(self):
         d = notif.evaluate_forecast(
-            _forecast("Good"), {"min_rating": "Good"},
+            _forecast("Good"),
+            {"min_rating": "Good"},
             datetime(2026, 6, 9, 5, 0, tzinfo=EAST),
         )
         _s, text, html = notif.build_email("Montauk", d)
@@ -165,9 +199,13 @@ class TestRunNotificationCheck:
             return True
 
         monkeypatch.setattr(
-            notif, "get_location",
-            lambda lid: {"id": lid, "name": "Montauk", "timezone": "America/New_York"}
-            if lid == "montauk-ny" else None,
+            notif,
+            "get_location",
+            lambda lid: (
+                {"id": lid, "name": "Montauk", "timezone": "America/New_York"}
+                if lid == "montauk-ny"
+                else None
+            ),
         )
         return sent_emails, sent_push, fake_email, fake_push
 
@@ -186,11 +224,16 @@ class TestRunNotificationCheck:
 
     def test_sends_email_and_dedupes(self, monkeypatch, patched):
         sent_emails, _sp, fake_email, fake_push = patched
-        monkeypatch.setattr(notif, "iter_notification_candidates", lambda: [self._candidate()])
-        recorded = []
-        monkeypatch.setattr(notif, "was_notified", lambda u, loc, d: (u, loc, d) in recorded)
         monkeypatch.setattr(
-            notif, "record_notification",
+            notif, "iter_notification_candidates", lambda: [self._candidate()]
+        )
+        recorded = []
+        monkeypatch.setattr(
+            notif, "was_notified", lambda u, loc, d: (u, loc, d) in recorded
+        )
+        monkeypatch.setattr(
+            notif,
+            "record_notification",
             lambda u, loc, d, w="", c="": recorded.append((u, loc, d)),
         )
 
@@ -199,38 +242,56 @@ class TestRunNotificationCheck:
 
         now = datetime(2026, 6, 9, 5, 0, tzinfo=EAST)
 
-        s1 = notif.run_notification_check(now, forecast_loader=loader, email_sender=fake_email, push_sender=fake_push)
+        s1 = notif.run_notification_check(
+            now, forecast_loader=loader, email_sender=fake_email, push_sender=fake_push
+        )
         assert s1["sent"] == 1
         assert sent_emails == [("a@b.com", "Good fishing at Montauk today")]
 
         # Second run same day → deduped, nothing sent.
-        s2 = notif.run_notification_check(now, forecast_loader=loader, email_sender=fake_email, push_sender=fake_push)
+        s2 = notif.run_notification_check(
+            now, forecast_loader=loader, email_sender=fake_email, push_sender=fake_push
+        )
         assert s2["sent"] == 0
         assert len(sent_emails) == 1
 
     def test_disabled_user_skipped(self, monkeypatch, patched):
         sent_emails, _sp, fake_email, fake_push = patched
-        monkeypatch.setattr(notif, "iter_notification_candidates", lambda: [self._candidate(enabled=False)])
+        monkeypatch.setattr(
+            notif,
+            "iter_notification_candidates",
+            lambda: [self._candidate(enabled=False)],
+        )
         monkeypatch.setattr(notif, "was_notified", lambda *_: False)
         monkeypatch.setattr(notif, "record_notification", lambda *a, **k: None)
         s = notif.run_notification_check(
             datetime(2026, 6, 9, 5, 0, tzinfo=EAST),
             forecast_loader=lambda *a: _forecast("Excellent"),
-            email_sender=fake_email, push_sender=fake_push,
+            email_sender=fake_email,
+            push_sender=fake_push,
         )
         assert s["sent"] == 0
         assert sent_emails == []
 
     def test_push_channel_uses_subscriptions(self, monkeypatch, patched):
         _se, sent_push, fake_email, fake_push = patched
-        monkeypatch.setattr(notif, "iter_notification_candidates", lambda: [self._candidate(email=False, push=True)])
+        monkeypatch.setattr(
+            notif,
+            "iter_notification_candidates",
+            lambda: [self._candidate(email=False, push=True)],
+        )
         monkeypatch.setattr(notif, "was_notified", lambda *_: False)
         monkeypatch.setattr(notif, "record_notification", lambda *a, **k: None)
-        monkeypatch.setattr(notif, "get_push_subscriptions", lambda uid: [{"endpoint": "https://p/ep", "p256dh": "x", "auth": "y"}])
+        monkeypatch.setattr(
+            notif,
+            "get_push_subscriptions",
+            lambda uid: [{"endpoint": "https://p/ep", "p256dh": "x", "auth": "y"}],
+        )
         s = notif.run_notification_check(
             datetime(2026, 6, 9, 5, 0, tzinfo=EAST),
             forecast_loader=lambda *a: _forecast("Good"),
-            email_sender=fake_email, push_sender=fake_push,
+            email_sender=fake_email,
+            push_sender=fake_push,
         )
         assert s["sent"] == 1
         assert sent_push and sent_push[0][0] == "https://p/ep"
@@ -243,15 +304,24 @@ class TestRunNotificationCheck:
             pushed.append((title, body))
             return True
 
-        monkeypatch.setattr(notif, "iter_notification_candidates", lambda: [self._candidate(email=False, push=True)])
+        monkeypatch.setattr(
+            notif,
+            "iter_notification_candidates",
+            lambda: [self._candidate(email=False, push=True)],
+        )
         monkeypatch.setattr(notif, "was_notified", lambda *_: False)
         monkeypatch.setattr(notif, "record_notification", lambda *a, **k: None)
-        monkeypatch.setattr(notif, "get_push_subscriptions", lambda uid: [{"endpoint": "https://p/ep", "p256dh": "x", "auth": "y"}])
+        monkeypatch.setattr(
+            notif,
+            "get_push_subscriptions",
+            lambda uid: [{"endpoint": "https://p/ep", "p256dh": "x", "auth": "y"}],
+        )
         wq = {"available": True, "hab_risk": "danger", "hab_message": "Toxin danger"}
         s = notif.run_notification_check(
             datetime(2026, 6, 9, 5, 0, tzinfo=EAST),
             forecast_loader=lambda *a: _forecast("Good", water_quality=wq),
-            email_sender=fake_email, push_sender=capturing_push,
+            email_sender=fake_email,
+            push_sender=capturing_push,
         )
         assert s["sent"] == 1
         assert pushed and pushed[0][1].startswith("⚠ Algal bloom risk nearby.")
@@ -266,7 +336,8 @@ class TestRunNotificationCheck:
         s = notif.run_notification_check(
             datetime(2026, 6, 9, 5, 0, tzinfo=EAST),
             forecast_loader=lambda *a: _forecast("Excellent"),
-            email_sender=fake_email, push_sender=fake_push,
+            email_sender=fake_email,
+            push_sender=fake_push,
         )
         assert s["sent"] == 0
 
@@ -274,7 +345,8 @@ class TestRunNotificationCheck:
 class TestBuildDigestEmail:
     def test_single_item_matches_build_email(self):
         d = notif.evaluate_forecast(
-            _forecast("Good"), {"min_rating": "Good"},
+            _forecast("Good"),
+            {"min_rating": "Good"},
             datetime(2026, 6, 9, 5, 0, tzinfo=EAST),
         )
         single = notif.build_digest_email([("Montauk", d)])
@@ -282,7 +354,8 @@ class TestBuildDigestEmail:
 
     def test_multiple_items_roll_up(self):
         d = notif.evaluate_forecast(
-            _forecast("Excellent", 90), {"min_rating": "Good"},
+            _forecast("Excellent", 90),
+            {"min_rating": "Good"},
             datetime(2026, 6, 9, 5, 0, tzinfo=EAST),
         )
         subject, text, html = notif.build_digest_email(
@@ -296,11 +369,13 @@ class TestBuildDigestEmail:
     def test_hab_risk_flagged_per_location(self):
         wq = {"available": True, "hab_risk": "watch", "hab_message": "Bloom watch"}
         clean = notif.evaluate_forecast(
-            _forecast("Good", 80), {"min_rating": "Good"},
+            _forecast("Good", 80),
+            {"min_rating": "Good"},
             datetime(2026, 6, 9, 5, 0, tzinfo=EAST),
         )
         risky = notif.evaluate_forecast(
-            _forecast("Good", 80, water_quality=wq), {"min_rating": "Good"},
+            _forecast("Good", 80, water_quality=wq),
+            {"min_rating": "Good"},
             datetime(2026, 6, 9, 5, 0, tzinfo=EAST),
         )
         _subject, text, html = notif.build_digest_email(
@@ -327,7 +402,8 @@ class TestDigestBatching:
             notification_prefs={"enabled": True, "email": True, "min_rating": "Good"},
         )
         monkeypatch.setattr(
-            notif, "get_location",
+            notif,
+            "get_location",
             lambda lid: {"id": lid, "name": lid, "timezone": "America/New_York"},
         )
         emails = []
@@ -361,9 +437,13 @@ class TestRunNotificationCheckRealDB:
         )
 
         monkeypatch.setattr(
-            notif, "get_location",
-            lambda lid: {"id": lid, "name": "Montauk", "timezone": "America/New_York"}
-            if lid == "montauk-ny" else None,
+            notif,
+            "get_location",
+            lambda lid: (
+                {"id": lid, "name": "Montauk", "timezone": "America/New_York"}
+                if lid == "montauk-ny"
+                else None
+            ),
         )
         sent = []
         now = datetime(2026, 6, 9, 5, 0, tzinfo=EAST)
@@ -371,7 +451,7 @@ class TestRunNotificationCheckRealDB:
         s1 = notif.run_notification_check(
             now,
             forecast_loader=lambda *a: _forecast("Good"),
-            email_sender=lambda *a: (sent.append(a[0]) or True),
+            email_sender=lambda *a: sent.append(a[0]) or True,
             push_sender=lambda *a: False,
         )
         assert s1["candidates"] == 1 and s1["sent"] == 1
@@ -381,7 +461,7 @@ class TestRunNotificationCheckRealDB:
         s2 = notif.run_notification_check(
             now,
             forecast_loader=lambda *a: _forecast("Good"),
-            email_sender=lambda *a: (sent.append(a[0]) or True),
+            email_sender=lambda *a: sent.append(a[0]) or True,
             push_sender=lambda *a: False,
         )
         assert s2["sent"] == 0
@@ -509,9 +589,13 @@ class TestLocationNow:
 class TestRunNotificationCheckErrorPaths:
     def _setup(self, monkeypatch, loc="montauk-ny"):
         monkeypatch.setattr(
-            notif, "get_location",
-            lambda lid: {"id": lid, "name": "Montauk", "timezone": "America/New_York"}
-            if lid == loc else None,
+            notif,
+            "get_location",
+            lambda lid: (
+                {"id": lid, "name": "Montauk", "timezone": "America/New_York"}
+                if lid == loc
+                else None
+            ),
         )
         monkeypatch.setattr(notif, "was_notified", lambda *_: False)
         monkeypatch.setattr(notif, "record_notification", lambda *a, **k: None)
@@ -521,7 +605,12 @@ class TestRunNotificationCheckErrorPaths:
             "user_id": 7,
             "email": "a@b.com",
             "default_location_id": None,
-            "notification_prefs": {"enabled": True, "email": True, "push": False, "min_rating": "Good"},
+            "notification_prefs": {
+                "enabled": True,
+                "email": True,
+                "push": False,
+                "min_rating": "Good",
+            },
             "fishing_profile": {},
             "favorites": ["montauk-ny"],
         }
@@ -530,7 +619,9 @@ class TestRunNotificationCheckErrorPaths:
 
     def test_forecast_loader_exception_continues(self, monkeypatch):
         self._setup(monkeypatch)
-        monkeypatch.setattr(notif, "iter_notification_candidates", lambda: [self._candidate()])
+        monkeypatch.setattr(
+            notif, "iter_notification_candidates", lambda: [self._candidate()]
+        )
 
         def boom(*a):
             raise RuntimeError("network down")
@@ -547,7 +638,9 @@ class TestRunNotificationCheckErrorPaths:
 
     def test_none_forecast_continues(self, monkeypatch):
         self._setup(monkeypatch)
-        monkeypatch.setattr(notif, "iter_notification_candidates", lambda: [self._candidate()])
+        monkeypatch.setattr(
+            notif, "iter_notification_candidates", lambda: [self._candidate()]
+        )
         emails = []
         s = notif.run_notification_check(
             datetime(2026, 6, 9, 5, 0, tzinfo=EAST),
@@ -559,7 +652,9 @@ class TestRunNotificationCheckErrorPaths:
 
     def test_email_send_exception_does_not_crash(self, monkeypatch):
         self._setup(monkeypatch)
-        monkeypatch.setattr(notif, "iter_notification_candidates", lambda: [self._candidate()])
+        monkeypatch.setattr(
+            notif, "iter_notification_candidates", lambda: [self._candidate()]
+        )
 
         def boom_email(*a):
             raise RuntimeError("SMTP down")
@@ -579,7 +674,8 @@ class TestRunNotificationCheckErrorPaths:
         cand["notification_prefs"]["email"] = False
         monkeypatch.setattr(notif, "iter_notification_candidates", lambda: [cand])
         monkeypatch.setattr(
-            notif, "get_push_subscriptions",
+            notif,
+            "get_push_subscriptions",
             lambda uid: [{"endpoint": "https://p/ep", "p256dh": "x", "auth": "y"}],
         )
 
@@ -600,8 +696,11 @@ class TestRunNotificationCheckErrorPaths:
         monkeypatch.setattr(notif, "iter_notification_candidates", lambda: [])
         import services.email as email_mod
         import services.push as push_mod
+
         captured = {}
-        monkeypatch.setattr(email_mod, "send_email", lambda *a: captured.setdefault("email", True))
+        monkeypatch.setattr(
+            email_mod, "send_email", lambda *a: captured.setdefault("email", True)
+        )
         monkeypatch.setattr(push_mod, "send_push", lambda *a: False)
         # No injected senders → should import defaults without error
         s = notif.run_notification_check(datetime(2026, 6, 9, 5, 0, tzinfo=EAST))

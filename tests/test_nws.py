@@ -486,9 +486,22 @@ class TestFetchStateAlertsAdditional:
     def test_skips_feature_without_event(self):
         body = {
             "features": [
-                {"properties": {"event": "", "severity": "", "headline": "", "description": ""}},
-                {"properties": {"event": "Rip Current Statement", "severity": "Minor",
-                                "headline": "Rip currents", "description": ""}},
+                {
+                    "properties": {
+                        "event": "",
+                        "severity": "",
+                        "headline": "",
+                        "description": "",
+                    }
+                },
+                {
+                    "properties": {
+                        "event": "Rip Current Statement",
+                        "severity": "Minor",
+                        "headline": "Rip currents",
+                        "description": "",
+                    }
+                },
             ]
         }
         mock_resp = MagicMock()
@@ -515,7 +528,9 @@ class TestTryNwsForecast:
     def test_returns_parsed_conditions(self):
         body = {
             "properties": {
-                "periods": [{"detailedForecast": "SW wind 10 to 15 kt. Seas 3 to 5 ft."}]
+                "periods": [
+                    {"detailedForecast": "SW wind 10 to 15 kt. Seas 3 to 5 ft."}
+                ]
             }
         }
         with patch("services.nws.http_get", return_value=self._mock(body)):
@@ -533,6 +548,7 @@ class TestTryNwsForecast:
 
     def test_propagates_http_error(self):
         import requests
+
         m = MagicMock()
         m.raise_for_status.side_effect = requests.HTTPError("403")
         with patch("services.nws.http_get", return_value=m):
@@ -587,6 +603,7 @@ class TestTryNwsGridpoint:
         with patch("services.nws.http_get", side_effect=[pts, fc]):
             wind, _wave, direction = _try_nws_gridpoint(34.0, -77.0)
         import pytest as _pytest
+
         assert wind is not None
         # 10 mph × 0.868976 ≈ 8.7 kt
         assert wind[0] == _pytest.approx(8.7, abs=0.1)
@@ -630,7 +647,9 @@ class TestFetchNwsExtended:
     def test_gridpoint_failure_falls_back_to_zone(self):
         zone_periods = [{"name": "Tonight", "detailedForecast": "SE wind 15 kt."}]
         marine_fc = self._fc_resp(zone_periods)
-        with patch("services.nws.http_get", side_effect=[Exception("network"), marine_fc]):
+        with patch(
+            "services.nws.http_get", side_effect=[Exception("network"), marine_fc]
+        ):
             result = _fetch_nws_extended(34.0, -77.0, zone="AMZ158")
         assert result == zone_periods
 
@@ -640,6 +659,8 @@ class TestFetchNwsExtended:
         assert result == []
 
     def test_both_failures_returns_empty(self):
-        with patch("services.nws.http_get", side_effect=[Exception("pts"), Exception("zone")]):
+        with patch(
+            "services.nws.http_get", side_effect=[Exception("pts"), Exception("zone")]
+        ):
             result = _fetch_nws_extended(34.0, -77.0, zone="AMZ158")
         assert result == []

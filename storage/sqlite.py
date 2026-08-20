@@ -286,21 +286,23 @@ def _run_migrations(conn: sqlite3.Connection) -> None:
     _ADMIN_USERNAME = "admin"
     _ADMIN_PASSWORD = "admin"
     _ADMIN_LOCATION = "wrightsville-beach-nc"
-    _ADMIN_PROFILE = json.dumps({
-        "completed": True,
-        "fishing_types": ["surf", "pier", "bridge"],
-        "live_bait": "sometimes",
-        "cut_bait": "yes",
-        "lures": "no",
-        "experience": "intermediate",
-        "targets": [],
-        "preferred_times": ["anytime"],
-        "primary_goal": "exploring",
-        "condition_tolerance": "moderate",
-        "tide_preference": "any",
-        "session_frequency": "monthly",
-        "catch_release": "sometimes",
-    })
+    _ADMIN_PROFILE = json.dumps(
+        {
+            "completed": True,
+            "fishing_types": ["surf", "pier", "bridge"],
+            "live_bait": "sometimes",
+            "cut_bait": "yes",
+            "lures": "no",
+            "experience": "intermediate",
+            "targets": [],
+            "preferred_times": ["anytime"],
+            "primary_goal": "exploring",
+            "condition_tolerance": "moderate",
+            "tide_preference": "any",
+            "session_frequency": "monthly",
+            "catch_release": "sometimes",
+        }
+    )
     _admin_row = conn.execute(
         "SELECT id FROM users WHERE username = ? COLLATE NOCASE",
         (_ADMIN_USERNAME,),
@@ -313,8 +315,12 @@ def _run_migrations(conn: sqlite3.Connection) -> None:
             (_ADMIN_USERNAME, _admin_pw),
         )
         _admin_id = _admin_cur.lastrowid
-        conn.execute("INSERT OR IGNORE INTO profiles (user_id) VALUES (?)", (_admin_id,))
-        conn.execute("INSERT OR IGNORE INTO locations (user_id) VALUES (?)", (_admin_id,))
+        conn.execute(
+            "INSERT OR IGNORE INTO profiles (user_id) VALUES (?)", (_admin_id,)
+        )
+        conn.execute(
+            "INSERT OR IGNORE INTO locations (user_id) VALUES (?)", (_admin_id,)
+        )
         conn.execute(
             "UPDATE profiles SET fishing_profile = ?, updated_at = datetime('now') WHERE user_id = ?",
             (_ADMIN_PROFILE, _admin_id),
@@ -392,6 +398,7 @@ def _run_migrations(conn: sqlite3.Connection) -> None:
             FROM forecasts_legacy
             """
         )
+
 
 def _prune_old_forecasts(conn: sqlite3.Connection) -> None:
     """Keep only the most-recent row per location in the forecasts history table.
@@ -829,9 +836,7 @@ def record_notification(
         conn.close()
 
 
-def add_push_subscription(
-    user_id: int, endpoint: str, p256dh: str, auth: str
-) -> None:
+def add_push_subscription(user_id: int, endpoint: str, p256dh: str, auth: str) -> None:
     """Store (or refresh) a Web Push subscription for a user."""
     conn = get_db()
     try:
@@ -871,9 +876,7 @@ def delete_push_subscription(endpoint: str) -> None:
     """Remove a single push subscription by endpoint (e.g. after a 410 Gone)."""
     conn = get_db()
     try:
-        conn.execute(
-            "DELETE FROM push_subscriptions WHERE endpoint = ?", (endpoint,)
-        )
+        conn.execute("DELETE FROM push_subscriptions WHERE endpoint = ?", (endpoint,))
         conn.commit()
     finally:
         conn.close()
@@ -1389,4 +1392,3 @@ def delete_forecast(location_id: str) -> bool:
     finally:
         conn.close()
     return deleted
-

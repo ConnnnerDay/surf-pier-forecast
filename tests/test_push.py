@@ -59,7 +59,9 @@ class TestPushService:
 
         self._install_fake_pywebpush(monkeypatch, raises=raises)
         pruned = []
-        monkeypatch.setattr(push, "delete_push_subscription", lambda ep: pruned.append(ep))
+        monkeypatch.setattr(
+            push, "delete_push_subscription", lambda ep: pruned.append(ep)
+        )
         sub = {"endpoint": "https://p/dead", "p256dh": "x", "auth": "y"}
         assert push.send_push(sub, "t", "b", "/u") is False
         assert pruned == ["https://p/dead"]
@@ -73,7 +75,9 @@ class TestPushService:
 
         self._install_fake_pywebpush(monkeypatch, raises=raises)
         pruned = []
-        monkeypatch.setattr(push, "delete_push_subscription", lambda ep: pruned.append(ep))
+        monkeypatch.setattr(
+            push, "delete_push_subscription", lambda ep: pruned.append(ep)
+        )
         sub = {"endpoint": "https://p/ep", "p256dh": "x", "auth": "y"}
         assert push.send_push(sub, "t", "b", "/u") is False
         assert pruned == []

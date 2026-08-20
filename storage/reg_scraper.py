@@ -49,6 +49,7 @@ _USER_AGENT = "Mozilla/5.0 (compatible; SurfForecast/1.0 fishing-regulation-look
 # Shared helpers
 # ──────────────────────────────────────────────────────────────────
 
+
 def _fetch_page(url: str) -> Optional[str]:
     """Fetch *url* and return its text content, or None on error.
 
@@ -82,6 +83,7 @@ def _fetch_page(url: str) -> Optional[str]:
         _log.warning("reg_scraper: fetch failed for %s: %s", url, exc)
         return None
 
+
 def _normalize_name(name: str) -> str:
     """Convert a display species name to a snake_case key."""
     return (
@@ -95,6 +97,7 @@ def _normalize_name(name: str) -> str:
         .strip()
         .replace(" ", "_")
     )
+
 
 def _name_variants(display_name: str) -> list[str]:
     """Return candidate snake_case keys for a species display name.
@@ -113,11 +116,13 @@ def _name_variants(display_name: str) -> list[str]:
         variants.append(short)
     return variants
 
+
 def _strip_html(html: str) -> str:
     text = re.sub(r"<[^>]+>", " ", html)
     text = re.sub(r"&amp;", "&", text)
     text = re.sub(r"&[a-zA-Z]+;", " ", text)
     return re.sub(r"\s+", " ", text).strip()
+
 
 def _most_common(values: list[str]) -> str:
     """Return the most frequently occurring non-empty string in *values*."""
@@ -125,6 +130,7 @@ def _most_common(values: list[str]) -> str:
     if not cleaned:
         return ""
     return Counter(cleaned).most_common(1)[0][0]
+
 
 # ──────────────────────────────────────────────────────────────────
 # Florida — FWC per-species pages
@@ -160,6 +166,7 @@ _FL_SLUGS: dict[str, str] = {
     "black_drum": "black-drum",
     "scup": "scup",
 }
+
 
 def _parse_fl_page(html: str) -> Optional[dict[str, str]]:
     """Extract dominant regulations from a FWC species page.
@@ -242,6 +249,7 @@ def _parse_fl_page(html: str) -> Optional[dict[str, str]]:
         "scraped_source": "myfwc.com",
     }
 
+
 def _scrape_fl(species_name: str) -> Optional[dict[str, str]]:
     slug = None
     for candidate in _name_variants(species_name):
@@ -256,6 +264,7 @@ def _scrape_fl(species_name: str) -> Optional[dict[str, str]]:
         _log.warning("FL scrape failed for %s", species_name)
         return None
     return _parse_fl_page(html)
+
 
 # ──────────────────────────────────────────────────────────────────
 # Virginia — VA Marine Resources Commission (single-page listing)
@@ -285,6 +294,7 @@ _VA_NAMES: dict[str, list[str]] = {
     "red_snapper": ["RED SNAPPER"],
 }
 
+
 def _get_va_html() -> Optional[str]:
     global _va_page_cache
     with _va_page_lock:
@@ -294,6 +304,7 @@ def _get_va_html() -> Optional[str]:
         if html:
             _va_page_cache = html
         return html
+
 
 def _parse_va_page(html: str, species_name: str) -> Optional[dict[str, str]]:
     names = None
@@ -353,11 +364,13 @@ def _parse_va_page(html: str, species_name: str) -> Optional[dict[str, str]]:
 
     return None
 
+
 def _scrape_va(species_name: str) -> Optional[dict[str, str]]:
     html = _get_va_html()
     if not html:
         return None
     return _parse_va_page(html, species_name)
+
 
 # ──────────────────────────────────────────────────────────────────
 # Georgia — Coastal GA DNR definition-list page
@@ -392,6 +405,7 @@ _GA_NAMES: dict[str, list[str]] = {
     "amberjack": ["amberjack"],
 }
 
+
 def _get_ga_html() -> Optional[str]:
     global _ga_page_cache
     with _ga_page_lock:
@@ -401,6 +415,7 @@ def _get_ga_html() -> Optional[str]:
         if html:
             _ga_page_cache = html
         return html
+
 
 def _parse_ga_dd(dd_text: str) -> dict[str, str]:
     """Extract season/limit/size from a GA coastalgadnr DD text block.
@@ -462,6 +477,7 @@ def _parse_ga_dd(dd_text: str) -> dict[str, str]:
         "min_size": size[:120],
     }
 
+
 def _parse_ga_page(html: str, species_name: str) -> Optional[dict[str, str]]:
     """Parse coastalgadnr.org/Limits which uses <dl>/<dt>/<dd> structure.
 
@@ -494,11 +510,13 @@ def _parse_ga_page(html: str, species_name: str) -> Optional[dict[str, str]]:
                     }
     return None
 
+
 def _scrape_ga(species_name: str) -> Optional[dict[str, str]]:
     html = _get_ga_html()
     if not html:
         return None
     return _parse_ga_page(html, species_name)
+
 
 # ──────────────────────────────────────────────────────────────────
 # North Carolina — NC DMF size/bag limits table
@@ -534,6 +552,7 @@ _NC_NAMES: dict[str, list[str]] = {
     "gag_grouper": ["snapper", "grouper"],  # grouped complex on NC page
 }
 
+
 def _get_nc_html() -> Optional[str]:
     global _nc_page_cache
     with _nc_page_lock:
@@ -543,6 +562,7 @@ def _get_nc_html() -> Optional[str]:
         if html:
             _nc_page_cache = html
         return html
+
 
 def _parse_nc_page(html: str, species_name: str) -> Optional[dict[str, str]]:
     """Parse the NC DMF recreational size/bag limits table.
@@ -605,11 +625,13 @@ def _parse_nc_page(html: str, species_name: str) -> Optional[dict[str, str]]:
                     }
     return None
 
+
 def _scrape_nc(species_name: str) -> Optional[dict[str, str]]:
     html = _get_nc_html()
     if not html:
         return None
     return _parse_nc_page(html, species_name)
+
 
 # ──────────────────────────────────────────────────────────────────
 # New York — NY DEC recreational fishing regulations table
@@ -640,6 +662,7 @@ _NY_NAMES: dict[str, list[str]] = {
     "flounder": ["summer flounder", "fluke"],
 }
 
+
 def _get_ny_html() -> Optional[str]:
     global _ny_page_cache
     with _ny_page_lock:
@@ -649,6 +672,7 @@ def _get_ny_html() -> Optional[str]:
         if html:
             _ny_page_cache = html
         return html
+
 
 def _parse_ny_page(html: str, species_name: str) -> Optional[dict[str, str]]:
     """Parse NY DEC 4-column saltwater regulations table.
@@ -694,11 +718,13 @@ def _parse_ny_page(html: str, species_name: str) -> Optional[dict[str, str]]:
                     }
     return None
 
+
 def _scrape_ny(species_name: str) -> Optional[dict[str, str]]:
     html = _get_ny_html()
     if not html:
         return None
     return _parse_ny_page(html, species_name)
+
 
 # ──────────────────────────────────────────────────────────────────
 # Alabama — ADCNR div.table-row layout
@@ -731,6 +757,7 @@ _AL_NAMES: dict[str, list[str]] = {
     "amberjack": ["greater amberjack", "amberjack"],
 }
 
+
 def _get_al_html() -> Optional[str]:
     global _al_page_cache
     with _al_page_lock:
@@ -740,6 +767,7 @@ def _get_al_html() -> Optional[str]:
         if html:
             _al_page_cache = html
         return html
+
 
 def _parse_al_page(html: str, species_name: str) -> Optional[dict[str, str]]:
     """Parse outdooralabama.com saltwater size/creel limits page.
@@ -776,11 +804,13 @@ def _parse_al_page(html: str, species_name: str) -> Optional[dict[str, str]]:
                     }
     return None
 
+
 def _scrape_al(species_name: str) -> Optional[dict[str, str]]:
     html = _get_al_html()
     if not html:
         return None
     return _parse_al_page(html, species_name)
+
 
 # ──────────────────────────────────────────────────────────────────
 # Rhode Island — RI DEM recreational table (Table index 1)
@@ -808,6 +838,7 @@ _RI_NAMES: dict[str, list[str]] = {
     "flounder": ["summer flounder", "fluke"],
 }
 
+
 def _get_ri_html() -> Optional[str]:
     global _ri_page_cache
     with _ri_page_lock:
@@ -817,6 +848,7 @@ def _get_ri_html() -> Optional[str]:
         if html:
             _ri_page_cache = html
         return html
+
 
 def _parse_ri_page(html: str, species_name: str) -> Optional[dict[str, str]]:
     """Parse RI DEM min-sizes/possession-limits page.
@@ -860,11 +892,13 @@ def _parse_ri_page(html: str, species_name: str) -> Optional[dict[str, str]]:
                     }
     return None
 
+
 def _scrape_ri(species_name: str) -> Optional[dict[str, str]]:
     html = _get_ri_html()
     if not html:
         return None
     return _parse_ri_page(html, species_name)
+
 
 # ──────────────────────────────────────────────────────────────────
 # Texas — TPWD per-species bag/length limit pages
@@ -915,6 +949,7 @@ _TX_TARGET: dict[str, str] = {
     "amberjack": "amberjack",
     "pompano": "pompano",
 }
+
 
 def _parse_tx_page(text: str, target: str) -> Optional[dict[str, str]]:
     """Extract Daily Bag / Min Length / Max Length from a TPWD species page.
@@ -986,6 +1021,7 @@ def _parse_tx_page(text: str, target: str) -> Optional[dict[str, str]]:
         }
     return None
 
+
 def _scrape_tx(species_name: str) -> Optional[dict[str, str]]:
     slug = None
     target = None
@@ -1003,13 +1039,12 @@ def _scrape_tx(species_name: str) -> Optional[dict[str, str]]:
         _log.warning("TX scrape failed for %s", species_name)
         return None
     try:
-    
-
         soup = BeautifulSoup(html, "html.parser")
         return _parse_tx_page(soup.get_text("\n", strip=True), target)
     except Exception as exc:
         _log.warning("TX parse failed for %s: %s", species_name, exc)
         return None
+
 
 # ──────────────────────────────────────────────────────────────────
 # Mississippi — eRegulations.com inshore/nearshore table
@@ -1037,6 +1072,7 @@ _MS_NAMES: dict[str, list[str]] = {
     "black_drum": ["black drum"],
     "tripletail": ["tripletail"],
 }
+
 
 def _get_ms_html() -> Optional[str]:
     global _ms_page_cache
@@ -1067,6 +1103,7 @@ def _get_ms_html() -> Optional[str]:
         except Exception as exc:
             _log.warning("MS page fetch failed: %s", exc)
             return None
+
 
 def _parse_ms_page(html: str, species_name: str) -> Optional[dict[str, str]]:
     """Parse MS eregulations inshore/nearshore table (Table 1).
@@ -1127,11 +1164,13 @@ def _parse_ms_page(html: str, species_name: str) -> Optional[dict[str, str]]:
                         }
     return None
 
+
 def _scrape_ms(species_name: str) -> Optional[dict[str, str]]:
     html = _get_ms_html()
     if not html:
         return None
     return _parse_ms_page(html, species_name)
+
 
 # ──────────────────────────────────────────────────────────────────
 # Generic table scraper — for the many states whose recreational rules
@@ -1140,6 +1179,7 @@ def _scrape_ms(species_name: str) -> Optional[dict[str, str]]:
 # structure differs the parser returns None and the caller falls back to
 # the static snapshot, so adding a state is low-risk.
 # ──────────────────────────────────────────────────────────────────
+
 
 def _detect_reg_columns(cells: list[str]) -> dict[str, int]:
     """Map size/bag/season fields to column indices from a header row.
@@ -1153,13 +1193,23 @@ def _detect_reg_columns(cells: list[str]) -> dict[str, int]:
         h = raw.lower()
         if "species" in h or "common name" in h:
             cols.setdefault("species", i)
-        elif ("size" in h or "length" in h or "minimum" in h or '"' in h or " in" in h) and "season" not in h:
+        elif (
+            "size" in h or "length" in h or "minimum" in h or '"' in h or " in" in h
+        ) and "season" not in h:
             cols.setdefault("size", i)
         elif "season" in h or "open" in h or "closed" in h or "dates" in h:
             cols.setdefault("season", i)
-        elif "bag" in h or "creel" in h or "possession" in h or "daily" in h or "limit" in h or "number" in h:
+        elif (
+            "bag" in h
+            or "creel" in h
+            or "possession" in h
+            or "daily" in h
+            or "limit" in h
+            or "number" in h
+        ):
             cols.setdefault("bag", i)
     return cols
+
 
 def _parse_reg_table(
     html: str,
@@ -1208,7 +1258,11 @@ def _parse_reg_table(
                 continue
 
             def _cell(idx: int) -> str:
-                return tds[idx].get_text(" ", strip=True).strip() if 0 <= idx < len(tds) else ""
+                return (
+                    tds[idx].get_text(" ", strip=True).strip()
+                    if 0 <= idx < len(tds)
+                    else ""
+                )
 
             size = _cell(size_col)
             bag = _cell(bag_col)
@@ -1286,6 +1340,7 @@ def _parse_reg_labels(
         "scraped_source": source,
     }
 
+
 def _make_table_scraper(
     url: str,
     names_map: dict[str, list[str]],
@@ -1316,11 +1371,17 @@ def _make_table_scraper(
 
     return _scrape
 
+
 # Common coastal species → the substrings (incl. regional aliases) likely to
 # appear in a state regulation table's first column.
 _COMMON_NAMES: dict[str, list[str]] = {
     "red_drum": ["red drum", "redfish", "channel bass", "puppy drum"],
-    "spotted_seatrout": ["spotted seatrout", "spotted sea trout", "speckled trout", "spotted weakfish"],
+    "spotted_seatrout": [
+        "spotted seatrout",
+        "spotted sea trout",
+        "speckled trout",
+        "spotted weakfish",
+    ],
     "striped_bass": ["striped bass", "rockfish", "striper"],
     "bluefish": ["bluefish"],
     "summer_flounder": ["summer flounder", "fluke"],
@@ -1428,8 +1489,10 @@ _NEW_TABLE_STATES = {
     ),
 }
 
+
 def _verify_note(source_label: str) -> str:
     return f"Verify current rules with {source_label} before fishing."
+
 
 # ──────────────────────────────────────────────────────────────────
 # State dispatcher
@@ -1457,6 +1520,7 @@ for _state_code, (_url, _label, _src) in _NEW_TABLE_STATES.items():
 # SQLite cache helpers
 # ──────────────────────────────────────────────────────────────────
 
+
 def _cache_get(species_key: str, state: str) -> Optional[dict[str, Any]]:
     """Return cached regulation dict, or None if missing / expired."""
     try:
@@ -1481,6 +1545,7 @@ def _cache_get(species_key: str, state: str) -> Optional[dict[str, Any]]:
     except Exception:
         return None
 
+
 def _cache_set(species_key: str, state: str, data: dict[str, Any]) -> None:
     try:
         conn = get_db()
@@ -1500,9 +1565,11 @@ def _cache_set(species_key: str, state: str, data: dict[str, Any]) -> None:
             exc_info=True,
         )
 
+
 # ──────────────────────────────────────────────────────────────────
 # Public API
 # ──────────────────────────────────────────────────────────────────
+
 
 def get_regulation_stale(
     species_name: str,
@@ -1587,6 +1654,7 @@ def scrape_regulation(
     _cache_set(cache_key, state, result or {})
 
     return result
+
 
 def invalidate_cache(state: Optional[str] = None) -> int:
     """Delete cached scrape entries, optionally filtered to one state.

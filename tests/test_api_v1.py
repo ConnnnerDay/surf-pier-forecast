@@ -668,6 +668,7 @@ def test_v1_community_activity_requires_login(client):
 
 def test_v1_community_activity_unavailable_below_threshold(client):
     from storage.sqlite import create_user
+
     uid = create_user("comm_api", "pass1234")
     _login_session(client, uid)
     resp = client.get("/api/v1/community/activity?location_id=wrightsville-beach-nc")
@@ -677,6 +678,7 @@ def test_v1_community_activity_unavailable_below_threshold(client):
 
 def test_v1_community_activity_available_when_threshold_met(client):
     from storage.sqlite import create_user, save_preferences, add_log_entry
+
     viewer = create_user("comm_viewer", "pass1234")
     _login_session(client, viewer)
     for i in range(3):

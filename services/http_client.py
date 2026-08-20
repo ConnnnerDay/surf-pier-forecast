@@ -22,7 +22,11 @@ _session = requests.Session()
 _adapter = HTTPAdapter(pool_connections=10, pool_maxsize=20, max_retries=0)
 _session.mount("https://", _adapter)
 _session.mount("http://", _adapter)
-_session.headers.update({"User-Agent": "surf-pier-forecast/1.0 (+https://github.com/connnnerday/surf-pier-forecast)"})
+_session.headers.update(
+    {
+        "User-Agent": "surf-pier-forecast/1.0 (+https://github.com/connnnerday/surf-pier-forecast)"
+    }
+)
 
 # Short-lived response cache: prevents duplicate network calls when concurrent
 # background refreshes for the same location overlap (each fires 20+ GET requests).
@@ -41,7 +45,9 @@ def _cache_key(url: str, headers: Optional[dict[str, str]]) -> tuple:
     return (url, tuple(sorted(headers.items())))
 
 
-def _cache_get(url: str, headers: Optional[dict[str, str]]) -> Optional[requests.Response]:
+def _cache_get(
+    url: str, headers: Optional[dict[str, str]]
+) -> Optional[requests.Response]:
     key = _cache_key(url, headers)
     with _RESPONSE_CACHE_LOCK:
         entry = _RESPONSE_CACHE.get(key)
@@ -59,7 +65,9 @@ def _cache_get(url: str, headers: Optional[dict[str, str]]) -> Optional[requests
     return resp
 
 
-def _cache_set(url: str, headers: Optional[dict[str, str]], response: requests.Response) -> None:
+def _cache_set(
+    url: str, headers: Optional[dict[str, str]], response: requests.Response
+) -> None:
     content = response.content
     if len(content) > _RESPONSE_CACHE_MAX_BYTES:
         return
@@ -68,7 +76,12 @@ def _cache_set(url: str, headers: Optional[dict[str, str]], response: requests.R
         if len(_RESPONSE_CACHE) >= _RESPONSE_CACHE_MAX:
             oldest = min(_RESPONSE_CACHE, key=lambda k: _RESPONSE_CACHE[k][0])
             _RESPONSE_CACHE.pop(oldest, None)
-        _RESPONSE_CACHE[key] = (time.time(), response.status_code, content, response.encoding)
+        _RESPONSE_CACHE[key] = (
+            time.time(),
+            response.status_code,
+            content,
+            response.encoding,
+        )
 
 
 def get(

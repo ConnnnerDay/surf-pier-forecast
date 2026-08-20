@@ -23,10 +23,34 @@ _WB_LAT, _WB_LNG = 34.2104, -77.7964
 def fake_catalogs(monkeypatch):
     """Inject small in-memory CO-OPS and NDBC catalogs near Wrightsville Beach."""
     coops = [
-        {"id": "8658163", "name": "Wrightsville Beach", "lat": 34.21, "lng": -77.79, "state": "NC"},
-        {"id": "8656483", "name": "Beaufort", "lat": 34.72, "lng": -76.67, "state": "NC"},
-        {"id": "9410230", "name": "La Jolla", "lat": 32.87, "lng": -117.26, "state": "CA"},
-        {"id": "8771450", "name": "Galveston", "lat": 29.31, "lng": -94.79, "state": "TX"},
+        {
+            "id": "8658163",
+            "name": "Wrightsville Beach",
+            "lat": 34.21,
+            "lng": -77.79,
+            "state": "NC",
+        },
+        {
+            "id": "8656483",
+            "name": "Beaufort",
+            "lat": 34.72,
+            "lng": -76.67,
+            "state": "NC",
+        },
+        {
+            "id": "9410230",
+            "name": "La Jolla",
+            "lat": 32.87,
+            "lng": -117.26,
+            "state": "CA",
+        },
+        {
+            "id": "8771450",
+            "name": "Galveston",
+            "lat": 29.31,
+            "lng": -94.79,
+            "state": "TX",
+        },
     ]
     ndbc = [
         {"id": "41110", "lat": 34.14, "lng": -77.71, "has_met": True},
@@ -35,8 +59,20 @@ def fake_catalogs(monkeypatch):
     ]
     # Water-temp-capable stations (a subset, sited differently from tide gauges).
     temp = [
-        {"id": "8658163", "name": "Wrightsville Beach", "lat": 34.21, "lng": -77.79, "state": "NC"},
-        {"id": "8775870", "name": "Bob Hall Pier", "lat": 27.58, "lng": -97.22, "state": "TX"},
+        {
+            "id": "8658163",
+            "name": "Wrightsville Beach",
+            "lat": 34.21,
+            "lng": -77.79,
+            "state": "NC",
+        },
+        {
+            "id": "8775870",
+            "name": "Bob Hall Pier",
+            "lat": 27.58,
+            "lng": -97.22,
+            "state": "TX",
+        },
     ]
     monkeypatch.setattr(stations, "_load_coops", lambda: coops)
     monkeypatch.setattr(stations, "_load_coops_temp", lambda: temp)
@@ -101,9 +137,18 @@ class TestBuildDynamicLocation:
     def test_has_all_forecast_fields(self, fake_catalogs):
         loc = L.build_dynamic_location(_WB_LAT, _WB_LNG)
         for key in (
-            "id", "name", "state", "lat", "lng", "timezone",
-            "coops_station", "ndbc_stations", "nws_zone",
-            "conditions_region", "temp_region", "fish_region",
+            "id",
+            "name",
+            "state",
+            "lat",
+            "lng",
+            "timezone",
+            "coops_station",
+            "ndbc_stations",
+            "nws_zone",
+            "conditions_region",
+            "temp_region",
+            "fish_region",
         ):
             assert key in loc, f"missing {key}"
         assert loc["coops_station"] == "8658163"
@@ -175,6 +220,7 @@ def _stub_builder():
     Lets generate_forecast run fully offline while exercising the real domain
     logic (species, scoring, orientation, tips) for a dynamic location.
     """
+
     class _Marine:
         def get_marine_forecast(self, *_a, **_k):
             if _k.get("sources_used") is not None:
@@ -264,7 +310,12 @@ class TestDynamicLocationEndToEnd:
         assert out["forecast_version"] == fc.FORECAST_VERSION
         # A full forecast was assembled (verdict computed, species present).
         assert out["conditions"]["verdict"] in {
-            "Excellent", "Good", "Fair", "Challenging", "Poor", "Unknown",
+            "Excellent",
+            "Good",
+            "Fair",
+            "Challenging",
+            "Poor",
+            "Unknown",
         }
         assert isinstance(out["species"], list) and out["species"]
 
@@ -326,9 +377,9 @@ class TestWindOrientation:
 
 class TestGulfScoringDiffersFromEast:
     def _score(self, coast, wind_dir):
-        return score_conditions(
-            (5.0, 8.0), (1.0, 2.0), wind_dir=wind_dir, coast=coast
-        )["score"]
+        return score_conditions((5.0, 8.0), (1.0, 2.0), wind_dir=wind_dir, coast=coast)[
+            "score"
+        ]
 
     def test_east_wind_penalises_atlantic_but_not_gulf(self):
         # An easterly is onshore (murkier water) on the Atlantic but merely

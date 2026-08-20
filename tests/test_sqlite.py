@@ -29,9 +29,7 @@ from storage.sqlite import (
     load_forecast_cache,
     load_forecast_cache_for_user,
     save_forecast_cache,
-    save_forecast_to_db,
     save_page_layout,
-    save_preferences,
 )
 
 
@@ -545,9 +543,7 @@ class TestIterNotificationCandidates:
         # Set notification_prefs to non-empty invalid JSON so the query
         # returns the row but _loads() hits the except branch.
         conn = get_db()
-        conn.execute(
-            "UPDATE users SET email_confirmed = 1 WHERE id = ?", (uid,)
-        )
+        conn.execute("UPDATE users SET email_confirmed = 1 WHERE id = ?", (uid,))
         conn.execute(
             "UPDATE profiles SET notification_prefs = ? WHERE user_id = ?",
             ("invalid-json", uid),
@@ -639,7 +635,9 @@ class TestAddLogEntryBadWaterTemp:
         """Lines 1112-1113: float() raises → water_temp_f = None."""
         uid = create_user("wtuser", "Password1!")
         entry_id = add_log_entry(
-            uid, "test-loc", "Flounder",
+            uid,
+            "test-loc",
+            "Flounder",
             conditions={"water_temp_f": "not-a-number"},
         )
         assert entry_id > 0
@@ -663,6 +661,7 @@ class TestLogStatsCache:
         result1 = get_log_stats(uid, "loc1")
         # Prime the cache; monkeypatch get_db to explode if called again.
         import unittest.mock as _mock
+
         with _mock.patch.object(sq, "get_db", side_effect=AssertionError("cache miss")):
             result2 = get_log_stats(uid, "loc1")
         assert result2 == result1
@@ -785,4 +784,3 @@ class TestLoadForecastBadJson:
         conn.commit()
         conn.close()
         assert load_forecast("bad-forecast") is None
-

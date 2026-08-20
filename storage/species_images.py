@@ -78,7 +78,9 @@ _THUMB_WIDTH_RE = re.compile(r"/(\d+)px-")
 # Commons File: search returns diagrams, range maps, and icons alongside real
 # photos; filenames for those non-photo files reliably contain one of these
 # words, so they're excluded rather than risk showing a map as "the fish".
-_NON_PHOTO_NAME_RE = re.compile(r"(map|distribution|range|diagram|icon|logo)", re.IGNORECASE)
+_NON_PHOTO_NAME_RE = re.compile(
+    r"(map|distribution|range|diagram|icon|logo)", re.IGNORECASE
+)
 
 
 def _cache_key(species_name: str) -> str:
@@ -284,7 +286,9 @@ def _fetch_from_noaa(species_name: str) -> Optional[dict[str, Any]]:
         return None
     page_url = _NOAA_SPECIES_PAGE.format(slug)
     try:
-        resp = http_get(page_url, endpoint="species_images.noaa_species_page", timeout=_TIMEOUT)
+        resp = http_get(
+            page_url, endpoint="species_images.noaa_species_page", timeout=_TIMEOUT
+        )
         if resp.status_code != 200:
             return None
         if len(resp.content) > _NOAA_MAX_RESPONSE_BYTES:
