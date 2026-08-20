@@ -105,10 +105,21 @@ Boots, has real CI, and now has:
   `resolve_dynamic_location` composes sprint 17's station catalogs with
   the curated dataset the same way the legacy
   `_resolve_dynamic_location` did, just decoupled from fetching them.
+- Observation normalization (`app/domain/normalize.py`): wraps sprints
+  13-15's provider-specific typed outputs (NWS, NOAA CO-OPS, NDBC) into
+  `app.domain.models.Observation`, the canonical provenance-carrying
+  vocabulary from sprint 11's ADR-003 domain models. A domain-layer
+  concern, not a provider one — see the module docstring for what's
+  deliberately out of scope (astronomy isn't measured so isn't
+  wrapped; categorical fields like wind direction have no unit;
+  NWS's forecast ranges become an `ObservationRange` of paired
+  low/high `Observation`s rather than one lossily-collapsed value;
+  fallback-value substitution stays forecast-assembly's job, sprint
+  21, as repeatedly deferred since sprint 14).
 
 It does not yet have the `/v1` routes, the ported forecast domain
 *logic*, or a Postgres connection. Those land in the Phase 2 sprints
-listed in the roadmap's sprint ledger (20 onward), each behind its own
+listed in the roadmap's sprint ledger (21 onward), each behind its own
 characterization tests, porting from the reconciliation audit
 ([`docs/R1_RECONCILIATION_AUDIT.md`](../../docs/R1_RECONCILIATION_AUDIT.md))
 rather than copying `v2/backend` or the legacy Flask app verbatim.
