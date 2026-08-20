@@ -157,6 +157,26 @@ async def test_connect_error_raises_provider_connection_error() -> None:
 
 
 @pytest.mark.asyncio
+async def test_other_transport_errors_also_raise_provider_connection_error() -> None:
+    """httpx.ProxyError (and other httpx.TransportError subclasses
+    beyond ConnectError — ReadError, WriteError, PoolTimeout) are
+    real-world transport failures discovered by hitting a sandbox-proxied
+    network path during manual testing; they must degrade the same way
+    ConnectError does, not escape as an unhandled exception.
+    """
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        raise httpx.ProxyError("407 Proxy Authentication Required")
+
+    transport = httpx.MockTransport(handler)
+    async with BoundedHTTPClient(
+        transport=transport, max_retries=0, backoff_base_seconds=0.0
+    ) as client:
+        with pytest.raises(ProviderConnectionError):
+            await client.get_json("https://example.test/proxied")
+
+
+@pytest.mark.asyncio
 async def test_oversized_response_raises_and_is_not_retried() -> None:
     attempts = {"count": 0}
 

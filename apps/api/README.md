@@ -239,12 +239,32 @@ Boots, has real CI, and now has:
   (`uvicorn app.main:app`), not just `TestClient`: `/health/live`,
   `/v1/locations/search`, and `/openapi.json` all responded correctly
   and the live OpenAPI schema matched the committed snapshot exactly.
+- Sprint 22's scoring wired into `app/domain/assembly.py`:
+  `ForecastConditions.score` is a real `ForecastScore` on every
+  forecast, computed by a source-reconciliation policy assembly now
+  owns — the NWS marine-zone range is preferred over the NDBC buoy's
+  single live reading when both are present (the buoy's value becomes
+  a degenerate zero-width range only as a fallback), and wind direction
+  prefers NWS's parsed value over the buoy's. `GET /v1/forecasts/{id}`
+  therefore returns a populated go/no-go score, not just raw
+  per-source readings. Discovered via this wiring's manual real-server
+  smoke test (a live network call this sandbox's proxy rejects with
+  `httpx.ProxyError`, not `httpx.ConnectError`): `app/infra/
+  http_client.py`'s `BoundedHTTPClient` only caught `ConnectError`, not
+  the broader `httpx.TransportError` family, so a proxy/read/write/
+  pool-timeout failure would have escaped as an unhandled exception
+  instead of degrading one source gracefully — fixed and characterized
+  in `test_http_client.py`. Sprint 23's `assess_confidence` and sprint
+  24's `SnapshotCache` are still not wired in — see
+  `app/domain/assembly.py`'s module docstring for exactly why
+  (`assess_confidence` needs real station-distance data `ResolvedLocation`
+  doesn't carry yet).
 
-It does not yet have the ported forecast domain *scoring/confidence
-refinement* wired into the API, or a Postgres connection. Those land in
-the Phase 2 sprints listed in the roadmap's sprint ledger (26 onward),
-each behind its own characterization tests, porting from the
-reconciliation audit
+It does not yet have sprint 23/24's confidence-model/caching refinements
+wired into the API, or a Postgres connection. Those land in the Phase 2
+sprints listed in the roadmap's sprint ledger (26 onward) or as further
+unassigned wiring follow-ups, each behind its own characterization
+tests, porting from the reconciliation audit
 ([`docs/R1_RECONCILIATION_AUDIT.md`](../../docs/R1_RECONCILIATION_AUDIT.md))
 rather than copying `v2/backend` or the legacy Flask app verbatim.
 

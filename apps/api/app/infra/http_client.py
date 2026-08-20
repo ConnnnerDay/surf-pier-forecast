@@ -177,5 +177,14 @@ class BoundedHTTPClient:
                 )
         except httpx.TimeoutException as exc:
             raise ProviderTimeoutError(f"{url} timed out") from exc
-        except httpx.ConnectError as exc:
+        except httpx.TransportError as exc:
+            # Broader than just httpx.ConnectError: also covers
+            # ProxyError, ReadError, WriteError, PoolTimeout, and other
+            # transport-level failures discovered by hitting a real (if
+            # sandbox-proxied) network path during sprint 25's manual
+            # smoke test — none of those are decision-relevant-source
+            # bugs, they're all "couldn't reach the upstream," and
+            # narrowly catching only ConnectError let them escape as
+            # unhandled exceptions instead of degrading one source
+            # gracefully, per the product contract's Reliability bullet.
             raise ProviderConnectionError(f"could not connect to {url}") from exc
