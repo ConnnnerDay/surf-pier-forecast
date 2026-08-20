@@ -22,10 +22,18 @@ Boots, has real CI, and now has:
   and structured `ProviderError` subclasses instead of leaking raw
   `httpx` exceptions. Every future provider adapter (NWS, NOAA CO-OPS,
   NDBC — sprints 13-16) is built on this, per ADR-003.
+- The first provider adapter, NWS (`app/providers/nws.py`): typed
+  marine-zone wind/wave/direction parsing and fetch
+  (`parse_marine_zone_conditions`/`fetch_marine_zone_conditions`), and
+  active-alerts parsing and fetch for a point or a state
+  (`fetch_point_alerts`/`fetch_state_alerts`), ported from the legacy
+  `services/nws.py` behind characterization tests, not a verbatim
+  carry-over — see the module docstring for what's deliberately deferred
+  (gridpoint wind fallback, current-weather observations).
 
 It does not yet have the `/v1` routes, the ported forecast domain
 *logic*, or a Postgres connection. Those land in the Phase 2 sprints
-listed in the roadmap's sprint ledger (13 onward), each behind its own
+listed in the roadmap's sprint ledger (14 onward), each behind its own
 characterization tests, porting from the reconciliation audit
 ([`docs/R1_RECONCILIATION_AUDIT.md`](../../docs/R1_RECONCILIATION_AUDIT.md))
 rather than copying `v2/backend` or the legacy Flask app verbatim.
