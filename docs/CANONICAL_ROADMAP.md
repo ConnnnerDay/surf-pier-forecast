@@ -317,7 +317,7 @@ to reconciliation, not proof that the agreed outcome passed.
 | 14 | NOAA CO-OPS adapter | Tide/water-temperature fixtures, missing values, DST | **Partially complete** — `apps/api/app/providers/noaa_coops.py`: water temperature and tide predictions, `zoneinfo`-based DST-safe timestamp parsing, missing-value/empty-row handling, all behind `apps/api/tests/test_noaa_coops_provider.py`. Wind/currents/environmental-metrics fetches and the tide-chart SVG helper deliberately deferred (see module docstring) |
 | 15 | NDBC adapter | Buoy parsing, missing columns and markers | **Partially complete** — `apps/api/app/providers/ndbc.py`: wind/wave/pressure parsing from the fixed-width `realtime2` feed (`parse_realtime_text`) and fetch (`fetch_buoy_observation`), distinguishing missing columns from missing-value markers, behind `apps/api/tests/test_ndbc_provider.py`. `app/infra/http_client.py`'s `BoundedHTTPClient` gained `get_text` for this (NDBC is plain text, not JSON). Pressure-trend/fishing-impact narrative deliberately deferred to the scoring sprint (35) — see module docstring |
 | 16 | Astronomy adapter | Pure deterministic coast/season/timezone tests | **Complete** — `apps/api/app/providers/astronomy.py`: sunrise/sunset, twilight, lunar details, and solunar periods, all pure math (no network). Typed timezone-aware `datetime`s instead of formatted strings; enums for moon phase/rating. `apps/api/tests/test_astronomy_provider.py` covers Atlantic/Pacific coasts, summer/winter seasons, a non-DST timezone, and polar-latitude clamping |
-| 17 | Station catalog | Provenance, timestamps, idempotent refresh | Candidate in `/v2` |
+| 17 | Station catalog | Provenance, timestamps, idempotent refresh | **Complete** — `apps/api/app/providers/stations.py`: CO-OPS tide/water-temp and NDBC catalog fetch (degrades to `[]`, metadata not a reading), pure nearest-station distance ranking, and `StationCatalogCache` — an explicit, injectable-clock, idempotent TTL cache, tested without sleeping in `apps/api/tests/test_stations_provider.py` |
 | 18 | Coastal coordinate validation | Inland/out-of-range rejection and all-coast boundaries | Candidate in `/v2` |
 | 19 | Location resolution | Timezone, zone, tide/temp station and buoy golden tests | Candidate in `/v2` |
 | 20 | Observation normalization | Canonical units/times with raw provenance retained | Candidate in `/v2` |
@@ -430,8 +430,8 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #338 (sprint 15, NDBC provider adapter, `cb36540`,
-  merged as `e4660cb`).
+- Last merged PR: #339 (sprint 16, astronomy provider adapter,
+  `c8e3db0`, merged as `129cbed`).
 - **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
   1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
   (#332). Phase 1's only remaining items (9, 10) need external accounts —
@@ -575,20 +575,46 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   exact assertions rather than pinned against an external ephemeris,
   since the module's formulas are explicitly approximations. All of
   `apps/api`'s checks (ruff, ruff format, mypy, pytest — 75 passed)
-  pass clean.
+  pass clean. This completes the four-sprint provider-adapter run
+  (13-16: NWS, NOAA CO-OPS, NDBC, astronomy) the sprint ledger named.
+- This PR continues Phase 2 with **sprint 17** (station catalog,
+  **complete**): `apps/api/app/providers/stations.py` —
+  `fetch_coops_tide_catalog`/`fetch_coops_watertemp_catalog`/
+  `fetch_ndbc_catalog` for the public NOAA CO-OPS and NDBC station
+  catalogs (metadata used to point sprints 13-15's adapters at *any*
+  US coastal coordinate, not just curated locations), degrading to
+  `[]` on failure rather than raising — the opposite resilience
+  posture from sprint 14's water-temperature/tide-*reading* fetches,
+  since a catalog is routing metadata, not a decision-relevant value.
+  `nearest_coops_station`/`nearest_ndbc_stations` are pure
+  distance-ranking functions over an already-fetched catalog list,
+  deliberately decoupled from the fetch/cache layer (the legacy
+  module coupled them), so the haversine math is tested with zero
+  network mocking. `StationCatalogCache` replaces the legacy module's
+  implicit module-level `dict` + `threading.Lock` with an explicit,
+  `asyncio.Lock`-based, injectable-clock idempotent TTL cache — a
+  positive TTL for a successful fetch, a short negative TTL for a
+  degraded one — satisfying the sprint's "provenance, timestamps,
+  idempotent refresh" requirement and letting `apps/api/tests/
+  test_stations_provider.py` characterize "still fresh, no refetch"
+  vs. "expired, refetch and replace" vs. "failed fetch, short
+  negative TTL" deterministically instead of sleeping in tests. All
+  of `apps/api`'s checks (ruff, ruff format, mypy, pytest — 90
+  passed) pass clean.
 - **Incident (sprint 6, resolved earlier)**: a scratch branch explicitly
   titled `DO NOT MERGE` was merged into `main` under the repo owner's own
   account, landing deliberately-broken code; reverted within ~10 minutes
   in PR #330. Full account in `docs/SPRINT_6_CI_PROOF.md`. Sprint 7
   turned this into a documented branch-hygiene rule.
 - Exact next action: finish sprint 13/14/15's deferred scope, or move to
-  sprint 17 (station catalog — provenance, timestamps, idempotent
-  refresh) — any is a valid next Phase 2 pick, needs no external
-  accounts. Separately, sprint 9 (preview environments) and sprint 10
-  (production skeleton) need real Vercel/Render/Neon accounts this
-  session has no credentials for — **flag to the product owner** rather
-  than attempting them blind; they can be done whenever those
-  credentials are available, in parallel with more Phase 2 sprints.
+  sprint 18 (coastal coordinate validation — inland/out-of-range
+  rejection and all-coast boundaries) — any is a valid next Phase 2
+  pick, needs no external accounts. Separately, sprint 9 (preview
+  environments) and sprint 10 (production skeleton) need real
+  Vercel/Render/Neon accounts this session has no credentials for —
+  **flag to the product owner** rather than attempting them blind; they
+  can be done whenever those credentials are available, in parallel
+  with more Phase 2 sprints.
 - Known blocker: sprints 9/10 need Vercel/Render/Neon account access not
   available to this session — needs the product owner to either provision
   and share access, or do that part directly.

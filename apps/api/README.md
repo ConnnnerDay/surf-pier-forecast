@@ -64,10 +64,24 @@ Boots, has real CI, and now has:
   over unchanged from the legacy math). `app/infra/timezones.py` (new)
   holds the `ZoneInfo`-with-fallback helper this adapter shares with
   sprint 14's NOAA CO-OPS adapter, which was refactored to use it too.
+- Station catalog resolution (`app/providers/stations.py`): fetches the
+  public NOAA CO-OPS (tide-prediction and water-temperature) and NDBC
+  station catalogs, and pure `nearest_coops_station`/
+  `nearest_ndbc_stations` distance-ranking functions over an
+  already-fetched catalog — the metadata that lets the other three
+  network adapters be pointed at *any* US coastal coordinate, not just
+  curated locations. Catalog fetches degrade to `[]` on failure rather
+  than raising (metadata-for-routing, not a decision-relevant reading —
+  see the module docstring for the contrast with sprint 14). Adds
+  `StationCatalogCache`, an explicit, injectable-clock, idempotent TTL
+  cache (a positive TTL for a successful fetch, a short negative TTL
+  for a degraded one) replacing the legacy module's implicit
+  module-level `dict` + lock, characterized in
+  `apps/api/tests/test_stations_provider.py` without sleeping in tests.
 
 It does not yet have the `/v1` routes, the ported forecast domain
 *logic*, or a Postgres connection. Those land in the Phase 2 sprints
-listed in the roadmap's sprint ledger (17 onward), each behind its own
+listed in the roadmap's sprint ledger (18 onward), each behind its own
 characterization tests, porting from the reconciliation audit
 ([`docs/R1_RECONCILIATION_AUDIT.md`](../../docs/R1_RECONCILIATION_AUDIT.md))
 rather than copying `v2/backend` or the legacy Flask app verbatim.
