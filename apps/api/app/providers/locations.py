@@ -195,6 +195,41 @@ def find_nearest_locations(
     return matches[:n]
 
 
+def find_curated_location(
+    location_id: str, locations: tuple[CuratedLocation, ...]
+) -> CuratedLocation | None:
+    """Look up a curated location by its stable id, or `None` if
+    *location_id* isn't a curated id (it may be a dynamic `pt_` id, or
+    simply unknown).
+    """
+    for loc in locations:
+        if loc.id == location_id:
+            return loc
+    return None
+
+
+def search_curated_locations(
+    query: str, locations: tuple[CuratedLocation, ...], limit: int = 10
+) -> list[CuratedLocation]:
+    """Case-insensitive substring search over curated locations. Name
+    matches rank before state/id matches; ties keep the dataset's
+    original order. An empty or whitespace-only *query* returns `[]`
+    rather than the whole dataset.
+    """
+    q = query.strip().lower()
+    if not q:
+        return []
+    name_matches = [loc for loc in locations if q in loc.name.lower()]
+    name_match_ids = {loc.id for loc in name_matches}
+    other_matches = [
+        loc
+        for loc in locations
+        if loc.id not in name_match_ids
+        and (q in loc.state.lower() or q in loc.id.lower())
+    ]
+    return (name_matches + other_matches)[:limit]
+
+
 def timezone_for_point(state: str, lng: float) -> str | None:
     """Best-effort IANA timezone for a US coastal point from its state.
     Returns `None` when the state is unknown so the caller can fall back

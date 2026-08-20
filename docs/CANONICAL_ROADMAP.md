@@ -325,7 +325,7 @@ to reconciliation, not proof that the agreed outcome passed.
 | 22 | Forecast scoring | Defensible stable score components with explanations | **Complete** — `apps/api/app/domain/scoring.py`: `score_conditions`, the 0-100 go/no-go index ported from `domain/forecast.py`, scores wind/wave/direction/water-temp/dawn-dusk/solunar factors with a sorted, plain-language summary; deliberately decoupled from sprint 21's `ForecastConditions` (takes a pre-reconciled `wind_range`/`wave_range`); tide, fishing-type/preference, and water-quality bonuses deliberately deferred (sprints 34/36, still-open product question); tested in `apps/api/tests/test_scoring.py` |
 | 23 | Confidence model | Predictable degradation by availability, distance, age, fallback | **Complete** — `apps/api/app/domain/confidence.py`: `assess_confidence`, a 100-point four-factor score (source coverage, observation age, station distance, fallback use) with no legacy precedent, replacing sprint 21's interim liveness-only stub; each degrading factor reports an independent reason code; tested in `apps/api/tests/test_confidence.py` |
 | 24 | Snapshot caching | Fresh/stale hit, miss, expiry, fallback, concurrency; target 4-hour freshness window, matching legacy cadence | **Complete** — `apps/api/app/infra/snapshot_cache.py`: `SnapshotCache[T]`, an injectable-clock, per-key, single-flight in-memory cache; `fresh_ttl_seconds` defaults to 4h matching legacy cadence, `stale_ttl_seconds` + fallback-on-fetch-failure are new (no legacy precedent); tested in `apps/api/tests/test_snapshot_cache.py` |
-| 25 | Versioned API | Required endpoints, OpenAPI contract and breaking-change guard | Candidate in `/v2` |
+| 25 | Versioned API | Required endpoints, OpenAPI contract and breaking-change guard | **Complete** — `apps/api/app/api/v1/{locations,forecasts}.py`: 4 of 6 required endpoints (`GET`/`PATCH /v1/me/preferences` deliberately deferred — need Better Auth + Postgres, neither exists yet); `app/api/deps.py`'s `AppState` (lifespan-managed `BoundedHTTPClient` + station-catalog caches) backs both routers; `tests/openapi_snapshot.json` + `scripts/generate_openapi_snapshot.py` is the breaking-change guard, mirroring sprint 11's schema-snapshot pattern; verified against a real running `uvicorn` server, not just `TestClient`; tested in `apps/api/tests/test_locations_router.py`/`test_forecasts_router.py`/`test_openapi_snapshot.py` |
 | 26 | Performance budget | Bounded parallel calls, no duplicates, warm p95 under 750 ms | Not accepted |
 
 ### Phase 3 — Create the mobile product
@@ -430,10 +430,8 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #348 (fix legacy lint CI's ruff rule-selection drift,
-  `e985be4`, merged as `b6056ce`). #347 (sprint 24, snapshot caching +
-  first legacy lint fix pass, `dac3c93`/`20a21cc`, merged as `cc121fa`)
-  landed just before it.
+- Last merged PR: #349 (roadmap checkpoint bookkeeping for the legacy
+  lint CI fix, `e6d4a2d`, merged as `7186f5b`).
 - **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
   1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
   (#332). Phase 1's only remaining items (9, 10) need external accounts —
@@ -837,14 +835,54 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   ruff's implicit default" bar it's held since sprint 12. Verified via
   the GitHub API that both `lint` job runs on #348's merge commit show
   `conclusion: success` — not just a local re-check.
+- This PR continues Phase 2 with **sprint 25** (versioned API,
+  **complete** except for the two auth-gated endpoints): `apps/api/app/
+  api/v1/locations.py` (`GET /v1/locations/search`,
+  `POST /v1/locations/resolve`) and `app/api/v1/forecasts.py`
+  (`GET /v1/forecasts/{location_id}`,
+  `POST /v1/forecasts/{location_id}/refresh`) — 4 of the canonical
+  roadmap's 6 required `/v1` endpoints. `GET`/`PATCH /v1/me/preferences`
+  are deliberately not attempted: they need Better Auth (sprint 28) and
+  a Postgres-backed preferences store, neither of which exists yet — no
+  amount of scoping cleverness makes those buildable now. No new domain
+  logic: `search`/`resolve` are thin wrappers over sprint 19's location
+  functions (plus two small new pure functions,
+  `search_curated_locations`/`find_curated_location`), and
+  `GET /v1/forecasts/{id}` returns exactly the `ForecastEnvelope`
+  sprint 21's `assemble_forecast` already builds — sprints 22-24's
+  scoring/confidence/caching refinements remain the unassigned wiring
+  follow-up they already were. `refresh` is deliberately identical to
+  `GET` today: `assemble_forecast` doesn't cache anything yet (sprint
+  24's `SnapshotCache` isn't wired into it), so there's nothing for
+  `refresh` to force bypassing until that wiring lands — documented in
+  the module docstring rather than silently faked. `app/api/deps.py`'s
+  `AppState` (one pooled `BoundedHTTPClient` plus the three sprint-17
+  station-catalog caches, created once in `app/main.py`'s FastAPI
+  `lifespan`) backs both routers via `Depends`, and its
+  `resolve_location_id` helper is shared by both so a location resolved
+  explicitly and one resolved implicitly by a forecast lookup always
+  agree for the same id. The breaking-change guard
+  (`tests/openapi_snapshot.json` + `scripts/generate_openapi_snapshot.py`)
+  mirrors sprint 11's domain-model schema-snapshot pattern exactly.
+  Verified against a real running `uvicorn` server, not just
+  `TestClient`: `/health/live`, `/v1/locations/search`, and
+  `/openapi.json` all responded correctly and the live schema matched
+  the committed snapshot byte-for-byte. `apps/api/tests/
+  test_locations_router.py`/`test_forecasts_router.py` cover search
+  matches/no-match/empty-query, resolve-by-id (found and 404),
+  resolve-by-point (coastal success and non-coastal 422), malformed
+  request bodies, and out-of-range coordinates; forecasts router tests
+  cover curated and dynamic location ids, unknown-id 404, non-coastal
+  422, and refresh returning the same shape as get. All of `apps/api`'s
+  checks (ruff, ruff format, mypy, pytest — 258 passed) pass clean.
 - **Incident (sprint 6, resolved earlier)**: a scratch branch explicitly
   titled `DO NOT MERGE` was merged into `main` under the repo owner's own
   account, landing deliberately-broken code; reverted within ~10 minutes
   in PR #330. Full account in `docs/SPRINT_6_CI_PROOF.md`. Sprint 7
   turned this into a documented branch-hygiene rule.
 - Exact next action: finish sprint 13/14/15's deferred scope, or move to
-  sprint 25 (versioned API — required endpoints, OpenAPI contract,
-  breaking-change guard), or wire sprints 22/23/24's
+  sprint 26 (performance budget — bounded parallel calls, no
+  duplicates, warm p95 under 750 ms), or wire sprints 22/23/24's
   `score_conditions`/`assess_confidence`/`SnapshotCache` into
   `assemble_forecast`'s output (picking a source when both NWS and
   NDBC report, computing real station distances/observation ages for
