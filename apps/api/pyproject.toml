@@ -1,0 +1,8 @@
+[tool.ruff]
+# Deliberately does not set [tool.ruff.lint].select: leaving it unset
+# preserves apps/api's actual historical behavior (every sprint's checks
+# have run `ruff check .` here against ruff's own implicit default and
+# passed clean since sprint 12). This file exists only so apps/api stops
+# inheriting the legacy repo-root pyproject.toml's deliberately narrower,
+# explicit selection — see that file's comment.
+target-version = "py310"
