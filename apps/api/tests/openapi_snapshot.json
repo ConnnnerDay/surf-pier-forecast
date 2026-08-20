@@ -1,0 +1,733 @@
+{
+  "components": {
+    "schemas": {
+      "Confidence": {
+        "properties": {
+          "level": {
+            "$ref": "#/components/schemas/ConfidenceLevel"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reasons",
+            "type": "array"
+          }
+        },
+        "required": [
+          "level"
+        ],
+        "title": "Confidence",
+        "type": "object"
+      },
+      "ConfidenceLevel": {
+        "enum": [
+          "high",
+          "medium",
+          "low"
+        ],
+        "title": "ConfidenceLevel",
+        "type": "string"
+      },
+      "CuratedLocation": {
+        "properties": {
+          "conditions_region": {
+            "title": "Conditions Region",
+            "type": "string"
+          },
+          "coops_station": {
+            "title": "Coops Station",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "lat": {
+            "title": "Lat",
+            "type": "number"
+          },
+          "lng": {
+            "title": "Lng",
+            "type": "number"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "ndbc_stations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Ndbc Stations",
+            "type": "array"
+          },
+          "nws_zone": {
+            "title": "Nws Zone",
+            "type": "string"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "temp_offset": {
+            "default": 0,
+            "title": "Temp Offset",
+            "type": "integer"
+          },
+          "temp_region": {
+            "title": "Temp Region",
+            "type": "string"
+          },
+          "timezone": {
+            "title": "Timezone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "state",
+          "lat",
+          "lng",
+          "timezone",
+          "coops_station",
+          "ndbc_stations",
+          "nws_zone",
+          "temp_region",
+          "conditions_region"
+        ],
+        "title": "CuratedLocation",
+        "type": "object"
+      },
+      "ForecastEnvelope": {
+        "description": "The top-level response shape named in docs/CANONICAL_ROADMAP.md's\n\"Required API surface\" section. `conditions`, `tides`, `hourly_outlook`,\nand `recommendations` are opaque here on purpose \u2014 see module docstring.",
+        "properties": {
+          "conditions": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conditions"
+          },
+          "confidence": {
+            "$ref": "#/components/schemas/Confidence"
+          },
+          "generated_at": {
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          },
+          "hourly_outlook": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hourly Outlook"
+          },
+          "location": {
+            "$ref": "#/components/schemas/Location"
+          },
+          "recommendations": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recommendations"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/SourceStatus"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "state": {
+            "$ref": "#/components/schemas/ForecastState"
+          },
+          "tides": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tides"
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/Warning"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "location",
+          "generated_at",
+          "state",
+          "confidence"
+        ],
+        "title": "ForecastEnvelope",
+        "type": "object"
+      },
+      "ForecastState": {
+        "description": "docs/product-definition.md \u00a7 Product vocabulary \u00a7 Forecast state.",
+        "enum": [
+          "fresh",
+          "stale",
+          "partial",
+          "unavailable"
+        ],
+        "title": "ForecastState",
+        "type": "string"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "Location": {
+        "description": "A resolved location. Coordinates are rounded before storage/transit\nper docs/CANONICAL_ROADMAP.md's data-minimization requirement \u2014 rounding\nitself happens at resolution time (sprint 18/19), not here.",
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "lat": {
+            "description": "Rounded, not precise \u2014 see module docstring.",
+            "title": "Lat",
+            "type": "number"
+          },
+          "lng": {
+            "description": "Rounded, not precise \u2014 see module docstring.",
+            "title": "Lng",
+            "type": "number"
+          },
+          "marine_zone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Marine Zone"
+          },
+          "station_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Station Ids",
+            "type": "array"
+          },
+          "timezone": {
+            "title": "Timezone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "lat",
+          "lng",
+          "timezone"
+        ],
+        "title": "Location",
+        "type": "object"
+      },
+      "LocationResolveRequest": {
+        "description": "Exactly one of `location_id`, or both `lat` and `lng`, must be\ngiven \u2014 never both shapes, never neither.",
+        "properties": {
+          "lat": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lat"
+          },
+          "lng": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lng"
+          },
+          "location_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location Id"
+          }
+        },
+        "title": "LocationResolveRequest",
+        "type": "object"
+      },
+      "ResolvedLocation": {
+        "description": "A forecast-ready location \u2014 either a curated spot as-is, or an\nassembled dynamic point. `is_dynamic=False` means every field came\ndirectly from `CuratedLocation`; `is_dynamic=True` means station IDs\nwere resolved from live catalogs and the coarse regional fields were\ninherited from the nearest curated neighbor (see\n`resolve_dynamic_location`).",
+        "properties": {
+          "conditions_region": {
+            "title": "Conditions Region",
+            "type": "string"
+          },
+          "coops_station": {
+            "title": "Coops Station",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "is_dynamic": {
+            "title": "Is Dynamic",
+            "type": "boolean"
+          },
+          "lat": {
+            "title": "Lat",
+            "type": "number"
+          },
+          "lng": {
+            "title": "Lng",
+            "type": "number"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "ndbc_stations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Ndbc Stations",
+            "type": "array"
+          },
+          "nws_zone": {
+            "title": "Nws Zone",
+            "type": "string"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "temp_offset": {
+            "title": "Temp Offset",
+            "type": "integer"
+          },
+          "temp_region": {
+            "title": "Temp Region",
+            "type": "string"
+          },
+          "timezone": {
+            "title": "Timezone",
+            "type": "string"
+          },
+          "water_temp_station": {
+            "title": "Water Temp Station",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "state",
+          "lat",
+          "lng",
+          "timezone",
+          "coops_station",
+          "water_temp_station",
+          "ndbc_stations",
+          "nws_zone",
+          "temp_region",
+          "conditions_region",
+          "temp_offset",
+          "is_dynamic"
+        ],
+        "title": "ResolvedLocation",
+        "type": "object"
+      },
+      "SourceState": {
+        "enum": [
+          "ok",
+          "degraded",
+          "unavailable"
+        ],
+        "title": "SourceState",
+        "type": "string"
+      },
+      "SourceStatus": {
+        "properties": {
+          "as_of": {
+            "format": "date-time",
+            "title": "As Of",
+            "type": "string"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          },
+          "state": {
+            "$ref": "#/components/schemas/SourceState"
+          }
+        },
+        "required": [
+          "provider",
+          "state",
+          "as_of"
+        ],
+        "title": "SourceStatus",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      },
+      "Warning": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "severity": {
+            "$ref": "#/components/schemas/WarningSeverity"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "severity"
+        ],
+        "title": "Warning",
+        "type": "object"
+      },
+      "WarningSeverity": {
+        "enum": [
+          "info",
+          "advisory",
+          "critical"
+        ],
+        "title": "WarningSeverity",
+        "type": "string"
+      }
+    }
+  },
+  "info": {
+    "title": "Surf & Pier Forecast API",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/health/live": {
+      "get": {
+        "description": "Process is up. No dependency checks \u2014 used for liveness probes.",
+        "operationId": "health_live_health_live_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Health Live Health Live Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health Live"
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "description": "Ready to serve traffic. Will grow real dependency checks (database,\nupstream reachability) once this app has any to check \u2014 see sprint 10.",
+        "operationId": "health_ready_health_ready_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Health Ready Health Ready Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health Ready"
+      }
+    },
+    "/v1/forecasts/{location_id}": {
+      "get": {
+        "operationId": "get_forecast_v1_forecasts__location_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "location_id",
+            "required": true,
+            "schema": {
+              "title": "Location Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForecastEnvelope"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Forecast",
+        "tags": [
+          "forecasts"
+        ]
+      }
+    },
+    "/v1/forecasts/{location_id}/refresh": {
+      "post": {
+        "operationId": "refresh_forecast_v1_forecasts__location_id__refresh_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "location_id",
+            "required": true,
+            "schema": {
+              "title": "Location Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForecastEnvelope"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Refresh Forecast",
+        "tags": [
+          "forecasts"
+        ]
+      }
+    },
+    "/v1/locations/resolve": {
+      "post": {
+        "operationId": "resolve_location_v1_locations_resolve_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationResolveRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResolvedLocation"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Resolve Location",
+        "tags": [
+          "locations"
+        ]
+      }
+    },
+    "/v1/locations/search": {
+      "get": {
+        "operationId": "search_locations_v1_locations_search_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": true,
+            "schema": {
+              "minLength": 1,
+              "title": "Q",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CuratedLocation"
+                  },
+                  "title": "Response Search Locations V1 Locations Search Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Search Locations",
+        "tags": [
+          "locations"
+        ]
+      }
+    }
+  }
+}

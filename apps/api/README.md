@@ -210,10 +210,41 @@ Boots, has real CI, and now has:
   concurrency (both same-key serialization and different-key
   non-blocking) independently.
 
-It does not yet have the `/v1` routes, the ported forecast domain
-*logic*, or a Postgres connection. Those land in the Phase 2 sprints
-listed in the roadmap's sprint ledger (25 onward), each behind its own
-characterization tests, porting from the reconciliation audit
+- The `/v1` HTTP surface (`app/api/v1/locations.py`,
+  `app/api/v1/forecasts.py`): `GET /v1/locations/search`,
+  `POST /v1/locations/resolve`, `GET /v1/forecasts/{location_id}`, and
+  `POST /v1/forecasts/{location_id}/refresh` — four of the six routes
+  the canonical roadmap's "Required API surface" names. `GET`/
+  `PATCH /v1/me/preferences` are deliberately not attempted: they need
+  Better Auth (sprint 28) and a Postgres-backed preferences store,
+  neither of which exists yet. No new domain logic — `search`/`resolve`
+  are thin wrappers over sprint 19's location functions (plus a new
+  `search_curated_locations`/`find_curated_location` pair), and
+  `GET /v1/forecasts/{id}` returns exactly the `ForecastEnvelope`
+  sprint 21's `assemble_forecast` already builds. `refresh` is
+  deliberately identical to `GET` today — `assemble_forecast` doesn't
+  cache anything yet (sprint 24's `SnapshotCache` isn't wired into it,
+  a named follow-up), so there's nothing yet for `refresh` to force
+  bypassing. `app/api/deps.py` holds the app-lifetime `AppState`
+  (pooled `BoundedHTTPClient` + the three station-catalog caches,
+  created in `app/main.py`'s FastAPI `lifespan` and injected via
+  `Depends`) and the shared `resolve_location_id` helper both routers
+  use, so a location resolved explicitly and one resolved implicitly by
+  a forecast lookup give the same answer for the same id.
+- An OpenAPI breaking-change guard (`tests/openapi_snapshot.json`,
+  `scripts/generate_openapi_snapshot.py`): mirrors sprint 11's
+  domain-model schema-snapshot pattern — any route or schema change
+  that isn't a deliberate, reviewed regeneration fails
+  `test_openapi_snapshot.py`. Verified against a real running server
+  (`uvicorn app.main:app`), not just `TestClient`: `/health/live`,
+  `/v1/locations/search`, and `/openapi.json` all responded correctly
+  and the live OpenAPI schema matched the committed snapshot exactly.
+
+It does not yet have the ported forecast domain *scoring/confidence
+refinement* wired into the API, or a Postgres connection. Those land in
+the Phase 2 sprints listed in the roadmap's sprint ledger (26 onward),
+each behind its own characterization tests, porting from the
+reconciliation audit
 ([`docs/R1_RECONCILIATION_AUDIT.md`](../../docs/R1_RECONCILIATION_AUDIT.md))
 rather than copying `v2/backend` or the legacy Flask app verbatim.
 
@@ -222,6 +253,13 @@ will fail — regenerate deliberately and review the diff:
 
 ```bash
 python -m scripts.generate_schema_snapshots
+```
+
+Likewise, if you change a `/v1` route or a model it returns, the OpenAPI
+snapshot test will fail — regenerate deliberately and review the diff:
+
+```bash
+python -m scripts.generate_openapi_snapshot
 ```
 
 ## Local dev

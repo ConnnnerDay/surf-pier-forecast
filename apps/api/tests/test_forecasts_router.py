@@ -1,0 +1,114 @@
+"""Tests for the /v1/forecasts router (sprint 25).
+
+All network access goes through httpx.MockTransport via a real
+BoundedHTTPClient injected through app.dependency_overrides — no live
+calls, per docs/R2_CI_BASELINE.md's no-live-provider-dependence rule.
+"""
+
+from __future__ import annotations
+
+from collections.abc import Iterator
+
+import httpx
+import pytest
+from fastapi.testclient import TestClient
+
+from app.api.deps import AppState, get_app_state
+from app.infra.http_client import BoundedHTTPClient
+from app.main import app
+from app.providers.stations import StationCatalogCache
+
+_MARINE_ZONE_FORECAST = {
+    "properties": {
+        "periods": [{"detailedForecast": "SW wind 10 to 15 kt. Seas 2 to 3 ft."}]
+    }
+}
+_WATER_TEMP_RESPONSE = {"data": [{"t": "2024-07-15 12:00", "v": "78.4"}]}
+_NDBC_FEED = (
+    "#YY  MM DD hh mm WDIR WSPD GST   WVHT   PRES\n"
+    "#yr  mo dy hr mn degT m/s  m/s     m    hPa\n"
+    "2024 07 15 12 00 230 8.2  10.1  1.3   1015.2\n"
+)
+_COOPS_CATALOG = {
+    "stations": [
+        {
+            "id": "8658163",
+            "name": "Wrightsville Beach",
+            "lat": "34.2135",
+            "lng": "-77.7865",
+            "state": "NC",
+        }
+    ]
+}
+_NDBC_CATALOG = (
+    "<stations>"
+    '<station id="41110" lat="34.194" lon="-77.75" name="Masonboro Inlet" met="y" />'
+    "</stations>"
+)
+
+
+def _handler(request: httpx.Request) -> httpx.Response:
+    url = str(request.url)
+    if "zones/forecast" in url:
+        return httpx.Response(200, json=_MARINE_ZONE_FORECAST)
+    if "alerts/active" in url:
+        return httpx.Response(200, json={"features": []})
+    if "datagetter" in url:
+        return httpx.Response(200, json=_WATER_TEMP_RESPONSE)
+    if "activestations.xml" in url:
+        return httpx.Response(200, text=_NDBC_CATALOG)
+    if "type=tidepredictions" in url or "type=watertemp" in url:
+        return httpx.Response(200, json=_COOPS_CATALOG)
+    if "ndbc.noaa.gov" in url:
+        return httpx.Response(200, text=_NDBC_FEED)
+    raise AssertionError(f"unexpected URL: {url}")
+
+
+@pytest.fixture
+def client() -> Iterator[TestClient]:
+    transport = httpx.MockTransport(_handler)
+    mock_state = AppState(
+        http_client=BoundedHTTPClient(transport=transport, max_retries=0),
+        coops_tide_cache=StationCatalogCache(),
+        coops_watertemp_cache=StationCatalogCache(),
+        ndbc_cache=StationCatalogCache(),
+    )
+    app.dependency_overrides[get_app_state] = lambda: mock_state
+    try:
+        yield TestClient(app)
+    finally:
+        app.dependency_overrides.pop(get_app_state, None)
+
+
+def test_get_forecast_for_curated_location(client: TestClient) -> None:
+    resp = client.get("/v1/forecasts/wrightsville-beach-nc")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["location"]["id"] == "wrightsville-beach-nc"
+    assert body["state"] == "fresh"
+    assert body["conditions"]["water_temperature"] is not None
+
+
+def test_get_forecast_for_dynamic_point(client: TestClient) -> None:
+    resp = client.get("/v1/forecasts/pt_34.200_-77.800")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["location"]["id"] == "pt_34.200_-77.800"
+
+
+def test_get_forecast_unknown_location_is_404(client: TestClient) -> None:
+    resp = client.get("/v1/forecasts/not-a-real-id")
+    assert resp.status_code == 404
+
+
+def test_get_forecast_non_coastal_point_is_422(client: TestClient) -> None:
+    resp = client.get("/v1/forecasts/pt_45.000_-95.000")
+    assert resp.status_code == 422
+
+
+def test_refresh_forecast_returns_same_shape_as_get(client: TestClient) -> None:
+    get_resp = client.get("/v1/forecasts/wrightsville-beach-nc")
+    refresh_resp = client.post("/v1/forecasts/wrightsville-beach-nc/refresh")
+    assert refresh_resp.status_code == 200
+    assert set(refresh_resp.json().keys()) == set(get_resp.json().keys())
+    assert refresh_resp.json()["location"] == get_resp.json()["location"]
