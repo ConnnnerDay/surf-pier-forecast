@@ -1,5 +1,6 @@
 """NOAA CO-OPS (Center for Operational Oceanographic Products and
-Services) provider adapter (sprint 14).
+Services) provider adapter (sprint 14; wind fallback added picking up
+sprint 14's own deferred scope once Phase 2 closed out).
 
 Ports water-temperature and tide-prediction fetching from the legacy
 `services/noaa.py`, behind typed contracts and
@@ -19,11 +20,31 @@ recording that decision on an `Observation.is_fallback`
 which has the full picture (which sources succeeded, what the location's
 own data offers) that a single provider adapter doesn't.
 
-Scope for this sprint: water temperature and tide predictions. The legacy
-module's wind/currents/environmental-metrics fetches and its
-`build_tide_chart_svg` rendering helper (not a provider concern at all)
-are deliberately deferred — see docs/CANONICAL_ROADMAP.md's sprint
-ledger.
+Original scope: water temperature and tide predictions.
+
+**Wind fallback, picked up from sprint 14's own deferred scope.** Ports
+the legacy module's `_try_coops_wind`: the latest wind reading from the
+same CO-OPS station used for water temperature — if that succeeds, this
+is very likely to as well. `app.domain.assembly` wires it in at the
+exact priority the legacy `domain/forecast.py:get_marine_conditions`
+used (marine-zone forecast, then NDBC buoy, then this, then NWS
+gridpoint wind last), tried only when neither of the first two provide
+wind — same "bounded parallel calls, no duplicates" performance-budget
+discipline as the gridpoint fallback. It's a fallback, not a
+decision-relevant primary source, so — unlike `fetch_water_temperature`/
+`fetch_tide_predictions` — it degrades to `None` on failure rather than
+raising, matching `app.providers.nws.fetch_gridpoint_wind`'s posture.
+
+The legacy module's currents (`fetch_currents_predictions`/
+`fetch_currents_observation`), environmental metrics
+(`fetch_coops_environmental_metrics` — air temp, humidity, visibility,
+pressure, salinity, conductivity), and `build_tide_chart_svg` rendering
+helper remain deliberately deferred: nothing in the canonical roadmap's
+required `ForecastConditions` shape or `docs/product-definition.md`'s
+dashboard-hierarchy list names tidal currents or these environmental
+metrics, so porting them now would be inventing product scope, not
+closing a named gap; SVG rendering isn't a provider-adapter concern at
+all.
 
 CO-OPS timestamps are returned in the station's local standard/daylight
 time (`time_zone=lst_ldt`), not UTC. Parsing uses `zoneinfo.ZoneInfo`,
@@ -80,6 +101,16 @@ class TidePrediction(BaseModel):
     height_ft: float
 
 
+class CoopsWindReading(BaseModel):
+    """The latest wind reading from a CO-OPS station. `None` fields mean
+    the station didn't report that quantity, not that it was zero.
+    """
+
+    wind_low_kt: float | None = None
+    wind_high_kt: float | None = None
+    wind_direction: str | None = None
+
+
 def _parse_coops_time(raw: str, tz: ZoneInfo) -> datetime:
     return datetime.strptime(raw, "%Y-%m-%d %H:%M").replace(tzinfo=tz)
 
@@ -109,6 +140,46 @@ async def fetch_water_temperature(
     tz = _safe_zone(tz_name)
     return WaterTemperatureReading(
         value_f=float(raw_value), observed_at=_parse_coops_time(raw_time, tz)
+    )
+
+
+async def fetch_coops_wind(
+    client: BoundedHTTPClient, station_id: str
+) -> CoopsWindReading | None:
+    """Fetch the latest wind reading from a CO-OPS station. A last-resort
+    wind fallback (see `app.domain.assembly`'s docstring for the
+    reconciliation order among this, NWS gridpoint wind, marine-zone,
+    and buoy) — degrades to `None` on any failure rather than raising,
+    unlike `fetch_water_temperature`/`fetch_tide_predictions`.
+    """
+    url = (
+        f"{_DATAGETTER_URL}?date=latest&station={station_id}"
+        "&product=wind&units=english"
+        "&time_zone=lst_ldt&format=json"
+    )
+    try:
+        data = cast(
+            "dict[str, Any]", await client.get_json(url, headers=_COOPS_HEADERS)
+        )
+    except ProviderError:
+        logger.warning(
+            "CO-OPS wind unavailable for station %r", station_id, exc_info=True
+        )
+        return None
+
+    rows = data.get("data") or []
+    if not rows:
+        return None
+    speed = rows[0].get("s")
+    if speed in (None, ""):
+        return None
+    speed_f = float(speed)
+    gust_raw = rows[0].get("g")
+    gust_f = float(gust_raw) if gust_raw not in (None, "", "0.00") else speed_f
+    return CoopsWindReading(
+        wind_low_kt=round(speed_f, 1),
+        wind_high_kt=round(max(speed_f, gust_f), 1),
+        wind_direction=rows[0].get("d") or None,
     )
 
 

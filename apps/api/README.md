@@ -358,6 +358,30 @@ Boots, has real CI, and now has:
   never fetched when marine-zone wind is already available (proven
   with a mock transport that raises on any unexpected `/points/`
   request, not by absence of assertions).
+- Sprint 14's own deferred CO-OPS wind fallback, picked up right after
+  sprint 13's gridpoint fallback: `app/providers/noaa_coops.py` gained
+  `fetch_coops_wind` (`CoopsWindReading`), ported from the legacy
+  `_try_coops_wind` — the latest wind reading from the same CO-OPS
+  station already used for water temperature. `app/domain/assembly.py`
+  now tries a genuine **two-step last-resort chain** in the exact
+  priority order the legacy `domain/forecast.py:get_marine_conditions`
+  used: CO-OPS wind first, then NWS gridpoint wind only if that also
+  comes up empty — stopping as soon as one succeeds, so the typical
+  case (marine-zone or buoy already has wind) never pays for either.
+  Same non-critical resilience posture as gridpoint wind (degrades to
+  `None`, doesn't raise) and the same score-vs-state distinction (can
+  rescue `ForecastState` to FRESH, can't rescue `score` — no wave data
+  from either fallback). Currents, environmental metrics (air temp,
+  humidity, visibility, pressure, salinity, conductivity), and the
+  tide-chart SVG helper remain deliberately deferred: nothing in the
+  required `ForecastConditions` shape or `docs/product-definition.md`'s
+  dashboard-hierarchy list names tidal currents or these metrics.
+  `tests/test_noaa_coops_provider.py` gained 5 tests for the new fetch
+  function; `tests/test_assembly.py` gained a `coops_wind_ok` client
+  parameter (matching `gridpoint_ok`'s pattern), a dedicated CO-OPS-
+  wind rescue test proving gridpoint is never reached when CO-OPS wind
+  already succeeded, and the existing gridpoint tests were updated to
+  isolate gridpoint's own behavior with `coops_wind_ok=False`.
 
 It does not yet have a Postgres connection. That lands in whichever
 Phase 2 sprint or infra work adds it, behind its own characterization

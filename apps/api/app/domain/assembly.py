@@ -90,34 +90,38 @@ docstring for the fresh/stale/miss/expiry/fallback policy and why
 `STALE` is a documented-but-dormant path given this function's own
 never-raises design.
 
-**Gridpoint wind fallback (picked up from sprint 13's own deferred
-scope once Phase 2 closed out).** When neither the marine-zone forecast
-nor the NDBC buoy provide a wind reading (`_reconcile_range` for wind
-returns `None`), this function makes one more, *sequential* (not part
-of the initial `asyncio.gather`) call to `app.providers.nws.
-fetch_gridpoint_wind` — the nearest land grid point's standard
-forecast, wind-only. Deliberately not fetched on every request: it's a
-fourth network call this module didn't need before, and per sprint 26's
-"bounded parallel calls, no duplicates" performance-budget discipline,
-paying for it only in the already-degraded case (both primary wind
-sources down) is the right trade — the typical case's latency and
-upstream-call count are unaffected. A successful gridpoint fetch adds a
-`SourceStatus` (`nws:gridpoint_wind`) and a `fallback:gridpoint_wind`
-warning, feeds its range/direction into `score_conditions` (only if
-`wind_direction` isn't already set from marine-zone/buoy — gridpoint is
-the last-resort direction source too), and counts toward
-`wind_wave_available`/`ForecastState.FRESH`. A *failed* gridpoint fetch
-also adds a `SourceStatus` (state `UNAVAILABLE`) so the confidence
-model sees the attempt, even though `fetch_gridpoint_wind` itself
-degrades to `None` rather than raising (non-critical enrichment, not a
-decision-relevant source — see that function's docstring). No wave
-fallback exists here: the gridpoint forecast is land-based, so it never
-has wave data to offer — which means gridpoint wind alone can rescue
-`ForecastState` (FRESH instead of PARTIAL) and per-source confidence,
-but *not* `score`: `score_conditions` needs both wind and wave to
-produce a number (sprint 22's contract, unchanged here), so `score`
-stays `None`/`UNKNOWN` whenever wave is unavailable from every source,
-gridpoint included.
+**Last-resort wind fallback chain (picked up from sprints 13/14's own
+deferred scope once Phase 2 closed out).** When neither the marine-zone
+forecast nor the NDBC buoy provide a wind reading (`_reconcile_range`
+for wind returns `None`), this function tries two more *sequential*
+sources (not part of the initial `asyncio.gather`), in the exact
+priority order the legacy `domain/forecast.py:get_marine_conditions`
+used: `app.providers.noaa_coops.fetch_coops_wind` (the same CO-OPS
+station already used for water temperature) first, then
+`app.providers.nws.fetch_gridpoint_wind` (the nearest land grid
+point's standard forecast) only if CO-OPS wind also came up empty.
+Deliberately not fetched on every request: each is a network call this
+module didn't need before, and per sprint 26's "bounded parallel
+calls, no duplicates" performance-budget discipline, paying for them
+only in the already-degraded case (both primary wind sources down) —
+and stopping as soon as one succeeds — is the right trade; the typical
+case's latency and upstream-call count are unaffected. A successful
+fetch from either adds a `SourceStatus` (`noaa_coops:wind` or
+`nws:gridpoint_wind`) and a matching `fallback:*` warning, feeds its
+range/direction into `score_conditions` (only if `wind_direction`
+isn't already set by an earlier-tried source), and counts toward
+`wind_wave_available`/`ForecastState.FRESH`. A *failed* attempt at
+either also adds its own `SourceStatus` (state `UNAVAILABLE`) so the
+confidence model sees exactly which fallbacks were tried, even though
+both fetch functions degrade to `None` rather than raising
+(non-critical enrichment, not decision-relevant sources — see their
+own docstrings). Neither has wave data (CO-OPS wind is a point
+reading, the gridpoint forecast is land-based) — this fallback chain
+can rescue `ForecastState` (FRESH instead of PARTIAL) and per-source
+confidence, but *not* `score`: `score_conditions` needs both wind and
+wave to produce a number (sprint 22's contract, unchanged here), so
+`score` stays `None`/`UNKNOWN` whenever wave is unavailable from every
+source, the fallback chain included.
 """
 
 from __future__ import annotations
@@ -161,7 +165,12 @@ from app.providers.astronomy import compute_sun_times as _compute_sun_times
 from app.providers.astronomy import compute_twilight_times as _compute_twilight_times
 from app.providers.locations import ResolvedLocation, monthly_water_temps_for_region
 from app.providers.ndbc import BuoyObservation, fetch_buoy_observation
-from app.providers.noaa_coops import WaterTemperatureReading, fetch_water_temperature
+from app.providers.noaa_coops import (
+    CoopsWindReading,
+    WaterTemperatureReading,
+    fetch_coops_wind,
+    fetch_water_temperature,
+)
 from app.providers.nws import (
     GridpointWindForecast,
     MarineZoneConditions,
@@ -175,6 +184,7 @@ _SOURCE_NWS_MARINE_ZONE = "nws:marine_zone"
 _SOURCE_NOAA_COOPS_WATER_TEMP = "noaa_coops:water_temperature"
 _SOURCE_NDBC_BUOY = "ndbc:buoy"
 _SOURCE_NWS_GRIDPOINT_WIND = "nws:gridpoint_wind"
+_SOURCE_NOAA_COOPS_WIND = "noaa_coops:wind"
 
 T = TypeVar("T")
 
@@ -207,6 +217,7 @@ class ForecastConditions(BaseModel):
     marine_zone_wind: ObservationRange | None
     marine_zone_wave: ObservationRange | None
     buoy: NormalizedBuoy | None
+    coops_wind: CoopsWindReading | None
     gridpoint_wind: GridpointWindForecast | None
     alerts: list[WeatherAlert]
     sun_times: SunTimes
@@ -405,29 +416,39 @@ async def assemble_forecast(
         else (buoy_observation.wind_direction if buoy_observation else None)
     )
 
+    coops_wind: CoopsWindReading | None = None
     gridpoint_wind: GridpointWindForecast | None = None
     if wind_range is None:
-        # Last resort: neither the marine-zone forecast nor the NDBC
-        # buoy provided wind. See the module docstring's gridpoint-wind
-        # section — fetched only here, not on every request, per sprint
-        # 26's "bounded parallel calls, no duplicates" discipline.
-        gridpoint_wind = await fetch_gridpoint_wind(client, location.lat, location.lng)
-        if gridpoint_wind is not None:
+        # Last-resort chain: neither the marine-zone forecast nor the
+        # NDBC buoy provided wind. Tried in the module docstring's
+        # documented priority order, sequentially (not part of the
+        # initial gather) and only here, not on every request, per
+        # sprint 26's "bounded parallel calls, no duplicates"
+        # discipline — stopping as soon as one succeeds.
+        coops_wind = (
+            await fetch_coops_wind(client, location.water_temp_station)
+            if location.water_temp_station
+            else None
+        )
+        if coops_wind is not None:
             sources.append(
                 SourceStatus(
-                    provider=_SOURCE_NWS_GRIDPOINT_WIND, state=SourceState.OK, as_of=now
+                    provider=_SOURCE_NOAA_COOPS_WIND, state=SourceState.OK, as_of=now
                 )
             )
-            if gridpoint_wind.wind_low_kt is not None and gridpoint_wind.wind_high_kt:
-                wind_range = (gridpoint_wind.wind_low_kt, gridpoint_wind.wind_high_kt)
+            if (
+                coops_wind.wind_low_kt is not None
+                and coops_wind.wind_high_kt is not None
+            ):
+                wind_range = (coops_wind.wind_low_kt, coops_wind.wind_high_kt)
             if wind_direction is None:
-                wind_direction = gridpoint_wind.wind_direction
+                wind_direction = coops_wind.wind_direction
             warnings.append(
                 Warning(
-                    code="fallback:gridpoint_wind",
+                    code="fallback:coops_wind",
                     message=(
-                        "Marine wind data unavailable; showing the nearest land "
-                        "forecast's wind instead."
+                        "Marine wind data unavailable; showing the tide "
+                        "station's wind instead."
                     ),
                     severity=WarningSeverity.ADVISORY,
                 )
@@ -435,12 +456,54 @@ async def assemble_forecast(
         else:
             sources.append(
                 SourceStatus(
-                    provider=_SOURCE_NWS_GRIDPOINT_WIND,
+                    provider=_SOURCE_NOAA_COOPS_WIND,
                     state=SourceState.UNAVAILABLE,
                     as_of=now,
-                    detail="NWS gridpoint wind forecast unavailable",
+                    detail="CO-OPS wind reading unavailable",
                 )
             )
+
+        if wind_range is None:
+            gridpoint_wind = await fetch_gridpoint_wind(
+                client, location.lat, location.lng
+            )
+            if gridpoint_wind is not None:
+                sources.append(
+                    SourceStatus(
+                        provider=_SOURCE_NWS_GRIDPOINT_WIND,
+                        state=SourceState.OK,
+                        as_of=now,
+                    )
+                )
+                if (
+                    gridpoint_wind.wind_low_kt is not None
+                    and gridpoint_wind.wind_high_kt is not None
+                ):
+                    wind_range = (
+                        gridpoint_wind.wind_low_kt,
+                        gridpoint_wind.wind_high_kt,
+                    )
+                if wind_direction is None:
+                    wind_direction = gridpoint_wind.wind_direction
+                warnings.append(
+                    Warning(
+                        code="fallback:gridpoint_wind",
+                        message=(
+                            "Marine wind data unavailable; showing the nearest "
+                            "land forecast's wind instead."
+                        ),
+                        severity=WarningSeverity.ADVISORY,
+                    )
+                )
+            else:
+                sources.append(
+                    SourceStatus(
+                        provider=_SOURCE_NWS_GRIDPOINT_WIND,
+                        state=SourceState.UNAVAILABLE,
+                        as_of=now,
+                        detail="NWS gridpoint wind forecast unavailable",
+                    )
+                )
 
     score = score_conditions(
         wind_range,
@@ -458,6 +521,7 @@ async def assemble_forecast(
         marine_zone_wind=marine_zone_wind,
         marine_zone_wave=marine_zone_wave,
         buoy=buoy,
+        coops_wind=coops_wind,
         gridpoint_wind=gridpoint_wind,
         alerts=alerts,
         sun_times=sun_times,
