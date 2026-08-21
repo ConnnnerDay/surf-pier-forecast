@@ -138,14 +138,20 @@ export function LocationSearch({
       )}
 
       {isOpen && results.length > 0 && (
-        <Card
-          className="absolute z-10 mt-1 w-full p-0"
-          id={listboxId}
-          role="listbox"
-        >
-          <ul className="max-h-64 overflow-y-auto py-1">
+        <Card className="absolute z-10 mt-1 w-full p-0">
+          {/* role="listbox"/"option" on plain divs, not ul/li: overriding
+              li's implicit "listitem" role to "option" breaks the ARIA
+              required-owned-elements relationship a real <ul> expects
+              from its children (axe-core's aria-required-children/
+              aria-required-parent/list rules all catch this) -- divs
+              carry no conflicting implicit role. */}
+          <div
+            id={listboxId}
+            role="listbox"
+            className="max-h-64 overflow-y-auto py-1"
+          >
             {results.map((result, index) => (
-              <li
+              <div
                 key={result.id}
                 id={`${listboxId}-option-${index}`}
                 role="option"
@@ -161,9 +167,9 @@ export function LocationSearch({
                 onMouseEnter={() => setActiveIndex(index)}
               >
                 {result.name}, {result.state}
-              </li>
+              </div>
             ))}
-          </ul>
+          </div>
         </Card>
       )}
     </div>

@@ -430,9 +430,8 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #360 (sprint 34 partial — tide predictions wired into
-  `assemble_forecast`, backend half only, `99338b7`, merged as
-  `4d6dd77`).
+- Last merged PR: #361 (sprint 34 frontend half — `TideTable` rendered
+  on the forecast page, `edefe65`, merged as `cfabe8b`).
 - **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
   1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
   (#332). Phase 1's only remaining items (9, 10) need external accounts —
@@ -1301,6 +1300,35 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   dark themes, then deleted before committing so it never shipped.
   `npm run lint` and `npm run build` both pass clean (same warnings as
   before, no new ones).
+- **`axe-core` spot-check across every real `apps/web` page, two real
+  bugs found and fixed** (verification of already-shipped work, not
+  new sprint scope -- sprint 40's formal WCAG 2.2 AA audit remains
+  unattempted): ran `axe-core` (fetched into a scratch npm project, not
+  committed as a dependency -- this was a one-time verification pass,
+  not new permanent CI infrastructure, which would be its own
+  deliberate decision) against `/`, `/locations`, `/forecast/{id}`,
+  and the 404 page, in both light and dark, plus two dynamic states
+  (the location-search dropdown open, the gallery's error `Field`
+  visible). Found: (1) `--color-nogo-text` used directly on the page
+  background failed WCAG AA contrast in dark mode (2.6:1 of a required
+  4.5:1) in `Field`'s error message and `ForecastErrorCard` -- that
+  token is correctly theme-invariant for `Badge`'s own pill (paired
+  with an equally theme-invariant background, so never actually
+  broken there), but bare status text on the alternating page
+  background needed its own token; added `--color-danger-text` with a
+  proper dark-mode override and migrated both call sites. (2)
+  `LocationSearch`'s dropdown used `<ul>`/`<li role="option">`, which
+  breaks ARIA's required-owned-elements relationship -- overriding an
+  `<li>`'s implicit "listitem" role to "option" means axe no longer
+  sees the `<ul>` as containing real list items, tripping
+  `aria-required-children`/`aria-required-parent`/`list` simultaneously;
+  switched to plain `<div role="listbox">`/`<div role="option">`,
+  which carry no conflicting implicit role -- the standard fix for
+  this well-known interaction. Zero violations across every page and
+  state after both fixes, confirmed with a full re-run; the
+  search-to-forecast interactive flow (type, arrow-key, select,
+  navigate) was re-verified functionally unchanged after the markup
+  change. `npm run lint`/`npm run build` both pass clean.
 - **Incident (sprint 6, resolved earlier)**: a scratch branch explicitly
   titled `DO NOT MERGE` was merged into `main` under the repo owner's own
   account, landing deliberately-broken code; reverted within ~10 minutes
