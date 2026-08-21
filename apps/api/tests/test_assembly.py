@@ -54,9 +54,17 @@ _NDBC_FEED = (
     "#yr  mo dy hr mn degT m/s  m/s     m    hPa\n"
     "2024 07 15 12 00 230 8.2  10.1  1.3   1015.2\n"
 )
+_GRIDPOINT_POINTS = {
+    "properties": {"forecast": "https://api.weather.gov/gridpoints/ILM/1,1/forecast"}
+}
+_GRIDPOINT_FORECAST = {
+    "properties": {"periods": [{"windSpeed": "10 mph", "windDirection": "SW"}]}
+}
 
 
-def _make_client(*, nws_ok: bool, coops_ok: bool, ndbc_ok: bool) -> BoundedHTTPClient:
+def _make_client(
+    *, nws_ok: bool, coops_ok: bool, ndbc_ok: bool, gridpoint_ok: bool = True
+) -> BoundedHTTPClient:
     def handler(request: httpx.Request) -> httpx.Response:
         url = str(request.url)
         if "zones/forecast" in url:
@@ -71,6 +79,18 @@ def _make_client(*, nws_ok: bool, coops_ok: bool, ndbc_ok: bool) -> BoundedHTTPC
             return (
                 httpx.Response(200, json=_WATER_TEMP_RESPONSE)
                 if coops_ok
+                else httpx.Response(503)
+            )
+        if "gridpoints/ILM" in url:
+            return (
+                httpx.Response(200, json=_GRIDPOINT_FORECAST)
+                if gridpoint_ok
+                else httpx.Response(503)
+            )
+        if "/points/" in url:
+            return (
+                httpx.Response(200, json=_GRIDPOINT_POINTS)
+                if gridpoint_ok
                 else httpx.Response(503)
             )
         if "ndbc.noaa.gov" in url:
@@ -95,7 +115,13 @@ _WATER_TEMP_PROFILES = load_water_temp_profiles()
 async def test_present_absent_matrix(
     nws_ok: bool, coops_ok: bool, ndbc_ok: bool
 ) -> None:
-    client = _make_client(nws_ok=nws_ok, coops_ok=coops_ok, ndbc_ok=ndbc_ok)
+    # gridpoint_ok=False: this test characterizes only the original three
+    # fallible sources per its own docstring. The gridpoint-wind fallback
+    # (a fourth, conditionally-triggered source) has its own dedicated
+    # tests below.
+    client = _make_client(
+        nws_ok=nws_ok, coops_ok=coops_ok, ndbc_ok=ndbc_ok, gridpoint_ok=False
+    )
     async with client:
         envelope = await assemble_forecast(
             _WRIGHTSVILLE_BEACH, client, _WATER_TEMP_PROFILES, now=_NOW
@@ -117,24 +143,36 @@ async def test_present_absent_matrix(
     # re-derive assess_confidence's own point arithmetic (that's
     # test_confidence.py's job). Wrightsville Beach is curated
     # (anchor_miles=None), so no station-distance factor applies here.
+    expected_sources = [
+        SourceStatus(
+            provider="nws:marine_zone",
+            state=SourceState.OK if nws_ok else SourceState.UNAVAILABLE,
+            as_of=_NOW,
+        ),
+        SourceStatus(
+            provider="noaa_coops:water_temperature",
+            state=SourceState.OK if coops_ok else SourceState.UNAVAILABLE,
+            as_of=_NOW,
+        ),
+        SourceStatus(
+            provider="ndbc:buoy",
+            state=SourceState.OK if ndbc_ok else SourceState.UNAVAILABLE,
+            as_of=_NOW,
+        ),
+    ]
+    if not nws_ok and not ndbc_ok:
+        # Both primary wind sources down — assembly attempts the
+        # gridpoint-wind fallback too (gridpoint_ok=False here, so it
+        # fails), adding a fourth SourceStatus.
+        expected_sources.append(
+            SourceStatus(
+                provider="nws:gridpoint_wind",
+                state=SourceState.UNAVAILABLE,
+                as_of=_NOW,
+            )
+        )
     expected_confidence = assess_confidence(
-        [
-            SourceStatus(
-                provider="nws:marine_zone",
-                state=SourceState.OK if nws_ok else SourceState.UNAVAILABLE,
-                as_of=_NOW,
-            ),
-            SourceStatus(
-                provider="noaa_coops:water_temperature",
-                state=SourceState.OK if coops_ok else SourceState.UNAVAILABLE,
-                as_of=_NOW,
-            ),
-            SourceStatus(
-                provider="ndbc:buoy",
-                state=SourceState.OK if ndbc_ok else SourceState.UNAVAILABLE,
-                as_of=_NOW,
-            ),
-        ],
+        expected_sources,
         now=_NOW,
         observations=[
             AgedObservation(
@@ -236,11 +274,19 @@ async def test_no_stations_assigned_treated_as_unavailable_not_a_crash() -> None
     )
 
     def handler(request: httpx.Request) -> httpx.Response:
-        assert "alerts/active" in str(request.url)
-        return httpx.Response(200, json={"features": []})
+        url = str(request.url)
+        if "alerts/active" in url:
+            return httpx.Response(200, json={"features": []})
+        # Wind is unavailable from both primary sources (no zone, no
+        # buoy), so the gridpoint-wind fallback is attempted too — also
+        # fails here, so this stays a total-degradation scenario.
+        assert "/points/" in url
+        return httpx.Response(503)
 
     transport = httpx.MockTransport(handler)
-    async with BoundedHTTPClient(transport=transport) as client:
+    async with BoundedHTTPClient(
+        transport=transport, max_retries=0, backoff_base_seconds=0.0
+    ) as client:
         envelope = await assemble_forecast(
             location, client, _WATER_TEMP_PROFILES, now=_NOW
         )
@@ -250,6 +296,8 @@ async def test_no_stations_assigned_treated_as_unavailable_not_a_crash() -> None
     conditions = ForecastConditions.model_validate(envelope.conditions)
     assert conditions.water_temperature.is_fallback is True
     assert conditions.score.verdict == ScoreVerdict.UNKNOWN
+    by_provider = {s.provider: s for s in envelope.sources}
+    assert by_provider["nws:gridpoint_wind"].state == SourceState.UNAVAILABLE
 
 
 @pytest.mark.asyncio
@@ -361,3 +409,67 @@ async def test_dynamic_location_anchor_distance_degrades_confidence() -> None:
 
     assert "distant_station:location:anchor" in envelope.confidence.reasons
     assert envelope.confidence.level != ConfidenceLevel.HIGH
+
+
+@pytest.mark.asyncio
+async def test_gridpoint_wind_rescues_forecast_state_when_both_primary_sources_down() -> (
+    None
+):
+    """Both the marine-zone forecast and the NDBC buoy are unavailable —
+    without the gridpoint-wind fallback this would be PARTIAL (see the
+    present/absent matrix's all-three-down case). With
+    `_GRIDPOINT_FORECAST` (10 mph / SW) available, the forecast recovers
+    to FRESH. The go/no-go *score* stays UNKNOWN even so: the gridpoint
+    forecast is land-only and never has wave data, and
+    `score_conditions` needs both wind and wave to produce a number
+    (sprint 22's contract, unchanged here) — gridpoint wind improves
+    `ForecastState` and per-source confidence, but can't single-handedly
+    rescue the score without a wave source too.
+    """
+    client = _make_client(nws_ok=False, coops_ok=True, ndbc_ok=False, gridpoint_ok=True)
+    async with client:
+        envelope = await assemble_forecast(
+            _WRIGHTSVILLE_BEACH, client, _WATER_TEMP_PROFILES, now=_NOW
+        )
+
+    assert envelope.state == ForecastState.FRESH
+    conditions = ForecastConditions.model_validate(envelope.conditions)
+    assert conditions.gridpoint_wind is not None
+    assert conditions.gridpoint_wind.wind_direction == "SW"
+    assert conditions.score.score is None
+    assert conditions.score.verdict == ScoreVerdict.UNKNOWN
+    by_provider = {s.provider: s for s in envelope.sources}
+    assert by_provider["nws:gridpoint_wind"].state == SourceState.OK
+    assert any(w.code == "fallback:gridpoint_wind" for w in envelope.warnings)
+
+
+@pytest.mark.asyncio
+async def test_gridpoint_wind_not_fetched_when_marine_zone_available() -> None:
+    """Marine-zone wind is available, so the gridpoint fallback should
+    never be attempted — proven by using a client that raises on any
+    `/points/` request rather than by absence-of-evidence.
+    """
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        url = str(request.url)
+        if "zones/forecast" in url:
+            return httpx.Response(200, json=_MARINE_ZONE_FORECAST)
+        if "alerts/active" in url:
+            return httpx.Response(200, json={"features": []})
+        if "datagetter" in url:
+            return httpx.Response(200, json=_WATER_TEMP_RESPONSE)
+        if "ndbc.noaa.gov" in url:
+            return httpx.Response(200, text=_NDBC_FEED)
+        raise AssertionError(f"unexpected URL (gridpoint should not be called): {url}")
+
+    transport = httpx.MockTransport(handler)
+    async with BoundedHTTPClient(
+        transport=transport, max_retries=0, backoff_base_seconds=0.0
+    ) as client:
+        envelope = await assemble_forecast(
+            _WRIGHTSVILLE_BEACH, client, _WATER_TEMP_PROFILES, now=_NOW
+        )
+
+    conditions = ForecastConditions.model_validate(envelope.conditions)
+    assert conditions.gridpoint_wind is None
+    assert all(s.provider != "nws:gridpoint_wind" for s in envelope.sources)

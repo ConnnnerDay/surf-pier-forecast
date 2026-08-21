@@ -13,10 +13,13 @@ import pytest
 
 from app.infra.http_client import BoundedHTTPClient, ProviderHTTPStatusError
 from app.providers.nws import (
+    GridpointWindForecast,
     MarineZoneConditions,
+    fetch_gridpoint_wind,
     fetch_marine_zone_conditions,
     fetch_point_alerts,
     fetch_state_alerts,
+    parse_gridpoint_wind,
     parse_marine_zone_conditions,
 )
 
@@ -114,6 +117,125 @@ async def test_fetch_marine_zone_conditions_propagates_provider_error() -> None:
     ) as client:
         with pytest.raises(ProviderHTTPStatusError):
             await fetch_marine_zone_conditions(client)
+
+
+def _gridpoint_period(wind_speed: str = "", wind_direction: str = "") -> dict[str, str]:
+    return {"windSpeed": wind_speed, "windDirection": wind_direction}
+
+
+def test_parse_gridpoint_wind_single_value() -> None:
+    periods = [_gridpoint_period("10 mph", "SW")]
+
+    result = parse_gridpoint_wind(periods)
+
+    assert result.wind_direction == "SW"
+    assert result.wind_low_kt == round(10 * 0.868976, 1)
+    assert result.wind_high_kt == round(10 * 0.868976, 1)
+
+
+def test_parse_gridpoint_wind_range() -> None:
+    periods = [_gridpoint_period("5 to 10 mph", "NE")]
+
+    result = parse_gridpoint_wind(periods)
+
+    assert result.wind_low_kt == round(5 * 0.868976, 1)
+    assert result.wind_high_kt == round(10 * 0.868976, 1)
+
+
+def test_parse_gridpoint_wind_direction_is_already_abbreviated_no_mapping_needed() -> (
+    None
+):
+    """Unlike parse_marine_zone_conditions, the gridpoint API returns
+    windDirection pre-abbreviated (e.g. "SW", not "Southwest") — no
+    _DIR_MAP lookup should be applied.
+    """
+    periods = [_gridpoint_period("10 mph", "SW")]
+
+    result = parse_gridpoint_wind(periods)
+
+    assert result.wind_direction == "SW"
+
+
+def test_parse_gridpoint_wind_takes_min_max_across_first_three_periods() -> None:
+    periods = [
+        _gridpoint_period("5 mph", "N"),
+        _gridpoint_period("15 mph", "NE"),
+        _gridpoint_period("8 mph", "E"),
+        _gridpoint_period("30 mph", "S"),  # outside the first-3 window, ignored
+    ]
+
+    result = parse_gridpoint_wind(periods)
+
+    assert result.wind_direction == "N"  # first period's direction
+    assert result.wind_low_kt == round(5 * 0.868976, 1)
+    assert result.wind_high_kt == round(15 * 0.868976, 1)
+
+
+def test_parse_gridpoint_wind_missing_fields_are_none() -> None:
+    periods = [_gridpoint_period()]
+
+    result = parse_gridpoint_wind(periods)
+
+    assert result == GridpointWindForecast()
+
+
+def test_parse_gridpoint_wind_empty_periods() -> None:
+    assert parse_gridpoint_wind([]) == GridpointWindForecast()
+
+
+@pytest.mark.asyncio
+async def test_fetch_gridpoint_wind_parses_response() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/points/34.21,-77.8":
+            return httpx.Response(
+                200,
+                json={
+                    "properties": {
+                        "forecast": "https://api.weather.gov/gridpoints/ILM/1,1/forecast"
+                    }
+                },
+            )
+        assert request.url.path == "/gridpoints/ILM/1,1/forecast"
+        return httpx.Response(
+            200, json={"properties": {"periods": [_gridpoint_period("10 mph", "SW")]}}
+        )
+
+    transport = httpx.MockTransport(handler)
+    async with BoundedHTTPClient(transport=transport) as client:
+        result = await fetch_gridpoint_wind(client, 34.21, -77.8)
+
+    assert result is not None
+    assert result.wind_direction == "SW"
+
+
+@pytest.mark.asyncio
+async def test_fetch_gridpoint_wind_degrades_to_none_on_provider_error() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(503)
+
+    transport = httpx.MockTransport(handler)
+    async with BoundedHTTPClient(
+        transport=transport, max_retries=0, backoff_base_seconds=0.0
+    ) as client:
+        result = await fetch_gridpoint_wind(client, 34.21, -77.8)
+
+    assert result is None
+
+
+@pytest.mark.asyncio
+async def test_fetch_gridpoint_wind_degrades_to_none_when_points_lookup_fails() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/points/34.21,-77.8":
+            return httpx.Response(200, json={"properties": {"forecast": "https://x"}})
+        return httpx.Response(503)
+
+    transport = httpx.MockTransport(handler)
+    async with BoundedHTTPClient(
+        transport=transport, max_retries=0, backoff_base_seconds=0.0
+    ) as client:
+        result = await fetch_gridpoint_wind(client, 34.21, -77.8)
+
+    assert result is None
 
 
 def test_parse_alerts_geojson_shape() -> None:
