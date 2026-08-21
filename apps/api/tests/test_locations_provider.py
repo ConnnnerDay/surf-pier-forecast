@@ -206,6 +206,10 @@ def test_resolve_dynamic_location_near_wrightsville_beach_inherits_regional_fiel
     )  # inherited, within the 75mi zone-inherit radius
     assert resolved.name == "Near Wrightsville Beach"
     assert anchor_miles < 5.0
+    # anchor_miles is embedded on the model itself too, matching the
+    # tuple's second element — app.domain.confidence's station-distance
+    # factor reads it from here, not from the tuple.
+    assert resolved.anchor_miles == anchor_miles
 
 
 def test_resolve_dynamic_location_far_from_everything_still_resolves_with_defaults() -> (
@@ -225,6 +229,9 @@ def test_resolve_dynamic_location_far_from_everything_still_resolves_with_defaul
     assert resolved.conditions_region == "atlantic_mid"
     assert resolved.timezone == "America/New_York"
     assert anchor_miles == float("inf")
+    # The raw tuple can be infinite (no anchor found at all); the model
+    # field is None instead — infinity isn't a meaningful JSON value.
+    assert resolved.anchor_miles is None
 
 
 def test_resolve_dynamic_location_nws_zone_not_inherited_when_too_far() -> None:

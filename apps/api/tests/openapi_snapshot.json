@@ -308,8 +308,19 @@
         "type": "object"
       },
       "ResolvedLocation": {
-        "description": "A forecast-ready location \u2014 either a curated spot as-is, or an\nassembled dynamic point. `is_dynamic=False` means every field came\ndirectly from `CuratedLocation`; `is_dynamic=True` means station IDs\nwere resolved from live catalogs and the coarse regional fields were\ninherited from the nearest curated neighbor (see\n`resolve_dynamic_location`).",
+        "description": "A forecast-ready location \u2014 either a curated spot as-is, or an\nassembled dynamic point. `is_dynamic=False` means every field came\ndirectly from `CuratedLocation`; `is_dynamic=True` means station IDs\nwere resolved from live catalogs and the coarse regional fields were\ninherited from the nearest curated neighbor (see\n`resolve_dynamic_location`).\n\n`anchor_miles` is `None` for a curated location \u2014 it *is* the named\nspot, so there's no meaningful \"distance to the nearest real\nstation\" to report \u2014 and for a dynamic point where no anchor\n(curated neighbor, CO-OPS station, or NDBC buoy) was found at all.\nOtherwise it's `resolve_dynamic_location`'s nearest-anchor distance,\nadded so a later confidence assessment (`app.domain.confidence`) has\nreal distance data to work with instead of none at all.",
         "properties": {
+          "anchor_miles": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Anchor Miles"
+          },
           "conditions_region": {
             "title": "Conditions Region",
             "type": "string"

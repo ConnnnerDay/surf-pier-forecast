@@ -430,8 +430,7 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #350 (sprint 25, versioned API, `2af6397`, merged as
-  `c861457`).
+- Last merged PR: #351 (scoring wiring, `1ccf642`, merged as `204329f`).
 - **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
   1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
   (#332). Phase 1's only remaining items (9, 10) need external accounts —
@@ -905,6 +904,37 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   buoy fallback becoming a zero-width range, and NWS-over-buoy
   direction preference. All of `apps/api`'s checks (ruff, ruff format,
   mypy, pytest — 262 passed) pass clean.
+- This PR continues with **confidence wiring** (not a numbered sprint —
+  the second slice of sprint 25's named wiring follow-up, closing the
+  blocker scoring-wiring's PR named explicitly): `ForecastEnvelope.
+  confidence` now comes from sprint 23's `assess_confidence` instead of
+  assembly's old liveness-only stub, given per-source status, one
+  `AgedObservation` for water temperature (age + fallback), and — for
+  dynamic points — a `StationDistance` from a new `ResolvedLocation.
+  anchor_miles` field. That field is the plumbing the blocker named:
+  `resolve_dynamic_location` (sprint 19) already computed an
+  anchor-miles value but discarded it into a tuple `app.api.deps.
+  resolve_location_id` (sprint 25) never used; it's now embedded on the
+  model itself, `None` for curated locations (they *are* the named
+  station — no distance factor) and for points with no anchor found at
+  all (an aggregate `float("inf")` in the raw tuple isn't a meaningful
+  JSON value). Documented as a deliberate simplification, not a full
+  per-source distance breakdown: `resolve_dynamic_location` only ever
+  returns the single nearest anchor's distance, not one per fallible
+  source. `POST /v1/locations/resolve`'s response schema picked up the
+  new field — `tests/openapi_snapshot.json` regenerated, reviewed as a
+  one-field additive diff, exactly the deliberate-regeneration flow the
+  breaking-change guard exists for. `apps/api/tests/test_assembly.py`'s
+  present/absent matrix test now reproduces assembly's exact
+  `assess_confidence` inputs to verify the wiring (not re-deriving the
+  point arithmetic — `test_confidence.py` already exhaustively covers
+  that), plus a new dedicated test confirms a dynamic location's
+  `anchor_miles` actually degrades confidence via a
+  `distant_station:location:anchor` reason.  Sprint 24's `SnapshotCache`
+  remains the one still-unwired piece — it needs a keying/
+  `ForecastState.STALE` design decision, not just missing input data,
+  see the module docstring. All of `apps/api`'s checks (ruff, ruff
+  format, mypy, pytest — 263 passed) pass clean.
 - **Incident (sprint 6, resolved earlier)**: a scratch branch explicitly
   titled `DO NOT MERGE` was merged into `main` under the repo owner's own
   account, landing deliberately-broken code; reverted within ~10 minutes
@@ -912,15 +942,13 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   turned this into a documented branch-hygiene rule.
 - Exact next action: finish sprint 13/14/15's deferred scope, or move to
   sprint 26 (performance budget — bounded parallel calls, no
-  duplicates, warm p95 under 750 ms), or continue the wiring follow-up
-  with sprint 23's `assess_confidence` (needs real station-distance
-  data threaded through `ResolvedLocation`/`resolve_location_id` first
-  — `resolve_dynamic_location`'s anchor-miles result is currently
-  dropped) or sprint 24's `SnapshotCache` (keying the cache by location
-  id around `assemble_forecast`, producing `ForecastState.STALE` on a
-  fallback hit) — scoring's slice is done, these two remain unassigned.
-  Any is a valid next Phase 2 pick, needs no external accounts.
-  Separately, sprint 9 (preview
+  duplicates, warm p95 under 750 ms), or close the wiring follow-up's
+  last piece with sprint 24's `SnapshotCache` (keying the cache by
+  location id around `assemble_forecast`, producing
+  `ForecastState.STALE` on a fallback hit — needs a keying/state design
+  decision, not missing input data; scoring and confidence are both
+  wired in now). Any is a valid next Phase 2 pick, needs no external
+  accounts. Separately, sprint 9 (preview
   environments) and sprint 10 (production skeleton) need real
   Vercel/Render/Neon accounts this session has no credentials for —
   **flag to the product owner** rather than attempting them blind; they

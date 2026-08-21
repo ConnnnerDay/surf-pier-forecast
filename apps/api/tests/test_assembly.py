@@ -18,7 +18,8 @@ import httpx
 import pytest
 
 from app.domain.assembly import ForecastConditions, assemble_forecast
-from app.domain.models import ConfidenceLevel, ForecastState, SourceState
+from app.domain.confidence import AgedObservation, assess_confidence
+from app.domain.models import ConfidenceLevel, ForecastState, SourceState, SourceStatus
 from app.domain.scoring import ScoreVerdict
 from app.infra.http_client import BoundedHTTPClient
 from app.providers.locations import ResolvedLocation, load_water_temp_profiles
@@ -110,14 +111,39 @@ async def test_present_absent_matrix(
     else:
         assert envelope.state == ForecastState.PARTIAL
 
-    # Confidence: HIGH only when all three sources are live; LOW when
-    # wind/wave data is missing entirely; MEDIUM otherwise.
-    if nws_ok and coops_ok and ndbc_ok:
-        assert envelope.confidence.level == ConfidenceLevel.HIGH
-    elif not wind_wave_available:
-        assert envelope.confidence.level == ConfidenceLevel.LOW
-    else:
-        assert envelope.confidence.level == ConfidenceLevel.MEDIUM
+    # Confidence: assembly wires per-source liveness and the water-temp
+    # observation's age/fallback status into assess_confidence (sprint
+    # 23) — reproduce the same inputs here to verify the wiring, not to
+    # re-derive assess_confidence's own point arithmetic (that's
+    # test_confidence.py's job). Wrightsville Beach is curated
+    # (anchor_miles=None), so no station-distance factor applies here.
+    expected_confidence = assess_confidence(
+        [
+            SourceStatus(
+                provider="nws:marine_zone",
+                state=SourceState.OK if nws_ok else SourceState.UNAVAILABLE,
+                as_of=_NOW,
+            ),
+            SourceStatus(
+                provider="noaa_coops:water_temperature",
+                state=SourceState.OK if coops_ok else SourceState.UNAVAILABLE,
+                as_of=_NOW,
+            ),
+            SourceStatus(
+                provider="ndbc:buoy",
+                state=SourceState.OK if ndbc_ok else SourceState.UNAVAILABLE,
+                as_of=_NOW,
+            ),
+        ],
+        now=_NOW,
+        observations=[
+            AgedObservation(
+                "noaa_coops:water_temperature", conditions.water_temperature
+            )
+        ],
+    )
+    assert envelope.confidence.level == expected_confidence.level
+    assert envelope.confidence.reasons == expected_confidence.reasons
 
     # Water temperature always resolves — live if CO-OPS succeeded,
     # otherwise a labeled fallback. Never silently missing.
@@ -312,3 +338,26 @@ async def test_score_wind_direction_prefers_marine_zone_over_buoy() -> None:
     assert any(
         "Clean offshore wind (W)" in f.description for f in conditions.score.factors
     )
+
+
+@pytest.mark.asyncio
+async def test_dynamic_location_anchor_distance_degrades_confidence() -> None:
+    """A curated location's `anchor_miles` is always `None` (no distance
+    factor — see the present/absent matrix test). A dynamic location
+    with a real `anchor_miles` should feed a `StationDistance` into
+    `assess_confidence`, producing a `distant_station:location:anchor`
+    reason and dropping confidence below what the same source liveness
+    would otherwise produce (all three sources live would otherwise be
+    HIGH — see the present/absent matrix test's case 1).
+    """
+    dynamic_location = _WRIGHTSVILLE_BEACH.model_copy(
+        update={"id": "pt_34.200_-77.800", "is_dynamic": True, "anchor_miles": 60.0}
+    )
+    client = _make_client(nws_ok=True, coops_ok=True, ndbc_ok=True)
+    async with client:
+        envelope = await assemble_forecast(
+            dynamic_location, client, _WATER_TEMP_PROFILES, now=_NOW
+        )
+
+    assert "distant_station:location:anchor" in envelope.confidence.reasons
+    assert envelope.confidence.level != ConfidenceLevel.HIGH
