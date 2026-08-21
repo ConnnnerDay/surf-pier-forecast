@@ -354,7 +354,7 @@ to reconciliation, not proof that the agreed outcome passed.
 | 41 | Structured observability | One request trace across web/API/sources with safe context | Not accepted |
 | 42 | Error monitoring | Frontend/API releases, source maps and secret redaction | Not accepted |
 | 43 | Privacy-safe analytics | Registration, resolution, forecast state, latency, return use | Not accepted |
-| 44 | Security hardening | CSP, CSRF, signed internal API, brute force, headers, threat model | Candidate pieces; not accepted |
+| 44 | Security hardening | CSP, CSRF, signed internal API, brute force, headers, threat model | **Partially complete** — the signed-internal-API piece's verification primitive is built (`apps/api/app/infra/internal_signature.py` + `app/api/internal_auth.py`, ADR-004's HMAC-SHA-256 contract, ports nothing since there's no legacy precedent) but deliberately not wired onto the `/v1` routers yet — see the module docstrings. CSP, CSRF, brute-force defense, and security headers remain candidate pieces; not accepted |
 | 45 | Privacy and deletion | **Required for v1 launch** (public product, real accounts): self-service export and account deletion/anonymization proof; legal pages | Candidate in `/v2`; not accepted |
 | 46 | Database resilience | Migrations, constraints, indexes, pooling, backups, blank restore drill | Not accepted |
 | 47 | Degraded-mode UX | Database/API/email/upstream chaos yields actionable UI | Not accepted |
@@ -430,8 +430,8 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #355 (sprint 13 follow-up, NWS gridpoint wind
-  fallback, `c3aaae9`, merged as `78d8896`).
+- Last merged PR: #356 (sprint 14 follow-up, CO-OPS wind fallback,
+  `41baffa`, merged as `bd04a97`).
 - **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
   1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
   (#332). Phase 1's only remaining items (9, 10) need external accounts —
@@ -1094,6 +1094,32 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   `coops_wind_ok=False`. Confirmed no OpenAPI drift and smoke-tested
   against a real running `uvicorn` server. All of `apps/api`'s checks
   (ruff, ruff format, mypy, pytest — 300 passed) pass clean.
+- **Sprint 44, partial (signed-internal-API verification primitive)**:
+  with Phase 2's own sprint-13/14/15 deferred scope essentially exhausted,
+  this PR picks up a different, fully-specified piece already decided in
+  `docs/architecture.md`'s ADR-004 rather than inventing new scope —
+  `app/infra/internal_signature.py` implements the HMAC-SHA-256
+  request-signing contract for the Next.js BFF → FastAPI boundary
+  (canonical method/path+query/body-digest/user-id/issued-at/expires-at/
+  request-id/key-id, constant-time comparison, clock-skew window,
+  expiration, and replay detection via an injectable-clock `ReplayGuard`
+  that prunes entries at their own `expires_at`, same pattern as
+  `SnapshotCache`). `app/api/internal_auth.py` wraps it as a
+  constructor-injectable FastAPI dependency (`InternalAuthDependency`)
+  that fails closed on missing configuration. Deliberately **not** wired
+  onto the `/v1` routers yet: `apps/web` is still the sprint-13 skeleton
+  with no signer to pair with it, and a mandatory signature check on
+  routes nothing can currently sign would make `apps/api` uncallable by
+  its only real client — this is a "build the primitive correctly, wire
+  it in later" split, the same pattern sprints 22/23/24 already used
+  before their own wiring follow-ups landed. `tests/
+  test_internal_signature.py` and `tests/test_internal_auth.py` cover
+  both layers: valid signature, tampered body/method/path, expired,
+  clock-skew, validity-window-too-long, unknown key id, previous-key
+  rotation, replay detection and replay-guard pruning, missing/malformed
+  headers, and fail-closed with no configured keys. All of `apps/api`'s
+  checks (ruff, ruff format, mypy, pytest — 321 passed) pass clean, no
+  OpenAPI drift (nothing wired onto any route yet).
 - **Incident (sprint 6, resolved earlier)**: a scratch branch explicitly
   titled `DO NOT MERGE` was merged into `main` under the repo owner's own
   account, landing deliberately-broken code; reverted within ~10 minutes
@@ -1115,17 +1141,18 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   system) explicitly requires a **branding decision** ("Surf & Pier
   Forecast" is a named placeholder, not a starting-point) before any UI
   work is defensible; sprint 28 (authentication) needs Better Auth +
-  Postgres infrastructure decisions neither exist yet. Exact next
-  action: sprint 13/14's backend-adapter-level deferred scope is now
-  essentially exhausted (what's left of each is deliberately-out-of-
-  scope enrichment, not adapter work) — **flag Phase 3's entry
-  blockers to the product owner** (the branding decision specifically)
-  rather than guessing a name or visual identity unilaterally. Sprint
-  15's NDBC pressure-trend/fishing-impact work is explicitly sprint
-  35's (fishing guidance) per that module's own docstring, so it isn't
-  a clean standalone pick either — worth flagging to the product owner
-  alongside the Phase 3 blockers rather than force-fitting it here.
-  Separately, sprint 9 (preview
+  Postgres infrastructure decisions neither exist yet. **Update: the
+  product owner has directed continuing on regardless** — including
+  Phase 3 frontend/visual work — rather than pausing on the branding
+  decision; "Surf & Pier Forecast" is used as a working placeholder
+  identity throughout, explicitly not treated as final, so Phase 3 work
+  can proceed without blocking on a name/visual-identity decision that
+  hasn't been made yet. Sprint 15's NDBC pressure-trend/fishing-impact
+  work is still explicitly sprint 35's (fishing guidance) per that
+  module's own docstring, so it isn't a clean standalone backend pick.
+  Sprint 44's signed-internal-API verification primitive (this PR) is a
+  fully-specified, non-branding-dependent piece of backend work picked
+  up in the meantime. Separately, sprint 9 (preview
   environments) and sprint 10 (production skeleton) need real
   Vercel/Render/Neon accounts this session has no credentials for —
   **flag to the product owner** rather than attempting them blind; they
