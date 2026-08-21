@@ -211,12 +211,126 @@ function TideTable({
   )
 }
 
+const _SHORT_HOURS = [
+  '12a', '1a', '2a', '3a', '4a', '5a', '6a', '7a', '8a', '9a', '10a', '11a',
+  '12p', '1p', '2p', '3p', '4p', '5p', '6p', '7p', '8p', '9p', '10p', '11p',
+]
+
+const _CHART_SLOT = 30
+const _CHART_BAR_WIDTH = 22
+const _CHART_BAR_MAX_HEIGHT = 90
+const _CHART_BASELINE_Y = 100
+const _CHART_WIDTH = _CHART_SLOT * 24
+const _CHART_HEIGHT = 128
+
 /**
- * Sprint 34's hourly outlook -- the remaining "timing" acceptance
- * sub-item's text-alternative half (apps/api's `app.domain.timing.
- * build_hourly_outlook`, backend). Like `TideTable`, a visual chart is
- * deliberately not attempted here; a plain, properly-labeled `<table>`
- * is itself an accessible representation, not a fallback for one.
+ * Sprint 34's hourly-outlook visual chart -- the "accessible charts"
+ * half of the acceptance bar, paired with `HourlyOutlookTable`'s
+ * already-complete text-alternative half. This is deliberately *not*
+ * the accessible representation itself: `aria-hidden="true"` removes
+ * it from the accessibility tree entirely, since `HourlyOutlookTable`
+ * (rendered alongside it, not replaced by it) already carries the same
+ * data as real text -- a chart re-announcing a table a screen-reader
+ * user just read is noise, not a service. Per the design system's
+ * `dataviz` skill: this is a single-metric magnitude series (one
+ * activity level per hour, not a categorical identity to color-key),
+ * so it gets a single-hue sequential encoding -- `--color-primary`
+ * at variable opacity (bar height *and* opacity both track `level`,
+ * a deliberately redundant pair of channels since this chart carries
+ * no information the table doesn't already have) -- rather than
+ * inventing new discrete color tokens for `ActivityTag`'s four tiers.
+ * `--color-go-text`/`--color-marginal-text` (used elsewhere for
+ * *paired* badge pills) were considered and rejected for a bar fill:
+ * per `app/globals.css`'s own comment on `--color-danger-text`, those
+ * tokens are theme-invariant, tuned only for pairing with their own
+ * light-tint badge background -- not for a solid fill against the
+ * card surface, where they'd risk the exact dark-mode contrast bug
+ * the sprint-27 `axe-core` pass already found and fixed once for
+ * `--color-nogo-text`. `--color-primary`/`--color-accent` are already
+ * theme-aware (separate light/dark values), so reusing them sidesteps
+ * that risk entirely instead of adding new tokens to re-solve it.
+ * The current hour gets an accent-colored ring; the day's peak
+ * hour(s) get an accent dot. Each bar carries a native SVG `<title>`
+ * (mouse-hover tooltip) but no `tabindex`/focus handling -- an
+ * `aria-hidden` subtree must never contain a keyboard-focusable
+ * element (axe-core's `aria-hidden-focus` rule), and every value a
+ * hover tooltip could show is already a keyboard/screen-reader-
+ * reachable table cell one section down.
+ */
+function HourlyOutlookChart({ outlook }: { outlook: HourlyOutlook }) {
+  return (
+    <div aria-hidden="true" className="flex flex-col gap-1">
+      <svg
+        viewBox={`0 0 ${_CHART_WIDTH} ${_CHART_HEIGHT}`}
+        role="presentation"
+        className="w-full"
+      >
+        <line
+          x1={0}
+          y1={_CHART_BASELINE_Y}
+          x2={_CHART_WIDTH}
+          y2={_CHART_BASELINE_Y}
+          strokeWidth={1}
+          className="stroke-border"
+        />
+        {outlook.hours.map((hour, index) => {
+          const x = index * _CHART_SLOT + (_CHART_SLOT - _CHART_BAR_WIDTH) / 2
+          const barHeight = Math.max(2, (hour.level / 100) * _CHART_BAR_MAX_HEIGHT)
+          const y = _CHART_BASELINE_Y - barHeight
+          return (
+            <g key={hour.hour}>
+              <rect
+                x={x}
+                y={y}
+                width={_CHART_BAR_WIDTH}
+                height={barHeight}
+                rx={3}
+                strokeWidth={hour.is_now ? 2 : 0}
+                className={cx('fill-primary', hour.is_now && 'stroke-accent')}
+                style={{ opacity: 0.25 + 0.75 * (hour.level / 100) }}
+              >
+                <title>{`${_SHORT_HOURS[hour.hour]}: ${hour.level}/100 (${hour.tag})`}</title>
+              </rect>
+              {hour.peak && (
+                <circle
+                  cx={x + _CHART_BAR_WIDTH / 2}
+                  cy={y - 6}
+                  r={3}
+                  className="fill-accent"
+                />
+              )}
+            </g>
+          )
+        })}
+        {outlook.hours.map((hour, index) =>
+          index % 3 === 0 ? (
+            <text
+              key={`label-${hour.hour}`}
+              x={index * _CHART_SLOT + _CHART_SLOT / 2}
+              y={_CHART_HEIGHT - 6}
+              textAnchor="middle"
+              className="fill-text-muted text-[9px]"
+            >
+              {_SHORT_HOURS[hour.hour]}
+            </text>
+          ) : null,
+        )}
+      </svg>
+      <p className="text-xs text-text-muted">
+        Taller, brighter bars mean better estimated activity; the dot marks the
+        day&apos;s peak.
+      </p>
+    </div>
+  )
+}
+
+/**
+ * Sprint 34's hourly outlook table -- the "text alternatives" half of
+ * the acceptance bar (apps/api's `app.domain.timing.
+ * build_hourly_outlook`, backend), rendered alongside
+ * `HourlyOutlookChart` above as the real accessible representation
+ * (the chart is `aria-hidden`). A plain, properly-labeled `<table>` is
+ * itself an accessible representation, not a fallback for one.
  * `hour.reasons`/`tide_event` are apps/api's own plain-language "why"
  * for that hour's estimate, shown verbatim rather than re-derived here.
  */
@@ -461,10 +575,13 @@ export function ForecastCard({ forecast }: { forecast: ForecastEnvelope }) {
       )}
 
       {forecast.hourly_outlook && (
-        <HourlyOutlookTable
-          outlook={forecast.hourly_outlook}
-          timezone={forecast.location.timezone}
-        />
+        <>
+          <HourlyOutlookChart outlook={forecast.hourly_outlook} />
+          <HourlyOutlookTable
+            outlook={forecast.hourly_outlook}
+            timezone={forecast.location.timezone}
+          />
+        </>
       )}
 
       {forecast.warnings.length > 0 && (
