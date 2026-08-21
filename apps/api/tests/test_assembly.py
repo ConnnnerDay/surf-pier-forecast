@@ -19,6 +19,7 @@ import pytest
 
 from app.domain.assembly import ForecastConditions, assemble_forecast
 from app.domain.models import ConfidenceLevel, ForecastState, SourceState
+from app.domain.scoring import ScoreVerdict
 from app.infra.http_client import BoundedHTTPClient
 from app.providers.locations import ResolvedLocation, load_water_temp_profiles
 
@@ -150,6 +151,15 @@ async def test_present_absent_matrix(
     if not ndbc_ok:
         assert any(w.code == "source_unavailable:ndbc_buoy" for w in envelope.warnings)
 
+    # Score: present whenever wind/wave data is available from either
+    # source (matching FRESH above); UNKNOWN-verdict/None-score only in
+    # the PARTIAL (temperature-only) case.
+    if wind_wave_available:
+        assert conditions.score.score is not None
+    else:
+        assert conditions.score.score is None
+        assert conditions.score.verdict == ScoreVerdict.UNKNOWN
+
 
 @pytest.mark.asyncio
 async def test_astronomy_always_present_regardless_of_other_sources() -> None:
@@ -213,3 +223,92 @@ async def test_no_stations_assigned_treated_as_unavailable_not_a_crash() -> None
     assert envelope.confidence.level == ConfidenceLevel.LOW
     conditions = ForecastConditions.model_validate(envelope.conditions)
     assert conditions.water_temperature.is_fallback is True
+    assert conditions.score.verdict == ScoreVerdict.UNKNOWN
+
+
+@pytest.mark.asyncio
+async def test_score_prefers_marine_zone_range_over_buoy_when_both_present() -> None:
+    """`_MARINE_ZONE_FORECAST` says "10 to 15 kt"/"2 to 3 ft"; `_NDBC_FEED`
+    reports a single live wind/wave reading. Both present — the score's
+    wind/wave factor descriptions should reflect the marine-zone range,
+    not the buoy's single value degenerated to a range.
+    """
+    client = _make_client(nws_ok=True, coops_ok=True, ndbc_ok=True)
+    async with client:
+        envelope = await assemble_forecast(
+            _WRIGHTSVILLE_BEACH, client, _WATER_TEMP_PROFILES, now=_NOW
+        )
+
+    conditions = ForecastConditions.model_validate(envelope.conditions)
+    descriptions = " ".join(f.description for f in conditions.score.factors)
+    assert "10-15 kt" in descriptions
+    assert "2-3 ft" in descriptions
+
+
+@pytest.mark.asyncio
+async def test_score_falls_back_to_buoy_range_when_marine_zone_unavailable() -> None:
+    """`_NDBC_FEED`'s single reading (8.2 m/s wind, 1.3 m wave) becomes a
+    degenerate zero-width range once NWS's marine-zone range is
+    unavailable.
+    """
+    client = _make_client(nws_ok=False, coops_ok=True, ndbc_ok=True)
+    async with client:
+        envelope = await assemble_forecast(
+            _WRIGHTSVILLE_BEACH, client, _WATER_TEMP_PROFILES, now=_NOW
+        )
+
+    conditions = ForecastConditions.model_validate(envelope.conditions)
+    assert conditions.buoy is not None
+    assert conditions.buoy.wind_speed is not None
+    assert conditions.buoy.wave_height is not None
+    # score_conditions labels ranges with int() truncation, not round().
+    wind_value = int(conditions.buoy.wind_speed.value)
+    wave_value = int(conditions.buoy.wave_height.value)
+    descriptions = " ".join(f.description for f in conditions.score.factors)
+    assert f"{wind_value}-{wind_value} kt" in descriptions
+    assert f"{wave_value}-{wave_value} ft" in descriptions
+
+
+@pytest.mark.asyncio
+async def test_score_wind_direction_prefers_marine_zone_over_buoy() -> None:
+    """NWS's text says "W wind" (a recognized east-coast offshore
+    direction); the buoy reports 000 degrees ("N", not in either
+    east-coast direction set — no bonus/penalty). If assembly used the
+    buoy's direction instead of NWS's, the offshore bonus would be
+    missing.
+    """
+    marine_zone_w_wind = {
+        "properties": {
+            "periods": [{"detailedForecast": "W wind 10 to 15 kt. Seas 2 to 3 ft."}]
+        }
+    }
+    ndbc_n_wind = (
+        "#YY  MM DD hh mm WDIR WSPD GST   WVHT   PRES\n"
+        "#yr  mo dy hr mn degT m/s  m/s     m    hPa\n"
+        "2024 07 15 12 00 000 8.2  10.1  1.3   1015.2\n"
+    )
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        url = str(request.url)
+        if "zones/forecast" in url:
+            return httpx.Response(200, json=marine_zone_w_wind)
+        if "alerts/active" in url:
+            return httpx.Response(200, json={"features": []})
+        if "datagetter" in url:
+            return httpx.Response(200, json=_WATER_TEMP_RESPONSE)
+        if "ndbc.noaa.gov" in url:
+            return httpx.Response(200, text=ndbc_n_wind)
+        raise AssertionError(f"unexpected URL: {url}")
+
+    transport = httpx.MockTransport(handler)
+    async with BoundedHTTPClient(
+        transport=transport, max_retries=0, backoff_base_seconds=0.0
+    ) as client:
+        envelope = await assemble_forecast(
+            _WRIGHTSVILLE_BEACH, client, _WATER_TEMP_PROFILES, now=_NOW
+        )
+
+    conditions = ForecastConditions.model_validate(envelope.conditions)
+    assert any(
+        "Clean offshore wind (W)" in f.description for f in conditions.score.factors
+    )

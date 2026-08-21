@@ -1,4 +1,4 @@
-"""Forecast assembly (sprint 21).
+"""Forecast assembly (sprint 21, scoring wiring added post-sprint-25).
 
 Concurrently fans out to the three independent, fallible live sources
 (NWS marine-zone conditions, NOAA CO-OPS water temperature, NDBC buoy
@@ -51,6 +51,31 @@ a labeled fallback is not an invented measurement.
   23 ("Confidence model") owns the fuller distance/age/fallback
   degradation policy; this sprint only needed something defensible
   enough to react to its own present/absent matrix.
+
+**Scoring wiring (added after sprint 25, still not a numbered sprint).**
+`ForecastConditions.score` is sprint 22's `ForecastScore`, computed here
+from a source-reconciliation policy this module owns: when both NWS's
+marine-zone range and the NDBC buoy report wind/wave, the marine-zone
+range is used — it already expresses genuine forecast uncertainty as a
+low/high spread, where the buoy gives one live point-in-time reading
+turned into a degenerate zero-width range (`(v, v)`) only when NWS
+didn't report. Wind direction prefers NWS's parsed direction, falling
+back to the buoy's. `score_conditions`'s `coast` parameter comes from
+`app.domain.scoring.wind_orientation_for_region(location.conditions_region)`.
+`score` is `None` (via `score_conditions`'s own contract) only when
+neither source reported wind/wave at all — the same condition that
+already produces `ForecastState.PARTIAL` above.
+
+Sprint 23's `assess_confidence` and sprint 24's `SnapshotCache` are
+still **not** wired in here. `assess_confidence` needs each fallible
+source's real distance from the resolved location — `ResolvedLocation`
+doesn't carry that (`resolve_dynamic_location`'s anchor-miles result is
+dropped by `app.api.deps.resolve_location_id`, sprint 25) — so wiring
+it in defensibly needs that plumbing first, not just a call to
+`assess_confidence` here. Wiring `SnapshotCache` around this function
+(keyed by location id, producing `ForecastState.STALE` on a fallback
+hit) is a separate, still-unassigned follow-up. Both remain named next
+steps in `docs/CANONICAL_ROADMAP.md`'s live checkpoint.
 """
 
 from __future__ import annotations
@@ -81,6 +106,11 @@ from app.domain.normalize import (
     normalize_marine_zone_wave_range,
     normalize_marine_zone_wind_range,
     normalize_water_temperature,
+)
+from app.domain.scoring import (
+    ForecastScore,
+    score_conditions,
+    wind_orientation_for_region,
 )
 from app.infra.http_client import BoundedHTTPClient, ProviderError
 from app.providers.astronomy import LunarDetails, SolunarTimes, SunTimes, TwilightTimes
@@ -122,8 +152,11 @@ class ForecastConditions(BaseModel):
 
     Each provider's raw normalized output is kept as its own field
     rather than merged into one reconciled "the wind is X" value —
-    reconciling multiple sources into a single defensible number is
-    forecast *scoring*'s job (sprint 22), not assembly's.
+    callers that want per-source detail still have it. `score` is the
+    one reconciled, single-number exception: `_reconcile_range` (this
+    module) picks one wind/wave range per the policy in the module
+    docstring's scoring-wiring section, and sprint 22's
+    `score_conditions` turns that into the go/no-go index.
     """
 
     water_temperature: Observation
@@ -135,6 +168,7 @@ class ForecastConditions(BaseModel):
     twilight: TwilightTimes
     lunar: LunarDetails
     solunar: SolunarTimes
+    score: ForecastScore
 
 
 def _to_domain_location(location: ResolvedLocation) -> Location:
@@ -205,6 +239,21 @@ def _source_status(name: str, result: _FetchResult[T], now: datetime) -> SourceS
     return SourceStatus(
         provider=name, state=SourceState.UNAVAILABLE, as_of=now, detail=result.error
     )
+
+
+def _reconcile_range(
+    marine_zone_range: ObservationRange | None, buoy_point: Observation | None
+) -> tuple[float, float] | None:
+    """Prefer the NWS marine-zone range (a genuine low/high forecast
+    spread) over the NDBC buoy's single live reading (a degenerate
+    zero-width range) — see the module docstring's scoring-wiring
+    section for why. `None` only when neither source reported it.
+    """
+    if marine_zone_range is not None:
+        return (marine_zone_range.low.value, marine_zone_range.high.value)
+    if buoy_point is not None:
+        return (buoy_point.value, buoy_point.value)
+    return None
 
 
 async def assemble_forecast(
@@ -279,40 +328,58 @@ async def assemble_forecast(
     marine_zone_conditions = marine_zone_result.value
     buoy_observation = buoy_result.value
 
+    marine_zone_wind = (
+        normalize_marine_zone_wind_range(
+            marine_zone_conditions, zone=location.nws_zone, observed_at=now
+        )
+        if marine_zone_conditions is not None
+        else None
+    )
+    marine_zone_wave = (
+        normalize_marine_zone_wave_range(
+            marine_zone_conditions, zone=location.nws_zone, observed_at=now
+        )
+        if marine_zone_conditions is not None
+        else None
+    )
+    buoy = (
+        normalize_buoy_readings(
+            buoy_observation, station_id=location.ndbc_stations[0], observed_at=now
+        )
+        if buoy_observation is not None
+        else None
+    )
+    sun_times = _compute_sun_times(now, location.lat, location.lng, location.timezone)
+    solunar = _compute_solunar_times(now, location.lat, location.lng, location.timezone)
+
+    score = score_conditions(
+        _reconcile_range(marine_zone_wind, buoy.wind_speed if buoy else None),
+        _reconcile_range(marine_zone_wave, buoy.wave_height if buoy else None),
+        wind_direction=(
+            marine_zone_conditions.wind_direction
+            if marine_zone_conditions and marine_zone_conditions.wind_direction
+            else (buoy_observation.wind_direction if buoy_observation else None)
+        ),
+        water_temperature=water_temperature,
+        sun_times=sun_times,
+        now=now,
+        solunar=solunar,
+        coast=wind_orientation_for_region(location.conditions_region),
+    )
+
     conditions = ForecastConditions(
         water_temperature=water_temperature,
-        marine_zone_wind=(
-            normalize_marine_zone_wind_range(
-                marine_zone_conditions, zone=location.nws_zone, observed_at=now
-            )
-            if marine_zone_conditions is not None
-            else None
-        ),
-        marine_zone_wave=(
-            normalize_marine_zone_wave_range(
-                marine_zone_conditions, zone=location.nws_zone, observed_at=now
-            )
-            if marine_zone_conditions is not None
-            else None
-        ),
-        buoy=(
-            normalize_buoy_readings(
-                buoy_observation, station_id=location.ndbc_stations[0], observed_at=now
-            )
-            if buoy_observation is not None
-            else None
-        ),
+        marine_zone_wind=marine_zone_wind,
+        marine_zone_wave=marine_zone_wave,
+        buoy=buoy,
         alerts=alerts,
-        sun_times=_compute_sun_times(
-            now, location.lat, location.lng, location.timezone
-        ),
+        sun_times=sun_times,
         twilight=_compute_twilight_times(
             now, location.lat, location.lng, location.timezone
         ),
         lunar=_compute_lunar_details(now, location.lng, location.timezone),
-        solunar=_compute_solunar_times(
-            now, location.lat, location.lng, location.timezone
-        ),
+        solunar=solunar,
+        score=score,
     )
 
     wind_wave_available = conditions.marine_zone_wind is not None or (

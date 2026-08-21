@@ -430,8 +430,8 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #349 (roadmap checkpoint bookkeeping for the legacy
-  lint CI fix, `e6d4a2d`, merged as `7186f5b`).
+- Last merged PR: #350 (sprint 25, versioned API, `2af6397`, merged as
+  `c861457`).
 - **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
   1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
   (#332). Phase 1's only remaining items (9, 10) need external accounts —
@@ -875,6 +875,36 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   cover curated and dynamic location ids, unknown-id 404, non-coastal
   422, and refresh returning the same shape as get. All of `apps/api`'s
   checks (ruff, ruff format, mypy, pytest — 258 passed) pass clean.
+- This PR continues Phase 2 with **scoring wiring** (not a numbered
+  sprint — the first slice of the "wire sprints 22/23/24 into
+  `assemble_forecast`" follow-up sprint 25 named): `app/domain/
+  assembly.py` now computes a real `ForecastConditions.score` on every
+  forecast via sprint 22's `score_conditions`, closing the gap where
+  `GET /v1/forecasts/{id}` returned raw per-source readings but no
+  actual go/no-go score. The source-reconciliation policy this
+  required — which of NWS's marine-zone range or NDBC's buoy reading
+  to score — is now assembly's, documented in its module docstring:
+  the marine-zone range is preferred (a genuine forecast low/high
+  spread) over the buoy's single live value (used only as a fallback,
+  turned into a degenerate zero-width range); wind direction prefers
+  NWS's parsed value over the buoy's. Confidence-model and caching
+  wiring (sprints 23/24) remain explicitly deferred — `assess_confidence`
+  needs real station-distance data `ResolvedLocation` doesn't carry
+  yet, named as the concrete blocker rather than left vague. This
+  wiring's manual real-server smoke test surfaced a genuine pre-existing
+  gap unrelated to scoring: `app/infra/http_client.py`'s
+  `BoundedHTTPClient` only caught `httpx.ConnectError`, not the
+  broader `httpx.TransportError` family (this sandbox's outbound proxy
+  raised `httpx.ProxyError` instead), so a proxy/read/write/pool-timeout
+  failure would have escaped as an unhandled exception rather than
+  degrading one source gracefully per the product contract's
+  Reliability bullet — fixed and characterized in
+  `apps/api/tests/test_http_client.py`. New/updated tests in
+  `apps/api/tests/test_assembly.py` cover score presence matching the
+  FRESH/PARTIAL split, the marine-zone-over-buoy range preference, the
+  buoy fallback becoming a zero-width range, and NWS-over-buoy
+  direction preference. All of `apps/api`'s checks (ruff, ruff format,
+  mypy, pytest — 262 passed) pass clean.
 - **Incident (sprint 6, resolved earlier)**: a scratch branch explicitly
   titled `DO NOT MERGE` was merged into `main` under the repo owner's own
   account, landing deliberately-broken code; reverted within ~10 minutes
@@ -882,13 +912,15 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   turned this into a documented branch-hygiene rule.
 - Exact next action: finish sprint 13/14/15's deferred scope, or move to
   sprint 26 (performance budget — bounded parallel calls, no
-  duplicates, warm p95 under 750 ms), or wire sprints 22/23/24's
-  `score_conditions`/`assess_confidence`/`SnapshotCache` into
-  `assemble_forecast`'s output (picking a source when both NWS and
-  NDBC report, computing real station distances/observation ages for
-  the confidence factors, and keying the cache by location id — all
-  still unassigned to a numbered sprint) — any is a valid next Phase 2
-  pick, needs no external accounts. Separately, sprint 9 (preview
+  duplicates, warm p95 under 750 ms), or continue the wiring follow-up
+  with sprint 23's `assess_confidence` (needs real station-distance
+  data threaded through `ResolvedLocation`/`resolve_location_id` first
+  — `resolve_dynamic_location`'s anchor-miles result is currently
+  dropped) or sprint 24's `SnapshotCache` (keying the cache by location
+  id around `assemble_forecast`, producing `ForecastState.STALE` on a
+  fallback hit) — scoring's slice is done, these two remain unassigned.
+  Any is a valid next Phase 2 pick, needs no external accounts.
+  Separately, sprint 9 (preview
   environments) and sprint 10 (production skeleton) need real
   Vercel/Render/Neon accounts this session has no credentials for —
   **flag to the product owner** rather than attempting them blind; they
