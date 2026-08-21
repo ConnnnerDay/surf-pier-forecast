@@ -447,6 +447,41 @@ Boots, has real CI, and now has:
   api.tidesandcurrents.noaa.gov" detail in this sandboxed environment
   (upstream calls are blocked per `docs/R2_CI_BASELINE.md`), proving
   the degrade-gracefully path end-to-end, not just in mocked tests.
+- This PR continues sprint 34 with its remaining "timing" scope:
+  `app/domain/timing.py`'s `build_hourly_outlook` ports the legacy
+  `domain/forecast.py:build_activity_timeline` — a 24-hour,
+  one-value-per-hour fish-activity estimate combining dawn/dusk,
+  solunar major/minor periods, tide-change windows, a night-hours
+  penalty (partially offset by a bright-moon nocturnal-feeding boost),
+  and a wind-conditions activity ceiling — as an *adapt*, not a
+  verbatim carry-over: it consumes this recovery's own typed inputs
+  (`app.providers.astronomy`'s `SunTimes`/`SolunarTimes`, the tide
+  predictions `app.domain.assembly` already fetches, and the wind range
+  that module has already reconciled from NWS/NDBC/the wind fallback
+  chain) instead of re-parsing legacy's pre-formatted strings. Wind
+  thresholds are converted from the legacy mph values to this
+  recovery's canonical kt unit. `app.domain.models.ForecastEnvelope.
+  hourly_outlook` is now populated on every request — unlike `tides`,
+  it never degrades to `None`, since astronomy is pure computation and
+  both tide predictions and wind range are already-optional inputs the
+  function tolerates being absent. Barometric-pressure-trend (no typed
+  pressure-trend data exists yet — deferred to sprint 35) and
+  `build_best_times`'s labeled-window summary (needs sprint 36's
+  user-preferences data for its bridge/jetty and preferred-time/
+  tide-preference boosts) are deliberately not ported — see the module
+  docstring. `apps/api/tests/test_timing.py` characterizes dawn/dusk
+  boosting, major-vs-minor solunar banding (including that a minor
+  period never downgrades an overlapping major one), reason
+  deduplication, bright-moon boosting, high-vs-low tide boost magnitude,
+  same-day-only tide filtering, wind-conditions damping, and the
+  is-now/peak flags — 18 tests, all passing. Verified against the real
+  `/v1/forecasts/{id}` endpoint (not just the unit tests): with every
+  live upstream blocked in this sandbox, `hourly_outlook` still comes
+  back fully populated with real dawn/solunar reasoning (e.g. hour 6
+  tagged `prime`, reasons `["Dawn", "Minor solunar"]`, `peak: true`),
+  proving the "astronomy always resolves" claim end-to-end. All of
+  `apps/api`'s checks (ruff, ruff format, mypy, pytest — 344 passed)
+  pass clean.
   `tests/test_assembly.py` covers presence, the local-date-window
   computation, and degrade-on-failure independently.
 

@@ -12,8 +12,8 @@ docs/CANONICAL_ROADMAP.md's product contract's Reliability bullet.
 **This sprint designs `ForecastEnvelope.conditions`**, per sprint 11's
 domain-models docstring, which named sprints 21/22/34/35 as the owners
 of `conditions`/`tides`/`hourly_outlook`/`recommendations`.
-`hourly_outlook` and `recommendations` stay opaque for their respective
-owning sprints. `tides` was originally deferred here too -- the legacy
+`recommendations` stays opaque for its owning sprint (35). `tides` was
+originally deferred here too -- the legacy
 architecture and the roadmap's sprint 34 ("Tides and timing") both
 treat tide predictions as a distinct time-series/schedule concern from
 "current conditions" -- but sprint 34's backend half (fetch + shape,
@@ -28,6 +28,16 @@ sequentially), degrading to `tides=None` plus an advisory `Warning` on
 failure -- there's no fallback substitute for tide predictions the way
 water temperature has a monthly average, so "unavailable" is the
 honest answer, never invented.
+
+**`hourly_outlook` (sprint 34's remaining "timing" scope) lands in the
+same PR as the rest of this docstring update.** `app.domain.timing.
+build_hourly_outlook` turns the sun/solunar/tide/wind data this
+function already has into a 24-hour fish-activity estimate — see that
+module's own docstring for the full port-vs-legacy accounting. Unlike
+`tides`, it never degrades to `None`: astronomy is pure computation
+(always resolves) and both tide predictions and wind range are already
+optional inputs the function itself tolerates being `None` for, so
+there's no new failure mode to represent.
 
 **Every present/absent matrix.** The three fallible sources give
 2**3 = 8 combinations, each exercised in `tests/test_assembly.py`.
@@ -168,6 +178,7 @@ from app.domain.scoring import (
     score_conditions,
     wind_orientation_for_region,
 )
+from app.domain.timing import HourlyOutlook, build_hourly_outlook
 from app.infra.http_client import BoundedHTTPClient, ProviderError
 from app.infra.timezones import safe_zone
 from app.providers.astronomy import LunarDetails, SolunarTimes, SunTimes, TwilightTimes
@@ -625,6 +636,15 @@ async def assemble_forecast(
         else None
     )
 
+    hourly_outlook: HourlyOutlook = build_hourly_outlook(
+        sun_times=sun_times,
+        solunar=solunar,
+        tide_predictions=tides_result.value,
+        wind_range=wind_range,
+        now=now,
+        tz_name=location.timezone,
+    )
+
     return ForecastEnvelope(
         location=_to_domain_location(location),
         generated_at=now,
@@ -634,6 +654,6 @@ async def assemble_forecast(
         warnings=warnings,
         conditions=conditions.model_dump(mode="json"),
         tides=tides,
-        hourly_outlook=None,
+        hourly_outlook=hourly_outlook.model_dump(mode="json"),
         recommendations=None,
     )
