@@ -17,16 +17,22 @@ primitive (same field order, same algorithm — that's the entire
 contract), and `lib/internal-api-client.ts`'s `internalApiFetch` signs
 and sends requests with it, failing closed (throws) if the signing-key
 env vars aren't set rather than silently calling unsigned.
-`app/forecast/demo/page.tsx` is a Server Component proving this
-end-to-end: it calls apps/api's real `GET /v1/forecasts/{id}` for a
-fixed demo location (Wrightsville Beach, NC) and renders whatever comes
-back, including a gracefully degraded response, using the sprint 27
-primitives below. It's marked `export const dynamic = 'force-dynamic'`
+`app/forecast/[locationId]/page.tsx` is a Server Component proving this
+end-to-end: it calls apps/api's real `GET /v1/forecasts/{id}` for
+*any* recognized `location_id` and renders whatever comes back,
+including a gracefully degraded response, using the sprint 27
+primitives (`app/components/forecast-card.tsx`). A 404 from apps/api
+(unknown location) becomes this page's own not-found state via
+`notFound()`. It's marked `export const dynamic = 'force-dynamic'`
 since forecasts are live, per-request data — without that, `next
 build`'s static prerender pass would freeze whatever the fetch did at
 build time (when apps/api isn't running) into the shell served to every
 visitor. This is a signed-path proof, not the real dashboard (sprint
-32) — its verdict-badge mapping is demo-page-scoped presentation only.
+32) — its verdict-badge mapping is page-scoped presentation only.
+`app/forecast/demo/page.tsx` (the earlier fixed-location proof, only
+ever Wrightsville Beach) now just redirects to
+`/forecast/wrightsville-beach-nc`, kept in case anything still links to
+it rather than deleted outright.
 
 Sprint 31 (partial — text search only): `app/components/
 location-search.tsx` is a hand-rolled [WAI-ARIA
@@ -37,12 +43,16 @@ Route Handler that proxies apps/api's `GET /v1/locations/search`
 through the signed internal path. This is the one place a Client
 Component's `fetch` can land, since the browser must never call
 apps/api directly (the signing secret is server-only). Demonstrated on
-`app/locations/page.tsx`. Device geolocation, map search, and
-station-preview/ambiguity states aren't attempted. Verified
-interactively via headless Chromium (typed a query, saw one real
-matching result, arrow-keyed to it, pressed Enter, saw the selection
-render) — not just curl, since this is the first genuinely interactive
-(Client Component) UI in this app.
+`app/locations/page.tsx`, where selecting a result links straight to
+its `/forecast/{id}` page — search and forecast are separate
+pages/concerns joined by a plain navigation link, not folded into one
+page. Device geolocation, map search, and station-preview/ambiguity
+states aren't attempted. Verified interactively via headless Chromium,
+including the full search → select → view-forecast flow (typed a
+query, saw one real matching result, arrow-keyed to it, pressed Enter,
+clicked "View forecast," landed on a real rendered forecast page) — not
+just curl, since this is the app's first genuinely interactive (Client
+Component) UI.
 
 Sprint 27 (design system) has a first pass: `app/globals.css` defines
 light/dark design
@@ -89,9 +99,9 @@ Open http://localhost:3000 — should render the design-system gallery page.
 
 ### Calling apps/api locally
 
-`/forecast/demo` needs apps/api running with a **matching** signing key
-(see `apps/api/README.md`'s "Local dev" section) — any value works as
-long as both sides agree:
+`/locations` and `/forecast/{id}` need apps/api running with a
+**matching** signing key (see `apps/api/README.md`'s "Local dev"
+section) — any value works as long as both sides agree:
 
 ```bash
 # terminal 1, from apps/api
@@ -104,8 +114,11 @@ INTERNAL_SIGNING_KEY_ID=dev-key INTERNAL_SIGNING_KEY_SECRET=dev-secret-please-ch
   npm run dev
 ```
 
-Open http://localhost:3000/forecast/demo. In this sandboxed environment
-apps/api's own upstream (NOAA/NWS/NDBC) calls are blocked
+Open http://localhost:3000/locations, search for a curated location
+(e.g. "wrightsville"), and select it to view its forecast — or go
+straight to http://localhost:3000/forecast/wrightsville-beach-nc. In
+this sandboxed environment apps/api's own upstream (NOAA/NWS/NDBC)
+calls are blocked
 ([`docs/R2_CI_BASELINE.md`](../../docs/R2_CI_BASELINE.md)'s
 no-live-provider-dependence rule), so expect a gracefully degraded
 forecast (state `partial`, confidence `low`, real warning messages) —

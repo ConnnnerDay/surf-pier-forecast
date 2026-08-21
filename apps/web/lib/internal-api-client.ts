@@ -23,7 +23,7 @@ import { sha256Hex, sign, type SignedRequestFields } from './internal-signature'
 
 const VALIDITY_SECONDS = 20
 
-class InternalApiError extends Error {
+export class InternalApiError extends Error {
   constructor(
     public status: number,
     public bodyText: string,

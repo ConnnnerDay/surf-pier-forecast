@@ -336,7 +336,7 @@ to reconciliation, not proof that the agreed outcome passed.
 | 28 | Authentication | Email/password lifecycle, session rotation, bot/CAPTCHA defense on registration, abuse tests | Divergent auth exists; replace/adapt |
 | 29 | Account-required routing | Public exceptions and authorization/redirect tests | Candidate in `/v2` |
 | 30 | Onboarding shell | Mobile recording from registration to dashboard | Candidate in `/v2` |
-| 31 | Location search | Text, device, map, station preview, denial/ambiguity tests | **Partially complete** — text search only: `apps/web/app/components/location-search.tsx` (a hand-rolled WAI-ARIA combobox, no dependency) calls `apps/web/app/api/locations/search/route.ts` (a BFF Route Handler proxying apps/api's `GET /v1/locations/search` through the signed internal path — the browser never calls apps/api directly, ADR-004), demonstrated on `apps/web/app/locations/page.tsx`. Device geolocation, map search, and station-preview/ambiguity states are not attempted; empty-results and fetch-failure states are handled distinctly. Verified interactively (typing, debounce, keyboard nav, selection) via headless Chromium, not just curl |
+| 31 | Location search | Text, device, map, station preview, denial/ambiguity tests | **Partially complete** — text search only: `apps/web/app/components/location-search.tsx` (a hand-rolled WAI-ARIA combobox, no dependency) calls `apps/web/app/api/locations/search/route.ts` (a BFF Route Handler proxying apps/api's `GET /v1/locations/search` through the signed internal path — the browser never calls apps/api directly, ADR-004), demonstrated on `apps/web/app/locations/page.tsx`, where selecting a result links to a real `apps/web/app/forecast/[locationId]/page.tsx` lookup (any recognized `location_id`, replacing the earlier fixed-location `/forecast/demo` proof, which now just redirects there). Device geolocation, map search, and station-preview/ambiguity states are not attempted; empty-results and fetch-failure states are handled distinctly, and an unknown location 404s via Next's `notFound()`. Verified interactively (typing, debounce, keyboard nav, selection, navigation to a real rendered forecast) via headless Chromium, not just curl |
 | 32 | Dashboard hierarchy | Go/no-go as a simple traffic-light headline (score/narrative expandable, not primary); best window, conditions, confidence, freshness first | Candidate in `/v2` |
 | 33 | Conditions experience | Full/partial/stale/unavailable source-attributed snapshots | Candidate in `/v2` |
 | 34 | Tides and timing | Accessible charts, text alternatives, timezone/DST tests | Candidate in `/v2` |
@@ -1214,6 +1214,32 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   patterns, non-blocking (same as `layout.tsx`'s two pre-existing
   `metadata`/`viewport`-export warnings), left as-is rather than
   contorted around a rule that doesn't cleanly apply here.
+- **Sprint 31's search wired into a real forecast lookup, retiring the
+  fixed demo page**: the natural next increment now that search exists.
+  `apps/web/app/forecast/[locationId]/page.tsx` replaces the earlier
+  `/forecast/demo` (which only ever showed Wrightsville Beach) with a
+  real per-location lookup for any `location_id` apps/api recognizes;
+  an unknown id 404s via Next's own `notFound()` rather than rendering
+  a confusing error card. The forecast-rendering markup itself moved
+  into a shared `app/components/forecast-card.tsx` (`ForecastCard`/
+  `ForecastErrorCard`) so there's one place it's implemented, not one
+  per page. `/forecast/demo` still resolves -- it's now a one-line
+  redirect to `/forecast/wrightsville-beach-nc`, kept rather than
+  deleted in case anything still links there. `app/locations/page.tsx`
+  gained a "View forecast" button on a selected search result, linking
+  straight to its `/forecast/{id}` page -- search and forecast stay
+  separate pages/concerns, joined by a plain navigation link.
+  `lib/internal-api-client.ts`'s `InternalApiError` is now exported so
+  the forecast page can distinguish a 404 (unknown location) from any
+  other failure. Verified with the full interactive flow end-to-end via
+  headless Chromium against two real running servers: typed a query in
+  `/locations`, selected the one real result, clicked "View forecast,"
+  landed on `/forecast/wrightsville-beach-nc`, and saw a real,
+  gracefully degraded forecast render -- plus direct-curl checks that
+  the demo redirect 307s correctly and an unknown location 404s.
+  `npm run lint` and `npm run build` both pass clean (same one
+  pre-existing `react/set-state-in-effect` warning as before, no new
+  ones).
 - **Incident (sprint 6, resolved earlier)**: a scratch branch explicitly
   titled `DO NOT MERGE` was merged into `main` under the repo owner's own
   account, landing deliberately-broken code; reverted within ~10 minutes
