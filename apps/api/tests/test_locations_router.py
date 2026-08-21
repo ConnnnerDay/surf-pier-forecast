@@ -3,6 +3,13 @@
 Network-touching cases go through httpx.MockTransport via a real
 BoundedHTTPClient injected through app.dependency_overrides — no live
 calls, per docs/R2_CI_BASELINE.md's no-live-provider-dependence rule.
+
+`require_internal_signature` is overridden to a no-op here: this file is
+about router/domain behavior, not ADR-004 signature verification, which
+already has its own dedicated coverage in test_internal_signature.py and
+test_internal_auth.py. test_internal_api_wiring.py separately proves the
+real dependency is actually attached to these routes (an unsigned request
+against the real app, no override, gets rejected).
 """
 
 from __future__ import annotations
@@ -14,6 +21,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.api.deps import AppState, get_app_state
+from app.api.internal_auth import require_internal_signature
 from app.infra.http_client import BoundedHTTPClient
 from app.infra.snapshot_cache import SnapshotCache
 from app.main import app
@@ -57,10 +65,12 @@ def client() -> Iterator[TestClient]:
         forecast_cache=SnapshotCache(),
     )
     app.dependency_overrides[get_app_state] = lambda: mock_state
+    app.dependency_overrides[require_internal_signature] = lambda: None
     try:
         yield TestClient(app)
     finally:
         app.dependency_overrides.pop(get_app_state, None)
+        app.dependency_overrides.pop(require_internal_signature, None)
 
 
 def test_search_matches_by_name(client: TestClient) -> None:

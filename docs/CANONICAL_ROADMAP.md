@@ -354,7 +354,7 @@ to reconciliation, not proof that the agreed outcome passed.
 | 41 | Structured observability | One request trace across web/API/sources with safe context | Not accepted |
 | 42 | Error monitoring | Frontend/API releases, source maps and secret redaction | Not accepted |
 | 43 | Privacy-safe analytics | Registration, resolution, forecast state, latency, return use | Not accepted |
-| 44 | Security hardening | CSP, CSRF, signed internal API, brute force, headers, threat model | **Partially complete** — the signed-internal-API piece's verification primitive is built (`apps/api/app/infra/internal_signature.py` + `app/api/internal_auth.py`, ADR-004's HMAC-SHA-256 contract, ports nothing since there's no legacy precedent) but deliberately not wired onto the `/v1` routers yet — see the module docstrings. CSP, CSRF, brute-force defense, and security headers remain candidate pieces; not accepted |
+| 44 | Security hardening | CSP, CSRF, signed internal API, brute force, headers, threat model | **Partially complete** — the signed-internal-API piece is now built **and wired end-to-end**: `apps/api/app/infra/internal_signature.py` + `app/api/internal_auth.py` implement ADR-004's HMAC-SHA-256 contract (no legacy precedent), required on every `/v1` route via `Depends(require_internal_signature)`; `apps/web/lib/internal-signature.ts` + `internal-api-client.ts` are the matching signer, exercised by `apps/web/app/forecast/demo/page.tsx`. Verified against two real running servers, not just unit tests — see both apps' READMEs. CSP, CSRF, brute-force defense, and security headers remain candidate pieces; not accepted |
 | 45 | Privacy and deletion | **Required for v1 launch** (public product, real accounts): self-service export and account deletion/anonymization proof; legal pages | Candidate in `/v2`; not accepted |
 | 46 | Database resilience | Migrations, constraints, indexes, pooling, backups, blank restore drill | Not accepted |
 | 47 | Degraded-mode UX | Database/API/email/upstream chaos yields actionable UI | Not accepted |
@@ -1157,6 +1157,43 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   labels), not a certified audit. `npm run lint` (oxlint) and
   `npm run build` both pass clean; TypeScript strict-mode compiles with
   no errors.
+- **Sprint 44's signed-internal-API wired end-to-end, plus a live
+  `apps/web` → `apps/api` proof**: with sprint 27's design-system
+  primitives in place and sprint 44's verification primitive already
+  built (previous PR), the two obvious blockers to actually wiring
+  ADR-004's signature requirement were both gone -- so this PR does
+  both halves at once rather than leaving the requirement unsatisfiable.
+  `apps/api/app/api/v1/locations.py`/`forecasts.py` now require
+  `require_internal_signature` on every route
+  (`dependencies=[Depends(...)]`); every existing router test overrides
+  it to a no-op (matching `get_app_state`'s established pattern) since
+  those files are about router/domain behavior, not signature
+  verification -- a new `tests/test_internal_api_wiring.py` is the one
+  file that deliberately does *not* override it, proving against the
+  real app that an unsigned request is rejected (401), a correctly
+  signed one succeeds (200), and no configured keys fails closed (500).
+  `apps/web/lib/internal-signature.ts` is a byte-for-byte TypeScript
+  mirror of the Python primitive's canonical-string algorithm (same
+  field order, same delimiter, same HMAC-SHA-256); `lib/
+  internal-api-client.ts`'s `internalApiFetch` signs and sends requests
+  with it, throwing rather than silently calling unsigned if the
+  signing-key env vars are missing. `apps/web/app/forecast/demo/page.tsx`
+  (`export const dynamic = 'force-dynamic'` -- forecasts are per-request
+  live data, and Next.js 16's static-shell prerendering would otherwise
+  freeze a build-time fetch failure into what every visitor sees) is a
+  Server Component proving the whole chain end-to-end for a fixed demo
+  location (Wrightsville Beach, NC). Verified against two real running
+  servers with matching dev signing keys, not just mocked unit tests: an
+  unsigned `curl` to `apps/api` got a real 401, and the demo page
+  rendered a real, correctly-signed, gracefully degraded forecast (state
+  `partial`, confidence `low`, real "could not connect to
+  api.weather.gov/ndbc.noaa.gov" warning messages -- upstream calls are
+  blocked in this sandbox per `docs/R2_CI_BASELINE.md`) in about 8.5
+  seconds. `user_id` stays empty on every signed request for now --
+  there's no Better Auth (sprint 28) session yet to source a real one
+  from. All of `apps/api`'s checks (ruff, ruff format, mypy, pytest --
+  324 passed) and `apps/web`'s (`npm run lint`, `npm run build`) pass
+  clean.
 - **Incident (sprint 6, resolved earlier)**: a scratch branch explicitly
   titled `DO NOT MERGE` was merged into `main` under the repo owner's own
   account, landing deliberately-broken code; reverted within ~10 minutes

@@ -32,6 +32,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.api.deps import AppState, get_app_state
+from app.api.internal_auth import require_internal_signature
 from app.infra.http_client import BoundedHTTPClient
 from app.infra.snapshot_cache import SnapshotCache
 from app.main import app
@@ -78,6 +79,7 @@ def _install_mock_state(counts: dict[str, int]) -> None:
         forecast_cache=SnapshotCache(),
     )
     app.dependency_overrides[get_app_state] = lambda: mock_state
+    app.dependency_overrides[require_internal_signature] = lambda: None
 
 
 @pytest.mark.asyncio
@@ -96,6 +98,7 @@ async def test_concurrent_requests_for_same_location_share_one_fetch() -> None:
             )
     finally:
         app.dependency_overrides.pop(get_app_state, None)
+        app.dependency_overrides.pop(require_internal_signature, None)
 
     assert all(r.status_code == 200 for r in responses)
     assert counts["marine_zone"] == 1
@@ -117,6 +120,7 @@ def test_warm_forecast_request_p95_under_750ms() -> None:
             assert resp.status_code == 200
     finally:
         app.dependency_overrides.pop(get_app_state, None)
+        app.dependency_overrides.pop(require_internal_signature, None)
 
     # No new upstream calls — every one of these 20 requests was warm.
     assert counts["marine_zone"] == 1
