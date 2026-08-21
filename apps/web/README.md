@@ -68,6 +68,24 @@ a temporary preview page (screenshotted in light/dark, then deleted
 before committing) rather than the live path, which only proves the
 `null` case.
 
+Sprint 34's remaining "timing" scope, frontend half: `ForecastCard`
+now also renders an `HourlyOutlookTable` when `forecast.hourly_outlook`
+is present — `apps/api`'s new `app.domain.timing.build_hourly_outlook`
+24-hour fish-activity estimate (backend), shown the same way as
+`TideTable`: a plain `<table>` with the current hour highlighted, an
+`Activity` `Badge` (prime/high → go, med → marginal, low → neutral, so
+a quiet overnight hour never reads as a failure state), and a `Why`
+column showing apps/api's own plain-language reasons (`"Dawn · Minor
+solunar"`, `"Major solunar"`, ...) verbatim rather than re-derived
+here. Unlike `tides`, `hourly_outlook` never degrades to `null`
+(astronomy always resolves), so — unlike `TideTable` — this was
+verified against the real, live `/forecast/wrightsville-beach-nc` page
+rather than mock data: real dawn/dusk/solunar reasoning rendered
+correctly (hour 6 tagged `Prime · Peak`, `Dawn · Minor solunar`), and a
+fresh `axe-core` spot-check across desktop/phone × light/dark (4
+combinations) found zero violations and no horizontal overflow at
+390px.
+
 Sprint 31 (partial — text search only): `app/components/
 location-search.tsx` is a hand-rolled [WAI-ARIA
 combobox](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/) (no
