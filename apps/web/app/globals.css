@@ -39,6 +39,16 @@
   --color-nogo-text: #b91c1c;
   --color-nogo-border: #fca5a5;
 
+  /* Deliberately distinct from --color-nogo-text: that token pairs with
+   * --color-nogo-bg inside Badge's own pill (always a light tint, by
+   * design theme-invariant -- see the dark-mode block below), so
+   * #b91c1c-on-#fef2f2 always has enough contrast regardless of page
+   * theme. This token is for bare status text directly on the page
+   * background (Field's error message, ForecastErrorCard), which *does*
+   * need to adapt per theme -- axe-core caught #b91c1c failing WCAG AA
+   * (2.6:1) against the dark background before this token existed. */
+  --color-danger-text: #b91c1c;
+
   --font-sans:
     system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 
@@ -59,6 +69,7 @@
     --color-primary-contrast: #06222a;
     --color-accent: #ff9d72;
     --color-focus-ring: #35b6c4;
+    --color-danger-text: #ff8a75;
   }
 }
 

@@ -156,7 +156,7 @@ export function ForecastErrorCard({ message }: { message: string }) {
   return (
     <Card>
       <h2 className="font-semibold text-text">Couldn&apos;t load the forecast</h2>
-      <p className="mt-1 text-sm text-nogo-text">{message}</p>
+      <p className="mt-1 text-sm text-danger-text">{message}</p>
       <p className="mt-3 text-sm text-text-muted">
         Is apps/api running (<code>uvicorn app.main:app</code>) with a matching{' '}
         <code>INTERNAL_SIGNING_KEY_ID</code>/<code>INTERNAL_SIGNING_KEY_SECRET</code>? See

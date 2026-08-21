@@ -94,8 +94,30 @@ row; the product owner has directed proceeding with Phase 3 work under
 this placeholder rather than blocking on a name/visual-identity decision.
 Full WCAG 2.2 AA verification (axe + keyboard/screen-reader evidence) and
 i18n-ready string externalization remain sprint 40/27's respective
-follow-up scope — this PR aims for accessible-by-construction markup, not
-a formal audit. Real screens land in the remaining Phase 3 sprints (28
+follow-up scope, not formally attempted here — but an `axe-core`
+spot-check was run against every real page (`/`, `/locations`,
+`/forecast/{id}`, the 404 page, both color schemes, plus the location
+search dropdown open and the gallery's error `Field` in dark mode) and
+found two genuine bugs, both fixed: (1) `--color-nogo-text` used
+directly on the page background (Field's error message,
+`ForecastErrorCard`) failed WCAG AA contrast in dark mode (2.6:1,
+needs 4.5:1) — that token is correctly theme-invariant for `Badge`'s
+own pill (its background is also theme-invariant, so the pairing was
+never broken there), but bare status text needed its own
+theme-adjusted token, `--color-danger-text`, added for exactly that
+use; (2) `LocationSearch`'s dropdown used `<ul>`/`<li role="option">`,
+which breaks ARIA's required-owned-elements relationship (overriding
+`<li>`'s implicit "listitem" role to "option" makes the `<ul>` no
+longer see real list items) — switched to plain `<div role="listbox">`/
+`<div role="option">`, which carry no conflicting implicit role. Zero
+violations across every page/state after both fixes. This is a
+spot-check with today's real screens, not the formal sprint 40 audit
+(no captured screen-reader-software evidence, no CI-wired regression
+gate) — the general accessible-by-construction claim for sprint 27's
+primitives already made above stands, now with automated verification
+behind it rather than just design intent.
+
+Real screens land in the remaining Phase 3 sprints (28
 onward), reusing UX patterns catalogued as "Adapt" in
 [`docs/R1_RECONCILIATION_AUDIT.md`](../../docs/R1_RECONCILIATION_AUDIT.md)
 §3 rather than the `v2/frontend` implementation verbatim.
