@@ -1,17 +1,20 @@
 """FastAPI dependency wrapping `app.infra.internal_signature`'s
-verification primitive (sprint 44, partial -- see that module's docstring
-for what's built and, importantly, what isn't wired onto the `/v1` routers
-yet and why).
+verification primitive (sprint 44, partial -- see that module's docstring).
 
 `InternalAuthDependency` takes its keys and clock via constructor
 injection, matching `SnapshotCache`/`StationCatalogCache`'s
 constructor-injection pattern, so tests never need to monkeypatch
 `os.environ` or clear an `lru_cache`. `require_internal_signature` is the
-default instance real routes would use, reading keys from the environment
-(`INTERNAL_SIGNING_KEY_ID`/`INTERNAL_SIGNING_KEY_SECRET` for the active
-key, `INTERNAL_SIGNING_KEY_ID_PREVIOUS`/`INTERNAL_SIGNING_KEY_SECRET_PREVIOUS`
-for ADR-004's rotation). None of these are documented deployment
-requirements yet, since nothing currently depends on this instance.
+default instance `app.api.v1.locations`/`forecasts` depend on, reading
+keys from the environment (`INTERNAL_SIGNING_KEY_ID`/
+`INTERNAL_SIGNING_KEY_SECRET` for the active key,
+`INTERNAL_SIGNING_KEY_ID_PREVIOUS`/`INTERNAL_SIGNING_KEY_SECRET_PREVIOUS`
+for ADR-004's rotation) -- now a real deployment requirement, documented in
+`apps/api/README.md`, since every `/v1` route depends on this instance and
+fails closed (500) without them configured. Local dev needs the same
+`INTERNAL_SIGNING_KEY_ID`/`INTERNAL_SIGNING_KEY_SECRET` values set on both
+`apps/api` and `apps/web` (`lib/internal-api-client.ts` reads the matching
+names) -- see both apps' READMEs.
 """
 
 from __future__ import annotations

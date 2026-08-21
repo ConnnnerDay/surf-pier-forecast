@@ -22,16 +22,16 @@ _PREVIOUS_KEY = SigningKey(key_id="k0", secret=b"previous-secret")
 
 
 def _fields(**overrides: object) -> SignedRequestFields:
-    base = dict(
-        method="GET",
-        path="/v1/forecasts/wrightsville-beach-nc",
-        body_digest=sha256_hex(b""),
-        user_id="",
-        issued_at=1000,
-        expires_at=1030,
-        request_id="req-1",
-        key_id="k1",
-    )
+    base = {
+        "method": "GET",
+        "path": "/v1/forecasts/wrightsville-beach-nc",
+        "body_digest": sha256_hex(b""),
+        "user_id": "",
+        "issued_at": 1000,
+        "expires_at": 1030,
+        "request_id": "req-1",
+        "key_id": "k1",
+    }
     base.update(overrides)
     return SignedRequestFields(**base)  # type: ignore[arg-type]
 
@@ -251,9 +251,9 @@ def test_replay_guard_prunes_entries_past_their_own_expiry() -> None:
     """
     guard = ReplayGuard(clock=lambda: 2010.0)
     guard.check_and_record("req-a", expires_at=1030)  # already-expired entry
-    assert "req-a" in guard._seen  # noqa: SLF001
+    assert "req-a" in guard._seen
 
     guard.check_and_record("req-b", expires_at=2040)
 
-    assert "req-a" not in guard._seen  # noqa: SLF001
-    assert "req-b" in guard._seen  # noqa: SLF001
+    assert "req-a" not in guard._seen
+    assert "req-b" in guard._seen

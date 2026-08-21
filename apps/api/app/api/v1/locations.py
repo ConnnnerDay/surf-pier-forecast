@@ -13,6 +13,14 @@ point and delegates to the shared `resolve_location_id` helper in
 `app.api.deps`, so a location resolved here and a location resolved
 implicitly by `GET /v1/forecasts/{location_id}` go through the exact
 same logic and give the exact same answer for the same id.
+
+Every route on this router requires ADR-004's internal request signature
+(`app.api.internal_auth.require_internal_signature`) now that `apps/web`
+has a signer to pair with it (`lib/internal-api-client.ts`) -- see that
+module's docstring and `app.api.internal_auth`'s for the full rationale.
+A plain `Depends()` function dependency like this one adds nothing to
+the OpenAPI schema (FastAPI only documents `fastapi.security` classes),
+so this doesn't touch `tests/openapi_snapshot.json`.
 """
 
 from __future__ import annotations
@@ -21,6 +29,7 @@ from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, model_validator
 
 from app.api.deps import AppState, get_app_state, resolve_location_id
+from app.api.internal_auth import require_internal_signature
 from app.providers.coastal_bounds import is_valid_coordinate
 from app.providers.locations import (
     CuratedLocation,
@@ -30,7 +39,11 @@ from app.providers.locations import (
     search_curated_locations,
 )
 
-router = APIRouter(prefix="/v1/locations", tags=["locations"])
+router = APIRouter(
+    prefix="/v1/locations",
+    tags=["locations"],
+    dependencies=[Depends(require_internal_signature)],
+)
 
 
 @router.get("/search")

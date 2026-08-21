@@ -332,11 +332,11 @@ to reconciliation, not proof that the agreed outcome passed.
 
 | Sprint | Outcome | Acceptance focus | Current state |
 |---:|---|---|---|
-| 27 | Design system | Gallery at phone/desktop widths and accessible primitives; branding decided first (name included, not just visual identity — "Surf & Pier Forecast" is a placeholder); clean/utility-first tone, Surfline-for-fishing positioning | Candidate UI; not accepted |
+| 27 | Design system | Gallery at phone/desktop widths and accessible primitives; branding decided first (name included, not just visual identity — "Surf & Pier Forecast" is a placeholder); clean/utility-first tone, Surfline-for-fishing positioning | **Partially complete** — **product owner directed proceeding under the placeholder identity rather than blocking on a final branding decision.** `apps/web/app/globals.css` (Tailwind v4 `@theme` tokens, light/dark) and `app/components/ui/` (`Button`/`Card`/`Badge`/`Field`/`Container`) replace `v2/frontend`'s flagged `.button`/`.card`/`.field` global-CSS classes (`docs/R1_RECONCILIATION_AUDIT.md` §3.2) with real accessible primitives; `app/page.tsx` is the gallery page at phone/desktop widths. i18n-ready string externalization (bundled into this sprint by R1's disposition) and formal WCAG 2.2 AA verification (sprint 40's job) remain open |
 | 28 | Authentication | Email/password lifecycle, session rotation, bot/CAPTCHA defense on registration, abuse tests | Divergent auth exists; replace/adapt |
 | 29 | Account-required routing | Public exceptions and authorization/redirect tests | Candidate in `/v2` |
 | 30 | Onboarding shell | Mobile recording from registration to dashboard | Candidate in `/v2` |
-| 31 | Location search | Text, device, map, station preview, denial/ambiguity tests | Candidate in `/v2` |
+| 31 | Location search | Text, device, map, station preview, denial/ambiguity tests | **Partially complete** — text search only: `apps/web/app/components/location-search.tsx` (a hand-rolled WAI-ARIA combobox, no dependency) calls `apps/web/app/api/locations/search/route.ts` (a BFF Route Handler proxying apps/api's `GET /v1/locations/search` through the signed internal path — the browser never calls apps/api directly, ADR-004), demonstrated on `apps/web/app/locations/page.tsx`. Device geolocation, map search, and station-preview/ambiguity states are not attempted; empty-results and fetch-failure states are handled distinctly. Verified interactively (typing, debounce, keyboard nav, selection) via headless Chromium, not just curl |
 | 32 | Dashboard hierarchy | Go/no-go as a simple traffic-light headline (score/narrative expandable, not primary); best window, conditions, confidence, freshness first | Candidate in `/v2` |
 | 33 | Conditions experience | Full/partial/stale/unavailable source-attributed snapshots | Candidate in `/v2` |
 | 34 | Tides and timing | Accessible charts, text alternatives, timezone/DST tests | Candidate in `/v2` |
@@ -354,7 +354,7 @@ to reconciliation, not proof that the agreed outcome passed.
 | 41 | Structured observability | One request trace across web/API/sources with safe context | Not accepted |
 | 42 | Error monitoring | Frontend/API releases, source maps and secret redaction | Not accepted |
 | 43 | Privacy-safe analytics | Registration, resolution, forecast state, latency, return use | Not accepted |
-| 44 | Security hardening | CSP, CSRF, signed internal API, brute force, headers, threat model | **Partially complete** — the signed-internal-API piece's verification primitive is built (`apps/api/app/infra/internal_signature.py` + `app/api/internal_auth.py`, ADR-004's HMAC-SHA-256 contract, ports nothing since there's no legacy precedent) but deliberately not wired onto the `/v1` routers yet — see the module docstrings. CSP, CSRF, brute-force defense, and security headers remain candidate pieces; not accepted |
+| 44 | Security hardening | CSP, CSRF, signed internal API, brute force, headers, threat model | **Partially complete** — the signed-internal-API piece is now built **and wired end-to-end**: `apps/api/app/infra/internal_signature.py` + `app/api/internal_auth.py` implement ADR-004's HMAC-SHA-256 contract (no legacy precedent), required on every `/v1` route via `Depends(require_internal_signature)`; `apps/web/lib/internal-signature.ts` + `internal-api-client.ts` are the matching signer, exercised by `apps/web/app/forecast/demo/page.tsx`. Verified against two real running servers, not just unit tests — see both apps' READMEs. CSP, CSRF, brute-force defense, and security headers remain candidate pieces; not accepted |
 | 45 | Privacy and deletion | **Required for v1 launch** (public product, real accounts): self-service export and account deletion/anonymization proof; legal pages | Candidate in `/v2`; not accepted |
 | 46 | Database resilience | Migrations, constraints, indexes, pooling, backups, blank restore drill | Not accepted |
 | 47 | Degraded-mode UX | Database/API/email/upstream chaos yields actionable UI | Not accepted |
@@ -430,8 +430,12 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #356 (sprint 14 follow-up, CO-OPS wind fallback,
-  `41baffa`, merged as `bd04a97`).
+- Last merged PR: #357 (sprint 44 partial, ADR-004 signed-internal-API
+  verification primitive, `d713d86`, merged as `57dc794`). Note: that
+  merge's `api-lint` check failed on a ruff patch-version bump
+  (0.16.3 -> 0.16.4 changed the implicit default rule set) — fixed in a
+  follow-up commit on PR #358 (sprint 27) rather than left as flagged
+  debt; see that PR's history for the fix.
 - **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
   1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
   (#332). Phase 1's only remaining items (9, 10) need external accounts —
@@ -1120,6 +1124,99 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   headers, and fail-closed with no configured keys. All of `apps/api`'s
   checks (ruff, ruff format, mypy, pytest — 321 passed) pass clean, no
   OpenAPI drift (nothing wired onto any route yet).
+- **Sprint 27, partial (design-system foundation, `apps/web`)**: the
+  product owner directed proceeding with Phase 3 frontend work under the
+  placeholder identity rather than waiting on a final branding decision
+  (name/visual identity still not decided — "Surf & Pier Forecast"
+  remains explicitly provisional throughout). `apps/web/app/globals.css`
+  adds Tailwind v4 via `@theme`-declared design tokens (colors, radius,
+  font) for light and dark, starting from `v2/frontend/src/index.css`'s
+  teal/coral palette -- `docs/R1_RECONCILIATION_AUDIT.md` §3.2 flagged
+  that app's `.button`/`.card`/`.field` *global CSS classes* as Replace
+  ("not a real design system"), not its color choices, so the palette
+  carries forward while the component layer is rebuilt as real React
+  primitives. `app/components/ui/` gained `Button` (renders a real
+  Next.js `<Link>` when `href` is given, a native `<button>` otherwise;
+  visible focus ring), `Card`, `Badge` (a status pill for sprint 32's
+  go/no-go traffic-light headline -- color reinforces the verdict, the
+  verdict itself is always the visible text label, never color alone),
+  `Field` (label/hint/error wired together via `aria-describedby`/
+  `aria-invalid`, closing the `.field`-class accessibility gap §3.6
+  flagged), and `Container` (mobile-first responsive width). `app/page.tsx`
+  is now a gallery page showcasing all five at phone and desktop widths,
+  screenshotted in both color schemes via a headless Chromium smoke test
+  (no console/page errors besides the pre-existing, unrelated favicon
+  404 every un-favicon'd Next.js app skeleton has). `app/not-found.tsx`
+  is the trivial 404 page R1's §3.1 route table names as a straight
+  `Keep`. Deliberately not attempted here: i18n-ready string
+  externalization (bundled into sprint 27 by R1's §3.7 disposition) and
+  a formal WCAG 2.2 AA audit (axe + keyboard/screen-reader evidence,
+  explicitly sprint 40's job per §3.6) -- this PR aims for
+  accessible-by-construction markup (semantic landmarks, labeled/
+  described form controls, visible focus states, text-not-color status
+  labels), not a certified audit. `npm run lint` (oxlint) and
+  `npm run build` both pass clean; TypeScript strict-mode compiles with
+  no errors.
+- **Sprint 44's signed-internal-API wired end-to-end, plus a live
+  `apps/web` → `apps/api` proof**: with sprint 27's design-system
+  primitives in place and sprint 44's verification primitive already
+  built (previous PR), the two obvious blockers to actually wiring
+  ADR-004's signature requirement were both gone -- so this PR does
+  both halves at once rather than leaving the requirement unsatisfiable.
+  `apps/api/app/api/v1/locations.py`/`forecasts.py` now require
+  `require_internal_signature` on every route
+  (`dependencies=[Depends(...)]`); every existing router test overrides
+  it to a no-op (matching `get_app_state`'s established pattern) since
+  those files are about router/domain behavior, not signature
+  verification -- a new `tests/test_internal_api_wiring.py` is the one
+  file that deliberately does *not* override it, proving against the
+  real app that an unsigned request is rejected (401), a correctly
+  signed one succeeds (200), and no configured keys fails closed (500).
+  `apps/web/lib/internal-signature.ts` is a byte-for-byte TypeScript
+  mirror of the Python primitive's canonical-string algorithm (same
+  field order, same delimiter, same HMAC-SHA-256); `lib/
+  internal-api-client.ts`'s `internalApiFetch` signs and sends requests
+  with it, throwing rather than silently calling unsigned if the
+  signing-key env vars are missing. `apps/web/app/forecast/demo/page.tsx`
+  (`export const dynamic = 'force-dynamic'` -- forecasts are per-request
+  live data, and Next.js 16's static-shell prerendering would otherwise
+  freeze a build-time fetch failure into what every visitor sees) is a
+  Server Component proving the whole chain end-to-end for a fixed demo
+  location (Wrightsville Beach, NC). Verified against two real running
+  servers with matching dev signing keys, not just mocked unit tests: an
+  unsigned `curl` to `apps/api` got a real 401, and the demo page
+  rendered a real, correctly-signed, gracefully degraded forecast (state
+  `partial`, confidence `low`, real "could not connect to
+  api.weather.gov/ndbc.noaa.gov" warning messages -- upstream calls are
+  blocked in this sandbox per `docs/R2_CI_BASELINE.md`) in about 8.5
+  seconds. `user_id` stays empty on every signed request for now --
+  there's no Better Auth (sprint 28) session yet to source a real one
+  from. All of `apps/api`'s checks (ruff, ruff format, mypy, pytest --
+  324 passed) and `apps/web`'s (`npm run lint`, `npm run build`) pass
+  clean.
+- **Sprint 31, partial (text location search)**: the natural next step
+  once the signed BFF path could reach a real endpoint. `apps/web/app/
+  components/location-search.tsx` is a hand-rolled WAI-ARIA combobox (no
+  dependency) calling a new `app/api/locations/search/route.ts` -- a
+  Route Handler proxying apps/api's `GET /v1/locations/search` through
+  `internalApiFetch`, the one place a Client Component's `fetch` can
+  land since the signing secret is server-only and the browser must
+  never call apps/api directly (ADR-004). This is this app's first
+  genuinely interactive (Client Component) UI, so it's verified with
+  headless Chromium actually typing into the input, not just curl:
+  typed "wrights", saw exactly one real matching result
+  ("Wrightsville Beach, NC"), arrow-keyed to it, pressed Enter, and saw
+  the selection render with its real id/coordinates; a separate run
+  confirmed the distinct no-matches state renders correctly too.
+  Demonstrated on `app/locations/page.tsx`. Deliberately not attempted:
+  device geolocation, map search, and station-preview/ambiguity states
+  -- text search alone is already a complete, useful capability, and
+  each of those is its own sizeable UI. `npm run lint` picked up one new
+  warning (`react/set-state-in-effect` on the debounced-fetch effect) --
+  a known false-positive class for async data-fetching-in-effect
+  patterns, non-blocking (same as `layout.tsx`'s two pre-existing
+  `metadata`/`viewport`-export warnings), left as-is rather than
+  contorted around a rule that doesn't cleanly apply here.
 - **Incident (sprint 6, resolved earlier)**: a scratch branch explicitly
   titled `DO NOT MERGE` was merged into `main` under the repo owner's own
   account, landing deliberately-broken code; reverted within ~10 minutes

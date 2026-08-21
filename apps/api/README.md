@@ -395,14 +395,7 @@ Boots, has real CI, and now has:
   (`InternalAuthDependency`, constructor-injected keys/clock for
   testability, matching `SnapshotCache`/`StationCatalogCache`'s style)
   that fails closed — no configured signing keys is a 500, never a
-  silent pass-through. **Not wired onto the `/v1` routers yet**: `apps/web`
-  has no signer to pair with it (still the sprint-13 skeleton), so wiring
-  a mandatory check onto routes nothing can currently sign would make
-  `apps/api` uncallable by its only real client. Wiring is the next step
-  once `apps/web` grows an internal HTTP client that can sign requests —
-  plausibly alongside sprint 28's Better Auth work, since ADR-004's
-  "authenticated internal user identifier" is exactly Better Auth's
-  opaque user ID. No legacy precedent: the legacy Flask app is
+  silent pass-through. No legacy precedent: the legacy Flask app is
   single-process with no internal service boundary to sign across.
   `tests/test_internal_signature.py` covers the pure primitive (valid
   signature, tampered body/method/path, expired, clock-skew, validity-
@@ -411,6 +404,31 @@ Boots, has real CI, and now has:
   the FastAPI dependency layer against a throwaway app (missing headers,
   invalid signature, body tampered in transit, expired, malformed
   timestamp header, replay, and fail-closed with no configured keys).
+- **Sprint 44's signature requirement is now wired onto the real `/v1`
+  routers** (`app/api/v1/locations.py`/`forecasts.py`, via each
+  `APIRouter`'s `dependencies=[Depends(require_internal_signature)]`):
+  `apps/web` grew a matching signer
+  (`lib/internal-api-client.ts`/`internal-signature.ts`) that computes
+  the identical canonical string and HMAC, so the check is no longer
+  unsatisfiable by its only real client. A plain function `Depends()`
+  adds nothing to the OpenAPI schema (FastAPI only documents
+  `fastapi.security` classes), so `tests/openapi_snapshot.json` is
+  unaffected. Every other router test in this suite overrides
+  `require_internal_signature` to a no-op via `app.dependency_overrides`
+  (matching `get_app_state`'s existing pattern) — they're about
+  router/domain behavior, already covered elsewhere. The one exception,
+  `tests/test_internal_api_wiring.py`, deliberately does *not* override
+  it: it monkeypatches real signing-key env vars and proves, against the
+  real app, that an unsigned request is rejected (401), a correctly
+  signed one succeeds (200), and no configured keys fails closed (500).
+  `user_id` stays empty on every request for now — no Better Auth
+  (sprint 28) session exists yet to source a real one from, and ADR-004
+  only requires it "when required," which nothing here does until
+  accounts exist. Verified against two real running servers (`uvicorn`
+  + `next dev`) with matching dev signing keys: an unsigned curl to
+  `apps/api` got a real 401, and `apps/web`'s new `/forecast/demo` page
+  (see that app's README) rendered a real, gracefully degraded forecast
+  end-to-end through the signed path.
 
 It does not yet have a Postgres connection. That lands in whichever
 Phase 2 sprint or infra work adds it, behind its own characterization
@@ -434,21 +452,36 @@ python -m scripts.generate_openapi_snapshot
 
 ## Local dev
 
+Every `/v1` route now requires ADR-004's internal request signature (see
+"Status" above) and fails closed with a 500 if no signing key is
+configured. Set matching values on both `apps/api` and `apps/web` for
+local dev — anything works as long as both sides agree:
+
 ```bash
 cd apps/api
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements-dev.txt   # includes runtime deps + ruff/mypy/pytest/httpx
-uvicorn app.main:app --reload --port 8000
+INTERNAL_SIGNING_KEY_ID=dev-key INTERNAL_SIGNING_KEY_SECRET=dev-secret-please-change \
+  uvicorn app.main:app --reload --port 8000
 ```
 
-Smoke test:
+Health checks don't require a signature:
 
 ```bash
 curl http://localhost:8000/health/live
 curl http://localhost:8000/health/ready
 # both return {"status": "ok"}
 ```
+
+`/v1` routes do — an unsigned request correctly gets a 401:
+
+```bash
+curl -i http://localhost:8000/v1/locations/search?q=wrightsville
+```
+
+See `apps/web/README.md` for the matching `apps/web` env vars and the
+`/forecast/demo` page that exercises this end-to-end.
 
 Interactive docs: http://localhost:8000/docs
 

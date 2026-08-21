@@ -3,6 +3,11 @@
 All network access goes through httpx.MockTransport via a real
 BoundedHTTPClient injected through app.dependency_overrides — no live
 calls, per docs/R2_CI_BASELINE.md's no-live-provider-dependence rule.
+
+`require_internal_signature` is overridden to a no-op throughout: this
+file is about router/domain behavior, not ADR-004 signature verification
+(see test_internal_signature.py, test_internal_auth.py, and
+test_internal_api_wiring.py for that).
 """
 
 from __future__ import annotations
@@ -14,6 +19,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.api.deps import AppState, get_app_state
+from app.api.internal_auth import require_internal_signature
 from app.infra.http_client import BoundedHTTPClient
 from app.infra.snapshot_cache import SnapshotCache
 from app.main import app
@@ -76,10 +82,12 @@ def client() -> Iterator[TestClient]:
         forecast_cache=SnapshotCache(),
     )
     app.dependency_overrides[get_app_state] = lambda: mock_state
+    app.dependency_overrides[require_internal_signature] = lambda: None
     try:
         yield TestClient(app)
     finally:
         app.dependency_overrides.pop(get_app_state, None)
+        app.dependency_overrides.pop(require_internal_signature, None)
 
 
 def test_get_forecast_for_curated_location(client: TestClient) -> None:
@@ -139,12 +147,14 @@ def test_second_get_is_served_from_cache_not_refetched() -> None:
         forecast_cache=SnapshotCache(),
     )
     app.dependency_overrides[get_app_state] = lambda: mock_state
+    app.dependency_overrides[require_internal_signature] = lambda: None
     try:
         test_client = TestClient(app)
         test_client.get("/v1/forecasts/wrightsville-beach-nc")
         test_client.get("/v1/forecasts/wrightsville-beach-nc")
     finally:
         app.dependency_overrides.pop(get_app_state, None)
+        app.dependency_overrides.pop(require_internal_signature, None)
 
     assert counts["marine_zone"] == 1
 
@@ -159,11 +169,13 @@ def test_refresh_forces_a_live_fetch_even_right_after_a_get() -> None:
         forecast_cache=SnapshotCache(),
     )
     app.dependency_overrides[get_app_state] = lambda: mock_state
+    app.dependency_overrides[require_internal_signature] = lambda: None
     try:
         test_client = TestClient(app)
         test_client.get("/v1/forecasts/wrightsville-beach-nc")
         test_client.post("/v1/forecasts/wrightsville-beach-nc/refresh")
     finally:
         app.dependency_overrides.pop(get_app_state, None)
+        app.dependency_overrides.pop(require_internal_signature, None)
 
     assert counts["marine_zone"] == 2

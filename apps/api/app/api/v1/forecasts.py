@@ -18,6 +18,11 @@ was always meant to have, once caching wiring landed (see this
 module's git history / `docs/CANONICAL_ROADMAP.md`'s checkpoint for
 sprint 25 and the scoring/confidence-wiring follow-ups that preceded
 this one).
+
+Every route on this router requires ADR-004's internal request signature
+(`app.api.internal_auth.require_internal_signature`), same as the
+locations router — see that module's docstring for why this is wired now
+and not before.
 """
 
 from __future__ import annotations
@@ -27,6 +32,7 @@ from datetime import UTC, datetime
 from fastapi import APIRouter, Depends
 
 from app.api.deps import AppState, get_app_state, resolve_location_id
+from app.api.internal_auth import require_internal_signature
 from app.domain.forecast_cache import (
     get_or_assemble_forecast,
     refresh_and_assemble_forecast,
@@ -34,7 +40,11 @@ from app.domain.forecast_cache import (
 from app.domain.models import ForecastEnvelope
 from app.providers.locations import load_water_temp_profiles
 
-router = APIRouter(prefix="/v1/forecasts", tags=["forecasts"])
+router = APIRouter(
+    prefix="/v1/forecasts",
+    tags=["forecasts"],
+    dependencies=[Depends(require_internal_signature)],
+)
 
 
 @router.get("/{location_id}")

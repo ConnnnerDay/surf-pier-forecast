@@ -1,4 +1,5 @@
-"""Internal request signing (sprint 44, partial: verification primitive only).
+"""Internal request signing (sprint 44, partial: signed and enforced,
+no Better Auth wiring yet).
 
 ADR-004 (`docs/architecture.md`) specifies HMAC-SHA-256 signing between the
 Next.js BFF and this FastAPI service: the BFF signs the HTTP method, the
@@ -8,17 +9,16 @@ random request ID, using a key identified by a rotatable key ID. FastAPI
 verifies with constant-time comparison, a clock-skew window, expiration,
 and replay detection by request ID.
 
-This module is only the pure verification primitive -- signing/verification
+This module is the pure verification primitive -- signing/verification
 logic plus a replay-detection guard, independent of FastAPI.
-`app.api.internal_auth` wraps it as a request dependency. **Neither is
-wired onto the `/v1` routers yet**: `apps/web` has no signer to pair with
-it (Next.js is still the sprint-13 skeleton), and wiring a mandatory
-signature check onto routes nothing can currently sign would make
-`apps/api` uncallable by its only real client. Wiring is the next step
-once `apps/web` grows an internal HTTP client that can sign requests --
-plausibly alongside sprint 28's Better Auth work, since ADR-004's
-"authenticated internal user identifier" is exactly Better Auth's opaque
-user ID.
+`app.api.internal_auth` wraps it as a request dependency, now required on
+every `/v1` route (`app.api.v1.locations`/`forecasts`): `apps/web` grew a
+matching signer (`lib/internal-api-client.ts`) that computes the identical
+canonical string and HMAC, so the check is no longer unsatisfiable by its
+only real client. `user_id` stays empty/`None` on every request for now --
+there's no Better Auth (sprint 28) session to source a real one from yet,
+and ADR-004 only requires it "when required," which nothing here does
+until accounts exist.
 
 No legacy precedent: the legacy Flask app is single-process and has no
 internal service boundary to sign across.
