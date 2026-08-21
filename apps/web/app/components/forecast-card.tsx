@@ -278,12 +278,81 @@ function HourlyOutlookTable({
   )
 }
 
+const TAG_RANK: Record<ActivityTag, number> = { low: 0, med: 1, high: 2, prime: 3 }
+
+export type BestWindow = { hours: HourlyActivity[]; tag: ActivityTag }
+
+/**
+ * Sprint 32's "best window" -- derived entirely from `hourly_outlook`
+ * already on hand, no extra fetch, per `app.domain.timing`'s own
+ * docstring flagging this as the natural follow-up. The longest
+ * contiguous run of hours at the day's best activity tag (ties broken
+ * by whichever run comes first); `null` when the day never reaches
+ * `high` (a `low`/`med`-only day has no window worth calling out).
+ */
+export function deriveBestWindow(outlook: HourlyOutlook): BestWindow | null {
+  const bestRank = Math.max(...outlook.hours.map((hour) => TAG_RANK[hour.tag]))
+  if (bestRank < TAG_RANK.high) return null
+  const bestTag = (Object.keys(TAG_RANK) as ActivityTag[]).find(
+    (tag) => TAG_RANK[tag] === bestRank,
+  )!
+
+  let bestRun: HourlyActivity[] = []
+  let currentRun: HourlyActivity[] = []
+  for (const hour of outlook.hours) {
+    if (hour.tag === bestTag) {
+      currentRun = [...currentRun, hour]
+      if (currentRun.length > bestRun.length) bestRun = currentRun
+    } else {
+      currentRun = []
+    }
+  }
+  return bestRun.length > 0 ? { hours: bestRun, tag: bestTag } : null
+}
+
+function BestWindowCallout({ window, timezone }: { window: BestWindow; timezone: string }) {
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+  const start = window.hours[0]
+  const end = window.hours[window.hours.length - 1]
+  const rangeLabel =
+    start.hour === end.hour
+      ? formatter.format(new Date(start.time))
+      : `${formatter.format(new Date(start.time))} – ${formatter.format(new Date(end.time))}`
+
+  return (
+    <p className="text-sm text-text-muted">
+      Best window <span className="font-medium text-text">{rangeLabel}</span>
+      {' · '}
+      <Badge variant={ACTIVITY_TAG_TO_BADGE[window.tag]}>{capitalize(window.tag)}</Badge>
+    </p>
+  )
+}
+
 /**
  * Presentational rendering of a `ForecastEnvelope` -- shared by
  * app/forecast/[locationId]/page.tsx (the real per-location lookup) so
- * there's one place this shape gets rendered, not one per page. Not the
- * real dashboard (sprint 32): the verdict-badge mapping here is
- * page-scoped presentation, not that sprint's product hierarchy.
+ * there's one place this shape gets rendered, not one per page.
+ *
+ * Sprint 32's "go/no-go as a simple traffic-light headline (score/
+ * narrative expandable, not primary); best window, conditions,
+ * confidence, freshness first": the verdict `Badge` is the primary
+ * headline (enlarged, first), `deriveBestWindow`'s callout sits right
+ * beneath it, and the numeric score plus its plain-language narrative
+ * move into a `<details>` -- present, but demoted, not the first thing
+ * a reader sees. Confidence/state/freshness stay in the summary strip
+ * below. This is not the real multi-location dashboard (still sprint
+ * 32/37's job): the verdict-badge mapping here is page-scoped
+ * presentation, not that sprint's full product hierarchy. A wind/wave/
+ * water-temperature "conditions" mini-panel is a deliberate follow-up
+ * -- apps/api's `ForecastConditions` carries per-source wind/wave
+ * (`marine_zone_wind`/`buoy`), not an already-reconciled single range,
+ * and re-deriving that reconciliation policy on the frontend would
+ * duplicate (and risk drifting from) `app.domain.assembly`'s own
+ * `_reconcile_range`, which already decided it once for scoring.
  *
  * The `State` badge and `SourceStatusList` below are sprint 33's
  * "full/partial/stale/unavailable source-attributed snapshots" --
@@ -291,17 +360,32 @@ function HourlyOutlookTable({
  * directly, not reinterpreted.
  */
 export function ForecastCard({ forecast }: { forecast: ForecastEnvelope }) {
+  const score = forecast.conditions?.score
+  const bestWindow = forecast.hourly_outlook ? deriveBestWindow(forecast.hourly_outlook) : null
+
   return (
     <Card className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-xl font-semibold text-text">{forecast.location.label}</h2>
-        <Badge variant={VERDICT_TO_BADGE[forecast.conditions?.score?.verdict ?? 'Unknown']}>
-          {forecast.conditions?.score?.verdict ?? 'Unknown'}
+      <h2 className="text-sm font-medium text-text-muted">{forecast.location.label}</h2>
+
+      <div className="flex flex-col gap-2">
+        <Badge
+          variant={VERDICT_TO_BADGE[score?.verdict ?? 'Unknown']}
+          className="w-fit px-4 py-2 text-base"
+        >
+          {score?.verdict ?? 'Unknown'}
         </Badge>
+        {bestWindow && (
+          <BestWindowCallout window={bestWindow} timezone={forecast.location.timezone} />
+        )}
       </div>
 
-      {forecast.conditions?.score?.summary && (
-        <p className="text-text-muted">{forecast.conditions.score.summary}</p>
+      {score?.summary && (
+        <details className="text-sm">
+          <summary className="cursor-pointer text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring">
+            Score details{score.score !== null ? ` (${score.score}/100)` : ''}
+          </summary>
+          <p className="mt-2 text-text-muted">{score.summary}</p>
+        </details>
       )}
 
       <dl className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-3">

@@ -86,6 +86,36 @@ fresh `axe-core` spot-check across desktop/phone × light/dark (4
 combinations) found zero violations and no horizontal overflow at
 390px.
 
+Sprint 32 (partial — hierarchy restructuring on the existing
+single-location forecast page, not the multi-location dashboard):
+`ForecastCard` is reordered to match the sprint's acceptance bar —
+"go/no-go as a simple traffic-light headline (score/narrative
+expandable, not primary); best window, conditions, confidence,
+freshness first." The verdict `Badge` is now enlarged and first, a new
+`deriveBestWindow` pure function derives a "best window" callout
+straight from `forecast.hourly_outlook` (the longest contiguous run of
+the day's best activity tag — no new fetch, sprint 34's own module
+docstring flagged this as derivable), and the numeric score plus its
+narrative move into a native `<details>`/`<summary>` — present, but
+demoted, not the first thing a reader sees. Confidence/state/freshness
+stay in the summary strip right below. A wind/wave/water-temperature
+"conditions" mini-panel is a deliberate follow-up, not this PR:
+`apps/api`'s `ForecastConditions` only carries per-source wind/wave
+(`marine_zone_wind`/`buoy`), not an already-reconciled single range,
+and re-deriving that reconciliation policy on the frontend would
+duplicate — and risk drifting from — `app.domain.assembly`'s own
+`_reconcile_range`, which already decided it once for scoring. Since
+this sandbox's blocked upstream calls mean the verdict is always
+`Unknown` (empty score/summary) on the live path, the enlarged
+traffic-light badge and the expandable score-details interaction were
+verified against a temporary mock preview page (a `Good`/82 verdict
+with a real best-window block; screenshotted collapsed and — via a
+real Playwright click on the `<summary>` — expanded, in both color
+schemes, then deleted before committing) rather than the live path,
+which only exercises the `Unknown`/no-summary case; a fresh `axe-core`
+spot-check on both the live page and the mock preview found zero
+violations and no horizontal overflow at 390px.
+
 Sprint 31 (partial — text search only): `app/components/
 location-search.tsx` is a hand-rolled [WAI-ARIA
 combobox](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/) (no
