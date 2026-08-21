@@ -254,17 +254,34 @@ Boots, has real CI, and now has:
   the broader `httpx.TransportError` family, so a proxy/read/write/
   pool-timeout failure would have escaped as an unhandled exception
   instead of degrading one source gracefully — fixed and characterized
-  in `test_http_client.py`. Sprint 23's `assess_confidence` and sprint
-  24's `SnapshotCache` are still not wired in — see
-  `app/domain/assembly.py`'s module docstring for exactly why
-  (`assess_confidence` needs real station-distance data `ResolvedLocation`
-  doesn't carry yet).
+  in `test_http_client.py`.
+- Sprint 23's confidence model wired in too: `ForecastEnvelope.confidence`
+  now comes from a real `assess_confidence` call instead of assembly's
+  old liveness-only stub, given per-source status, one `AgedObservation`
+  for water temperature (age + fallback status), and — for dynamic
+  points — a `StationDistance` built from `location.anchor_miles`.
+  That required a small plumbing addition: `ResolvedLocation` (`app/
+  providers/locations.py`) gained an `anchor_miles: float | None` field,
+  populated by `resolve_dynamic_location` (previously computed and
+  discarded) and left `None` for curated locations (they *are* the
+  named station, so no distance factor applies) and for points where no
+  anchor was found at all. This is a deliberate simplification, not a
+  full per-source distance breakdown: `resolve_dynamic_location` only
+  ever returns the single *nearest* anchor's distance, not one per
+  fallible source — documented in `assembly.py`'s module docstring.
+  Sprint 24's `SnapshotCache` remains the one still-unwired piece; see
+  the module docstring for why (it needs a keying/`ForecastState.STALE`
+  design decision, not just missing input data). `POST /v1/locations/
+  resolve`'s response schema picked up the new field, regenerating
+  `tests/openapi_snapshot.json` — reviewed as a one-field, additive
+  diff, exactly the deliberate-regeneration flow the breaking-change
+  guard exists for.
 
-It does not yet have sprint 23/24's confidence-model/caching refinements
-wired into the API, or a Postgres connection. Those land in the Phase 2
-sprints listed in the roadmap's sprint ledger (26 onward) or as further
-unassigned wiring follow-ups, each behind its own characterization
-tests, porting from the reconciliation audit
+It does not yet have sprint 24's caching wired into the API, or a
+Postgres connection. Those land in the Phase 2 sprints listed in the
+roadmap's sprint ledger (26 onward) or as further unassigned wiring
+follow-ups, each behind its own characterization tests, porting from
+the reconciliation audit
 ([`docs/R1_RECONCILIATION_AUDIT.md`](../../docs/R1_RECONCILIATION_AUDIT.md))
 rather than copying `v2/backend` or the legacy Flask app verbatim.
 

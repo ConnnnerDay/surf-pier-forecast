@@ -1,4 +1,5 @@
-"""Forecast assembly (sprint 21, scoring wiring added post-sprint-25).
+"""Forecast assembly (sprint 21; scoring and confidence wiring added
+post-sprint-25).
 
 Concurrently fans out to the three independent, fallible live sources
 (NWS marine-zone conditions, NOAA CO-OPS water temperature, NDBC buoy
@@ -31,7 +32,7 @@ never presented as a live reading: `Observation.is_fallback=True` and
 ("missing observations are never turned into invented measurements") —
 a labeled fallback is not an invented measurement.
 
-`ForecastState`/`Confidence` here are intentionally simple:
+`ForecastState` here is intentionally simple:
 
 - `ForecastState.FRESH` if wind/wave data is available from either
   source (live or fallback water temp doesn't affect this); `PARTIAL`
@@ -44,13 +45,10 @@ a labeled fallback is not an invented measurement.
 - `ForecastState.STALE` is not produced here at all: staleness is a
   caching-layer concept (serving a previous fetch past its freshness
   window) and there is no cache yet — that's sprint 24's job.
-- `Confidence` is HIGH only when all three sources are live, LOW when
-  wind/wave data is missing entirely, MEDIUM otherwise (some
-  degradation, including a water-temperature fallback, but wind/wave
-  data still available). This is a basic, provisional policy — sprint
-  23 ("Confidence model") owns the fuller distance/age/fallback
-  degradation policy; this sprint only needed something defensible
-  enough to react to its own present/absent matrix.
+
+`Confidence` (originally a basic liveness-only stub here) now comes
+from sprint 23's `assess_confidence`, see the confidence-wiring section
+below.
 
 **Scoring wiring (added after sprint 25, still not a numbered sprint).**
 `ForecastConditions.score` is sprint 22's `ForecastScore`, computed here
@@ -66,16 +64,26 @@ back to the buoy's. `score_conditions`'s `coast` parameter comes from
 neither source reported wind/wave at all — the same condition that
 already produces `ForecastState.PARTIAL` above.
 
-Sprint 23's `assess_confidence` and sprint 24's `SnapshotCache` are
-still **not** wired in here. `assess_confidence` needs each fallible
-source's real distance from the resolved location — `ResolvedLocation`
-doesn't carry that (`resolve_dynamic_location`'s anchor-miles result is
-dropped by `app.api.deps.resolve_location_id`, sprint 25) — so wiring
-it in defensibly needs that plumbing first, not just a call to
-`assess_confidence` here. Wiring `SnapshotCache` around this function
-(keyed by location id, producing `ForecastState.STALE` on a fallback
-hit) is a separate, still-unassigned follow-up. Both remain named next
-steps in `docs/CANONICAL_ROADMAP.md`'s live checkpoint.
+**Confidence wiring (added after the scoring-wiring PR, still not a
+numbered sprint).** `ForecastEnvelope.confidence` is now sprint 23's
+`assess_confidence`, given: `sources` (per-source liveness, unchanged
+from sprint 21); one `AgedObservation` for `water_temperature` (its age
+and `is_fallback` flag — the only `Observation` this module produces
+outside `ForecastConditions`'s per-source fields, and the only one
+worth a confidence penalty on its own, since wind/wave data isn't
+represented as a single `Observation` at all here); and, when
+`location.anchor_miles` is set (dynamic points only —
+`resolve_dynamic_location`'s nearest-anchor distance, now embedded on
+`ResolvedLocation` itself rather than dropped), one `StationDistance`
+labeled `"location:anchor"`. This is a deliberate simplification, not a
+full per-source distance breakdown: `resolve_dynamic_location` only
+returns the *single nearest* anchor's distance (whichever of the
+curated neighbor, CO-OPS station, or NDBC buoy is closest), not a
+distance per individual source. A curated location's `anchor_miles` is
+always `None` — it *is* the named station, so no distance factor
+applies. Wiring `SnapshotCache` around this function (keyed by location
+id, producing `ForecastState.STALE` on a fallback hit) remains a
+separate, still-unassigned follow-up.
 """
 
 from __future__ import annotations
@@ -87,9 +95,8 @@ from typing import Generic, TypeVar
 
 from pydantic import BaseModel
 
+from app.domain.confidence import AgedObservation, StationDistance, assess_confidence
 from app.domain.models import (
-    Confidence,
-    ConfidenceLevel,
     ForecastEnvelope,
     ForecastState,
     Location,
@@ -385,29 +392,27 @@ async def assemble_forecast(
     wind_wave_available = conditions.marine_zone_wind is not None or (
         conditions.buoy is not None and conditions.buoy.wind_speed is not None
     )
-    all_three_live = (
-        marine_zone_result.error is None
-        and water_temp_result.error is None
-        and buoy_result.error is None
+    state = ForecastState.FRESH if wind_wave_available else ForecastState.PARTIAL
+
+    confidence = assess_confidence(
+        sources,
+        now=now,
+        observations=[
+            AgedObservation("noaa_coops:water_temperature", water_temperature)
+        ],
+        station_distances=(
+            [StationDistance("location:anchor", location.anchor_miles)]
+            if location.anchor_miles is not None
+            else []
+        ),
     )
-
-    if wind_wave_available:
-        state = ForecastState.FRESH
-        confidence_level = (
-            ConfidenceLevel.HIGH if all_three_live else ConfidenceLevel.MEDIUM
-        )
-    else:
-        state = ForecastState.PARTIAL
-        confidence_level = ConfidenceLevel.LOW
-
-    confidence_reasons = [w.code for w in warnings]
 
     return ForecastEnvelope(
         location=_to_domain_location(location),
         generated_at=now,
         state=state,
         sources=sources,
-        confidence=Confidence(level=confidence_level, reasons=confidence_reasons),
+        confidence=confidence,
         warnings=warnings,
         conditions=conditions.model_dump(mode="json"),
         tides=None,

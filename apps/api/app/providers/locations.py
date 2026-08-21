@@ -127,6 +127,14 @@ class ResolvedLocation(BaseModel):
     were resolved from live catalogs and the coarse regional fields were
     inherited from the nearest curated neighbor (see
     `resolve_dynamic_location`).
+
+    `anchor_miles` is `None` for a curated location — it *is* the named
+    spot, so there's no meaningful "distance to the nearest real
+    station" to report — and for a dynamic point where no anchor
+    (curated neighbor, CO-OPS station, or NDBC buoy) was found at all.
+    Otherwise it's `resolve_dynamic_location`'s nearest-anchor distance,
+    added so a later confidence assessment (`app.domain.confidence`) has
+    real distance data to work with instead of none at all.
     """
 
     id: str
@@ -143,6 +151,7 @@ class ResolvedLocation(BaseModel):
     conditions_region: str
     temp_offset: int
     is_dynamic: bool
+    anchor_miles: float | None = None
 
 
 @lru_cache(maxsize=1)
@@ -360,6 +369,7 @@ def resolve_dynamic_location(
         conditions_region=conditions_region,
         temp_offset=temp_offset,
         is_dynamic=True,
+        anchor_miles=anchor_miles if anchor_miles != float("inf") else None,
     )
     return location, anchor_miles
 
