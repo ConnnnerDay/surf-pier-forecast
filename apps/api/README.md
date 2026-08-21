@@ -269,19 +269,40 @@ Boots, has real CI, and now has:
   full per-source distance breakdown: `resolve_dynamic_location` only
   ever returns the single *nearest* anchor's distance, not one per
   fallible source — documented in `assembly.py`'s module docstring.
-  Sprint 24's `SnapshotCache` remains the one still-unwired piece; see
-  the module docstring for why (it needs a keying/`ForecastState.STALE`
-  design decision, not just missing input data). `POST /v1/locations/
-  resolve`'s response schema picked up the new field, regenerating
-  `tests/openapi_snapshot.json` — reviewed as a one-field, additive
-  diff, exactly the deliberate-regeneration flow the breaking-change
-  guard exists for.
+  `POST /v1/locations/resolve`'s response schema picked up the new
+  field, regenerating `tests/openapi_snapshot.json` — reviewed as a
+  one-field, additive diff, exactly the deliberate-regeneration flow
+  the breaking-change guard exists for.
+- Sprint 24's `SnapshotCache` wired in too, closing the last of the
+  three unassigned wiring pieces: `app/domain/forecast_cache.py` wraps
+  sprint 21's `assemble_forecast` in the cache, keyed by location id,
+  not inside `assemble_forecast` itself — assembly stays a pure
+  "assemble one envelope right now" function. `GET /v1/forecasts/{id}`
+  (`get_or_assemble_forecast`) serves a fresh cached envelope when one
+  exists; `POST /v1/forecasts/{id}/refresh`
+  (`refresh_and_assemble_forecast`) bypasses the freshness check
+  entirely and forces a live assemble, repopulating the cache — the
+  distinguishing behavior sprint 25's router docstring promised it once
+  this landed. `SnapshotCache` gained a `force_refresh` method for
+  exactly that ("bypass the TTL, still fall back to the last known-good
+  value on failure"), sharing `get_or_refresh`'s fallback/single-flight
+  logic via a new private `_fetch_and_store` helper. A fallback hit
+  (the wrapped assemble raising) is relabeled `ForecastState.STALE` —
+  documented as a **practically dormant path**: `assemble_forecast`
+  never raises by design (every fallible source degrades internally),
+  so there's normally nothing for the cache's fallback branch to catch.
+  Both cache-wrapper functions accept an injectable `assemble` callable
+  (defaulting to the real one) specifically so `tests/
+  test_forecast_cache.py` can substitute a deliberately failing
+  stand-in and actually exercise that dormant path — the same "test the
+  seam directly" approach sprint 24's own `SnapshotCache` tests already
+  use. Router-level tests confirm the wiring end-to-end: a second `GET`
+  doesn't re-hit any upstream, and `refresh` does even immediately
+  after a `GET`.
 
-It does not yet have sprint 24's caching wired into the API, or a
-Postgres connection. Those land in the Phase 2 sprints listed in the
-roadmap's sprint ledger (26 onward) or as further unassigned wiring
-follow-ups, each behind its own characterization tests, porting from
-the reconciliation audit
+It does not yet have a Postgres connection. That lands in whichever
+Phase 2 sprint or infra work adds it, behind its own characterization
+tests, porting from the reconciliation audit
 ([`docs/R1_RECONCILIATION_AUDIT.md`](../../docs/R1_RECONCILIATION_AUDIT.md))
 rather than copying `v2/backend` or the legacy Flask app verbatim.
 

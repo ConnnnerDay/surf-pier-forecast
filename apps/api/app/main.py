@@ -11,10 +11,12 @@ sprint only builds what's buildable without them.
 
 The `lifespan` context manager owns the app-lifetime resources every
 `/v1` route depends on (`app.api.deps.AppState`): one pooled
-`BoundedHTTPClient` (sprint 12) and the three sprint-17
-`StationCatalogCache` instances, created on startup and closed on
-shutdown rather than per-request — the same pooling rationale sprint
-12's docstring gives for the HTTP client itself.
+`BoundedHTTPClient` (sprint 12), the three sprint-17
+`StationCatalogCache` instances, and the sprint-24
+`SnapshotCache[ForecastEnvelope]` (`app.domain.forecast_cache`'s
+caching wiring) — created on startup and closed on shutdown rather than
+per-request, same pooling rationale sprint 12's docstring gives for the
+HTTP client itself.
 """
 
 from collections.abc import AsyncIterator
@@ -26,6 +28,7 @@ from app.api.deps import AppState
 from app.api.v1.forecasts import router as forecasts_router
 from app.api.v1.locations import router as locations_router
 from app.infra.http_client import BoundedHTTPClient
+from app.infra.snapshot_cache import SnapshotCache
 from app.providers.stations import StationCatalogCache
 
 
@@ -37,6 +40,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             coops_tide_cache=StationCatalogCache(),
             coops_watertemp_cache=StationCatalogCache(),
             ndbc_cache=StationCatalogCache(),
+            forecast_cache=SnapshotCache(),
         )
         yield
 

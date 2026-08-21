@@ -51,6 +51,16 @@ duplicate requests; callers for *different* keys never block each
 other. Locks are never removed once created, an accepted simplification
 for this sprint's key space (bounded by the number of resolved
 locations in practice).
+
+`force_refresh` (added when `app.domain.forecast_cache` wired this
+cache around forecast assembly, still not a numbered sprint) skips the
+freshness check entirely and always calls *fetch*, for a caller that
+needs to force a live refetch regardless of the cached entry's age —
+`POST /v1/forecasts/{id}/refresh`'s reason to exist, as opposed to
+`GET`'s `get_or_refresh`. It shares `get_or_refresh`'s fallback-on-
+failure and single-flight-per-key behavior via the private
+`_fetch_and_store` helper both methods call while holding the same
+per-key lock.
 """
 
 from __future__ import annotations
@@ -131,20 +141,51 @@ class SnapshotCache(Generic[T]):
                     del self._entries[key]
                     entry = None
 
-            try:
-                value = await fetch()
-            except Exception:
-                if entry is not None:
-                    return CachedSnapshot(
-                        value=entry.value,
-                        fetched_at=entry.fetched_at,
-                        is_fresh=False,
-                        is_fallback=True,
-                    )
-                raise
+            return await self._fetch_and_store(key, fetch, entry, now)
 
-            fetched_at = now
-            self._entries[key] = _Entry(value=value, fetched_at=fetched_at)
-            return CachedSnapshot(
-                value=value, fetched_at=fetched_at, is_fresh=True, is_fallback=False
-            )
+    async def force_refresh(
+        self, key: str, fetch: Callable[[], Awaitable[T]]
+    ) -> CachedSnapshot[T]:
+        """Unconditionally call *fetch*, bypassing the freshness check
+        entirely, and replace the cached entry with the result. Still
+        single-flight per key. For a caller that needs to force a live
+        fetch regardless of how fresh the cached entry is (e.g. a
+        "refresh" API endpoint) — as opposed to `get_or_refresh`, which
+        only fetches when the entry is missing or past
+        `fresh_ttl_seconds`. A fetch failure still falls back to the
+        existing entry if one exists, exactly as `get_or_refresh` does:
+        forcing a refresh doesn't mean discarding the last known-good
+        value on failure.
+        """
+        async with self._locks[key]:
+            entry = self._entries.get(key)
+            now = self._clock()
+            return await self._fetch_and_store(key, fetch, entry, now)
+
+    async def _fetch_and_store(
+        self,
+        key: str,
+        fetch: Callable[[], Awaitable[T]],
+        fallback_entry: _Entry[T] | None,
+        now: datetime,
+    ) -> CachedSnapshot[T]:
+        """Call *fetch* and cache the result, or fall back to
+        *fallback_entry* on failure. Callers must already hold
+        `self._locks[key]`.
+        """
+        try:
+            value = await fetch()
+        except Exception:
+            if fallback_entry is not None:
+                return CachedSnapshot(
+                    value=fallback_entry.value,
+                    fetched_at=fallback_entry.fetched_at,
+                    is_fresh=False,
+                    is_fallback=True,
+                )
+            raise
+
+        self._entries[key] = _Entry(value=value, fetched_at=now)
+        return CachedSnapshot(
+            value=value, fetched_at=now, is_fresh=True, is_fallback=False
+        )

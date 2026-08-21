@@ -15,6 +15,7 @@ from fastapi.testclient import TestClient
 
 from app.api.deps import AppState, get_app_state
 from app.infra.http_client import BoundedHTTPClient
+from app.infra.snapshot_cache import SnapshotCache
 from app.main import app
 from app.providers.stations import StationCatalogCache
 
@@ -72,6 +73,7 @@ def client() -> Iterator[TestClient]:
         coops_tide_cache=StationCatalogCache(),
         coops_watertemp_cache=StationCatalogCache(),
         ndbc_cache=StationCatalogCache(),
+        forecast_cache=SnapshotCache(),
     )
     app.dependency_overrides[get_app_state] = lambda: mock_state
     try:
@@ -112,3 +114,56 @@ def test_refresh_forecast_returns_same_shape_as_get(client: TestClient) -> None:
     assert refresh_resp.status_code == 200
     assert set(refresh_resp.json().keys()) == set(get_resp.json().keys())
     assert refresh_resp.json()["location"] == get_resp.json()["location"]
+
+
+def _counting_client() -> tuple[BoundedHTTPClient, dict[str, int]]:
+    counts = {"marine_zone": 0}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        url = str(request.url)
+        if "zones/forecast" in url:
+            counts["marine_zone"] += 1
+        return _handler(request)
+
+    transport = httpx.MockTransport(handler)
+    return BoundedHTTPClient(transport=transport, max_retries=0), counts
+
+
+def test_second_get_is_served_from_cache_not_refetched() -> None:
+    http_client, counts = _counting_client()
+    mock_state = AppState(
+        http_client=http_client,
+        coops_tide_cache=StationCatalogCache(),
+        coops_watertemp_cache=StationCatalogCache(),
+        ndbc_cache=StationCatalogCache(),
+        forecast_cache=SnapshotCache(),
+    )
+    app.dependency_overrides[get_app_state] = lambda: mock_state
+    try:
+        test_client = TestClient(app)
+        test_client.get("/v1/forecasts/wrightsville-beach-nc")
+        test_client.get("/v1/forecasts/wrightsville-beach-nc")
+    finally:
+        app.dependency_overrides.pop(get_app_state, None)
+
+    assert counts["marine_zone"] == 1
+
+
+def test_refresh_forces_a_live_fetch_even_right_after_a_get() -> None:
+    http_client, counts = _counting_client()
+    mock_state = AppState(
+        http_client=http_client,
+        coops_tide_cache=StationCatalogCache(),
+        coops_watertemp_cache=StationCatalogCache(),
+        ndbc_cache=StationCatalogCache(),
+        forecast_cache=SnapshotCache(),
+    )
+    app.dependency_overrides[get_app_state] = lambda: mock_state
+    try:
+        test_client = TestClient(app)
+        test_client.get("/v1/forecasts/wrightsville-beach-nc")
+        test_client.post("/v1/forecasts/wrightsville-beach-nc/refresh")
+    finally:
+        app.dependency_overrides.pop(get_app_state, None)
+
+    assert counts["marine_zone"] == 2

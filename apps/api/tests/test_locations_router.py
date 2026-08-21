@@ -15,6 +15,7 @@ from fastapi.testclient import TestClient
 
 from app.api.deps import AppState, get_app_state
 from app.infra.http_client import BoundedHTTPClient
+from app.infra.snapshot_cache import SnapshotCache
 from app.main import app
 from app.providers.stations import StationCatalogCache
 
@@ -53,6 +54,7 @@ def client() -> Iterator[TestClient]:
         coops_tide_cache=StationCatalogCache(),
         coops_watertemp_cache=StationCatalogCache(),
         ndbc_cache=StationCatalogCache(),
+        forecast_cache=SnapshotCache(),
     )
     app.dependency_overrides[get_app_state] = lambda: mock_state
     try:

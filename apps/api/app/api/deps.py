@@ -1,11 +1,13 @@
-"""Shared, app-lifetime dependencies for the /v1 routers (sprint 25).
+"""Shared, app-lifetime dependencies for the /v1 routers (sprint 25;
+gained `forecast_cache` in the caching-wiring follow-up).
 
 Everything a route handler needs that's expensive to create per-request —
-the pooled `BoundedHTTPClient` (sprint 12) and the three station-catalog
+the pooled `BoundedHTTPClient` (sprint 12), the three station-catalog
 `StationCatalogCache` instances (sprint 17, one each for CO-OPS tide,
-CO-OPS water-temperature, and NDBC) — is created once in `app.main`'s
-FastAPI lifespan and stored on `app.state`. `AppState` and the
-`get_app_state`/`get_http_client` dependency functions here are the
+CO-OPS water-temperature, and NDBC), and the `SnapshotCache[ForecastEnvelope]`
+(sprint 24, wired by `app.domain.forecast_cache`) — is created once in
+`app.main`'s FastAPI lifespan and stored on `app.state`. `AppState` and
+the `get_app_state`/`get_http_client` dependency functions here are the
 typed accessors route handlers use instead of reaching into
 `request.app.state` directly, and the seam tests use to inject a
 mocked `BoundedHTTPClient` via `app.dependency_overrides`.
@@ -24,7 +26,9 @@ from dataclasses import dataclass
 
 from fastapi import HTTPException, Request
 
+from app.domain.models import ForecastEnvelope
 from app.infra.http_client import BoundedHTTPClient
+from app.infra.snapshot_cache import SnapshotCache
 from app.providers.coastal_bounds import gate_coastal_point
 from app.providers.locations import (
     ResolvedLocation,
@@ -50,6 +54,7 @@ class AppState:
     coops_tide_cache: StationCatalogCache[CoopsStationCatalogEntry]
     coops_watertemp_cache: StationCatalogCache[CoopsStationCatalogEntry]
     ndbc_cache: StationCatalogCache[NdbcStationCatalogEntry]
+    forecast_cache: SnapshotCache[ForecastEnvelope]
 
 
 def get_app_state(request: Request) -> AppState:
