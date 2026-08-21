@@ -337,7 +337,7 @@ to reconciliation, not proof that the agreed outcome passed.
 | 29 | Account-required routing | Public exceptions and authorization/redirect tests | Candidate in `/v2` |
 | 30 | Onboarding shell | Mobile recording from registration to dashboard | Candidate in `/v2` |
 | 31 | Location search | Text, device, map, station preview, denial/ambiguity tests | **Partially complete** — text search only: `apps/web/app/components/location-search.tsx` (a hand-rolled WAI-ARIA combobox, no dependency) calls `apps/web/app/api/locations/search/route.ts` (a BFF Route Handler proxying apps/api's `GET /v1/locations/search` through the signed internal path — the browser never calls apps/api directly, ADR-004), demonstrated on `apps/web/app/locations/page.tsx`, where selecting a result links to a real `apps/web/app/forecast/[locationId]/page.tsx` lookup (any recognized `location_id`, replacing the earlier fixed-location `/forecast/demo` proof, which now just redirects there). Device geolocation, map search, and station-preview/ambiguity states are not attempted; empty-results and fetch-failure states are handled distinctly, and an unknown location 404s via Next's `notFound()`. Verified interactively (typing, debounce, keyboard nav, selection, navigation to a real rendered forecast) via headless Chromium, not just curl |
-| 32 | Dashboard hierarchy | Go/no-go as a simple traffic-light headline (score/narrative expandable, not primary); best window, conditions, confidence, freshness first | **Partially complete** — hierarchy restructuring on the existing single-location forecast page, not the multi-location dashboard (that needs sprint 37's saved locations first): `apps/web/app/components/forecast-card.tsx`'s `ForecastCard` now leads with an enlarged verdict `Badge` (the traffic light), a new `deriveBestWindow`-derived "best window" callout (computed purely from `hourly_outlook`, no new fetch), then the numeric score/narrative demoted into a `<details>`/`<summary>`, then confidence/state/freshness. A wind/wave/water-temperature "conditions" mini-panel is deliberately deferred — it needs a backend-exposed, already-reconciled range to avoid duplicating `app.domain.assembly`'s reconciliation policy on the frontend. Verified via a temporary mock preview page (this sandbox's live path only exercises the `Unknown`/empty-summary case) plus a fresh `axe-core` spot-check — zero violations |
+| 32 | Dashboard hierarchy | Go/no-go as a simple traffic-light headline (score/narrative expandable, not primary); best window, conditions, confidence, freshness first | **Partially complete** — hierarchy restructuring on the existing single-location forecast page, not the multi-location dashboard (that needs sprint 37's saved locations first): `apps/web/app/components/forecast-card.tsx`'s `ForecastCard` leads with an enlarged verdict `Badge` (the traffic light), a `deriveBestWindow`-derived "best window" callout (computed purely from `hourly_outlook`, no new fetch), a new `ConditionsSummary` (wind/wave/water-temperature, one line, e.g. "Wind 10–15 kt SW · Waves 2–3 ft · Water 76°F"), then confidence/state/freshness, then the numeric score/narrative demoted into a `<details>`/`<summary>`. `ConditionsSummary` reads `apps/api/app/domain/assembly.py`'s new `ForecastConditions.wind_range_kt`/`wave_range_ft`/`wind_direction` fields — the exact already-reconciled range `score_conditions` was computed from — rather than re-deriving that reconciliation policy on the frontend. Verified via temporary mock preview pages (this sandbox's live path always has `Unknown`/empty-summary and `null` wind/wave) plus a fresh `axe-core` spot-check on both the live page and the mock previews — zero violations. Only the multi-location dashboard itself (sprint 37) remains open |
 | 33 | Conditions experience | Full/partial/stale/unavailable source-attributed snapshots | **Partially complete** — `apps/web/app/components/forecast-card.tsx`'s `ForecastCard` renders `forecast.state` as a badge using apps/api's own fresh/stale/partial/unavailable vocabulary, and a new `SourceStatusList` shows every fanned-out source individually (human-readable label, ok/degraded/unavailable badge, raw provider error for non-ok sources) — real per-source attribution, not just the aggregate already shown. Verified against a real running server and re-audited with `axe-core` (zero violations); caught and fixed a real text-overflow bug (long provider-error URLs not wrapping at phone width) in the process |
 | 34 | Tides and timing | Accessible charts, text alternatives, timezone/DST tests | **Partially complete** — backend, tides: `apps/api/app/domain/assembly.py` fetches tide predictions (`app.providers.noaa_coops.fetch_tide_predictions`) in the same `asyncio.gather` as the other independent sources, for a local-date window computed in the location's own timezone (`app.infra.timezones.safe_zone`, not naive UTC); `ForecastTides` (station id + upcoming high/low predictions) is the sprint-34-owned shape of `ForecastEnvelope.tides`, degrading to `None` with an advisory `Warning` on failure. Backend, timing: `apps/api/app/domain/timing.py`'s `build_hourly_outlook` ports the legacy 24-hour fish-activity timeline (dawn/dusk, solunar major/minor bands, tide-change windows, night penalty offset by a bright-moon boost, wind-conditions damping) from typed inputs already on hand, populated on every request (never degrades to `None`, unlike `tides`) — pressure-trend and the profile-dependent parts of the legacy "best times" summary are deliberately deferred, see the module docstring. Frontend: `apps/web/app/components/forecast-card.tsx`'s `TideTable` — the text-alternative half of the *tides* sub-item — is a plain, properly-labeled `<table>` (times formatted in the *location's* timezone, not the viewer's), visually verified against realistic mock data via a temporary preview page since this sandbox's blocked upstream calls mean `tides` is always `None` on the live path; `HourlyOutlookTable` renders `forecast.hourly_outlook` the same way, but — since it never degrades to `None` — was verified against the real, live forecast page and a fresh `axe-core` spot-check (desktop/phone × light/dark, zero violations, no overflow). A visual chart remains open for both sub-items, and a real dashboard's use of this data (sprint 32's "best window" headline) is a separate follow-up |
 | 35 | Fishing guidance | Limited supported suggestions; every recommendation explains why | Existing broad feature is out of scope; adapt |
@@ -1439,6 +1439,36 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   committing); a fresh `axe-core` spot-check on both the live page and
   the mock preview found zero violations and no horizontal overflow at
   390px. `npm run lint`/`npm run build` both pass clean.
+- **Sprint 32, continued (the "conditions" mini-panel)**: backend,
+  `apps/api/app/domain/assembly.py`'s `ForecastConditions` gains
+  `wind_range_kt`/`wave_range_ft`/`wind_direction` -- the exact
+  already-reconciled wind/wave range and direction `score_conditions`
+  was computed from (including the last-resort wind-fallback-chain
+  result, when it fires), exposed as their own fields instead of only
+  living as local variables, so a frontend summary can show the same
+  numbers the go/no-go score used rather than re-deriving this
+  module's NWS-marine-zone-over-NDBC-buoy source-preference policy a
+  second time. `apps/api/tests/test_assembly.py` extends four existing
+  tests (marine-zone-preferred, buoy-fallback, direction-preference,
+  gridpoint-wind-rescue) with exact-value assertions on the new
+  fields, plus a presence assertion in the present/absent matrix,
+  rather than adding parallel duplicate tests -- 344 passed; ruff,
+  ruff format, and mypy all clean. Frontend: `apps/web/app/components/
+  forecast-card.tsx` gains `ConditionsSummary`, rendered right after
+  the "best window" callout per the acceptance bar's literal ordering,
+  showing one line (e.g. "Wind 10-15 kt SW · Waves 2-3 ft · Water
+  76°F") from those same three fields; water temperature (always
+  present, unlike wind/wave) is labeled "(monthly avg)" when
+  `is_fallback` is set. Verified against the real, live forecast page
+  (correctly shows only the water-temperature line when wind/wave are
+  `null`, this sandbox's actual state) plus two temporary mock preview
+  pages -- one with a full wind/wave/water-temp reading, one exercising
+  the water-temperature-fallback label -- screenshotted and
+  `axe-core`-checked in both color schemes (zero violations, no
+  overflow), then deleted before committing. `npm run lint`/`npm run
+  build` both pass clean. This closes out sprint 32's named elements on
+  the single-location page; only the multi-location dashboard itself
+  (sprint 37) remains open.
 - **Incident (sprint 6, resolved earlier)**: a scratch branch explicitly
   titled `DO NOT MERGE` was merged into `main` under the repo owner's own
   account, landing deliberately-broken code; reverted within ~10 minutes

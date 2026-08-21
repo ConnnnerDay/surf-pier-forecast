@@ -85,6 +85,14 @@ back to the buoy's. `score_conditions`'s `coast` parameter comes from
 neither source reported wind/wave at all — the same condition that
 already produces `ForecastState.PARTIAL` above.
 
+`ForecastConditions.wind_range_kt`/`wave_range_ft`/`wind_direction`
+(added post-sprint-32) are the same reconciled `wind_range`/
+`wave_range`/`wind_direction` values `score_conditions` was called
+with, including any last-resort wind-fallback-chain result below —
+exposed as their own fields so a caller can show "the wind is X" once,
+reconciled the same way the score was, rather than re-deriving this
+policy from the raw per-source fields a second time.
+
 **Confidence wiring (added after the scoring-wiring PR, still not a
 numbered sprint).** `ForecastEnvelope.confidence` is now sprint 23's
 `assess_confidence`, given: `sources` (per-source liveness, unchanged
@@ -234,11 +242,16 @@ class ForecastConditions(BaseModel):
 
     Each provider's raw normalized output is kept as its own field
     rather than merged into one reconciled "the wind is X" value —
-    callers that want per-source detail still have it. `score` is the
-    one reconciled, single-number exception: `_reconcile_range` (this
-    module) picks one wind/wave range per the policy in the module
-    docstring's scoring-wiring section, and sprint 22's
-    `score_conditions` turns that into the go/no-go index.
+    callers that want per-source detail still have it. `score`,
+    `wind_range_kt`/`wave_range_ft`/`wind_direction` are the reconciled
+    exceptions: `_reconcile_range` (this module) picks one wind/wave
+    range per the policy in the module docstring's scoring-wiring
+    section, sprint 22's `score_conditions` turns that into the go/no-go
+    index, and both the range and the index are exposed here — added
+    post-sprint-32 so a frontend "conditions" summary panel can show the
+    exact number the score was computed from, instead of re-deriving
+    this module's own NWS-marine-zone-over-NDBC-buoy source-preference
+    policy a second time and risking drift from it.
     """
 
     water_temperature: Observation
@@ -253,6 +266,9 @@ class ForecastConditions(BaseModel):
     lunar: LunarDetails
     solunar: SolunarTimes
     score: ForecastScore
+    wind_range_kt: tuple[float, float] | None
+    wave_range_ft: tuple[float, float] | None
+    wind_direction: str | None
 
 
 class ForecastTides(BaseModel):
@@ -606,6 +622,9 @@ async def assemble_forecast(
         lunar=_compute_lunar_details(now, location.lng, location.timezone),
         solunar=solunar,
         score=score,
+        wind_range_kt=wind_range,
+        wave_range_ft=wave_range,
+        wind_direction=wind_direction,
     )
 
     wind_wave_available = (

@@ -98,23 +98,43 @@ the day's best activity tag — no new fetch, sprint 34's own module
 docstring flagged this as derivable), and the numeric score plus its
 narrative move into a native `<details>`/`<summary>` — present, but
 demoted, not the first thing a reader sees. Confidence/state/freshness
-stay in the summary strip right below. A wind/wave/water-temperature
-"conditions" mini-panel is a deliberate follow-up, not this PR:
-`apps/api`'s `ForecastConditions` only carries per-source wind/wave
-(`marine_zone_wind`/`buoy`), not an already-reconciled single range,
-and re-deriving that reconciliation policy on the frontend would
-duplicate — and risk drifting from — `app.domain.assembly`'s own
-`_reconcile_range`, which already decided it once for scoring. Since
-this sandbox's blocked upstream calls mean the verdict is always
-`Unknown` (empty score/summary) on the live path, the enlarged
-traffic-light badge and the expandable score-details interaction were
-verified against a temporary mock preview page (a `Good`/82 verdict
-with a real best-window block; screenshotted collapsed and — via a
-real Playwright click on the `<summary>` — expanded, in both color
-schemes, then deleted before committing) rather than the live path,
-which only exercises the `Unknown`/no-summary case; a fresh `axe-core`
-spot-check on both the live page and the mock preview found zero
-violations and no horizontal overflow at 390px.
+stay in the summary strip right below (a wind/wave/water-temperature
+"conditions" mini-panel, the sprint's other named element, followed in
+a later PR — see below). Since this sandbox's blocked upstream calls
+mean the verdict is always `Unknown` (empty score/summary) on the live
+path, the enlarged traffic-light badge and the expandable
+score-details interaction were verified against a temporary mock
+preview page (a `Good`/82 verdict with a real best-window block;
+screenshotted collapsed and — via a real Playwright click on the
+`<summary>` — expanded, in both color schemes, then deleted before
+committing) rather than the live path, which only exercises the
+`Unknown`/no-summary case; a fresh `axe-core` spot-check on both the
+live page and the mock preview found zero violations and no
+horizontal overflow at 390px.
+
+Sprint 32, continued (the "conditions" mini-panel deferred above): a
+new `ConditionsSummary` renders right after the "best window" callout,
+matching the acceptance bar's literal ordering ("best window,
+conditions, confidence, freshness"). It shows a single "Wind 10–15 kt
+SW · Waves 2–3 ft · Water 76°F" line from `apps/api`'s new
+`ForecastConditions.wind_range_kt`/`wave_range_ft`/`wind_direction`
+fields (added in the same change, `app/domain/assembly.py`) — the
+exact already-reconciled numbers `score_conditions` was computed from
+— rather than re-deriving that NWS-marine-zone-over-NDBC-buoy
+source-preference policy from the raw per-source fields on the
+frontend a second time, which would risk drifting from
+`app.domain.assembly`'s own `_reconcile_range`. Water temperature
+(always present, unlike wind/wave) is labeled `(monthly avg)` when
+`is_fallback` is set, same honesty rule as everywhere else this app
+shows a fallback value. Since this sandbox always has both ranges
+`null` on the live path, the populated case was verified the same way
+as the traffic-light headline above: a temporary mock preview page
+(one card with a full wind/wave/water-temp reading, one with the
+water-temperature-fallback case) screenshotted and `axe-core`-checked
+in both color schemes, zero violations, no overflow, then deleted
+before committing; the live page was separately re-verified to still
+correctly show only the water-temperature line when wind/wave are
+`null`.
 
 Sprint 31 (partial — text search only): `app/components/
 location-search.tsx` is a hand-rolled [WAI-ARIA
