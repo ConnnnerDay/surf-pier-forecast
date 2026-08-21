@@ -1,21 +1,23 @@
-"""`/v1/forecasts` router (sprint 25).
+"""`/v1/forecasts` router (sprint 25; cache-wired in the caching-wiring
+follow-up).
 
 `GET /v1/forecasts/{location_id}` resolves *location_id* (via the same
 `resolve_location_id` helper the locations router uses — see
-`app.api.deps`) and assembles a `ForecastEnvelope` with sprint 21's
-`assemble_forecast`. No new domain logic: the envelope this returns is
-exactly what sprint 21 already builds, sprints 22-24's score/confidence/
-caching refinements aside (still an unassigned wiring follow-up, not
-this sprint's job).
+`app.api.deps`) and serves a forecast through
+`app.domain.forecast_cache.get_or_assemble_forecast`: a fresh cached
+envelope if one exists, otherwise a live `assemble_forecast` (sprint
+21), subject to sprint 24's `SnapshotCache` fresh/stale/miss/expiry
+policy — see that module's docstring for the full behavior, including
+why `ForecastState.STALE` is a documented-but-practically-dormant path.
 
-`POST /v1/forecasts/{location_id}/refresh` is deliberately identical to
-`GET` today. The canonical roadmap names it as a distinct endpoint
-because a *cached* forecast service needs a way to force a live
-refetch — but `assemble_forecast` doesn't cache anything yet (sprint
-24's `SnapshotCache` isn't wired into it, the same unassigned follow-up
-named above), so right now every `GET` is already a live refetch and
-there is nothing for `refresh` to force. Once that wiring lands,
-`refresh` is where its bypass-the-cache behavior belongs.
+`POST /v1/forecasts/{location_id}/refresh` uses
+`refresh_and_assemble_forecast` instead: it bypasses the cache's
+freshness check entirely and forces a live assemble, repopulating the
+cache for subsequent `GET`s — the distinguishing behavior this endpoint
+was always meant to have, once caching wiring landed (see this
+module's git history / `docs/CANONICAL_ROADMAP.md`'s checkpoint for
+sprint 25 and the scoring/confidence-wiring follow-ups that preceded
+this one).
 """
 
 from __future__ import annotations
@@ -25,7 +27,10 @@ from datetime import UTC, datetime
 from fastapi import APIRouter, Depends
 
 from app.api.deps import AppState, get_app_state, resolve_location_id
-from app.domain.assembly import assemble_forecast
+from app.domain.forecast_cache import (
+    get_or_assemble_forecast,
+    refresh_and_assemble_forecast,
+)
 from app.domain.models import ForecastEnvelope
 from app.providers.locations import load_water_temp_profiles
 
@@ -38,8 +43,12 @@ async def get_forecast(
     state: AppState = Depends(get_app_state),  # noqa: B008
 ) -> ForecastEnvelope:
     location = await resolve_location_id(location_id, state)
-    return await assemble_forecast(
-        location, state.http_client, load_water_temp_profiles(), now=datetime.now(UTC)
+    return await get_or_assemble_forecast(
+        state.forecast_cache,
+        location,
+        state.http_client,
+        load_water_temp_profiles(),
+        now=datetime.now(UTC),
     )
 
 
@@ -48,4 +57,11 @@ async def refresh_forecast(
     location_id: str,
     state: AppState = Depends(get_app_state),  # noqa: B008
 ) -> ForecastEnvelope:
-    return await get_forecast(location_id, state)
+    location = await resolve_location_id(location_id, state)
+    return await refresh_and_assemble_forecast(
+        state.forecast_cache,
+        location,
+        state.http_client,
+        load_water_temp_profiles(),
+        now=datetime.now(UTC),
+    )

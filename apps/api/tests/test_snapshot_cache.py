@@ -249,6 +249,75 @@ class TestConcurrency:
         assert {r.value for r in results} == {"v1", "v2"}
 
 
+class TestForceRefresh:
+    @pytest.mark.asyncio
+    async def test_bypasses_freshness_check_on_a_fresh_entry(self) -> None:
+        clock = _FakeClock(_START)
+        cache = _make_cache(clock)
+        populate, _ = _fetcher("v1")
+        await cache.get_or_refresh("loc-1", populate)
+
+        # Entry is still well within fresh_ttl — get_or_refresh would
+        # serve the cached value without calling fetch again.
+        force_fetch, force_calls = _fetcher("v2")
+        result = await cache.force_refresh("loc-1", force_fetch)
+
+        assert force_calls[0] == 1
+        assert result.value == "v2"
+        assert result.is_fresh is True
+        assert result.is_fallback is False
+
+    @pytest.mark.asyncio
+    async def test_populates_an_empty_cache_like_a_miss(self) -> None:
+        clock = _FakeClock(_START)
+        cache = _make_cache(clock)
+        fetch, calls = _fetcher("v1")
+
+        result = await cache.force_refresh("loc-1", fetch)
+
+        assert calls[0] == 1
+        assert result.value == "v1"
+        assert result.is_fresh is True
+
+    @pytest.mark.asyncio
+    async def test_updates_the_cache_for_subsequent_get_or_refresh_calls(self) -> None:
+        clock = _FakeClock(_START)
+        cache = _make_cache(clock)
+        populate, _ = _fetcher("v1")
+        await cache.get_or_refresh("loc-1", populate)
+
+        force_fetch, _ = _fetcher("v2")
+        await cache.force_refresh("loc-1", force_fetch)
+
+        never_called, never_called_count = _fetcher("v3")
+        subsequent = await cache.get_or_refresh("loc-1", never_called)
+        assert subsequent.value == "v2"
+        assert never_called_count[0] == 0
+
+    @pytest.mark.asyncio
+    async def test_fetch_failure_falls_back_to_existing_entry(self) -> None:
+        clock = _FakeClock(_START)
+        cache = _make_cache(clock)
+        populate, _ = _fetcher("v1")
+        await cache.get_or_refresh("loc-1", populate)
+
+        failing, _ = _failing_fetcher()
+        result = await cache.force_refresh("loc-1", failing)
+
+        assert result.value == "v1"
+        assert result.is_fresh is False
+        assert result.is_fallback is True
+
+    @pytest.mark.asyncio
+    async def test_fetch_failure_with_no_existing_entry_propagates(self) -> None:
+        clock = _FakeClock(_START)
+        cache = _make_cache(clock)
+        failing, _ = _failing_fetcher()
+
+        with pytest.raises(RuntimeError, match="upstream failure"):
+            await cache.force_refresh("loc-1", failing)
+
+
 class TestConstructorValidation:
     def test_stale_ttl_less_than_fresh_ttl_raises(self) -> None:
         with pytest.raises(ValueError, match="stale_ttl_seconds"):

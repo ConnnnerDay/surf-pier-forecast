@@ -81,9 +81,14 @@ returns the *single nearest* anchor's distance (whichever of the
 curated neighbor, CO-OPS station, or NDBC buoy is closest), not a
 distance per individual source. A curated location's `anchor_miles` is
 always `None` — it *is* the named station, so no distance factor
-applies. Wiring `SnapshotCache` around this function (keyed by location
-id, producing `ForecastState.STALE` on a fallback hit) remains a
-separate, still-unassigned follow-up.
+applies. Sprint 24's `SnapshotCache` is now wired *around* this
+function (not inside it) by `app.domain.forecast_cache`, keyed by
+location id — this module stays a pure "assemble one envelope right
+now" function, with caching, freshness, and the resulting
+`ForecastState.STALE` labeling entirely that module's concern. See its
+docstring for the fresh/stale/miss/expiry/fallback policy and why
+`STALE` is a documented-but-dormant path given this function's own
+never-raises design.
 """
 
 from __future__ import annotations

@@ -430,7 +430,8 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #351 (scoring wiring, `1ccf642`, merged as `204329f`).
+- Last merged PR: #352 (confidence wiring, `1bd498a`, merged as
+  `9f0304b`).
 - **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
   1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
   (#332). Phase 1's only remaining items (9, 10) need external accounts —
@@ -935,6 +936,44 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   `ForecastState.STALE` design decision, not just missing input data,
   see the module docstring. All of `apps/api`'s checks (ruff, ruff
   format, mypy, pytest — 263 passed) pass clean.
+- This PR closes the wiring follow-up with **caching wiring** (not a
+  numbered sprint — the third and last of the three pieces sprint 25
+  named): `app/domain/forecast_cache.py` wraps sprint 21's
+  `assemble_forecast` in sprint 24's `SnapshotCache`, keyed by location
+  id, *around* assembly rather than inside it — `assemble_forecast`
+  stays a pure "assemble one envelope right now" function; caching,
+  freshness, and `ForecastState.STALE` labeling are entirely
+  `forecast_cache`'s concern. `GET /v1/forecasts/{id}`
+  (`get_or_assemble_forecast`) serves a fresh cached envelope when one
+  exists; `POST /v1/forecasts/{id}/refresh`
+  (`refresh_and_assemble_forecast`) bypasses the freshness check
+  entirely and forces a live assemble, repopulating the cache — the
+  distinguishing behavior sprint 25's router docstring promised it once
+  this landed, finally delivered. `SnapshotCache` gained a
+  `force_refresh` method for exactly that, refactored to share
+  `get_or_refresh`'s fallback/single-flight logic via a new private
+  `_fetch_and_store` helper — externally-observable behavior unchanged,
+  confirmed by the existing 15 `SnapshotCache` tests passing unmodified.
+  A fallback hit (the wrapped assemble raising) is relabeled
+  `ForecastState.STALE`, documented as a **practically dormant path**:
+  `assemble_forecast` never raises by design, so normally nothing
+  reaches the cache's fallback branch. Both cache-wrapper functions
+  accept an injectable `assemble` callable (default: the real one)
+  specifically so `apps/api/tests/test_forecast_cache.py` can
+  substitute a deliberately failing stand-in and actually exercise that
+  dormant path — `assemble_forecast` itself can't be made to raise, so
+  a substitutable seam is what makes the path testable at all, the same
+  "test the seam directly" approach sprint 24's own tests already take.
+  Router-level tests in `test_forecasts_router.py` confirm the wiring
+  end-to-end with a call-counting mock transport: a second `GET` never
+  re-hits the marine-zone upstream, and `refresh` does even immediately
+  after a `GET`. `AppState`/`app.main`'s lifespan gained the cache
+  instance; a real running `uvicorn` server was smoke-tested to confirm
+  the lifespan wiring boots cleanly. `POST /v1/locations/resolve` and
+  `ForecastEnvelope`'s response schemas are unaffected — no OpenAPI
+  snapshot regeneration needed, confirmed by the existing snapshot test
+  passing unmodified. All of `apps/api`'s checks (ruff, ruff format,
+  mypy, pytest — 279 passed) pass clean.
 - **Incident (sprint 6, resolved earlier)**: a scratch branch explicitly
   titled `DO NOT MERGE` was merged into `main` under the repo owner's own
   account, landing deliberately-broken code; reverted within ~10 minutes
@@ -942,13 +981,12 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   turned this into a documented branch-hygiene rule.
 - Exact next action: finish sprint 13/14/15's deferred scope, or move to
   sprint 26 (performance budget — bounded parallel calls, no
-  duplicates, warm p95 under 750 ms), or close the wiring follow-up's
-  last piece with sprint 24's `SnapshotCache` (keying the cache by
-  location id around `assemble_forecast`, producing
-  `ForecastState.STALE` on a fallback hit — needs a keying/state design
-  decision, not missing input data; scoring and confidence are both
-  wired in now). Any is a valid next Phase 2 pick, needs no external
-  accounts. Separately, sprint 9 (preview
+  duplicates, warm p95 under 750 ms; the caching wiring just landed
+  gives this a running start on the "no duplicates" half). The
+  scoring/confidence/caching wiring follow-up sprint 25 named is now
+  **fully closed** — all three of sprints 22/23/24 are wired into
+  `assemble_forecast`'s output via `app.domain.forecast_cache`. Any
+  remaining pick needs no external accounts. Separately, sprint 9 (preview
   environments) and sprint 10 (production skeleton) need real
   Vercel/Render/Neon accounts this session has no credentials for —
   **flag to the product owner** rather than attempting them blind; they
