@@ -336,7 +336,7 @@ to reconciliation, not proof that the agreed outcome passed.
 | 28 | Authentication | Email/password lifecycle, session rotation, bot/CAPTCHA defense on registration, abuse tests | Divergent auth exists; replace/adapt |
 | 29 | Account-required routing | Public exceptions and authorization/redirect tests | Candidate in `/v2` |
 | 30 | Onboarding shell | Mobile recording from registration to dashboard | Candidate in `/v2` |
-| 31 | Location search | Text, device, map, station preview, denial/ambiguity tests | Candidate in `/v2` |
+| 31 | Location search | Text, device, map, station preview, denial/ambiguity tests | **Partially complete** — text search only: `apps/web/app/components/location-search.tsx` (a hand-rolled WAI-ARIA combobox, no dependency) calls `apps/web/app/api/locations/search/route.ts` (a BFF Route Handler proxying apps/api's `GET /v1/locations/search` through the signed internal path — the browser never calls apps/api directly, ADR-004), demonstrated on `apps/web/app/locations/page.tsx`. Device geolocation, map search, and station-preview/ambiguity states are not attempted; empty-results and fetch-failure states are handled distinctly. Verified interactively (typing, debounce, keyboard nav, selection) via headless Chromium, not just curl |
 | 32 | Dashboard hierarchy | Go/no-go as a simple traffic-light headline (score/narrative expandable, not primary); best window, conditions, confidence, freshness first | Candidate in `/v2` |
 | 33 | Conditions experience | Full/partial/stale/unavailable source-attributed snapshots | Candidate in `/v2` |
 | 34 | Tides and timing | Accessible charts, text alternatives, timezone/DST tests | Candidate in `/v2` |
@@ -1194,6 +1194,29 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   from. All of `apps/api`'s checks (ruff, ruff format, mypy, pytest --
   324 passed) and `apps/web`'s (`npm run lint`, `npm run build`) pass
   clean.
+- **Sprint 31, partial (text location search)**: the natural next step
+  once the signed BFF path could reach a real endpoint. `apps/web/app/
+  components/location-search.tsx` is a hand-rolled WAI-ARIA combobox (no
+  dependency) calling a new `app/api/locations/search/route.ts` -- a
+  Route Handler proxying apps/api's `GET /v1/locations/search` through
+  `internalApiFetch`, the one place a Client Component's `fetch` can
+  land since the signing secret is server-only and the browser must
+  never call apps/api directly (ADR-004). This is this app's first
+  genuinely interactive (Client Component) UI, so it's verified with
+  headless Chromium actually typing into the input, not just curl:
+  typed "wrights", saw exactly one real matching result
+  ("Wrightsville Beach, NC"), arrow-keyed to it, pressed Enter, and saw
+  the selection render with its real id/coordinates; a separate run
+  confirmed the distinct no-matches state renders correctly too.
+  Demonstrated on `app/locations/page.tsx`. Deliberately not attempted:
+  device geolocation, map search, and station-preview/ambiguity states
+  -- text search alone is already a complete, useful capability, and
+  each of those is its own sizeable UI. `npm run lint` picked up one new
+  warning (`react/set-state-in-effect` on the debounced-fetch effect) --
+  a known false-positive class for async data-fetching-in-effect
+  patterns, non-blocking (same as `layout.tsx`'s two pre-existing
+  `metadata`/`viewport`-export warnings), left as-is rather than
+  contorted around a rule that doesn't cleanly apply here.
 - **Incident (sprint 6, resolved earlier)**: a scratch branch explicitly
   titled `DO NOT MERGE` was merged into `main` under the repo owner's own
   account, landing deliberately-broken code; reverted within ~10 minutes

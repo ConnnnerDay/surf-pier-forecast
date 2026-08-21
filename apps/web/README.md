@@ -8,8 +8,8 @@ app authenticates the user and signs the internal request instead.
 
 ## Status
 
-Still no routing or auth — but `apps/web` can now call `apps/api`
-through ADR-004's signed internal request path
+Still no auth — but `apps/web` can now call `apps/api` through ADR-004's
+signed internal request path
 ([`docs/architecture.md`](../../docs/architecture.md)):
 `lib/internal-signature.ts` is a TypeScript mirror of `apps/api/app/
 infra/internal_signature.py`'s canonical-string + HMAC-SHA-256
@@ -19,15 +19,30 @@ and sends requests with it, failing closed (throws) if the signing-key
 env vars aren't set rather than silently calling unsigned.
 `app/forecast/demo/page.tsx` is a Server Component proving this
 end-to-end: it calls apps/api's real `GET /v1/forecasts/{id}` for a
-fixed demo location (Wrightsville Beach, NC — no location search yet,
-sprint 31) and renders whatever comes back, including a gracefully
-degraded response, using the sprint 27 primitives below. It's marked
-`export const dynamic = 'force-dynamic'` since forecasts are live,
-per-request data — without that, `next build`'s static prerender pass
-would freeze whatever the fetch did at build time (when apps/api isn't
-running) into the shell served to every visitor. This is a signed-path
-proof, not the real dashboard (sprint 32) — its verdict-badge mapping
-is demo-page-scoped presentation only.
+fixed demo location (Wrightsville Beach, NC) and renders whatever comes
+back, including a gracefully degraded response, using the sprint 27
+primitives below. It's marked `export const dynamic = 'force-dynamic'`
+since forecasts are live, per-request data — without that, `next
+build`'s static prerender pass would freeze whatever the fetch did at
+build time (when apps/api isn't running) into the shell served to every
+visitor. This is a signed-path proof, not the real dashboard (sprint
+32) — its verdict-badge mapping is demo-page-scoped presentation only.
+
+Sprint 31 (partial — text search only): `app/components/
+location-search.tsx` is a hand-rolled [WAI-ARIA
+combobox](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/) (no
+dependency) — debounced, keyboard-navigable, distinct empty-results and
+fetch-failure states — calling `app/api/locations/search/route.ts`, a
+Route Handler that proxies apps/api's `GET /v1/locations/search`
+through the signed internal path. This is the one place a Client
+Component's `fetch` can land, since the browser must never call
+apps/api directly (the signing secret is server-only). Demonstrated on
+`app/locations/page.tsx`. Device geolocation, map search, and
+station-preview/ambiguity states aren't attempted. Verified
+interactively via headless Chromium (typed a query, saw one real
+matching result, arrow-keyed to it, pressed Enter, saw the selection
+render) — not just curl, since this is the first genuinely interactive
+(Client Component) UI in this app.
 
 Sprint 27 (design system) has a first pass: `app/globals.css` defines
 light/dark design
