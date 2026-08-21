@@ -354,7 +354,7 @@ to reconciliation, not proof that the agreed outcome passed.
 | 41 | Structured observability | One request trace across web/API/sources with safe context | Not accepted |
 | 42 | Error monitoring | Frontend/API releases, source maps and secret redaction | Not accepted |
 | 43 | Privacy-safe analytics | Registration, resolution, forecast state, latency, return use | Not accepted |
-| 44 | Security hardening | CSP, CSRF, signed internal API, brute force, headers, threat model | **Partially complete** — the signed-internal-API piece is now built **and wired end-to-end**: `apps/api/app/infra/internal_signature.py` + `app/api/internal_auth.py` implement ADR-004's HMAC-SHA-256 contract (no legacy precedent), required on every `/v1` route via `Depends(require_internal_signature)`; `apps/web/lib/internal-signature.ts` + `internal-api-client.ts` are the matching signer, exercised by `apps/web/app/forecast/demo/page.tsx`. Verified against two real running servers, not just unit tests — see both apps' READMEs. CSP, CSRF, brute-force defense, and security headers remain candidate pieces; not accepted |
+| 44 | Security hardening | CSP, CSRF, signed internal API, brute force, headers, threat model | **Partially complete** — the signed-internal-API piece is now built **and wired end-to-end**: `apps/api/app/infra/internal_signature.py` + `app/api/internal_auth.py` implement ADR-004's HMAC-SHA-256 contract (no legacy precedent), required on every `/v1` route via `Depends(require_internal_signature)`; `apps/web/lib/internal-signature.ts` + `internal-api-client.ts` are the matching signer, exercised by `apps/web/app/forecast/demo/page.tsx`. CSP and security headers are also done: `apps/web/next.config.ts`'s `headers()` attaches a self-only `Content-Security-Policy` plus `X-Content-Type-Options`/`X-Frame-Options`/`Referrer-Policy`/`Permissions-Policy`/`X-Permitted-Cross-Domain-Policies`/`Strict-Transport-Security` to every response, adapted (stricter, since apps/web has no third-party origins yet) from the legacy Flask app's `_set_security_headers`; verified against a real production build/server, not just `next dev` — real headers on static/dynamic/Route-Handler responses, a full headless-Chromium interactive pass confirming zero actual CSP violations, and a fresh `axe-core` spot-check. CSRF and brute-force defense remain candidate pieces — both need Better Auth (sprint 28) first, since neither is meaningful before there are mutating, authenticated endpoints to protect; not accepted |
 | 45 | Privacy and deletion | **Required for v1 launch** (public product, real accounts): self-service export and account deletion/anonymization proof; legal pages | Candidate in `/v2`; not accepted |
 | 46 | Database resilience | Migrations, constraints, indexes, pooling, backups, blank restore drill | Not accepted |
 | 47 | Degraded-mode UX | Database/API/email/upstream chaos yields actionable UI | Not accepted |
@@ -1469,6 +1469,43 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   build` both pass clean. This closes out sprint 32's named elements on
   the single-location page; only the multi-location dashboard itself
   (sprint 37) remains open.
+- **Sprint 44, continued (CSP and security headers)**:
+  `apps/web/next.config.ts`'s `headers()` now attaches a self-only
+  `Content-Security-Policy` (`default-src 'self'`, every directive
+  scoped to `'self'`, `'unsafe-inline'` only on `script-src`/`style-src`
+  since Next.js inlines its hydration payload without a nonce) plus
+  `X-Content-Type-Options`/`X-Frame-Options`/`Referrer-Policy`/
+  `Permissions-Policy`/`X-Permitted-Cross-Domain-Policies`/
+  `Strict-Transport-Security` to every response, and `poweredByHeader:
+  false` drops `X-Powered-By: Next.js`. Adapted from the legacy Flask
+  app's `_set_security_headers` (`app.py`), not ported verbatim: this
+  CSP is deliberately stricter than the legacy one since apps/web has
+  no third-party scripts, external fonts, or non-`self` image origins
+  to allow-list yet, and `Permissions-Policy` locks geolocation/camera
+  fully closed (the legacy app scoped them `self` for features apps/web
+  doesn't have yet). Nonce-based CSP was considered and deliberately
+  not used -- it would force *every* page to render dynamically (per
+  `node_modules/next/dist/docs/01-app/02-guides/
+  content-security-policy.md`'s "Without Nonces" section), a real
+  static-rendering cost not worth paying for pages with no user data;
+  this doc also surfaced one of `apps/web/AGENTS.md`'s warned breaking
+  changes firsthand -- this Next version renamed the nonce-generating
+  file from `middleware.ts` to `proxy.ts`. Verified against a real
+  production build (`next build && next start`, not `next dev`):
+  `curl -D -` confirmed every header on a static page, a dynamic page,
+  and a Route Handler; a headless-Chromium pass drove the full
+  search-select-navigate interactive flow end-to-end and confirmed
+  **zero actual CSP violations** (an initial "404 Failed to load
+  resource" console message turned out to be Next's own `Link`
+  prefetch aborting when a real navigation supersedes it -- normal
+  behavior, reproduced identically on `main` without this change, not
+  a regression); a fresh `axe-core` spot-check across four real pages
+  found zero violations. `npm run build`'s route table is unchanged
+  (`headers()` doesn't force static pages dynamic) and `npm run lint`
+  is clean. CSRF and brute-force defense (sprint 44's remaining pieces)
+  are not attempted -- both need Better Auth (sprint 28) first, since
+  neither is meaningful before there are mutating, authenticated
+  endpoints to protect.
 - **Incident (sprint 6, resolved earlier)**: a scratch branch explicitly
   titled `DO NOT MERGE` was merged into `main` under the repo owner's own
   account, landing deliberately-broken code; reverted within ~10 minutes

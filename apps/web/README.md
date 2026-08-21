@@ -8,6 +8,44 @@ app authenticates the user and signs the internal request instead.
 
 ## Status
 
+Sprint 44's remaining "security hardening" piece, CSP and security
+headers: `next.config.ts`'s `headers()` attaches `Content-Security-Policy`,
+`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`,
+`Permissions-Policy`, `X-Permitted-Cross-Domain-Policies`, and
+`Strict-Transport-Security` to every response, plus `poweredByHeader:
+false` to drop `X-Powered-By: Next.js`. Adapted from the legacy Flask
+app's `_set_security_headers` (`app.py`), not ported verbatim: apps/web
+has no third-party scripts, external fonts, or non-`self` image origins
+today, so the CSP is deliberately stricter — self-only on every
+directive, nothing external to allow-list. `'unsafe-inline'` on
+`script-src`/`style-src` is still required without a nonce (Next.js
+inlines its hydration payload); nonce-based CSP would force *every*
+page to render dynamically (per `node_modules/next/dist/docs/01-app/
+02-guides/content-security-policy.md`'s "Without Nonces" section — this
+repo's Next version renamed the nonce-generating file from
+`middleware.ts` to `proxy.ts`, one of the breaking changes
+`apps/web/AGENTS.md` warns to check docs for before assuming
+training-data APIs still apply), a real cost not worth paying yet for
+pages with no user data. `Permissions-Policy` locks geolocation/camera
+fully closed, unlike the legacy app's `self`-scoped allowance for its
+device-geolocation/catch-log-photo features — neither exists in
+apps/web yet; sprint 31's still-open device-geolocation sub-item is the
+right point to loosen it, not before. Verified against a real
+production build (`next build && next start`, not just `next dev`):
+`curl -D -` confirmed every header present and correctly formed on a
+static page (`/`), a dynamic page (`/forecast/{id}`), and a Route
+Handler (`/api/locations/search`); a headless-Chromium pass exercised
+the full search → select → navigate interactive flow end-to-end and
+confirmed **zero actual CSP violations** in the console (the initial
+run's "404 Failed to load resource" console noise turned out to be
+Next.js's own `Link` prefetch (`?_rsc=...`) 404ing and aborting when a
+real navigation supersedes it — normal Next.js behavior, reproduced
+identically without this PR's changes, not a CSP-caused regression); a
+fresh `axe-core` spot-check across home/locations/forecast/404 found
+zero violations. `npm run build`'s route table is unchanged (`headers()`
+doesn't force static pages into dynamic rendering) and `npm run lint`
+is clean.
+
 Still no auth — but `apps/web` can now call `apps/api` through ADR-004's
 signed internal request path
 ([`docs/architecture.md`](../../docs/architecture.md)):
