@@ -430,10 +430,10 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #367 (sprint 32's conditions mini-panel —
-  `ForecastConditions.wind_range_kt`/`wave_range_ft`/`wind_direction`
-  backend, `ConditionsSummary` frontend, `41b427a`, merged as
-  `a54698b`).
+- Last merged PR: #368 (sprint 44's CSP and security headers for
+  `apps/web` — `next.config.ts`'s `headers()`, verified against a real
+  production build/server with zero actual CSP violations, `17f8f64`,
+  merged as `c753023`).
 - **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
   1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
   (#332). Phase 1's only remaining items (9, 10) need external accounts —
