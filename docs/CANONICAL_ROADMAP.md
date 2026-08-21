@@ -339,7 +339,7 @@ to reconciliation, not proof that the agreed outcome passed.
 | 31 | Location search | Text, device, map, station preview, denial/ambiguity tests | **Partially complete** — text search only: `apps/web/app/components/location-search.tsx` (a hand-rolled WAI-ARIA combobox, no dependency) calls `apps/web/app/api/locations/search/route.ts` (a BFF Route Handler proxying apps/api's `GET /v1/locations/search` through the signed internal path — the browser never calls apps/api directly, ADR-004), demonstrated on `apps/web/app/locations/page.tsx`, where selecting a result links to a real `apps/web/app/forecast/[locationId]/page.tsx` lookup (any recognized `location_id`, replacing the earlier fixed-location `/forecast/demo` proof, which now just redirects there). Device geolocation, map search, and station-preview/ambiguity states are not attempted; empty-results and fetch-failure states are handled distinctly, and an unknown location 404s via Next's `notFound()`. Verified interactively (typing, debounce, keyboard nav, selection, navigation to a real rendered forecast) via headless Chromium, not just curl |
 | 32 | Dashboard hierarchy | Go/no-go as a simple traffic-light headline (score/narrative expandable, not primary); best window, conditions, confidence, freshness first | Candidate in `/v2` |
 | 33 | Conditions experience | Full/partial/stale/unavailable source-attributed snapshots | Candidate in `/v2` |
-| 34 | Tides and timing | Accessible charts, text alternatives, timezone/DST tests | **Partially complete** — backend half only: `apps/api/app/domain/assembly.py` fetches tide predictions (`app.providers.noaa_coops.fetch_tide_predictions`) in the same `asyncio.gather` as the other independent sources, for a local-date window computed in the location's own timezone (`app.infra.timezones.safe_zone`, not naive UTC). `ForecastTides` (station id + upcoming high/low predictions) is the sprint-34-owned shape of `ForecastEnvelope.tides`; degrades to `None` with an advisory `Warning` on failure, no fallback substitute. Verified against a real running server, not just mocked tests. Accessible charts and text alternatives (the frontend half) are not attempted — `apps/web` doesn't render `tides` yet |
+| 34 | Tides and timing | Accessible charts, text alternatives, timezone/DST tests | **Partially complete** — backend: `apps/api/app/domain/assembly.py` fetches tide predictions (`app.providers.noaa_coops.fetch_tide_predictions`) in the same `asyncio.gather` as the other independent sources, for a local-date window computed in the location's own timezone (`app.infra.timezones.safe_zone`, not naive UTC); `ForecastTides` (station id + upcoming high/low predictions) is the sprint-34-owned shape of `ForecastEnvelope.tides`, degrading to `None` with an advisory `Warning` on failure. Frontend: `apps/web/app/components/forecast-card.tsx`'s `TideTable` — the text-alternative half — is a plain, properly-labeled `<table>` (times formatted in the *location's* timezone, not the viewer's), visually verified against realistic mock data via a temporary preview page since this sandbox's blocked upstream calls mean `tides` is always `None` on the live path. A visual chart (the other named acceptance sub-item) is not attempted |
 | 35 | Fishing guidance | Limited supported suggestions; every recommendation explains why | Existing broad feature is out of scope; adapt |
 | 36 | Preferences | Units, thresholds, style, default location persistence | Candidate in `/v2` |
 | 37 | Saved locations | Ordered favorites, ownership, duplicates, deletion, empty state; ownership model built so a free-tier cap (target: 1 location) is a natural later addition, without building billing now | Candidate in `/v2` |
@@ -430,9 +430,9 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #359 (sprint 31 follow-up — location search wired
-  into a real `/forecast/[locationId]` lookup, retiring the fixed
-  `/forecast/demo` proof page, `a1ef618`, merged as `a4f3f47`).
+- Last merged PR: #360 (sprint 34 partial — tide predictions wired into
+  `assemble_forecast`, backend half only, `99338b7`, merged as
+  `4d6dd77`).
 - **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
   1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
   (#332). Phase 1's only remaining items (9, 10) need external accounts —
@@ -1279,6 +1279,28 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   bar, and `apps/web` doesn't render `tides` at all yet. All of
   `apps/api`'s checks (ruff, ruff format, mypy, pytest -- 326 passed)
   pass clean.
+- **Sprint 34's frontend half: rendering tides on the forecast page**:
+  the natural continuation now that `apps/api` actually returns tide
+  data (previous PR). `apps/web/app/components/forecast-card.tsx`'s
+  `ForecastCard` gained a `TideTable`, rendered when `forecast.tides`
+  is present -- a plain, properly-labeled `<table>` (`<caption>`,
+  `scope="col"` headers) rather than a visual chart, which is itself an
+  accessible representation of the data, not a lesser fallback for a
+  chart. This closes sprint 34's "text alternatives" acceptance
+  sub-item; the "accessible charts" sub-item (an actual visual chart)
+  is not attempted. Times are formatted in the *location's* timezone
+  (`Intl.DateTimeFormat` with `forecast.location.timezone`), not the
+  viewer's browser timezone -- a tide time is only meaningful relative
+  to the place it's for, and the two can differ. Since this sandbox's
+  blocked upstream calls mean `tides` is always `None` on the real
+  live path (verified in the previous PR), the table's actual rendering
+  couldn't be exercised through a real request here -- it was instead
+  visually verified against realistic mock data (four tide events
+  spanning two days, matching the real API shape) via a temporary
+  preview page under `app/forecast/`, screenshotted in both light and
+  dark themes, then deleted before committing so it never shipped.
+  `npm run lint` and `npm run build` both pass clean (same warnings as
+  before, no new ones).
 - **Incident (sprint 6, resolved earlier)**: a scratch branch explicitly
   titled `DO NOT MERGE` was merged into `main` under the repo owner's own
   account, landing deliberately-broken code; reverted within ~10 minutes

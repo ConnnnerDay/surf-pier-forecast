@@ -34,6 +34,23 @@ ever Wrightsville Beach) now just redirects to
 `/forecast/wrightsville-beach-nc`, kept in case anything still links to
 it rather than deleted outright.
 
+Sprint 34's frontend half (the accessible-chart/text-alternative
+rendering `apps/api`'s backend half — merged earlier — deliberately
+left to `apps/web`): `app/components/forecast-card.tsx`'s
+`ForecastCard` now renders a `TideTable` when `forecast.tides` is
+present — a plain, properly-labeled `<table>` (`<caption>`,
+`scope="col"` headers) rather than a visual chart, which is itself an
+accessible representation, not a fallback for one. Times are formatted
+in the *location's* timezone (`Intl.DateTimeFormat` with
+`forecast.location.timezone`), not the viewer's browser timezone — a
+tide time is only meaningful relative to the place it's for. Since
+this sandbox's blocked upstream calls mean `tides` is always `null`
+here (verified — the `noaa_coops:tides` source correctly degrades),
+the table itself was visually verified against realistic mock data via
+a temporary preview page (screenshotted in light/dark, then deleted
+before committing) rather than the live path, which only proves the
+`null` case.
+
 Sprint 31 (partial — text search only): `app/components/
 location-search.tsx` is a hand-rolled [WAI-ARIA
 combobox](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/) (no
