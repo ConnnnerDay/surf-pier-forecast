@@ -344,7 +344,7 @@ to reconciliation, not proof that the agreed outcome passed.
 | 36 | Preferences | Units, thresholds, style, default location persistence | Candidate in `/v2` |
 | 37 | Saved locations | Ordered favorites, ownership, duplicates, deletion, empty state; ownership model built so a free-tier cap (target: 1 location) is a natural later addition, without building billing now | Candidate in `/v2` |
 | 38 | PWA baseline | Installable shell with full offline navigation and graceful degradation, not just last-cached-forecast viewing; authenticated forecasts not cached forever | Candidate in `/v2` |
-| 39 | Responsive polish | Layout shift, assets, tap targets, Lighthouse, screenshot budgets | Not accepted |
+| 39 | Responsive polish | Layout shift, assets, tap targets, Lighthouse, screenshot budgets | **Partially complete** — the "Lighthouse" sub-item: a real Lighthouse audit (mobile, all four categories) run against a real production build for `/`, `/locations`, and `/forecast/wrightsville-beach-nc` — accessibility/best-practices/SEO all 100, performance 96-98. Found and fixed one genuine bug: no `favicon`/`icon` file existed, so every page 404'd on `GET /favicon.ico` (a real logged console error, not cosmetic); `apps/web/app/icon.tsx` generates a real branded PNG via `next/og`'s `ImageResponse` (design-system teal/coral, no new branding decision). Confirmed fixed (`best-practices` 96→100). Remaining performance-timing audits recorded as a noisy sandbox baseline, not chased. Layout shift, tap targets, and screenshot budgets not attempted |
 | 40 | Accessibility pass | WCAG 2.2 AA, axe plus keyboard/screen-reader evidence | Not accepted |
 
 ### Phase 4 — Make it operable and launch it
@@ -430,10 +430,10 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #367 (sprint 32's conditions mini-panel —
-  `ForecastConditions.wind_range_kt`/`wave_range_ft`/`wind_direction`
-  backend, `ConditionsSummary` frontend, `41b427a`, merged as
-  `a54698b`).
+- Last merged PR: #368 (sprint 44's CSP and security headers for
+  `apps/web` — `next.config.ts`'s `headers()`, verified against a real
+  production build/server with zero actual CSP violations, `17f8f64`,
+  merged as `c753023`).
 - **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
   1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
   (#332). Phase 1's only remaining items (9, 10) need external accounts —
@@ -1506,6 +1506,37 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   are not attempted -- both need Better Auth (sprint 28) first, since
   neither is meaningful before there are mutating, authenticated
   endpoints to protect.
+- **Sprint 39, partial (Lighthouse)**: ran a real Lighthouse audit
+  (mobile, performance/accessibility/best-practices/SEO) against a real
+  production build (`next build && next start`, not `next dev`) for
+  `/`, `/locations`, and `/forecast/wrightsville-beach-nc` -- this
+  repo's first Lighthouse run, distinct from the `axe-core` spot-checks
+  used so far (which only cover accessibility). Accessibility,
+  best-practices, and SEO all scored a clean 100 on every page;
+  performance scored 96-98. One genuine finding, fixed: no
+  `favicon`/`icon` file existed anywhere in `apps/web`, so every page
+  load made a real browser request for `/favicon.ico` that 404'd -- a
+  real logged console error (Lighthouse's `errors-in-console` audit
+  failed outright, 0/1). `apps/web/app/icon.tsx` generates a real 32x32
+  PNG at build time via `next/og`'s `ImageResponse` (statically
+  optimized, no `public/` asset needed) -- a small wave glyph using
+  `app/globals.css`'s own teal/coral design-system palette, not an
+  arbitrary color, so this implies no branding decision beyond the one
+  already on record (sprint 27's row). Confirmed fixed: `best-practices`
+  went from 96 to 100 on the forecast page after adding it; `curl`/
+  `file` confirmed a real `image/png` response. The remaining
+  performance-timing audits (`total-blocking-time`,
+  `max-potential-fid`, `unused-javascript` -- flagging ~55 KiB inside
+  Next.js/React's own framework chunks, not identifiable app code) are
+  recorded as a real baseline, not chased: this sandbox's shared,
+  unaccelerated CPU makes absolute timing numbers noisy run-to-run (the
+  same page scored both 94 and 98 across two runs), the same caveat
+  sprint 26's performance-budget test already documented for cold-path
+  latency -- further bundle-splitting work would be premature before
+  Phase 3 itself is complete. Layout shift, tap targets, and
+  screenshot budgets (the sprint's other named sub-items) are not
+  attempted. `npm run lint`/`npm run build` both pass clean, route
+  table unchanged except the new static `/icon` route.
 - **Incident (sprint 6, resolved earlier)**: a scratch branch explicitly
   titled `DO NOT MERGE` was merged into `main` under the repo owner's own
   account, landing deliberately-broken code; reverted within ~10 minutes
