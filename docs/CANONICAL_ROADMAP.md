@@ -430,10 +430,10 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #365 (sprint 34's frontend half of the "timing"
-  scope — `ForecastCard`'s new `HourlyOutlookTable`, verified against
-  the real live forecast page and a clean `axe-core` spot-check,
-  `8cf5816`, merged as `33c3d44`).
+- Last merged PR: #366 (sprint 32 partial — go/no-go traffic-light
+  dashboard hierarchy: enlarged verdict `Badge`, `deriveBestWindow`
+  callout, score/narrative demoted into `<details>`, `4c8a3ff`, merged
+  as `c9a7239`).
 - **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
   1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
   (#332). Phase 1's only remaining items (9, 10) need external accounts —
