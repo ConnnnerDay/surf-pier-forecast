@@ -430,12 +430,9 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #357 (sprint 44 partial, ADR-004 signed-internal-API
-  verification primitive, `d713d86`, merged as `57dc794`). Note: that
-  merge's `api-lint` check failed on a ruff patch-version bump
-  (0.16.3 -> 0.16.4 changed the implicit default rule set) — fixed in a
-  follow-up commit on PR #358 (sprint 27) rather than left as flagged
-  debt; see that PR's history for the fix.
+- Last merged PR: #358 (sprints 27 + 44 wiring + 31 partial — design
+  system, ADR-004 signed-API end-to-end, text location search,
+  `c1589f1`, merged as `3abaf8b`).
 - **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
   1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
   (#332). Phase 1's only remaining items (9, 10) need external accounts —
