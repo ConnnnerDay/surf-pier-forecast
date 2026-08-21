@@ -34,6 +34,23 @@ ever Wrightsville Beach) now just redirects to
 `/forecast/wrightsville-beach-nc`, kept in case anything still links to
 it rather than deleted outright.
 
+Sprint 33 ("full/partial/stale/unavailable source-attributed
+snapshots"): `ForecastCard` now renders `forecast.state` as a Badge
+(fresh/stale/partial/unavailable, apps/api's own vocabulary, not
+reinterpreted) instead of plain text, and a new `SourceStatusList`
+shows every individual source apps/api fanned out to (marine zone,
+water temperature, buoy, tides, and the wind-fallback chain when it
+fires) with a human-readable label, an ok/degraded/unavailable badge,
+and the raw provider error as its own line for non-ok sources — real
+per-source attribution, not just the aggregate state/warnings already
+shown. Verified against a real running server (every source correctly
+`unavailable` in this sandbox, exactly as designed) and re-audited with
+`axe-core` (zero violations). Caught one more real bug in the process:
+detail/warning message text (which can contain long provider URLs)
+overflowed the viewport at phone width instead of wrapping —
+`break-words` on those three text nodes fixed it, confirmed by
+re-screenshotting at 390px.
+
 Sprint 34's frontend half (the accessible-chart/text-alternative
 rendering `apps/api`'s backend half — merged earlier — deliberately
 left to `apps/web`): `app/components/forecast-card.tsx`'s
