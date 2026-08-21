@@ -339,7 +339,7 @@ to reconciliation, not proof that the agreed outcome passed.
 | 31 | Location search | Text, device, map, station preview, denial/ambiguity tests | **Partially complete** — text search only: `apps/web/app/components/location-search.tsx` (a hand-rolled WAI-ARIA combobox, no dependency) calls `apps/web/app/api/locations/search/route.ts` (a BFF Route Handler proxying apps/api's `GET /v1/locations/search` through the signed internal path — the browser never calls apps/api directly, ADR-004), demonstrated on `apps/web/app/locations/page.tsx`, where selecting a result links to a real `apps/web/app/forecast/[locationId]/page.tsx` lookup (any recognized `location_id`, replacing the earlier fixed-location `/forecast/demo` proof, which now just redirects there). Device geolocation, map search, and station-preview/ambiguity states are not attempted; empty-results and fetch-failure states are handled distinctly, and an unknown location 404s via Next's `notFound()`. Verified interactively (typing, debounce, keyboard nav, selection, navigation to a real rendered forecast) via headless Chromium, not just curl |
 | 32 | Dashboard hierarchy | Go/no-go as a simple traffic-light headline (score/narrative expandable, not primary); best window, conditions, confidence, freshness first | Candidate in `/v2` |
 | 33 | Conditions experience | Full/partial/stale/unavailable source-attributed snapshots | Candidate in `/v2` |
-| 34 | Tides and timing | Accessible charts, text alternatives, timezone/DST tests | Candidate in `/v2` |
+| 34 | Tides and timing | Accessible charts, text alternatives, timezone/DST tests | **Partially complete** — backend half only: `apps/api/app/domain/assembly.py` fetches tide predictions (`app.providers.noaa_coops.fetch_tide_predictions`) in the same `asyncio.gather` as the other independent sources, for a local-date window computed in the location's own timezone (`app.infra.timezones.safe_zone`, not naive UTC). `ForecastTides` (station id + upcoming high/low predictions) is the sprint-34-owned shape of `ForecastEnvelope.tides`; degrades to `None` with an advisory `Warning` on failure, no fallback substitute. Verified against a real running server, not just mocked tests. Accessible charts and text alternatives (the frontend half) are not attempted — `apps/web` doesn't render `tides` yet |
 | 35 | Fishing guidance | Limited supported suggestions; every recommendation explains why | Existing broad feature is out of scope; adapt |
 | 36 | Preferences | Units, thresholds, style, default location persistence | Candidate in `/v2` |
 | 37 | Saved locations | Ordered favorites, ownership, duplicates, deletion, empty state; ownership model built so a free-tier cap (target: 1 location) is a natural later addition, without building billing now | Candidate in `/v2` |
@@ -1240,6 +1240,45 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   `npm run lint` and `npm run build` both pass clean (same one
   pre-existing `react/set-state-in-effect` warning as before, no new
   ones).
+- **Sprint 34, partial (tide predictions, backend half)**: with search
+  and per-location forecast lookup both working end-to-end, tide data
+  was the next concrete gap in what a real forecast lookup actually
+  returns -- `ForecastEnvelope.tides` had been `None` since sprint 21
+  deliberately deferred it. `app/domain/assembly.py` now fetches tide
+  predictions (`app.providers.noaa_coops.fetch_tide_predictions`,
+  already built in an earlier sprint, unused until now) in the same
+  `asyncio.gather` as the marine-zone/water-temp/buoy/alerts fetches --
+  independent and parallel, not sequential, per sprint 26's discipline.
+  The request window is today through two days out, computed in the
+  *location's own timezone* (`app.infra.timezones.safe_zone`) rather
+  than a naive UTC date, which could be off by a day for locations far
+  from UTC. `ForecastTides` (station id + upcoming high/low
+  predictions) is the sprint-34-owned shape of `tides`, mirroring how
+  sprint 21 owned `conditions` and sprint 22 owned `score`. On failure,
+  `tides` stays `None` with an advisory `Warning` -- there's no
+  fallback substitute for tide predictions the way water temperature
+  has a monthly climatological average, so "unavailable" is the honest
+  answer, never invented. `tests/test_assembly.py` gained a
+  `tides_ok` parameter (matching `coops_wind_ok`/`gridpoint_ok`'s
+  established pattern) and every existing inline mock handler in that
+  file needed a `product=predictions` branch added, since tide
+  request URLs also match the generic `datagetter` substring check
+  used for water-temperature -- without the explicit branch, tide
+  fetches would have silently received water-temperature JSON and
+  degraded via a real (if accidental) error path rather than the
+  intended one. Three tests are new: presence, the local-date-window
+  computation (asserting the exact `begin_date`/`end_date` in the
+  outgoing request URL), and degrade-on-failure. Verified against a
+  real running server, not just mocked tests: the `noaa_coops:tides`
+  source correctly reports `unavailable` with a genuine "could not
+  connect to api.tidesandcurrents.noaa.gov" detail in this sandboxed
+  environment (upstream calls are blocked per
+  `docs/R2_CI_BASELINE.md`), proving the degrade-gracefully path
+  end-to-end. Deliberately not attempted: accessible chart rendering
+  and text alternatives -- the frontend half of sprint 34's acceptance
+  bar, and `apps/web` doesn't render `tides` at all yet. All of
+  `apps/api`'s checks (ruff, ruff format, mypy, pytest -- 326 passed)
+  pass clean.
 - **Incident (sprint 6, resolved earlier)**: a scratch branch explicitly
   titled `DO NOT MERGE` was merged into `main` under the repo owner's own
   account, landing deliberately-broken code; reverted within ~10 minutes

@@ -426,9 +426,29 @@ Boots, has real CI, and now has:
   only requires it "when required," which nothing here does until
   accounts exist. Verified against two real running servers (`uvicorn`
   + `next dev`) with matching dev signing keys: an unsigned curl to
-  `apps/api` got a real 401, and `apps/web`'s new `/forecast/demo` page
-  (see that app's README) rendered a real, gracefully degraded forecast
+  `apps/api` got a real 401, and `apps/web`'s forecast page (see that
+  app's README) rendered a real, gracefully degraded forecast
   end-to-end through the signed path.
+- Sprint 34's backend half (tide predictions, not the accessible-chart/
+  text-alternative rendering, which is `apps/web`'s job):
+  `app/domain/assembly.py` fetches tide predictions
+  (`app.providers.noaa_coops.fetch_tide_predictions`, already built)
+  in the same `asyncio.gather` as the other independent sources, for a
+  local-date window (today through two days out, computed in the
+  *location's* timezone via `app.infra.timezones.safe_zone` — not a
+  naive UTC date, which could be off by a day). `ForecastTides`
+  (station id + upcoming high/low predictions) is the sprint-34-owned
+  shape of `ForecastEnvelope.tides`, populated on success and left
+  `None` with an advisory `Warning` on failure — there's no fallback
+  substitute for tide predictions the way water temperature has a
+  monthly average, so "unavailable" is the honest answer. Verified
+  against a real running server: the `noaa_coops:tides` source
+  correctly reports `unavailable` with a real "could not connect to
+  api.tidesandcurrents.noaa.gov" detail in this sandboxed environment
+  (upstream calls are blocked per `docs/R2_CI_BASELINE.md`), proving
+  the degrade-gracefully path end-to-end, not just in mocked tests.
+  `tests/test_assembly.py` covers presence, the local-date-window
+  computation, and degrade-on-failure independently.
 
 It does not yet have a Postgres connection. That lands in whichever
 Phase 2 sprint or infra work adds it, behind its own characterization

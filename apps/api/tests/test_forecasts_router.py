@@ -31,6 +31,12 @@ _MARINE_ZONE_FORECAST = {
     }
 }
 _WATER_TEMP_RESPONSE = {"data": [{"t": "2024-07-15 12:00", "v": "78.4"}]}
+_TIDE_PREDICTIONS_RESPONSE = {
+    "predictions": [
+        {"t": "2024-07-15 06:32", "v": "5.234", "type": "H"},
+        {"t": "2024-07-15 12:48", "v": "0.512", "type": "L"},
+    ]
+}
 _NDBC_FEED = (
     "#YY  MM DD hh mm WDIR WSPD GST   WVHT   PRES\n"
     "#yr  mo dy hr mn degT m/s  m/s     m    hPa\n"
@@ -60,6 +66,8 @@ def _handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(200, json=_MARINE_ZONE_FORECAST)
     if "alerts/active" in url:
         return httpx.Response(200, json={"features": []})
+    if "product=predictions" in url:
+        return httpx.Response(200, json=_TIDE_PREDICTIONS_RESPONSE)
     if "datagetter" in url:
         return httpx.Response(200, json=_WATER_TEMP_RESPONSE)
     if "activestations.xml" in url:
