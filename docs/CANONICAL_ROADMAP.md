@@ -430,8 +430,9 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #361 (sprint 34 frontend half — `TideTable` rendered
-  on the forecast page, `edefe65`, merged as `cfabe8b`).
+- Last merged PR: #362 (`axe-core` spot-check across every real
+  `apps/web` page — two real bugs found and fixed, verification not
+  new sprint scope, `b8122f5`, merged as `6fa334a`).
 - **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
   1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
   (#332). Phase 1's only remaining items (9, 10) need external accounts —
