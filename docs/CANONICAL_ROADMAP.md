@@ -430,10 +430,10 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #363 (sprint 33 partial — source-attributed forecast
-  snapshots: `ForecastCard`'s `state` badge and the new
-  `SourceStatusList` per-source breakdown, `229fbdb`, merged as
-  `1ecc0f5`).
+- Last merged PR: #364 (sprint 34's remaining "timing" scope —
+  `app.domain.timing.build_hourly_outlook`, the 24-hour fish-activity
+  outlook, wired into `ForecastEnvelope.hourly_outlook`, `d2bcd73`,
+  merged as `d17ea59`).
 - **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
   1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
   (#332). Phase 1's only remaining items (9, 10) need external accounts —
