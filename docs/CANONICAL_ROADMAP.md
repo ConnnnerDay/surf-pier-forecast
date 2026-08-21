@@ -430,10 +430,10 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #368 (sprint 44's CSP and security headers for
-  `apps/web` — `next.config.ts`'s `headers()`, verified against a real
-  production build/server with zero actual CSP violations, `17f8f64`,
-  merged as `c753023`).
+- Last merged PR: #369 (sprint 39 partial — a real Lighthouse audit
+  against a production build, catching and fixing a genuine missing-
+  favicon bug via `apps/web/app/icon.tsx`, `68d8597`, merged as
+  `9529d0d`).
 - **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
   1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
   (#332). Phase 1's only remaining items (9, 10) need external accounts —
