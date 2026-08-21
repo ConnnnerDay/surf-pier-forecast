@@ -8,6 +8,37 @@ app authenticates the user and signs the internal request instead.
 
 ## Status
 
+Sprint 39 ("Responsive polish"), the "Lighthouse" acceptance sub-item:
+ran a real [Lighthouse](https://developer.chrome.com/docs/lighthouse/)
+audit (mobile, performance/accessibility/best-practices/SEO) against a
+real production build (`next build && next start`, not `next dev`) for
+`/`, `/locations`, and `/forecast/wrightsville-beach-nc` — the first
+time this repo has run Lighthouse rather than just `axe-core`, which
+only covers the accessibility category. Accessibility, best-practices,
+and SEO all scored a clean 100 on every page; performance scored
+96-98. One genuine finding, fixed: no `favicon`/`icon` file existed
+anywhere in `apps/web`, so every page load made a real browser request
+`GET /favicon.ico` that 404'd — a real console error, not a cosmetic
+gap (Lighthouse's `errors-in-console` audit failed outright, 0/1, on
+the pages tested). `app/icon.tsx` generates a real 32×32 PNG at build
+time via `next/og`'s `ImageResponse` (a statically-optimized route, no
+`public/` image asset needed) — a small teal/coral wave glyph using
+`app/globals.css`'s own design-system palette, not an arbitrary color
+choice, so this doesn't imply a branding decision beyond the one
+already on record (sprint 27's row). Confirmed fixed: `best-practices`
+went from 96 to 100 on the forecast page after adding it, and
+`curl`/`file` confirmed a real `image/png` response. The remaining
+performance-category audits (`total-blocking-time`,
+`max-potential-fid`, `unused-javascript` — the last one flagging ~55
+KiB of unused bytes inside Next.js/React's own framework chunks, not
+identifiable app code) are recorded as a real baseline, not chased:
+this sandbox's shared, unaccelerated CPU makes absolute timing numbers
+noisy run-to-run (the same forecast page scored both 94 and 98 across
+two runs), the same caveat sprint 26's performance-budget test already
+documented for cold-path latency — further bundle-splitting work would
+be premature before Phase 3 itself is complete. Screenshot-budget and
+tap-target sub-items are not attempted here.
+
 Sprint 44's remaining "security hardening" piece, CSP and security
 headers: `next.config.ts`'s `headers()` attaches `Content-Security-Policy`,
 `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`,
