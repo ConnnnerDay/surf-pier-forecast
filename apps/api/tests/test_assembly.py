@@ -306,9 +306,10 @@ async def test_location_domain_fields_mapped_correctly() -> None:
 
 
 @pytest.mark.asyncio
-async def test_hourly_outlook_recommendations_left_none() -> None:
-    """`tides` is populated now (sprint 34's backend half); `hourly_outlook`
-    and `recommendations` remain deferred to their own owning sprints.
+async def test_tides_and_hourly_outlook_populated_recommendations_left_none() -> None:
+    """`tides` (sprint 34's backend half) and `hourly_outlook`
+    (`app.domain.timing`, sprint 34's remaining "timing" scope) are both
+    populated now; `recommendations` remains deferred to sprint 35.
     """
     client = _make_client(nws_ok=True, coops_ok=True, ndbc_ok=True)
     async with client:
@@ -317,7 +318,8 @@ async def test_hourly_outlook_recommendations_left_none() -> None:
         )
 
     assert envelope.tides is not None
-    assert envelope.hourly_outlook is None
+    assert envelope.hourly_outlook is not None
+    assert len(envelope.hourly_outlook["hours"]) == 24
     assert envelope.recommendations is None
 
 

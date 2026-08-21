@@ -11,7 +11,13 @@ tides/timing, 35 fishing guidance) — each behind its own characterization
 tests per the canonical technical contract ("port Python logic only after
 characterization tests capture defensible behavior"). Designing those
 shapes now, without that evidence, would be exactly the kind of
-unsupported invention this project is recovering from.
+unsupported invention this project is recovering from. `conditions`
+(`app.domain.assembly.ForecastConditions`), `tides`
+(`app.domain.assembly.ForecastTides`), and `hourly_outlook`
+(`app.domain.timing.HourlyOutlook`) are now designed and populated by
+those modules; this field stays an opaque `dict` here regardless, since
+the typed shape belongs to the module that owns it, not this one.
+`recommendations` remains unpopulated, sprint 35's job.
 """
 
 from __future__ import annotations

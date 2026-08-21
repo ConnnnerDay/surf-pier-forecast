@@ -339,7 +339,7 @@ to reconciliation, not proof that the agreed outcome passed.
 | 31 | Location search | Text, device, map, station preview, denial/ambiguity tests | **Partially complete** — text search only: `apps/web/app/components/location-search.tsx` (a hand-rolled WAI-ARIA combobox, no dependency) calls `apps/web/app/api/locations/search/route.ts` (a BFF Route Handler proxying apps/api's `GET /v1/locations/search` through the signed internal path — the browser never calls apps/api directly, ADR-004), demonstrated on `apps/web/app/locations/page.tsx`, where selecting a result links to a real `apps/web/app/forecast/[locationId]/page.tsx` lookup (any recognized `location_id`, replacing the earlier fixed-location `/forecast/demo` proof, which now just redirects there). Device geolocation, map search, and station-preview/ambiguity states are not attempted; empty-results and fetch-failure states are handled distinctly, and an unknown location 404s via Next's `notFound()`. Verified interactively (typing, debounce, keyboard nav, selection, navigation to a real rendered forecast) via headless Chromium, not just curl |
 | 32 | Dashboard hierarchy | Go/no-go as a simple traffic-light headline (score/narrative expandable, not primary); best window, conditions, confidence, freshness first | Candidate in `/v2` |
 | 33 | Conditions experience | Full/partial/stale/unavailable source-attributed snapshots | **Partially complete** — `apps/web/app/components/forecast-card.tsx`'s `ForecastCard` renders `forecast.state` as a badge using apps/api's own fresh/stale/partial/unavailable vocabulary, and a new `SourceStatusList` shows every fanned-out source individually (human-readable label, ok/degraded/unavailable badge, raw provider error for non-ok sources) — real per-source attribution, not just the aggregate already shown. Verified against a real running server and re-audited with `axe-core` (zero violations); caught and fixed a real text-overflow bug (long provider-error URLs not wrapping at phone width) in the process |
-| 34 | Tides and timing | Accessible charts, text alternatives, timezone/DST tests | **Partially complete** — backend: `apps/api/app/domain/assembly.py` fetches tide predictions (`app.providers.noaa_coops.fetch_tide_predictions`) in the same `asyncio.gather` as the other independent sources, for a local-date window computed in the location's own timezone (`app.infra.timezones.safe_zone`, not naive UTC); `ForecastTides` (station id + upcoming high/low predictions) is the sprint-34-owned shape of `ForecastEnvelope.tides`, degrading to `None` with an advisory `Warning` on failure. Frontend: `apps/web/app/components/forecast-card.tsx`'s `TideTable` — the text-alternative half — is a plain, properly-labeled `<table>` (times formatted in the *location's* timezone, not the viewer's), visually verified against realistic mock data via a temporary preview page since this sandbox's blocked upstream calls mean `tides` is always `None` on the live path. A visual chart (the other named acceptance sub-item) is not attempted |
+| 34 | Tides and timing | Accessible charts, text alternatives, timezone/DST tests | **Partially complete** — backend, tides: `apps/api/app/domain/assembly.py` fetches tide predictions (`app.providers.noaa_coops.fetch_tide_predictions`) in the same `asyncio.gather` as the other independent sources, for a local-date window computed in the location's own timezone (`app.infra.timezones.safe_zone`, not naive UTC); `ForecastTides` (station id + upcoming high/low predictions) is the sprint-34-owned shape of `ForecastEnvelope.tides`, degrading to `None` with an advisory `Warning` on failure. Backend, timing: `apps/api/app/domain/timing.py`'s `build_hourly_outlook` ports the legacy 24-hour fish-activity timeline (dawn/dusk, solunar major/minor bands, tide-change windows, night penalty offset by a bright-moon boost, wind-conditions damping) from typed inputs already on hand, populated on every request (never degrades to `None`, unlike `tides`) — pressure-trend and the profile-dependent parts of the legacy "best times" summary are deliberately deferred, see the module docstring. Frontend: `apps/web/app/components/forecast-card.tsx`'s `TideTable` — the text-alternative half of the *tides* sub-item — is a plain, properly-labeled `<table>` (times formatted in the *location's* timezone, not the viewer's), visually verified against realistic mock data via a temporary preview page since this sandbox's blocked upstream calls mean `tides` is always `None` on the live path. `hourly_outlook`'s own accessible-chart/text-alternative rendering is not yet built on the frontend — that, and a visual chart for tides, remain open |
 | 35 | Fishing guidance | Limited supported suggestions; every recommendation explains why | Existing broad feature is out of scope; adapt |
 | 36 | Preferences | Units, thresholds, style, default location persistence | Candidate in `/v2` |
 | 37 | Saved locations | Ordered favorites, ownership, duplicates, deletion, empty state; ownership model built so a free-tier cap (target: 1 location) is a natural later addition, without building billing now | Candidate in `/v2` |
@@ -1354,6 +1354,42 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   `break-words` on those three text nodes fixed it, confirmed by
   re-screenshotting at 390px before and after. `npm run lint`/
   `npm run build` both pass clean.
+- **Sprint 34, continued (hourly outlook -- the remaining "timing"
+  scope)**: `apps/api/app/domain/timing.py`'s `build_hourly_outlook`
+  ports the legacy `domain/forecast.py:build_activity_timeline` -- a
+  24-hour, one-value-per-hour fish-activity estimate combining
+  dawn/dusk, solunar major/minor bands, tide-change windows, a
+  night-hours penalty (partially offset by a bright-moon nocturnal
+  boost), and a wind-conditions activity ceiling -- as an *adapt*, not
+  a verbatim carry-over: it consumes this recovery's own typed inputs
+  (`SunTimes`/`SolunarTimes`, the tide predictions
+  `app.domain.assembly` already fetches, and the already-reconciled
+  wind range) instead of re-parsing legacy's pre-formatted strings, and
+  its wind thresholds are converted from mph to this recovery's
+  canonical kt unit. `ForecastEnvelope.hourly_outlook` is now populated
+  on every request -- unlike `tides`, it never degrades to `None`,
+  since astronomy is pure computation and both tide predictions and
+  wind range are already-optional inputs the function tolerates being
+  absent. Deliberately not ported: the barometric-pressure-trend
+  multiplier (no typed pressure-trend data exists yet, deferred to
+  sprint 35) and `build_best_times`'s labeled-window summary (a
+  separate legacy function needing sprint 36's user-preferences data
+  for its bridge/jetty and preferred-time/tide-preference boosts) --
+  see the module docstring for the full accounting. `apps/api/tests/
+  test_timing.py` (18 tests) characterizes dawn/dusk boosting,
+  major-vs-minor solunar banding (a minor period never downgrades an
+  overlapping major one), reason deduplication, bright-moon boosting,
+  high-vs-low tide boost magnitude, same-day-only tide filtering,
+  wind-conditions damping, and the is-now/peak flags. Verified against
+  the real `/v1/forecasts/{id}` endpoint, not just the unit tests: with
+  every live upstream blocked in this sandbox, `hourly_outlook` still
+  comes back fully populated with real dawn/solunar reasoning (hour 6
+  tagged `prime`, reasons `["Dawn", "Minor solunar"]`, `peak: true`),
+  proving the "astronomy always resolves" claim end-to-end, not just in
+  mocked tests. All of `apps/api`'s checks (ruff, ruff format, mypy,
+  pytest -- 344 passed) pass clean. `hourly_outlook`'s own
+  accessible-chart/text-alternative frontend rendering (`apps/web`'s
+  job, matching sprint 34's tides split) is not attempted here.
 - **Incident (sprint 6, resolved earlier)**: a scratch branch explicitly
   titled `DO NOT MERGE` was merged into `main` under the repo owner's own
   account, landing deliberately-broken code; reverted within ~10 minutes
