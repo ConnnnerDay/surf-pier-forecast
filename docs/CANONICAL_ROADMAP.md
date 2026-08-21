@@ -430,9 +430,9 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #359 (sprint 31 follow-up — location search wired
-  into a real `/forecast/[locationId]` lookup, retiring the fixed
-  `/forecast/demo` proof page, `a1ef618`, merged as `a4f3f47`).
+- Last merged PR: #360 (sprint 34 partial — tide predictions wired into
+  `assemble_forecast`, backend half only, `99338b7`, merged as
+  `4d6dd77`).
 - **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
   1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
   (#332). Phase 1's only remaining items (9, 10) need external accounts —
