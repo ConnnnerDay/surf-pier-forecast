@@ -383,6 +383,35 @@ Boots, has real CI, and now has:
   already succeeded, and the existing gridpoint tests were updated to
   isolate gridpoint's own behavior with `coops_wind_ok=False`.
 
+- Sprint 44's internal-signature verification primitive (partial):
+  `app/infra/internal_signature.py` implements ADR-004's
+  (`docs/architecture.md`) HMAC-SHA-256 request-signing contract for the
+  Next.js BFF → FastAPI boundary — canonical method/path (including query
+  string)/body-digest/user-id/issued-at/expires-at/request-id/key-id,
+  constant-time signature comparison, a clock-skew window, expiration,
+  and replay detection by request ID with an injectable-clock
+  `ReplayGuard` (per-entry expiry, same pattern as `SnapshotCache`).
+  `app/api/internal_auth.py` wraps it as a FastAPI dependency
+  (`InternalAuthDependency`, constructor-injected keys/clock for
+  testability, matching `SnapshotCache`/`StationCatalogCache`'s style)
+  that fails closed — no configured signing keys is a 500, never a
+  silent pass-through. **Not wired onto the `/v1` routers yet**: `apps/web`
+  has no signer to pair with it (still the sprint-13 skeleton), so wiring
+  a mandatory check onto routes nothing can currently sign would make
+  `apps/api` uncallable by its only real client. Wiring is the next step
+  once `apps/web` grows an internal HTTP client that can sign requests —
+  plausibly alongside sprint 28's Better Auth work, since ADR-004's
+  "authenticated internal user identifier" is exactly Better Auth's
+  opaque user ID. No legacy precedent: the legacy Flask app is
+  single-process with no internal service boundary to sign across.
+  `tests/test_internal_signature.py` covers the pure primitive (valid
+  signature, tampered body/method/path, expired, clock-skew, validity-
+  window-too-long, unknown key id, previous-key rotation, replay
+  detection, replay-guard pruning); `tests/test_internal_auth.py` covers
+  the FastAPI dependency layer against a throwaway app (missing headers,
+  invalid signature, body tampered in transit, expired, malformed
+  timestamp header, replay, and fail-closed with no configured keys).
+
 It does not yet have a Postgres connection. That lands in whichever
 Phase 2 sprint or infra work adds it, behind its own characterization
 tests, porting from the reconciliation audit
