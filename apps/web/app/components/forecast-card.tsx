@@ -2,6 +2,17 @@ import { Badge, type BadgeVariant, Card } from './ui'
 
 export type ForecastVerdict = 'Excellent' | 'Good' | 'Fair' | 'Challenging' | 'Poor' | 'Unknown'
 
+export type TidePrediction = {
+  time: string
+  kind: 'high' | 'low'
+  height_ft: number
+}
+
+export type ForecastTides = {
+  station_id: string
+  predictions: TidePrediction[]
+}
+
 export type ForecastEnvelope = {
   location: { id: string; label: string; timezone: string }
   generated_at: string
@@ -11,6 +22,7 @@ export type ForecastEnvelope = {
   conditions: {
     score?: { score: number | null; verdict: ForecastVerdict; summary: string } | null
   } | null
+  tides: ForecastTides | null
 }
 
 const VERDICT_TO_BADGE: Record<ForecastVerdict, BadgeVariant> = {
@@ -20,6 +32,69 @@ const VERDICT_TO_BADGE: Record<ForecastVerdict, BadgeVariant> = {
   Challenging: 'marginal',
   Poor: 'nogo',
   Unknown: 'neutral',
+}
+
+/**
+ * Sprint 34's tide table -- the text-alternative half of that sprint's
+ * "accessible charts, text alternatives" acceptance bar. A visual
+ * chart is deliberately not attempted here; a plain, properly-labeled
+ * `<table>` is itself an accessible representation, not a fallback for
+ * one. Times are formatted in the *location's* timezone
+ * (`forecast.location.timezone`), not the viewer's browser timezone --
+ * a tide time is only meaningful relative to the place it's for.
+ */
+function TideTable({
+  tides,
+  timezone,
+}: {
+  tides: ForecastTides
+  timezone: string
+}) {
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    weekday: 'short',
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+
+  return (
+    <div className="flex flex-col gap-2">
+      <h3 className="text-sm font-medium text-text">Upcoming tides</h3>
+      <div className="overflow-x-auto">
+        <table className="w-full text-left text-sm">
+          <caption className="sr-only">
+            Upcoming high and low tides for {tides.station_id}
+          </caption>
+          <thead>
+            <tr className="text-text-muted">
+              <th scope="col" className="py-1 pr-4 font-medium">
+                Time
+              </th>
+              <th scope="col" className="py-1 pr-4 font-medium">
+                Tide
+              </th>
+              <th scope="col" className="py-1 font-medium">
+                Height
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {tides.predictions.map((prediction) => (
+              <tr key={prediction.time} className="border-t border-border">
+                <td className="py-1.5 pr-4 text-text">
+                  {formatter.format(new Date(prediction.time))}
+                </td>
+                <td className="py-1.5 pr-4 text-text">
+                  {prediction.kind === 'high' ? 'High' : 'Low'}
+                </td>
+                <td className="py-1.5 text-text">{prediction.height_ft.toFixed(1)} ft</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
 }
 
 /**
@@ -57,6 +132,10 @@ export function ForecastCard({ forecast }: { forecast: ForecastEnvelope }) {
           <dd className="font-medium text-text">{forecast.generated_at}</dd>
         </div>
       </dl>
+
+      {forecast.tides && (
+        <TideTable tides={forecast.tides} timezone={forecast.location.timezone} />
+      )}
 
       {forecast.warnings.length > 0 && (
         <div className="flex flex-col gap-2">
