@@ -314,7 +314,7 @@ to reconciliation, not proof that the agreed outcome passed.
 | 11 | Canonical domain model | Typed models, schema snapshots, serialization round trips | **Complete** — `apps/api/app/domain/models.py` (fresh Pydantic models per `docs/architecture.md`'s ADR-003, not ported from `v2/backend/app/schemas/`, which are auth-coupled DTOs per `docs/R1_RECONCILIATION_AUDIT.md`); schema-snapshot + round-trip tests in `apps/api/tests/test_domain_models.py`, drift-detection verified locally before commit |
 | 12 | HTTP client policy | Timeouts, bounded retries, user agent, size limit, structured errors | **Complete** — `apps/api/app/infra/http_client.py` (`BoundedHTTPClient` per `docs/architecture.md`'s ADR-003, provider-agnostic); `apps/api/tests/test_http_client.py` covers success, retries, retry exhaustion, no-retry-on-4xx, timeouts, connection errors, and oversized responses via `httpx.MockTransport` |
 | 13 | NWS adapter | Typed weather, wind, alerts, and grid contract fixtures | **Partially complete** — `apps/api/app/providers/nws.py`: marine-zone wind/wave/direction parsing and fetch, point/state active-alerts parsing and fetch, **plus the gridpoint wind fallback** (`fetch_gridpoint_wind`/`parse_gridpoint_wind`, wired into `app/domain/assembly.py` as a last-resort wind source, fetched only when both primary wind sources fail), all behind `apps/api/tests/test_nws_provider.py`/`test_assembly.py` fixture tests. Current-weather observations (air temp, humidity, heat index, precipitation) remain deliberately deferred — nothing in the required `ForecastConditions` shape names them, so porting would be inventing product scope |
-| 14 | NOAA CO-OPS adapter | Tide/water-temperature fixtures, missing values, DST | **Partially complete** — `apps/api/app/providers/noaa_coops.py`: water temperature and tide predictions, `zoneinfo`-based DST-safe timestamp parsing, missing-value/empty-row handling, all behind `apps/api/tests/test_noaa_coops_provider.py`. Wind/currents/environmental-metrics fetches and the tide-chart SVG helper deliberately deferred (see module docstring) |
+| 14 | NOAA CO-OPS adapter | Tide/water-temperature fixtures, missing values, DST | **Partially complete** — `apps/api/app/providers/noaa_coops.py`: water temperature and tide predictions, `zoneinfo`-based DST-safe timestamp parsing, missing-value/empty-row handling, **plus the CO-OPS wind fallback** (`fetch_coops_wind`, wired into `app/domain/assembly.py` as the second step of the last-resort wind chain, after marine-zone/buoy and before NWS gridpoint — the legacy priority order), all behind `apps/api/tests/test_noaa_coops_provider.py`/`test_assembly.py`. Currents, environmental metrics, and the tide-chart SVG helper remain deliberately deferred — nothing in the required `ForecastConditions` shape or product-definition's dashboard hierarchy names them |
 | 15 | NDBC adapter | Buoy parsing, missing columns and markers | **Partially complete** — `apps/api/app/providers/ndbc.py`: wind/wave/pressure parsing from the fixed-width `realtime2` feed (`parse_realtime_text`) and fetch (`fetch_buoy_observation`), distinguishing missing columns from missing-value markers, behind `apps/api/tests/test_ndbc_provider.py`. `app/infra/http_client.py`'s `BoundedHTTPClient` gained `get_text` for this (NDBC is plain text, not JSON). Pressure-trend/fishing-impact narrative deliberately deferred to the scoring sprint (35) — see module docstring |
 | 16 | Astronomy adapter | Pure deterministic coast/season/timezone tests | **Complete** — `apps/api/app/providers/astronomy.py`: sunrise/sunset, twilight, lunar details, and solunar periods, all pure math (no network). Typed timezone-aware `datetime`s instead of formatted strings; enums for moon phase/rating. `apps/api/tests/test_astronomy_provider.py` covers Atlantic/Pacific coasts, summer/winter seasons, a non-DST timezone, and polar-latitude clamping |
 | 17 | Station catalog | Provenance, timestamps, idempotent refresh | **Complete** — `apps/api/app/providers/stations.py`: CO-OPS tide/water-temp and NDBC catalog fetch (degrades to `[]`, metadata not a reading), pure nearest-station distance ranking, and `StationCatalogCache` — an explicit, injectable-clock, idempotent TTL cache, tested without sleeping in `apps/api/tests/test_stations_provider.py` |
@@ -430,8 +430,8 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #354 (sprint 26, performance budget — closes Phase 2,
-  `f381216`, merged as `54d97b0`).
+- Last merged PR: #355 (sprint 13 follow-up, NWS gridpoint wind
+  fallback, `c3aaae9`, merged as `78d8896`).
 - **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
   1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
   (#332). Phase 1's only remaining items (9, 10) need external accounts —
@@ -1052,6 +1052,48 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   opaque inside `ForecastEnvelope.conditions`) and smoke-tested against
   a real running `uvicorn` server. All of `apps/api`'s checks (ruff,
   ruff format, mypy, pytest — 294 passed) pass clean.
+- This PR picks up **sprint 14's own deferred CO-OPS wind fallback**,
+  right after sprint 13's gridpoint fallback — the two combine into a
+  genuine two-step last-resort chain matching the legacy priority
+  order exactly. `apps/api/app/providers/noaa_coops.py` gains
+  `fetch_coops_wind` (`CoopsWindReading`), ported from the legacy
+  `_try_coops_wind` — the latest wind reading from the same CO-OPS
+  station already used for water temperature (if that succeeds, this
+  is very likely to as well). `app/domain/assembly.py`'s fallback
+  chain now tries CO-OPS wind first, then NWS gridpoint wind only if
+  that also comes up empty, matching legacy `domain/forecast.py:
+  get_marine_conditions`'s exact source order (marine-zone, buoy,
+  CO-OPS wind, gridpoint) — stopping as soon as one succeeds, so the
+  typical case never pays for either. Same resilience posture as
+  gridpoint wind (degrades to `None`, doesn't raise — non-critical
+  fallback, not a decision-relevant primary source) and the same
+  score-vs-state distinction documented for gridpoint: can rescue
+  `ForecastState` to FRESH, can't rescue `score` (neither fallback has
+  wave data). A real gap surfaced and fixed along the way: the fallback
+  was initially unconditional, meaning a location with no
+  `water_temp_station` configured would still fire a pointless network
+  call with an empty station id — now guarded exactly like
+  `_fetch_water_temp`'s existing empty-station check. Currents
+  (`fetch_currents_predictions`/`fetch_currents_observation`),
+  environmental metrics (air temp, humidity, visibility, pressure,
+  salinity, conductivity), and the tide-chart SVG helper remain
+  deliberately deferred: nothing in the required `ForecastConditions`
+  shape or `docs/product-definition.md`'s dashboard-hierarchy list
+  names tidal currents or these metrics, and SVG rendering isn't a
+  provider-adapter concern at all. `tests/test_noaa_coops_provider.py`
+  gains 5 tests for the new fetch function (success, no-gust-uses-
+  speed, missing-speed/empty-data/provider-error all degrading to
+  `None`). `tests/test_assembly.py` gains a `coops_wind_ok` client
+  parameter (matching `gridpoint_ok`'s pattern, both defaulting to
+  `False` in the present/absent matrix test to preserve its original
+  three-source scope, with both fallback `SourceStatus`es folded into
+  the confidence reproduction for the two affected combos), a dedicated
+  CO-OPS-wind rescue test proving gridpoint is never reached once
+  CO-OPS wind already succeeded, and the existing gridpoint tests
+  updated to isolate gridpoint's own behavior with
+  `coops_wind_ok=False`. Confirmed no OpenAPI drift and smoke-tested
+  against a real running `uvicorn` server. All of `apps/api`'s checks
+  (ruff, ruff format, mypy, pytest — 300 passed) pass clean.
 - **Incident (sprint 6, resolved earlier)**: a scratch branch explicitly
   titled `DO NOT MERGE` was merged into `main` under the repo owner's own
   account, landing deliberately-broken code; reverted within ~10 minutes
@@ -1059,22 +1101,30 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   turned this into a documented branch-hygiene rule.
 - **Milestone: Phase 2 (backend) is done.** Sprints 12 through 26 are
   all **Complete** except 13/14/15's remaining deliberately-deferred
-  sub-scopes: sprint 13's gridpoint wind fallback is now done (this
-  PR); its current-weather observations (air temp/humidity/heat-index/
-  precipitation) remain deferred, no `ForecastConditions` field names
-  them. NOAA CO-OPS (sprint 14: wind/currents/environmental-metrics +
-  tide-chart SVG) and NDBC (sprint 15: pressure-trend + fishing-impact
-  narrative) are still fully deferred, each a valid next pick. Phase 3
+  sub-scopes: sprint 13's gridpoint wind fallback and sprint 14's
+  CO-OPS wind fallback are both done now (combined into one two-step
+  last-resort chain, this PR). What's left of each: sprint 13's
+  current-weather observations (air temp/humidity/heat-index/
+  precipitation) and sprint 14's currents/environmental-metrics/
+  tide-chart SVG remain deferred — no `ForecastConditions` field names
+  any of them. NDBC (sprint 15: pressure-trend + fishing-impact
+  narrative, both explicitly named as sprint 35's job, not a provider-
+  adapter concern) is the one sub-scope not yet touched at all. Phase 3
   (sprints 27+) is entirely `apps/web` frontend/product work and needs
   decisions this session can't make unilaterally: sprint 27 (design
   system) explicitly requires a **branding decision** ("Surf & Pier
   Forecast" is a named placeholder, not a starting-point) before any UI
   work is defensible; sprint 28 (authentication) needs Better Auth +
   Postgres infrastructure decisions neither exist yet. Exact next
-  action: continue sprint 14 or 15's deferred scope (concrete,
-  backend-only, needs no new decisions) — or **flag Phase 3's entry
+  action: sprint 13/14's backend-adapter-level deferred scope is now
+  essentially exhausted (what's left of each is deliberately-out-of-
+  scope enrichment, not adapter work) — **flag Phase 3's entry
   blockers to the product owner** (the branding decision specifically)
-  rather than guessing a name or visual identity unilaterally.
+  rather than guessing a name or visual identity unilaterally. Sprint
+  15's NDBC pressure-trend/fishing-impact work is explicitly sprint
+  35's (fishing guidance) per that module's own docstring, so it isn't
+  a clean standalone pick either — worth flagging to the product owner
+  alongside the Phase 3 blockers rather than force-fitting it here.
   Separately, sprint 9 (preview
   environments) and sprint 10 (production skeleton) need real
   Vercel/Render/Neon accounts this session has no credentials for —

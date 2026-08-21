@@ -13,6 +13,7 @@ import pytest
 from app.infra.http_client import BoundedHTTPClient
 from app.providers.noaa_coops import (
     NoaaDataUnavailableError,
+    fetch_coops_wind,
     fetch_tide_predictions,
     fetch_water_temperature,
 )
@@ -100,6 +101,74 @@ async def test_fetch_water_temperature_missing_data_key_raises() -> None:
     async with BoundedHTTPClient(transport=transport) as client:
         with pytest.raises(NoaaDataUnavailableError):
             await fetch_water_temperature(client, "8658163")
+
+
+@pytest.mark.asyncio
+async def test_fetch_coops_wind_success() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert "product=wind" in str(request.url)
+        return _datagetter_response(data=[{"s": "10.5", "g": "14.2", "d": "SW"}])
+
+    transport = httpx.MockTransport(handler)
+    async with BoundedHTTPClient(transport=transport) as client:
+        result = await fetch_coops_wind(client, "8658163")
+
+    assert result is not None
+    assert result.wind_low_kt == 10.5
+    assert result.wind_high_kt == 14.2
+    assert result.wind_direction == "SW"
+
+
+@pytest.mark.asyncio
+async def test_fetch_coops_wind_no_gust_uses_speed_as_high() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return _datagetter_response(data=[{"s": "10.5", "g": "0.00", "d": "SW"}])
+
+    transport = httpx.MockTransport(handler)
+    async with BoundedHTTPClient(transport=transport) as client:
+        result = await fetch_coops_wind(client, "8658163")
+
+    assert result is not None
+    assert result.wind_low_kt == 10.5
+    assert result.wind_high_kt == 10.5
+
+
+@pytest.mark.asyncio
+async def test_fetch_coops_wind_missing_speed_degrades_to_none() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return _datagetter_response(data=[{"d": "SW"}])
+
+    transport = httpx.MockTransport(handler)
+    async with BoundedHTTPClient(transport=transport) as client:
+        result = await fetch_coops_wind(client, "8658163")
+
+    assert result is None
+
+
+@pytest.mark.asyncio
+async def test_fetch_coops_wind_empty_data_degrades_to_none() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return _datagetter_response(data=[])
+
+    transport = httpx.MockTransport(handler)
+    async with BoundedHTTPClient(transport=transport) as client:
+        result = await fetch_coops_wind(client, "8658163")
+
+    assert result is None
+
+
+@pytest.mark.asyncio
+async def test_fetch_coops_wind_degrades_to_none_on_provider_error() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(503)
+
+    transport = httpx.MockTransport(handler)
+    async with BoundedHTTPClient(
+        transport=transport, max_retries=0, backoff_base_seconds=0.0
+    ) as client:
+        result = await fetch_coops_wind(client, "8658163")
+
+    assert result is None
 
 
 @pytest.mark.asyncio
