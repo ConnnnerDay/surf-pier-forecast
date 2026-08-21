@@ -430,8 +430,8 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #355 (sprint 13 follow-up, NWS gridpoint wind
-  fallback, `c3aaae9`, merged as `78d8896`).
+- Last merged PR: #356 (sprint 14 follow-up, CO-OPS wind fallback,
+  `41baffa`, merged as `bd04a97`).
 - **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
   1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
   (#332). Phase 1's only remaining items (9, 10) need external accounts —
