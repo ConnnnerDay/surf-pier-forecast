@@ -19,6 +19,32 @@ from app.infra.http_client import (
 
 
 @pytest.mark.asyncio
+async def test_bounded_concurrency_configures_httpx_limits() -> None:
+    """`limits` only takes effect when httpx builds its own transport —
+    see the module docstring's bounded-concurrency section — so unlike
+    every other test here, this one deliberately omits `transport` to
+    let httpx construct a real `httpx.AsyncHTTPTransport` and inspect
+    its connection pool. No request is made — no live network call, per
+    the module docstring's own rule — this only characterizes
+    construction-time wiring.
+    """
+    async with BoundedHTTPClient(
+        max_connections=7, max_keepalive_connections=3
+    ) as client:
+        pool = client._client._transport._pool  # type: ignore[attr-defined]
+        assert pool._max_connections == 7
+        assert pool._max_keepalive_connections == 3
+
+
+@pytest.mark.asyncio
+async def test_bounded_concurrency_defaults() -> None:
+    async with BoundedHTTPClient() as client:
+        pool = client._client._transport._pool  # type: ignore[attr-defined]
+        assert pool._max_connections == 20
+        assert pool._max_keepalive_connections == 10
+
+
+@pytest.mark.asyncio
 async def test_get_json_success() -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(200, json={"ok": True})

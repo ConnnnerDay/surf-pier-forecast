@@ -1,5 +1,6 @@
 """Shared HTTP client policy for external providers (sprint 12; `get_text`
-added in sprint 15 for NDBC's plain-text responses).
+added in sprint 15 for NDBC's plain-text responses; explicit connection
+bound added in sprint 26, performance budget).
 
 Per docs/architecture.md's ADR-003: "Provider adapters use an async HTTP
 client with bounded concurrency, explicit timeouts, limited retries, and
@@ -21,6 +22,22 @@ Design:
   ProviderResponseTooLargeError, ProviderConnectionError) instead of
   leaking raw httpx exceptions, so calling code can handle "this provider
   is unavailable" as one concern regardless of *why*.
+- **Bounded concurrency** (sprint 26): despite ADR-003 naming this as
+  part of the design from the start, `BoundedHTTPClient` never actually
+  set an `httpx.Limits` — it silently relied on httpx's own unexamined
+  defaults (100 max connections, 20 max keepalive) for how many
+  simultaneous outbound requests one client instance would allow. A
+  process serving many concurrent forecast requests fans out through
+  `asyncio.gather` per request (sprint 21); with no explicit cap, a
+  burst of requests could open unboundedly many connections to a single
+  upstream provider. `max_connections`/`max_keepalive_connections`
+  (defaults: 20/10) now configure `httpx.Limits` explicitly. **Only
+  takes effect when httpx builds its own transport** — when a caller
+  passes a custom `transport` (every test in this codebase, via
+  `httpx.MockTransport`), httpx uses that transport directly and
+  `limits` has no effect; `tests/test_http_client.py` characterizes this
+  by constructing a real (no-mock-transport) client and introspecting
+  its transport's connection pool, not by exercising it through a mock.
 """
 
 from __future__ import annotations
@@ -80,6 +97,8 @@ class BoundedHTTPClient:
         max_retries: int = 2,
         backoff_base_seconds: float = 0.5,
         max_response_bytes: int = 2_000_000,
+        max_connections: int = 20,
+        max_keepalive_connections: int = 10,
         user_agent: str = USER_AGENT,
         transport: httpx.AsyncBaseTransport | None = None,
     ) -> None:
@@ -92,8 +111,13 @@ class BoundedHTTPClient:
             write=read_timeout,
             pool=connect_timeout,
         )
+        limits = httpx.Limits(
+            max_connections=max_connections,
+            max_keepalive_connections=max_keepalive_connections,
+        )
         self._client = httpx.AsyncClient(
             timeout=timeout,
+            limits=limits,
             headers={"User-Agent": user_agent},
             transport=transport,
         )

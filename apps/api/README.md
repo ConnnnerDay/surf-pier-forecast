@@ -299,6 +299,37 @@ Boots, has real CI, and now has:
   use. Router-level tests confirm the wiring end-to-end: a second `GET`
   doesn't re-hit any upstream, and `refresh` does even immediately
   after a `GET`.
+- Sprint 26, performance budget ("bounded parallel calls, no
+  duplicates, warm p95 under 750 ms"): `BoundedHTTPClient`
+  (`app/infra/http_client.py`) now sets `httpx.Limits` explicitly
+  (`max_connections`/`max_keepalive_connections`, defaults 20/10) —
+  despite ADR-003 naming "bounded concurrency" as part of the design
+  from the start, the client had silently relied on httpx's own
+  unexamined defaults until now. **Only takes effect when httpx builds
+  its own transport** — a caller-supplied `transport` (every test in
+  this codebase, via `httpx.MockTransport`) bypasses `limits` entirely,
+  so `test_http_client.py` characterizes it by constructing a
+  no-mock-transport client and inspecting the real transport's
+  connection pool, not by exercising it through a mock. "No duplicates"
+  under genuine concurrent HTTP requests (not just sequential) and
+  "warm p95" are both characterized in the new
+  `tests/test_performance_budget.py`: `httpx.AsyncClient` +
+  `httpx.ASGITransport` drives the real FastAPI app with real
+  `asyncio.gather`-driven concurrency (Starlette's synchronous
+  `TestClient` can't produce genuine overlapping requests) — three
+  concurrent `GET`s for the same location produce exactly one upstream
+  marine-zone call, proving sprint 24's single-flight caching holds at
+  the HTTP layer, not just the domain layer sprint 24/the caching-wiring
+  follow-up already tested. Warm p95 is measured with real wall-clock
+  timing over 20 already-cached requests (no fake clock — "warm" means
+  no network call should happen at all, which this test also verifies
+  directly): measured p95 ≈ 2.8ms against the 750ms budget, roughly
+  270x headroom. This measures the warm path's *local* processing
+  latency only — a real end-to-end cold-path p95 against live upstreams
+  can't be measured in this sandboxed CI environment
+  (`docs/R2_CI_BASELINE.md`'s no-live-provider-dependence rule) and
+  remains open acceptance evidence for whenever this runs somewhere
+  with real network access.
 
 It does not yet have a Postgres connection. That lands in whichever
 Phase 2 sprint or infra work adds it, behind its own characterization

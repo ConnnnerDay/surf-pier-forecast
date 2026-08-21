@@ -326,7 +326,7 @@ to reconciliation, not proof that the agreed outcome passed.
 | 23 | Confidence model | Predictable degradation by availability, distance, age, fallback | **Complete** — `apps/api/app/domain/confidence.py`: `assess_confidence`, a 100-point four-factor score (source coverage, observation age, station distance, fallback use) with no legacy precedent, replacing sprint 21's interim liveness-only stub; each degrading factor reports an independent reason code; tested in `apps/api/tests/test_confidence.py` |
 | 24 | Snapshot caching | Fresh/stale hit, miss, expiry, fallback, concurrency; target 4-hour freshness window, matching legacy cadence | **Complete** — `apps/api/app/infra/snapshot_cache.py`: `SnapshotCache[T]`, an injectable-clock, per-key, single-flight in-memory cache; `fresh_ttl_seconds` defaults to 4h matching legacy cadence, `stale_ttl_seconds` + fallback-on-fetch-failure are new (no legacy precedent); tested in `apps/api/tests/test_snapshot_cache.py` |
 | 25 | Versioned API | Required endpoints, OpenAPI contract and breaking-change guard | **Complete** — `apps/api/app/api/v1/{locations,forecasts}.py`: 4 of 6 required endpoints (`GET`/`PATCH /v1/me/preferences` deliberately deferred — need Better Auth + Postgres, neither exists yet); `app/api/deps.py`'s `AppState` (lifespan-managed `BoundedHTTPClient` + station-catalog caches) backs both routers; `tests/openapi_snapshot.json` + `scripts/generate_openapi_snapshot.py` is the breaking-change guard, mirroring sprint 11's schema-snapshot pattern; verified against a real running `uvicorn` server, not just `TestClient`; tested in `apps/api/tests/test_locations_router.py`/`test_forecasts_router.py`/`test_openapi_snapshot.py` |
-| 26 | Performance budget | Bounded parallel calls, no duplicates, warm p95 under 750 ms | Not accepted |
+| 26 | Performance budget | Bounded parallel calls, no duplicates, warm p95 under 750 ms | **Complete** — `BoundedHTTPClient` now sets explicit `httpx.Limits` (bounded parallel calls); `tests/test_performance_budget.py` proves no-duplicates under real concurrent HTTP requests (`asyncio.gather` + `httpx.ASGITransport`) and measures warm p95 ≈ 2.8ms against the 750ms budget. Cold-path latency against live upstreams is untestable in this sandboxed CI environment — not part of this sprint's stated bar, but flagged as open evidence for whenever this runs with live network access |
 
 ### Phase 3 — Create the mobile product
 
@@ -430,8 +430,8 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #352 (confidence wiring, `1bd498a`, merged as
-  `9f0304b`).
+- Last merged PR: #353 (caching wiring, closing the scoring/confidence/
+  caching wiring follow-up, `3e0ffb3`, merged as `57ee79a`).
 - **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
   1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
   (#332). Phase 1's only remaining items (9, 10) need external accounts —
@@ -974,19 +974,65 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   snapshot regeneration needed, confirmed by the existing snapshot test
   passing unmodified. All of `apps/api`'s checks (ruff, ruff format,
   mypy, pytest — 279 passed) pass clean.
+- This PR continues Phase 2 with **sprint 26** (performance budget —
+  bounded parallel calls, no duplicates, warm p95 under 750 ms).
+  `BoundedHTTPClient` (`app/infra/http_client.py`) now sets `httpx.Limits`
+  explicitly (`max_connections`/`max_keepalive_connections`, defaults
+  20/10) — despite ADR-003 naming "bounded concurrency" as part of the
+  design from the start, the client had silently relied on httpx's own
+  unexamined defaults until now, an implementation gap discovered while
+  scoping this sprint. **Only takes effect when httpx builds its own
+  transport** — a caller-supplied `transport` (every existing test in
+  this codebase, via `httpx.MockTransport`) bypasses `limits` entirely;
+  `test_http_client.py` characterizes it by constructing a
+  no-mock-transport client and inspecting the real transport's
+  connection pool's `_max_connections`/`_max_keepalive_connections`, not
+  by exercising it through a mock. New `tests/test_performance_budget.py`
+  proves the other two acceptance bars: "no duplicates" under genuine
+  concurrent HTTP requests (not just the sequential case
+  `test_forecasts_router.py` already covered) via `httpx.AsyncClient` +
+  `httpx.ASGITransport` driving the real FastAPI app with real
+  `asyncio.gather` concurrency — Starlette's synchronous `TestClient`
+  can't produce genuine overlapping requests — three concurrent `GET`s
+  for the same location produce exactly one upstream marine-zone call,
+  proving sprint 24's single-flight caching holds at the HTTP layer
+  too, not just the domain layer the caching-wiring PR already tested;
+  and "warm p95 under 750ms," measured with real wall-clock timing (no
+  fake clock) over 20 already-cached requests, also asserting zero new
+  upstream calls occurred (a "warm" request that silently hit the
+  network wouldn't be a valid warm-path measurement) — observed p95 ≈
+  2.8ms, roughly 270x headroom under budget. This measures the warm
+  path's *local* processing latency only: a real end-to-end cold-path
+  p95 against live upstreams can't be measured in this sandboxed CI
+  environment (`docs/R2_CI_BASELINE.md`'s no-live-provider-dependence
+  rule) and isn't part of this sprint's stated acceptance bar, but is
+  flagged as open evidence for whenever this runs somewhere with real
+  network access. Smoke-tested against a real running `uvicorn` server
+  to confirm the new `httpx.Limits` wiring boots cleanly. All of
+  `apps/api`'s checks (ruff, ruff format, mypy, pytest — 283 passed)
+  pass clean.
 - **Incident (sprint 6, resolved earlier)**: a scratch branch explicitly
   titled `DO NOT MERGE` was merged into `main` under the repo owner's own
   account, landing deliberately-broken code; reverted within ~10 minutes
   in PR #330. Full account in `docs/SPRINT_6_CI_PROOF.md`. Sprint 7
   turned this into a documented branch-hygiene rule.
-- Exact next action: finish sprint 13/14/15's deferred scope, or move to
-  sprint 26 (performance budget — bounded parallel calls, no
-  duplicates, warm p95 under 750 ms; the caching wiring just landed
-  gives this a running start on the "no duplicates" half). The
-  scoring/confidence/caching wiring follow-up sprint 25 named is now
-  **fully closed** — all three of sprints 22/23/24 are wired into
-  `assemble_forecast`'s output via `app.domain.forecast_cache`. Any
-  remaining pick needs no external accounts. Separately, sprint 9 (preview
+- **Milestone: Phase 2 (backend) is done.** Sprints 12 through 26 are
+  all **Complete** except 13/14/15's deliberately-deferred sub-scopes
+  (NWS gridpoint wind fallback + current-weather observations; NOAA
+  CO-OPS wind/currents/environmental-metrics + tide-chart SVG; NDBC
+  pressure-trend + fishing-impact narrative — each named as "a valid
+  next Phase 2 pick" in every checkpoint since its own sprint, never
+  yet picked up). Phase 3 (sprints 27+) is entirely `apps/web`
+  frontend/product work and needs decisions this session can't make
+  unilaterally: sprint 27 (design system) explicitly requires a
+  **branding decision** ("Surf & Pier Forecast" is a named placeholder,
+  not a starting-point) before any UI work is defensible; sprint 28
+  (authentication) needs Better Auth + Postgres infrastructure
+  decisions neither exist yet. Exact next action: finish sprint
+  13/14/15's deferred scope (concrete, backend-only, needs no new
+  decisions) — or **flag Phase 3's entry blockers to the product owner**
+  (the branding decision specifically) rather than guessing a name or
+  visual identity unilaterally. Separately, sprint 9 (preview
   environments) and sprint 10 (production skeleton) need real
   Vercel/Render/Neon accounts this session has no credentials for —
   **flag to the product owner** rather than attempting them blind; they
