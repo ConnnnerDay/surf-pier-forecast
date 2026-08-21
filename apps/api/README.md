@@ -484,6 +484,23 @@ Boots, has real CI, and now has:
   pass clean.
   `tests/test_assembly.py` covers presence, the local-date-window
   computation, and degrade-on-failure independently.
+- Post-sprint-32: `ForecastConditions` (`app/domain/assembly.py`) gains
+  `wind_range_kt`/`wave_range_ft`/`wind_direction` — the exact
+  already-reconciled wind/wave range and direction `score_conditions`
+  was computed from (including the last-resort wind-fallback-chain
+  result, when it fires), exposed as their own fields instead of only
+  living as local variables. Added so `apps/web` can show a
+  wind/wave/water-temperature "conditions" summary using the same
+  numbers the go/no-go score used, rather than re-deriving this
+  module's NWS-marine-zone-over-NDBC-buoy source-preference policy
+  from the raw per-source fields on the frontend a second time (and
+  risking drift from it). `apps/api/tests/test_assembly.py` extends
+  four existing tests (marine-zone-preferred, buoy-fallback,
+  direction-preference, gridpoint-wind-rescue) with exact-value
+  assertions on the new fields, plus a presence assertion in the
+  present/absent matrix, rather than adding parallel duplicate tests.
+  All of `apps/api`'s checks (ruff, ruff format, mypy, pytest — 344
+  passed) pass clean.
 
 It does not yet have a Postgres connection. That lands in whichever
 Phase 2 sprint or infra work adds it, behind its own characterization

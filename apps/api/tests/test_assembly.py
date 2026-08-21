@@ -275,6 +275,11 @@ async def test_present_absent_matrix(
         assert conditions.score.score is None
         assert conditions.score.verdict == ScoreVerdict.UNKNOWN
 
+    # Reconciled wind/wave range (added post-sprint-32): present exactly
+    # when score is, since score_conditions was given this same range.
+    assert (conditions.wind_range_kt is not None) == wind_wave_available
+    assert (conditions.wave_range_ft is not None) == wind_wave_available
+
 
 @pytest.mark.asyncio
 async def test_astronomy_always_present_regardless_of_other_sources() -> None:
@@ -440,6 +445,12 @@ async def test_score_prefers_marine_zone_range_over_buoy_when_both_present() -> 
     descriptions = " ".join(f.description for f in conditions.score.factors)
     assert "10-15 kt" in descriptions
     assert "2-3 ft" in descriptions
+    # The reconciled range exposed on ForecastConditions matches exactly
+    # what score_conditions was given -- the marine-zone range, not the
+    # buoy's degenerate one.
+    assert conditions.wind_range_kt == (10.0, 15.0)
+    assert conditions.wave_range_ft == (2.0, 3.0)
+    assert conditions.wind_direction == "SW"
 
 
 @pytest.mark.asyncio
@@ -464,6 +475,16 @@ async def test_score_falls_back_to_buoy_range_when_marine_zone_unavailable() -> 
     descriptions = " ".join(f.description for f in conditions.score.factors)
     assert f"{wind_value}-{wind_value} kt" in descriptions
     assert f"{wave_value}-{wave_value} ft" in descriptions
+    # The reconciled range exposed on ForecastConditions is the same
+    # degenerate zero-width range score_conditions was given.
+    assert conditions.wind_range_kt == (
+        conditions.buoy.wind_speed.value,
+        conditions.buoy.wind_speed.value,
+    )
+    assert conditions.wave_range_ft == (
+        conditions.buoy.wave_height.value,
+        conditions.buoy.wave_height.value,
+    )
 
 
 @pytest.mark.asyncio
@@ -511,6 +532,7 @@ async def test_score_wind_direction_prefers_marine_zone_over_buoy() -> None:
     assert any(
         "Clean offshore wind (W)" in f.description for f in conditions.score.factors
     )
+    assert conditions.wind_direction == "W"
 
 
 @pytest.mark.asyncio
@@ -571,6 +593,13 @@ async def test_gridpoint_wind_rescues_forecast_state_when_both_primary_sources_d
     assert conditions.gridpoint_wind is not None
     assert conditions.gridpoint_wind.wind_direction == "SW"
     assert conditions.score.score is None
+    # wind_range_kt is rescued by the gridpoint fallback (state is
+    # FRESH), but wave_range_ft stays None -- gridpoint wind is land-
+    # only and never has wave data, matching why the score above stays
+    # UNKNOWN despite a populated wind range.
+    assert conditions.wind_range_kt is not None
+    assert conditions.wave_range_ft is None
+    assert conditions.wind_direction == "SW"
     assert conditions.score.verdict == ScoreVerdict.UNKNOWN
     by_provider = {s.provider: s for s in envelope.sources}
     assert by_provider["nws:gridpoint_wind"].state == SourceState.OK

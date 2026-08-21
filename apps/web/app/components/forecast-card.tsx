@@ -41,6 +41,12 @@ export type HourlyOutlook = {
   hours: HourlyActivity[]
 }
 
+export type Observation = {
+  value: number
+  unit: string
+  is_fallback: boolean
+}
+
 export type ForecastEnvelope = {
   location: { id: string; label: string; timezone: string }
   generated_at: string
@@ -50,6 +56,10 @@ export type ForecastEnvelope = {
   warnings: { code: string; message: string; severity: string }[]
   conditions: {
     score?: { score: number | null; verdict: ForecastVerdict; summary: string } | null
+    water_temperature: Observation
+    wind_range_kt: [number, number] | null
+    wave_range_ft: [number, number] | null
+    wind_direction: string | null
   } | null
   tides: ForecastTides | null
   hourly_outlook: HourlyOutlook | null
@@ -310,6 +320,40 @@ export function deriveBestWindow(outlook: HourlyOutlook): BestWindow | null {
   return bestRun.length > 0 ? { hours: bestRun, tag: bestTag } : null
 }
 
+/**
+ * Sprint 32's "conditions" summary -- the wind/wave/water-temperature
+ * line the acceptance bar names between "best window" and
+ * "confidence, freshness." Shows `app.domain.assembly`'s own
+ * already-reconciled `wind_range_kt`/`wave_range_ft`/`wind_direction`
+ * (the exact numbers `score_conditions` was computed from) verbatim,
+ * rather than re-deriving that NWS-marine-zone-over-NDBC-buoy
+ * source-preference policy from the per-source fields on the frontend
+ * a second time.
+ */
+function ConditionsSummary({
+  conditions,
+}: {
+  conditions: NonNullable<ForecastEnvelope['conditions']>
+}) {
+  const parts: string[] = []
+  if (conditions.wind_range_kt) {
+    const [low, high] = conditions.wind_range_kt
+    const range = low === high ? `${low}` : `${low}–${high}`
+    parts.push(`Wind ${range} kt${conditions.wind_direction ? ` ${conditions.wind_direction}` : ''}`)
+  }
+  if (conditions.wave_range_ft) {
+    const [low, high] = conditions.wave_range_ft
+    const range = low === high ? `${low}` : `${low}–${high}`
+    parts.push(`Waves ${range} ft`)
+  }
+  const waterTemp = conditions.water_temperature
+  parts.push(
+    `Water ${Math.round(waterTemp.value)}°F${waterTemp.is_fallback ? ' (monthly avg)' : ''}`,
+  )
+
+  return <p className="text-sm text-text">{parts.join(' · ')}</p>
+}
+
 function BestWindowCallout({ window, timezone }: { window: BestWindow; timezone: string }) {
   const formatter = new Intl.DateTimeFormat('en-US', {
     timeZone: timezone,
@@ -341,18 +385,19 @@ function BestWindowCallout({ window, timezone }: { window: BestWindow; timezone:
  * narrative expandable, not primary); best window, conditions,
  * confidence, freshness first": the verdict `Badge` is the primary
  * headline (enlarged, first), `deriveBestWindow`'s callout sits right
- * beneath it, and the numeric score plus its plain-language narrative
+ * beneath it, `ConditionsSummary` renders the wind/wave/water-temperature
+ * line next, and the numeric score plus its plain-language narrative
  * move into a `<details>` -- present, but demoted, not the first thing
  * a reader sees. Confidence/state/freshness stay in the summary strip
  * below. This is not the real multi-location dashboard (still sprint
- * 32/37's job): the verdict-badge mapping here is page-scoped
- * presentation, not that sprint's full product hierarchy. A wind/wave/
- * water-temperature "conditions" mini-panel is a deliberate follow-up
- * -- apps/api's `ForecastConditions` carries per-source wind/wave
- * (`marine_zone_wind`/`buoy`), not an already-reconciled single range,
- * and re-deriving that reconciliation policy on the frontend would
- * duplicate (and risk drifting from) `app.domain.assembly`'s own
- * `_reconcile_range`, which already decided it once for scoring.
+ * 37's job): the verdict-badge mapping here is page-scoped
+ * presentation, not that sprint's full product hierarchy.
+ * `ConditionsSummary` shows apps/api's own already-reconciled
+ * `wind_range_kt`/`wave_range_ft`/`wind_direction` (added to
+ * `ForecastConditions` post-sprint-32 for exactly this) verbatim,
+ * rather than re-deriving `app.domain.assembly`'s NWS-marine-zone-
+ * over-NDBC-buoy source-preference policy from the per-source fields
+ * on the frontend a second time.
  *
  * The `State` badge and `SourceStatusList` below are sprint 33's
  * "full/partial/stale/unavailable source-attributed snapshots" --
@@ -378,6 +423,8 @@ export function ForecastCard({ forecast }: { forecast: ForecastEnvelope }) {
           <BestWindowCallout window={bestWindow} timezone={forecast.location.timezone} />
         )}
       </div>
+
+      {forecast.conditions && <ConditionsSummary conditions={forecast.conditions} />}
 
       {score?.summary && (
         <details className="text-sm">
