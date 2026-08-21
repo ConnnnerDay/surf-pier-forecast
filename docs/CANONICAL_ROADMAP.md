@@ -338,7 +338,7 @@ to reconciliation, not proof that the agreed outcome passed.
 | 30 | Onboarding shell | Mobile recording from registration to dashboard | Candidate in `/v2` |
 | 31 | Location search | Text, device, map, station preview, denial/ambiguity tests | **Partially complete** — text search only: `apps/web/app/components/location-search.tsx` (a hand-rolled WAI-ARIA combobox, no dependency) calls `apps/web/app/api/locations/search/route.ts` (a BFF Route Handler proxying apps/api's `GET /v1/locations/search` through the signed internal path — the browser never calls apps/api directly, ADR-004), demonstrated on `apps/web/app/locations/page.tsx`, where selecting a result links to a real `apps/web/app/forecast/[locationId]/page.tsx` lookup (any recognized `location_id`, replacing the earlier fixed-location `/forecast/demo` proof, which now just redirects there). Device geolocation, map search, and station-preview/ambiguity states are not attempted; empty-results and fetch-failure states are handled distinctly, and an unknown location 404s via Next's `notFound()`. Verified interactively (typing, debounce, keyboard nav, selection, navigation to a real rendered forecast) via headless Chromium, not just curl |
 | 32 | Dashboard hierarchy | Go/no-go as a simple traffic-light headline (score/narrative expandable, not primary); best window, conditions, confidence, freshness first | Candidate in `/v2` |
-| 33 | Conditions experience | Full/partial/stale/unavailable source-attributed snapshots | Candidate in `/v2` |
+| 33 | Conditions experience | Full/partial/stale/unavailable source-attributed snapshots | **Partially complete** — `apps/web/app/components/forecast-card.tsx`'s `ForecastCard` renders `forecast.state` as a badge using apps/api's own fresh/stale/partial/unavailable vocabulary, and a new `SourceStatusList` shows every fanned-out source individually (human-readable label, ok/degraded/unavailable badge, raw provider error for non-ok sources) — real per-source attribution, not just the aggregate already shown. Verified against a real running server and re-audited with `axe-core` (zero violations); caught and fixed a real text-overflow bug (long provider-error URLs not wrapping at phone width) in the process |
 | 34 | Tides and timing | Accessible charts, text alternatives, timezone/DST tests | **Partially complete** — backend: `apps/api/app/domain/assembly.py` fetches tide predictions (`app.providers.noaa_coops.fetch_tide_predictions`) in the same `asyncio.gather` as the other independent sources, for a local-date window computed in the location's own timezone (`app.infra.timezones.safe_zone`, not naive UTC); `ForecastTides` (station id + upcoming high/low predictions) is the sprint-34-owned shape of `ForecastEnvelope.tides`, degrading to `None` with an advisory `Warning` on failure. Frontend: `apps/web/app/components/forecast-card.tsx`'s `TideTable` — the text-alternative half — is a plain, properly-labeled `<table>` (times formatted in the *location's* timezone, not the viewer's), visually verified against realistic mock data via a temporary preview page since this sandbox's blocked upstream calls mean `tides` is always `None` on the live path. A visual chart (the other named acceptance sub-item) is not attempted |
 | 35 | Fishing guidance | Limited supported suggestions; every recommendation explains why | Existing broad feature is out of scope; adapt |
 | 36 | Preferences | Units, thresholds, style, default location persistence | Candidate in `/v2` |
@@ -1330,6 +1330,29 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   search-to-forecast interactive flow (type, arrow-key, select,
   navigate) was re-verified functionally unchanged after the markup
   change. `npm run lint`/`npm run build` both pass clean.
+- **Sprint 33, partial (source-attributed snapshots)**: the natural
+  next increment after the accessibility spot-check -- the forecast
+  page already showed the aggregate `state`/`confidence`/`warnings`,
+  but not a per-source breakdown, exactly sprint 33's stated bar.
+  `ForecastCard` (`apps/web/app/components/forecast-card.tsx`) now
+  renders `forecast.state` as a `Badge` (fresh/stale/partial/
+  unavailable, apps/api's own `ForecastState` vocabulary, not
+  reinterpreted) instead of plain text, and a new `SourceStatusList`
+  lists every source apps/api fanned out to -- marine zone, water
+  temperature, buoy, tides, and the wind-fallback chain when it fires
+  -- each with a human-readable provider label, an ok/degraded/
+  unavailable `Badge`, and the raw provider error shown as its own
+  line for non-ok sources (the honest "why" behind a bad badge).
+  Verified against a real running server: every source correctly shows
+  `unavailable` with its real connection-error detail in this sandbox,
+  exactly as designed, not a bug. Re-audited with `axe-core` after the
+  change -- zero violations -- and in the process caught one more real
+  bug: the source-detail and warning message text (which can contain
+  long provider URLs) overflowed the page's width at phone viewport
+  size instead of wrapping, breaking the mobile-first layout;
+  `break-words` on those three text nodes fixed it, confirmed by
+  re-screenshotting at 390px before and after. `npm run lint`/
+  `npm run build` both pass clean.
 - **Incident (sprint 6, resolved earlier)**: a scratch branch explicitly
   titled `DO NOT MERGE` was merged into `main` under the repo owner's own
   account, landing deliberately-broken code; reverted within ~10 minutes
