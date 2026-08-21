@@ -330,6 +330,34 @@ Boots, has real CI, and now has:
   (`docs/R2_CI_BASELINE.md`'s no-live-provider-dependence rule) and
   remains open acceptance evidence for whenever this runs somewhere
   with real network access.
+- Sprint 13's own deferred gridpoint-wind fallback, picked up now that
+  Phase 2 is otherwise closed out: `app/providers/nws.py` gained
+  `fetch_gridpoint_wind`/`parse_gridpoint_wind` (`GridpointWindForecast`
+  — wind-only, no wave data, since it's a land-point forecast), ported
+  from the legacy `_try_nws_gridpoint`. `app/domain/assembly.py` wires
+  it in as a *last-resort* wind source: fetched only when neither the
+  marine-zone forecast nor the NDBC buoy provide wind, as one extra
+  sequential call (not part of the initial `asyncio.gather`) rather
+  than on every request, per sprint 26's "bounded parallel calls, no
+  duplicates" performance-budget discipline. A successful gridpoint
+  fetch rescues `ForecastState` (FRESH instead of PARTIAL) and feeds a
+  `SourceStatus`/warning into the confidence model, but — being
+  wave-blind by nature — **cannot by itself rescue `score`**:
+  `score_conditions` still needs both wind and wave to produce a
+  number (sprint 22's contract, unchanged), so `score` stays
+  `None`/`UNKNOWN` whenever wave is unavailable from every source,
+  gridpoint included — documented explicitly rather than left as a
+  surprising gap. The legacy module's current-weather observations
+  (`fetch_current_weather` — air temp, humidity, heat index, recent
+  precipitation) remain deliberately deferred: nothing in the canonical
+  roadmap's required `ForecastConditions` shape names them, so porting
+  now would be inventing product scope, not closing a named gap.
+  `tests/test_nws_provider.py` gained 8 new tests for the parser/fetch
+  functions; `tests/test_assembly.py` gained coverage for the rescue
+  case, the state-vs-score distinction above, and that gridpoint is
+  never fetched when marine-zone wind is already available (proven
+  with a mock transport that raises on any unexpected `/points/`
+  request, not by absence of assertions).
 
 It does not yet have a Postgres connection. That lands in whichever
 Phase 2 sprint or infra work adds it, behind its own characterization

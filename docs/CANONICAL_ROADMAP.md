@@ -313,7 +313,7 @@ to reconciliation, not proof that the agreed outcome passed.
 |---:|---|---|---|
 | 11 | Canonical domain model | Typed models, schema snapshots, serialization round trips | **Complete** — `apps/api/app/domain/models.py` (fresh Pydantic models per `docs/architecture.md`'s ADR-003, not ported from `v2/backend/app/schemas/`, which are auth-coupled DTOs per `docs/R1_RECONCILIATION_AUDIT.md`); schema-snapshot + round-trip tests in `apps/api/tests/test_domain_models.py`, drift-detection verified locally before commit |
 | 12 | HTTP client policy | Timeouts, bounded retries, user agent, size limit, structured errors | **Complete** — `apps/api/app/infra/http_client.py` (`BoundedHTTPClient` per `docs/architecture.md`'s ADR-003, provider-agnostic); `apps/api/tests/test_http_client.py` covers success, retries, retry exhaustion, no-retry-on-4xx, timeouts, connection errors, and oversized responses via `httpx.MockTransport` |
-| 13 | NWS adapter | Typed weather, wind, alerts, and grid contract fixtures | **Partially complete** — `apps/api/app/providers/nws.py`: marine-zone wind/wave/direction parsing and fetch, point/state active-alerts parsing and fetch, all behind `apps/api/tests/test_nws_provider.py` fixture tests. Gridpoint wind fallback and current-weather observations deliberately deferred (see module docstring) to keep the PR reviewable; tracked as follow-up before sprint 21 needs them |
+| 13 | NWS adapter | Typed weather, wind, alerts, and grid contract fixtures | **Partially complete** — `apps/api/app/providers/nws.py`: marine-zone wind/wave/direction parsing and fetch, point/state active-alerts parsing and fetch, **plus the gridpoint wind fallback** (`fetch_gridpoint_wind`/`parse_gridpoint_wind`, wired into `app/domain/assembly.py` as a last-resort wind source, fetched only when both primary wind sources fail), all behind `apps/api/tests/test_nws_provider.py`/`test_assembly.py` fixture tests. Current-weather observations (air temp, humidity, heat index, precipitation) remain deliberately deferred — nothing in the required `ForecastConditions` shape names them, so porting would be inventing product scope |
 | 14 | NOAA CO-OPS adapter | Tide/water-temperature fixtures, missing values, DST | **Partially complete** — `apps/api/app/providers/noaa_coops.py`: water temperature and tide predictions, `zoneinfo`-based DST-safe timestamp parsing, missing-value/empty-row handling, all behind `apps/api/tests/test_noaa_coops_provider.py`. Wind/currents/environmental-metrics fetches and the tide-chart SVG helper deliberately deferred (see module docstring) |
 | 15 | NDBC adapter | Buoy parsing, missing columns and markers | **Partially complete** — `apps/api/app/providers/ndbc.py`: wind/wave/pressure parsing from the fixed-width `realtime2` feed (`parse_realtime_text`) and fetch (`fetch_buoy_observation`), distinguishing missing columns from missing-value markers, behind `apps/api/tests/test_ndbc_provider.py`. `app/infra/http_client.py`'s `BoundedHTTPClient` gained `get_text` for this (NDBC is plain text, not JSON). Pressure-trend/fishing-impact narrative deliberately deferred to the scoring sprint (35) — see module docstring |
 | 16 | Astronomy adapter | Pure deterministic coast/season/timezone tests | **Complete** — `apps/api/app/providers/astronomy.py`: sunrise/sunset, twilight, lunar details, and solunar periods, all pure math (no network). Typed timezone-aware `datetime`s instead of formatted strings; enums for moon phase/rating. `apps/api/tests/test_astronomy_provider.py` covers Atlantic/Pacific coasts, summer/winter seasons, a non-DST timezone, and polar-latitude clamping |
@@ -430,8 +430,8 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #353 (caching wiring, closing the scoring/confidence/
-  caching wiring follow-up, `3e0ffb3`, merged as `57ee79a`).
+- Last merged PR: #354 (sprint 26, performance budget — closes Phase 2,
+  `f381216`, merged as `54d97b0`).
 - **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
   1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
   (#332). Phase 1's only remaining items (9, 10) need external accounts —
@@ -1011,28 +1011,71 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   to confirm the new `httpx.Limits` wiring boots cleanly. All of
   `apps/api`'s checks (ruff, ruff format, mypy, pytest — 283 passed)
   pass clean.
+- This PR picks up **sprint 13's own deferred gridpoint-wind
+  fallback**, now that Phase 2 is otherwise closed out and it's the one
+  concrete backend pick needing no new product/infra decisions.
+  `apps/api/app/providers/nws.py` gains `fetch_gridpoint_wind`/
+  `parse_gridpoint_wind` (`GridpointWindForecast` — wind-only, no wave
+  data, since it's a land-point forecast), ported from the legacy
+  `_try_nws_gridpoint`, degrading to `None` on failure like
+  `fetch_point_alerts` rather than raising like
+  `fetch_marine_zone_conditions` — it's a fallback, not a
+  decision-relevant primary source. `app/domain/assembly.py` wires it
+  in as a *last-resort* wind source: fetched only when neither the
+  marine-zone forecast nor the NDBC buoy provide wind, as one extra
+  sequential call (deliberately outside the initial `asyncio.gather`)
+  rather than on every request — sprint 26's "bounded parallel calls,
+  no duplicates" performance-budget discipline applied to the very next
+  sprint after landing it. A successful fetch adds a `SourceStatus`
+  (`nws:gridpoint_wind`) and a `fallback:gridpoint_wind` warning, feeds
+  wind range/direction into scoring (direction only if not already set
+  from marine-zone/buoy), and rescues `ForecastState` (FRESH instead of
+  PARTIAL). **Documented explicitly, not left as a surprising gap**:
+  because the gridpoint forecast never has wave data, it cannot by
+  itself rescue `score` — `score_conditions` still needs both wind and
+  wave (sprint 22's unchanged contract), so `score` stays
+  `None`/`UNKNOWN` whenever wave is unavailable from every source,
+  gridpoint included. The legacy module's current-weather observations
+  (air temp, humidity, heat index, precipitation) remain deliberately
+  deferred: nothing in the required `ForecastConditions` shape names
+  them, so porting now would be inventing product scope, not closing a
+  named gap. `tests/test_nws_provider.py` gains 8 tests for the new
+  parser/fetch functions; `tests/test_assembly.py` gains coverage for
+  the present/absent matrix (now explicitly excluding gridpoint via a
+  `gridpoint_ok=False` client, preserving its original three-source
+  scope, with a fourth conditional `SourceStatus` folded into the
+  confidence reproduction for the two now-affected combos), the rescue
+  case, the state-vs-score distinction, and proof gridpoint is never
+  fetched when marine-zone wind is already available (a mock transport
+  that raises on any unexpected `/points/` request, not absence of
+  assertions). Confirmed no OpenAPI drift (`ForecastConditions` stays
+  opaque inside `ForecastEnvelope.conditions`) and smoke-tested against
+  a real running `uvicorn` server. All of `apps/api`'s checks (ruff,
+  ruff format, mypy, pytest — 294 passed) pass clean.
 - **Incident (sprint 6, resolved earlier)**: a scratch branch explicitly
   titled `DO NOT MERGE` was merged into `main` under the repo owner's own
   account, landing deliberately-broken code; reverted within ~10 minutes
   in PR #330. Full account in `docs/SPRINT_6_CI_PROOF.md`. Sprint 7
   turned this into a documented branch-hygiene rule.
 - **Milestone: Phase 2 (backend) is done.** Sprints 12 through 26 are
-  all **Complete** except 13/14/15's deliberately-deferred sub-scopes
-  (NWS gridpoint wind fallback + current-weather observations; NOAA
-  CO-OPS wind/currents/environmental-metrics + tide-chart SVG; NDBC
-  pressure-trend + fishing-impact narrative — each named as "a valid
-  next Phase 2 pick" in every checkpoint since its own sprint, never
-  yet picked up). Phase 3 (sprints 27+) is entirely `apps/web`
-  frontend/product work and needs decisions this session can't make
-  unilaterally: sprint 27 (design system) explicitly requires a
-  **branding decision** ("Surf & Pier Forecast" is a named placeholder,
-  not a starting-point) before any UI work is defensible; sprint 28
-  (authentication) needs Better Auth + Postgres infrastructure
-  decisions neither exist yet. Exact next action: finish sprint
-  13/14/15's deferred scope (concrete, backend-only, needs no new
-  decisions) — or **flag Phase 3's entry blockers to the product owner**
-  (the branding decision specifically) rather than guessing a name or
-  visual identity unilaterally. Separately, sprint 9 (preview
+  all **Complete** except 13/14/15's remaining deliberately-deferred
+  sub-scopes: sprint 13's gridpoint wind fallback is now done (this
+  PR); its current-weather observations (air temp/humidity/heat-index/
+  precipitation) remain deferred, no `ForecastConditions` field names
+  them. NOAA CO-OPS (sprint 14: wind/currents/environmental-metrics +
+  tide-chart SVG) and NDBC (sprint 15: pressure-trend + fishing-impact
+  narrative) are still fully deferred, each a valid next pick. Phase 3
+  (sprints 27+) is entirely `apps/web` frontend/product work and needs
+  decisions this session can't make unilaterally: sprint 27 (design
+  system) explicitly requires a **branding decision** ("Surf & Pier
+  Forecast" is a named placeholder, not a starting-point) before any UI
+  work is defensible; sprint 28 (authentication) needs Better Auth +
+  Postgres infrastructure decisions neither exist yet. Exact next
+  action: continue sprint 14 or 15's deferred scope (concrete,
+  backend-only, needs no new decisions) — or **flag Phase 3's entry
+  blockers to the product owner** (the branding decision specifically)
+  rather than guessing a name or visual identity unilaterally.
+  Separately, sprint 9 (preview
   environments) and sprint 10 (production skeleton) need real
   Vercel/Render/Neon accounts this session has no credentials for —
   **flag to the product owner** rather than attempting them blind; they
