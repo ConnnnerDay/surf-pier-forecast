@@ -1,13 +1,79 @@
-:root {
-  color-scheme: light dark;
+@import 'tailwindcss';
+
+/*
+ * Design tokens for sprint 27's design system (docs/CANONICAL_ROADMAP.md).
+ * Color values start from v2/frontend/src/index.css's already-reasonable
+ * teal/coral palette (R1_RECONCILIATION_AUDIT.md §3.2 flagged that app's
+ * *component* layer -- global .button/.card/.field classes, not real
+ * primitives -- as Replace, not its color choices), extended here with
+ * semantic go/marginal/no-go tokens for sprint 32's traffic-light dashboard
+ * headline. "Surf & Pier Forecast" and this palette are a working
+ * placeholder identity, not a final branding decision -- see
+ * docs/CANONICAL_ROADMAP.md's sprint 27 row.
+ *
+ * Declared via Tailwind v4's @theme so every token also becomes a utility
+ * class (bg-primary, text-go-text, ...); dark-mode values below override
+ * the same custom properties by media query, which the generated
+ * utilities pick up automatically since they reference var(--color-*).
+ */
+@theme {
+  --color-bg: #f4f7f8;
+  --color-surface: #ffffff;
+  --color-text: #0b1f2a;
+  --color-text-muted: #4a5c63;
+  --color-border: #d8e0e2;
+
+  --color-primary: #0e7480;
+  --color-primary-hover: #0b5f69;
+  --color-primary-contrast: #ffffff;
+  --color-accent: #ff8552;
+  --color-focus-ring: #0e7480;
+
+  --color-go-bg: #ecfdf3;
+  --color-go-text: #15803d;
+  --color-go-border: #86efac;
+  --color-marginal-bg: #fffbeb;
+  --color-marginal-text: #92400e;
+  --color-marginal-border: #fcd34d;
+  --color-nogo-bg: #fef2f2;
+  --color-nogo-text: #b91c1c;
+  --color-nogo-border: #fca5a5;
+
+  --font-sans:
+    system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #0b1f2a;
+    --color-surface: #122c3a;
+    --color-text: #eef5f6;
+    --color-text-muted: #a9bdc4;
+    --color-border: #234152;
+
+    --color-primary: #35b6c4;
+    --color-primary-hover: #5ecbd6;
+    --color-primary-contrast: #06222a;
+    --color-accent: #ff9d72;
+    --color-focus-ring: #35b6c4;
+  }
 }
 
 * {
   box-sizing: border-box;
 }
 
+html {
+  color-scheme: light dark;
+}
+
 body {
   margin: 0;
-  font-family:
-    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
 }

@@ -332,7 +332,7 @@ to reconciliation, not proof that the agreed outcome passed.
 
 | Sprint | Outcome | Acceptance focus | Current state |
 |---:|---|---|---|
-| 27 | Design system | Gallery at phone/desktop widths and accessible primitives; branding decided first (name included, not just visual identity — "Surf & Pier Forecast" is a placeholder); clean/utility-first tone, Surfline-for-fishing positioning | Candidate UI; not accepted |
+| 27 | Design system | Gallery at phone/desktop widths and accessible primitives; branding decided first (name included, not just visual identity — "Surf & Pier Forecast" is a placeholder); clean/utility-first tone, Surfline-for-fishing positioning | **Partially complete** — **product owner directed proceeding under the placeholder identity rather than blocking on a final branding decision.** `apps/web/app/globals.css` (Tailwind v4 `@theme` tokens, light/dark) and `app/components/ui/` (`Button`/`Card`/`Badge`/`Field`/`Container`) replace `v2/frontend`'s flagged `.button`/`.card`/`.field` global-CSS classes (`docs/R1_RECONCILIATION_AUDIT.md` §3.2) with real accessible primitives; `app/page.tsx` is the gallery page at phone/desktop widths. i18n-ready string externalization (bundled into this sprint by R1's disposition) and formal WCAG 2.2 AA verification (sprint 40's job) remain open |
 | 28 | Authentication | Email/password lifecycle, session rotation, bot/CAPTCHA defense on registration, abuse tests | Divergent auth exists; replace/adapt |
 | 29 | Account-required routing | Public exceptions and authorization/redirect tests | Candidate in `/v2` |
 | 30 | Onboarding shell | Mobile recording from registration to dashboard | Candidate in `/v2` |
@@ -1120,6 +1120,39 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   headers, and fail-closed with no configured keys. All of `apps/api`'s
   checks (ruff, ruff format, mypy, pytest — 321 passed) pass clean, no
   OpenAPI drift (nothing wired onto any route yet).
+- **Sprint 27, partial (design-system foundation, `apps/web`)**: the
+  product owner directed proceeding with Phase 3 frontend work under the
+  placeholder identity rather than waiting on a final branding decision
+  (name/visual identity still not decided — "Surf & Pier Forecast"
+  remains explicitly provisional throughout). `apps/web/app/globals.css`
+  adds Tailwind v4 via `@theme`-declared design tokens (colors, radius,
+  font) for light and dark, starting from `v2/frontend/src/index.css`'s
+  teal/coral palette -- `docs/R1_RECONCILIATION_AUDIT.md` §3.2 flagged
+  that app's `.button`/`.card`/`.field` *global CSS classes* as Replace
+  ("not a real design system"), not its color choices, so the palette
+  carries forward while the component layer is rebuilt as real React
+  primitives. `app/components/ui/` gained `Button` (renders a real
+  Next.js `<Link>` when `href` is given, a native `<button>` otherwise;
+  visible focus ring), `Card`, `Badge` (a status pill for sprint 32's
+  go/no-go traffic-light headline -- color reinforces the verdict, the
+  verdict itself is always the visible text label, never color alone),
+  `Field` (label/hint/error wired together via `aria-describedby`/
+  `aria-invalid`, closing the `.field`-class accessibility gap §3.6
+  flagged), and `Container` (mobile-first responsive width). `app/page.tsx`
+  is now a gallery page showcasing all five at phone and desktop widths,
+  screenshotted in both color schemes via a headless Chromium smoke test
+  (no console/page errors besides the pre-existing, unrelated favicon
+  404 every un-favicon'd Next.js app skeleton has). `app/not-found.tsx`
+  is the trivial 404 page R1's §3.1 route table names as a straight
+  `Keep`. Deliberately not attempted here: i18n-ready string
+  externalization (bundled into sprint 27 by R1's §3.7 disposition) and
+  a formal WCAG 2.2 AA audit (axe + keyboard/screen-reader evidence,
+  explicitly sprint 40's job per §3.6) -- this PR aims for
+  accessible-by-construction markup (semantic landmarks, labeled/
+  described form controls, visible focus states, text-not-color status
+  labels), not a certified audit. `npm run lint` (oxlint) and
+  `npm run build` both pass clean; TypeScript strict-mode compiles with
+  no errors.
 - **Incident (sprint 6, resolved earlier)**: a scratch branch explicitly
   titled `DO NOT MERGE` was merged into `main` under the repo owner's own
   account, landing deliberately-broken code; reverted within ~10 minutes
