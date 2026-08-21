@@ -61,6 +61,12 @@ _GRIDPOINT_FORECAST = {
     "properties": {"periods": [{"windSpeed": "10 mph", "windDirection": "SW"}]}
 }
 _COOPS_WIND_RESPONSE = {"data": [{"s": "10.5", "g": "14.2", "d": "SW"}]}
+_TIDE_PREDICTIONS_RESPONSE = {
+    "predictions": [
+        {"t": "2024-07-15 06:32", "v": "5.234", "type": "H"},
+        {"t": "2024-07-15 12:48", "v": "0.512", "type": "L"},
+    ]
+}
 
 
 def _make_client(
@@ -70,6 +76,7 @@ def _make_client(
     ndbc_ok: bool,
     gridpoint_ok: bool = True,
     coops_wind_ok: bool = True,
+    tides_ok: bool = True,
 ) -> BoundedHTTPClient:
     def handler(request: httpx.Request) -> httpx.Response:
         url = str(request.url)
@@ -85,6 +92,12 @@ def _make_client(
             return (
                 httpx.Response(200, json=_COOPS_WIND_RESPONSE)
                 if coops_wind_ok
+                else httpx.Response(503)
+            )
+        if "product=predictions" in url:
+            return (
+                httpx.Response(200, json=_TIDE_PREDICTIONS_RESPONSE)
+                if tides_ok
                 else httpx.Response(503)
             )
         if "datagetter" in url:
@@ -175,6 +188,13 @@ async def test_present_absent_matrix(
             state=SourceState.OK if ndbc_ok else SourceState.UNAVAILABLE,
             as_of=_NOW,
         ),
+        # tides_ok defaults to True in _make_client regardless of the
+        # three parametrized flags — tides is fetched independently.
+        SourceStatus(
+            provider="noaa_coops:tides",
+            state=SourceState.OK,
+            as_of=_NOW,
+        ),
     ]
     if not nws_ok and not ndbc_ok:
         # Both primary wind sources down — assembly attempts the wind
@@ -226,6 +246,13 @@ async def test_present_absent_matrix(
     assert by_provider["ndbc:buoy"].state == (
         SourceState.OK if ndbc_ok else SourceState.UNAVAILABLE
     )
+    assert by_provider["noaa_coops:tides"].state == SourceState.OK
+
+    # Tides is independent of the three parametrized sources — always
+    # present here, since _make_client's tides_ok defaults to True.
+    assert envelope.tides is not None
+    assert envelope.tides["station_id"] == "8658163"
+    assert len(envelope.tides["predictions"]) == 2
 
     # Data presence matches source outcome, per-field.
     assert (conditions.marine_zone_wind is not None) == nws_ok
@@ -279,22 +306,87 @@ async def test_location_domain_fields_mapped_correctly() -> None:
 
 
 @pytest.mark.asyncio
-async def test_tides_hourly_outlook_recommendations_left_none() -> None:
+async def test_hourly_outlook_recommendations_left_none() -> None:
+    """`tides` is populated now (sprint 34's backend half); `hourly_outlook`
+    and `recommendations` remain deferred to their own owning sprints.
+    """
     client = _make_client(nws_ok=True, coops_ok=True, ndbc_ok=True)
     async with client:
         envelope = await assemble_forecast(
             _WRIGHTSVILLE_BEACH, client, _WATER_TEMP_PROFILES, now=_NOW
         )
 
-    assert envelope.tides is None
+    assert envelope.tides is not None
     assert envelope.hourly_outlook is None
     assert envelope.recommendations is None
 
 
 @pytest.mark.asyncio
+async def test_tides_request_uses_local_date_window() -> None:
+    """_NOW is 2024-07-15 12:00 UTC; Wrightsville Beach is
+    America/New_York (EDT, UTC-4 in July), so local "today" is still
+    2024-07-15 -- begin_date/end_date should reflect the *location's*
+    local date, not a naive UTC one that could be off by a day for
+    other timezones.
+    """
+    seen_url = {"value": ""}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        url = str(request.url)
+        if "product=predictions" in url:
+            seen_url["value"] = url
+            return httpx.Response(200, json=_TIDE_PREDICTIONS_RESPONSE)
+        if "zones/forecast" in url:
+            return httpx.Response(200, json=_MARINE_ZONE_FORECAST)
+        if "alerts/active" in url:
+            return httpx.Response(200, json={"features": []})
+        if "datagetter" in url:
+            return httpx.Response(200, json=_WATER_TEMP_RESPONSE)
+        if "ndbc.noaa.gov" in url:
+            return httpx.Response(200, text=_NDBC_FEED)
+        raise AssertionError(f"unexpected URL: {url}")
+
+    transport = httpx.MockTransport(handler)
+    async with BoundedHTTPClient(
+        transport=transport, max_retries=0, backoff_base_seconds=0.0
+    ) as client:
+        await assemble_forecast(
+            _WRIGHTSVILLE_BEACH, client, _WATER_TEMP_PROFILES, now=_NOW
+        )
+
+    assert "begin_date=20240715" in seen_url["value"]
+    assert "end_date=20240717" in seen_url["value"]
+    assert "station=8658163" in seen_url["value"]
+
+
+@pytest.mark.asyncio
+async def test_tides_unavailable_degrades_to_none_with_warning() -> None:
+    client = _make_client(nws_ok=True, coops_ok=True, ndbc_ok=True, tides_ok=False)
+    async with client:
+        envelope = await assemble_forecast(
+            _WRIGHTSVILLE_BEACH, client, _WATER_TEMP_PROFILES, now=_NOW
+        )
+
+    assert envelope.tides is None
+    by_provider = {s.provider: s for s in envelope.sources}
+    assert by_provider["noaa_coops:tides"].state == SourceState.UNAVAILABLE
+    assert any(
+        w.code == "source_unavailable:noaa_coops_tides" for w in envelope.warnings
+    )
+    # Everything else still resolves fine -- one source failing doesn't
+    # blank the forecast.
+    assert envelope.state == ForecastState.FRESH
+
+
+@pytest.mark.asyncio
 async def test_no_stations_assigned_treated_as_unavailable_not_a_crash() -> None:
     location = _WRIGHTSVILLE_BEACH.model_copy(
-        update={"nws_zone": "", "ndbc_stations": [], "water_temp_station": ""}
+        update={
+            "nws_zone": "",
+            "ndbc_stations": [],
+            "water_temp_station": "",
+            "coops_station": "",
+        }
     )
 
     def handler(request: httpx.Request) -> httpx.Response:
@@ -325,6 +417,8 @@ async def test_no_stations_assigned_treated_as_unavailable_not_a_crash() -> None
     by_provider = {s.provider: s for s in envelope.sources}
     assert by_provider["noaa_coops:wind"].state == SourceState.UNAVAILABLE
     assert by_provider["nws:gridpoint_wind"].state == SourceState.UNAVAILABLE
+    assert by_provider["noaa_coops:tides"].state == SourceState.UNAVAILABLE
+    assert envelope.tides is None
 
 
 @pytest.mark.asyncio
@@ -395,6 +489,8 @@ async def test_score_wind_direction_prefers_marine_zone_over_buoy() -> None:
             return httpx.Response(200, json=marine_zone_w_wind)
         if "alerts/active" in url:
             return httpx.Response(200, json={"features": []})
+        if "product=predictions" in url:
+            return httpx.Response(200, json=_TIDE_PREDICTIONS_RESPONSE)
         if "datagetter" in url:
             return httpx.Response(200, json=_WATER_TEMP_RESPONSE)
         if "ndbc.noaa.gov" in url:
@@ -495,6 +591,8 @@ async def test_wind_fallback_chain_not_fetched_when_marine_zone_available() -> N
             return httpx.Response(200, json={"features": []})
         if "product=wind" in url or "/points/" in url:
             raise AssertionError(f"wind fallback chain should not be called: {url}")
+        if "product=predictions" in url:
+            return httpx.Response(200, json=_TIDE_PREDICTIONS_RESPONSE)
         if "datagetter" in url:
             return httpx.Response(200, json=_WATER_TEMP_RESPONSE)
         if "ndbc.noaa.gov" in url:
@@ -535,6 +633,8 @@ async def test_coops_wind_rescues_forecast_when_both_primary_sources_down() -> N
             return httpx.Response(200, json={"features": []})
         if "product=wind" in url:
             return httpx.Response(200, json=_COOPS_WIND_RESPONSE)
+        if "product=predictions" in url:
+            return httpx.Response(200, json=_TIDE_PREDICTIONS_RESPONSE)
         if "/points/" in url:
             raise AssertionError(f"gridpoint fallback should not be called: {url}")
         if "datagetter" in url:

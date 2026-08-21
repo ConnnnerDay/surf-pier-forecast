@@ -11,12 +11,23 @@ docs/CANONICAL_ROADMAP.md's product contract's Reliability bullet.
 
 **This sprint designs `ForecastEnvelope.conditions`**, per sprint 11's
 domain-models docstring, which named sprints 21/22/34/35 as the owners
-of `conditions`/`tides`/`hourly_outlook`/`recommendations`. `tides` is
-NOT touched here — the legacy architecture and the roadmap's sprint 34
-("Tides and timing") both treat tide predictions as a distinct
-time-series/schedule concern from "current conditions," so this sprint
-doesn't fetch or shape tide data at all; `hourly_outlook` and
-`recommendations` stay opaque for their respective owning sprints too.
+of `conditions`/`tides`/`hourly_outlook`/`recommendations`.
+`hourly_outlook` and `recommendations` stay opaque for their respective
+owning sprints. `tides` was originally deferred here too -- the legacy
+architecture and the roadmap's sprint 34 ("Tides and timing") both
+treat tide predictions as a distinct time-series/schedule concern from
+"current conditions" -- but sprint 34's backend half (fetch + shape,
+not the accessible-chart/text-alternative rendering, which is
+`apps/web`'s job) landed once search/forecast wiring made a real
+per-location lookup worth enriching. `ForecastTides` (this module) is
+that shape: the location's tide station id plus upcoming high/low
+predictions from `app.providers.noaa_coops.fetch_tide_predictions`,
+timezone/DST-safe via that function's own `zoneinfo` handling. Fetched
+in the same `asyncio.gather` as the other independent sources (not
+sequentially), degrading to `tides=None` plus an advisory `Warning` on
+failure -- there's no fallback substitute for tide predictions the way
+water temperature has a monthly average, so "unavailable" is the
+honest answer, never invented.
 
 **Every present/absent matrix.** The three fallible sources give
 2**3 = 8 combinations, each exercised in `tests/test_assembly.py`.
@@ -128,7 +139,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Generic, TypeVar
 
 from pydantic import BaseModel
@@ -158,6 +169,7 @@ from app.domain.scoring import (
     wind_orientation_for_region,
 )
 from app.infra.http_client import BoundedHTTPClient, ProviderError
+from app.infra.timezones import safe_zone
 from app.providers.astronomy import LunarDetails, SolunarTimes, SunTimes, TwilightTimes
 from app.providers.astronomy import compute_lunar_details as _compute_lunar_details
 from app.providers.astronomy import compute_solunar_times as _compute_solunar_times
@@ -167,8 +179,10 @@ from app.providers.locations import ResolvedLocation, monthly_water_temps_for_re
 from app.providers.ndbc import BuoyObservation, fetch_buoy_observation
 from app.providers.noaa_coops import (
     CoopsWindReading,
+    TidePrediction,
     WaterTemperatureReading,
     fetch_coops_wind,
+    fetch_tide_predictions,
     fetch_water_temperature,
 )
 from app.providers.nws import (
@@ -185,6 +199,9 @@ _SOURCE_NOAA_COOPS_WATER_TEMP = "noaa_coops:water_temperature"
 _SOURCE_NDBC_BUOY = "ndbc:buoy"
 _SOURCE_NWS_GRIDPOINT_WIND = "nws:gridpoint_wind"
 _SOURCE_NOAA_COOPS_WIND = "noaa_coops:wind"
+_SOURCE_NOAA_COOPS_TIDES = "noaa_coops:tides"
+
+_TIDE_WINDOW_DAYS = 2
 
 T = TypeVar("T")
 
@@ -225,6 +242,18 @@ class ForecastConditions(BaseModel):
     lunar: LunarDetails
     solunar: SolunarTimes
     score: ForecastScore
+
+
+class ForecastTides(BaseModel):
+    """The sprint-34-designed shape of `ForecastEnvelope.tides` -- a
+    distinct time-series/schedule concern from `conditions`, per this
+    module's docstring. Just the upcoming high/low predictions for the
+    location's tide station; accessible-chart rendering and text
+    alternatives are `apps/web`'s job, not this backend shape's.
+    """
+
+    station_id: str
+    predictions: list[TidePrediction]
 
 
 def _to_domain_location(location: ResolvedLocation) -> Location:
@@ -289,6 +318,25 @@ async def _fetch_buoy(
     return _FetchResult(value=value, error=None)
 
 
+async def _fetch_tides(
+    client: BoundedHTTPClient, station_id: str, now: datetime, tz_name: str
+) -> _FetchResult[list[TidePrediction]]:
+    if not station_id:
+        return _FetchResult(
+            value=None, error="no CO-OPS tide station assigned to this location"
+        )
+    local_today = now.astimezone(safe_zone(tz_name)).date()
+    begin_date = local_today.strftime("%Y%m%d")
+    end_date = (local_today + timedelta(days=_TIDE_WINDOW_DAYS)).strftime("%Y%m%d")
+    try:
+        value = await fetch_tide_predictions(
+            client, station_id, begin_date, end_date, tz_name=tz_name
+        )
+    except ProviderError as exc:
+        return _FetchResult(value=None, error=str(exc))
+    return _FetchResult(value=value, error=None)
+
+
 def _source_status(name: str, result: _FetchResult[T], now: datetime) -> SourceStatus:
     if result.error is None:
         return SourceStatus(provider=name, state=SourceState.OK, as_of=now)
@@ -319,17 +367,25 @@ async def assemble_forecast(
     *,
     now: datetime,
 ) -> ForecastEnvelope:
-    marine_zone_result, water_temp_result, buoy_result, alerts = await asyncio.gather(
+    (
+        marine_zone_result,
+        water_temp_result,
+        buoy_result,
+        alerts,
+        tides_result,
+    ) = await asyncio.gather(
         _fetch_marine_zone(client, location.nws_zone),
         _fetch_water_temp(client, location.water_temp_station),
         _fetch_buoy(client, location.ndbc_stations),
         fetch_point_alerts(client, location.lat, location.lng),
+        _fetch_tides(client, location.coops_station, now, location.timezone),
     )
 
     sources = [
         _source_status(_SOURCE_NWS_MARINE_ZONE, marine_zone_result, now),
         _source_status(_SOURCE_NOAA_COOPS_WATER_TEMP, water_temp_result, now),
         _source_status(_SOURCE_NDBC_BUOY, buoy_result, now),
+        _source_status(_SOURCE_NOAA_COOPS_TIDES, tides_result, now),
     ]
 
     warnings: list[Warning] = []
@@ -338,6 +394,14 @@ async def assemble_forecast(
             Warning(
                 code="source_unavailable:nws_marine_zone",
                 message=f"NWS marine zone forecast unavailable: {marine_zone_result.error}",
+                severity=WarningSeverity.ADVISORY,
+            )
+        )
+    if tides_result.error is not None:
+        warnings.append(
+            Warning(
+                code="source_unavailable:noaa_coops_tides",
+                message=f"Tide predictions unavailable: {tides_result.error}",
                 severity=WarningSeverity.ADVISORY,
             )
         )
@@ -553,6 +617,14 @@ async def assemble_forecast(
         ),
     )
 
+    tides = (
+        ForecastTides(
+            station_id=location.coops_station, predictions=tides_result.value
+        ).model_dump(mode="json")
+        if tides_result.value is not None
+        else None
+    )
+
     return ForecastEnvelope(
         location=_to_domain_location(location),
         generated_at=now,
@@ -561,7 +633,7 @@ async def assemble_forecast(
         confidence=confidence,
         warnings=warnings,
         conditions=conditions.model_dump(mode="json"),
-        tides=None,
+        tides=tides,
         hourly_outlook=None,
         recommendations=None,
     )
