@@ -8,6 +8,39 @@ app authenticates the user and signs the internal request instead.
 
 ## Status
 
+Sprint 34's remaining "accessible charts" sub-item: `ForecastCard`
+gains `HourlyOutlookChart`, a hand-rolled SVG bar chart rendered
+alongside (not instead of) the already-complete `HourlyOutlookTable`.
+Per the `dataviz` skill's own form heuristic, one activity level per
+hour is a **magnitude** series, not a categorical identity, so it gets
+a single-hue sequential encoding — `--color-primary` at variable
+opacity, bar height *and* opacity both tracking `level` — rather than
+four discrete colors for `ActivityTag`'s low/med/high/prime tiers.
+`--color-go-text`/`--color-marginal-text` (used elsewhere, but only
+*paired* with their own light-tint badge background) were considered
+and rejected for a bar fill: per `app/globals.css`'s own comment on
+`--color-danger-text`, those tokens are theme-invariant and would risk
+the exact dark-mode contrast bug the sprint-27 `axe-core` pass already
+found and fixed once for `--color-nogo-text` — `--color-primary`/
+`--color-accent` are already theme-aware, sidestepping that risk
+entirely instead of adding new tokens to re-solve it. The current hour
+gets an accent-colored ring; the day's peak gets an accent dot. The
+whole chart is `aria-hidden="true"` — it's a decorative duplicate of
+data the table already carries as real, screen-reader-reachable text,
+so re-announcing it would be noise, not a service; per that same rule,
+each bar has a native SVG `<title>` (mouse-hover tooltip) but no
+`tabindex`, since an `aria-hidden` subtree must never contain a
+keyboard-focusable element (axe-core's `aria-hidden-focus` rule).
+Since `hourly_outlook` never degrades to `None` (unlike `tides`), this
+was verified against the real, live forecast page rather than mock
+data — the chart's bar heights visibly match the adjacent table's
+levels — plus a fresh `axe-core` spot-check across desktop/phone ×
+light/dark (4 combinations) found zero violations and no horizontal
+overflow. A visual chart for tides remains open, and is a separate,
+smaller follow-up (a curve/point chart, not a bar chart, since the
+`dataviz` skill's own form heuristic treats a small handful of
+high/low events differently from a fine-grained hourly series).
+
 Sprint 39 ("Responsive polish"), the "Lighthouse" acceptance sub-item:
 ran a real [Lighthouse](https://developer.chrome.com/docs/lighthouse/)
 audit (mobile, performance/accessibility/best-practices/SEO) against a
