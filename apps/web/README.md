@@ -8,6 +8,55 @@ app authenticates the user and signs the internal request instead.
 
 ## Status
 
+Sprint 49 ("SEO and sharing"), the "public non-personal forecast pages
+(organic-growth surface)" half of the acceptance bar: `app/forecast/
+[locationId]/page.tsx` gains a real `generateMetadata` -- per-location
+title (`"{label} Fishing Forecast"`), description, canonical URL, and
+OpenGraph tags, replacing the root layout's generic default on the one
+page type worth indexing individually. The description is deliberately
+static copy about the location, never live score/warning text — a
+degraded-conditions sentence (a real "could not connect to..." warning)
+has no business being cached into a search result or link-preview
+card. Wrapped the actual `internalApiFetch` call in React's `cache()`
+(not relying on `fetch`'s own automatic per-request memoization, which
+can't dedupe here — ADR-004 signs every request with a fresh
+`requestId`/timestamp, so two calls for the same location never look
+like the same `fetch(...)` call to Next's dedup) so `generateMetadata`
+and the page body share one real network round trip per request, not
+two — confirmed by checking `apps/api`'s own request logs during
+verification, not assumed. A 404 (unknown `location_id`) calls
+`notFound()` from `generateMetadata` too, matching the page body, so a
+bad link gets Next's real not-found metadata instead of a fabricated
+title.
+
+`app/layout.tsx` gains `metadataBase` (env-driven via
+`NEXT_PUBLIC_SITE_URL`, defaulting to `http://localhost:3000` so
+`next build`/`next dev` never need it set), a title template
+(`"%s — Surf & Pier Forecast"`), and `openGraph`/`twitter` defaults.
+`app/opengraph-image.tsx` generates a real 1200×630 PNG link-preview
+card at build time via `next/og`'s `ImageResponse` (same technique as
+`app/icon.tsx`'s favicon — no `public/` asset), using the design
+system's own teal/coral palette, so this implies no branding decision
+beyond the one already on record (sprint 27's row); a per-location
+card is a follow-up, not attempted here. `app/robots.ts` allows every
+page (nothing is private yet — sprint 28's job) and deliberately omits
+a `Sitemap` directive: a real sitemap needs an endpoint that can
+enumerate every curated location, and `apps/api`'s 101-spot dataset
+isn't exposed that way today (only via `/v1/locations/search`'s
+query-based lookup) — inventing a partial sitemap from whatever
+happens to be searchable would misrepresent the site's real page count
+more than omitting it entirely; that's this sprint's remaining open
+piece, needing a small `apps/api` addition first.
+
+Verified against two real running servers: `curl` confirmed the real
+per-location `<title>`/description/canonical/`og:*` tags, the 404
+page's fallback to the generic title, `robots.txt`'s real output, and
+the OG image's real `image/png` response (`file` confirmed 1200×630).
+A fresh `axe-core` spot-check on the forecast and home pages found
+zero violations. `npm run build`'s route table gained `/robots.txt`
+and `/opengraph-image` as new static routes; `/forecast/[locationId]`
+is still `ƒ Dynamic`. `npm run lint`/`npm run build` both pass clean.
+
 Sprint 34's last remaining open piece, the tide visual chart:
 `ForecastCard` gains `TideChart`, rendered alongside (not instead of)
 the already-complete `TideTable`. This is a **point chart with
@@ -382,6 +431,15 @@ no-live-provider-dependence rule), so expect a gracefully degraded
 forecast (state `partial`, confidence `low`, real warning messages) —
 that's the signed path and the degradation path both working, not a
 bug. Against real network access the same page renders a live forecast.
+
+### Other environment variables
+
+`NEXT_PUBLIC_SITE_URL` (optional, default `http://localhost:3000`) —
+the real deployed origin, once one exists (Vercel isn't provisioned
+yet, `docs/CANONICAL_ROADMAP.md`'s Phase 1 blockers 9/10). Used as
+`app/layout.tsx`'s `metadataBase`, so every relative canonical/
+OpenGraph URL (sprint 49) resolves correctly. Never needs setting for
+local dev or `next build`.
 
 ## Checks
 
