@@ -17,6 +17,12 @@ The `lifespan` context manager owns the app-lifetime resources every
 caching wiring) — created on startup and closed on shutdown rather than
 per-request, same pooling rationale sprint 12's docstring gives for the
 HTTP client itself.
+
+`app.infra.request_logging.log_requests` (sprint 41, "Structured
+observability," the dependency-free half) wraps every request with one
+structured JSON trace log line, correlated with `apps/web`'s own log
+line for the same call via ADR-004's `X-Internal-Request-Id` header —
+see that module's docstring.
 """
 
 from collections.abc import AsyncIterator
@@ -28,6 +34,7 @@ from app.api.deps import AppState
 from app.api.v1.forecasts import router as forecasts_router
 from app.api.v1.locations import router as locations_router
 from app.infra.http_client import BoundedHTTPClient
+from app.infra.request_logging import log_requests
 from app.infra.snapshot_cache import SnapshotCache
 from app.providers.stations import StationCatalogCache
 
@@ -46,6 +53,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(title="Surf & Pier Forecast API", version="0.1.0", lifespan=lifespan)
+
+app.middleware("http")(log_requests)
 
 app.include_router(locations_router)
 app.include_router(forecasts_router)

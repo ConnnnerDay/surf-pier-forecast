@@ -19,6 +19,26 @@ import { sha256Hex, sign, type SignedRequestFields } from './internal-signature'
  *
  * `userId` is always omitted for now: there's no Better Auth (sprint 28)
  * session to source a real one from yet.
+ *
+ * Sprint 41 ("Structured observability," the dependency-free half): every
+ * call logs one structured JSON trace line (`request_id`/method/path/
+ * `status_code`/`duration_ms`) to stdout, correlated with
+ * `apps/api/app/infra/request_logging.py`'s own trace line for the same
+ * call via the same `requestId` this function already generates for
+ * ADR-004's signature -- grepping one id in both services' logs finds
+ * both halves of one request. "Safe context" matches that module's rule:
+ * `path` is logged with its query string stripped (a caller can embed
+ * one, e.g. the location-search route's `?q=...`), never headers or the
+ * request/response body.
+ *
+ * This trace log is also what caught a real, previously-undetected
+ * issue on `app/forecast/[locationId]/page.tsx`: `generateMetadata` and
+ * the page body each call this function once, and were assumed (sprint
+ * 49) to share one call via React `cache()` -- a two-server trace using
+ * this exact logging showed two distinct `request_id`s reaching
+ * apps/api for one page view instead. See that page's `getForecast`
+ * docstring for the full account; apps/api's own snapshot cache keeps
+ * the real cost of the second call low regardless.
  */
 
 const VALIDITY_SECONDS = 20
@@ -76,12 +96,24 @@ export async function internalApiFetch<T>(
     headers['Content-Type'] = 'application/json'
   }
 
+  const started = performance.now()
   const response = await fetch(`${baseUrl}${path}`, {
     method,
     headers,
     body: bodyText || undefined,
     cache: 'no-store',
   })
+  const durationMs = Math.round((performance.now() - started) * 10) / 10
+
+  console.log(
+    JSON.stringify({
+      request_id: fields.requestId,
+      method,
+      path: path.split('?')[0],
+      status_code: response.status,
+      duration_ms: durationMs,
+    }),
+  )
 
   if (!response.ok) {
     throw new InternalApiError(response.status, await response.text())
