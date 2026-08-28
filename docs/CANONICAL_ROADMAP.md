@@ -351,7 +351,7 @@ to reconciliation, not proof that the agreed outcome passed.
 
 | Sprint | Outcome | Acceptance focus | Current state |
 |---:|---|---|---|
-| 41 | Structured observability | One request trace across web/API/sources with safe context | Not accepted |
+| 41 | Structured observability | One request trace across web/API/sources with safe context | **Partially complete** — the dependency-free half, no observability vendor: `apps/api/app/infra/request_logging.py`'s `log_requests` middleware emits one structured JSON trace line per request (`request_id`/method/path/status_code/duration_ms, "safe context" — no query string, headers, or body), correlated with `apps/web/lib/internal-api-client.ts`'s own trace line for the same call via ADR-004's `X-Internal-Request-Id` header (already generated for signing, not a new correlation scheme). Fires even for requests that never reach a route handler (an unsigned/unauthenticated call), since it wraps the whole ASGI call. Caught and fixed a real bug in the process: the middleware's `logger.info(...)` calls were silently dropped under a real `uvicorn app.main:app` run (no handler attached — uvicorn only wires up its own loggers, and pytest's `caplog` fixture had been masking this by attaching its own handler regardless) — fixed by giving the logger its own `StreamHandler`. Verified end-to-end against two real running servers: grepped the same `request_id` out of both services' real log output for one real page load, not asserted from unit tests alone — and in the process caught and corrected a real inaccuracy in sprint 49's fetch-deduplication claim (see that row). Per-source (NWS/NOAA CO-OPS/NDBC provider) log lines remain uncorrelated with the request trace — a larger refactor threading the request id through every provider call, not attempted here without evidence it's worth the churn |
 | 42 | Error monitoring | Frontend/API releases, source maps and secret redaction | Not accepted |
 | 43 | Privacy-safe analytics | Registration, resolution, forecast state, latency, return use | Not accepted |
 | 44 | Security hardening | CSP, CSRF, signed internal API, brute force, headers, threat model | **Partially complete** — the signed-internal-API piece is now built **and wired end-to-end**: `apps/api/app/infra/internal_signature.py` + `app/api/internal_auth.py` implement ADR-004's HMAC-SHA-256 contract (no legacy precedent), required on every `/v1` route via `Depends(require_internal_signature)`; `apps/web/lib/internal-signature.ts` + `internal-api-client.ts` are the matching signer, exercised by `apps/web/app/forecast/demo/page.tsx`. CSP and security headers are also done: `apps/web/next.config.ts`'s `headers()` attaches a self-only `Content-Security-Policy` plus `X-Content-Type-Options`/`X-Frame-Options`/`Referrer-Policy`/`Permissions-Policy`/`X-Permitted-Cross-Domain-Policies`/`Strict-Transport-Security` to every response, adapted (stricter, since apps/web has no third-party origins yet) from the legacy Flask app's `_set_security_headers`; verified against a real production build/server, not just `next dev` — real headers on static/dynamic/Route-Handler responses, a full headless-Chromium interactive pass confirming zero actual CSP violations, and a fresh `axe-core` spot-check. CSRF and brute-force defense remain candidate pieces — both need Better Auth (sprint 28) first, since neither is meaningful before there are mutating, authenticated endpoints to protect; not accepted |
@@ -359,7 +359,7 @@ to reconciliation, not proof that the agreed outcome passed.
 | 46 | Database resilience | Migrations, constraints, indexes, pooling, backups, blank restore drill | Not accepted |
 | 47 | Degraded-mode UX | Database/API/email/upstream chaos yields actionable UI | Not accepted |
 | 48 | Release controls | Promotion, migration gate, smoke, rollback and staging drill | Not accepted |
-| 49 | SEO and sharing | **Required for v1**, not just later phase-4 sequencing: public non-personal forecast pages (organic-growth surface); private dashboards | **Partially complete** — the "public non-personal forecast pages" half: `apps/web/app/forecast/[locationId]/page.tsx` gains real per-location `generateMetadata` (title, description, canonical URL, OpenGraph tags — static copy, never live score/warning text), sharing its `internalApiFetch` call with the page body via React `cache()` so metadata resolution costs no extra network round trip. `app/layout.tsx` gains `metadataBase`/a title template/OpenGraph+Twitter defaults; `app/opengraph-image.tsx` generates a real 1200×630 PNG link-preview card via `next/og` (design-system palette, no new branding decision); `app/robots.ts` allows every page (nothing private exists yet — sprint 28's job). Verified against two real running servers (`curl` confirmed real tags/canonical/404-fallback/robots output/OG-image response) plus a fresh `axe-core` spot-check, zero violations. A real sitemap.xml (this sprint's other named piece, needing a small `apps/api` addition to enumerate curated locations — `/v1/locations/search` is query-based only, not a full listing) and the "private dashboards" half (needs sprint 28's auth) remain open |
+| 49 | SEO and sharing | **Required for v1**, not just later phase-4 sequencing: public non-personal forecast pages (organic-growth surface); private dashboards | **Partially complete** — the "public non-personal forecast pages" half: `apps/web/app/forecast/[locationId]/page.tsx` gains real per-location `generateMetadata` (title, description, canonical URL, OpenGraph tags — static copy, never live score/warning text), attempting to share its `internalApiFetch` call with the page body via React `cache()` — **verified not to actually dedupe** once sprint 41's request tracing existed to check it (two distinct signed calls reach apps/api per page view, not one; `apps/api`'s own sprint-24 `SnapshotCache` keeps the real cost of the second one low regardless, so this is a known inefficiency, not a correctness problem — see sprint 41's row and that page's `getForecast` docstring). `app/layout.tsx` gains `metadataBase`/a title template/OpenGraph+Twitter defaults; `app/opengraph-image.tsx` generates a real 1200×630 PNG link-preview card via `next/og` (design-system palette, no new branding decision); `app/robots.ts` allows every page (nothing private exists yet — sprint 28's job). Verified against two real running servers (`curl` confirmed real tags/canonical/404-fallback/robots output/OG-image response) plus a fresh `axe-core` spot-check, zero violations. A real sitemap.xml (this sprint's other named piece, needing a small `apps/api` addition to enumerate curated locations — `/v1/locations/search` is query-based only, not a full listing) and the "private dashboards" half (needs sprint 28's auth) remain open |
 | 50 | Launch readiness | Cross-device, load, security, a11y, restore, outage evidence | Not accepted |
 | 51 | Limited beta | Small angler cohort recruited via personal network and local fishing communities (not a public open beta); severity/reproduction report | Not accepted |
 | 52 | Public-launch runbook | Owners, freeze rules, alerts, go/no-go and rollback triggers | Not accepted |
@@ -430,9 +430,9 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #371 (sprint 34's tide visual chart, closing the
-  sprint entirely — `TideChart`, a point chart with straight lines
-  between real predictions, `d588cb0`, merged as `8ffc649`).
+- Last merged PR: #372 (sprint 49 partial — real per-location SEO
+  metadata, OpenGraph image, and robots.txt for `apps/web`'s forecast
+  pages, `4588d23`, merged as `ac4f15a`).
 - **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
   1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
   (#332). Phase 1's only remaining items (9, 10) need external accounts —
@@ -1611,16 +1611,19 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   deliberately static copy about the location, never live score/
   warning text -- a degraded-conditions sentence (a real "could not
   connect to..." warning) has no business being cached into a search
-  result or link-preview card. The actual `internalApiFetch` call is
-  wrapped in React's `cache()` (not relying on `fetch`'s own automatic
-  per-request memoization, which can't dedupe here -- ADR-004 signs
-  every request with a fresh `requestId`/timestamp, so two calls for
-  the same location never look like the same `fetch(...)` call to
-  Next's dedup) so `generateMetadata` and the page body share one real
-  network round trip per request, not two. A 404 (unknown
-  `location_id`) calls `notFound()` from `generateMetadata` too,
-  matching the page body, so a bad link gets Next's real not-found
-  metadata instead of a fabricated title.
+  result or link-preview card. The actual `internalApiFetch` call was
+  wrapped in React's `cache()`, intended to make `generateMetadata` and
+  the page body share one real network round trip per request instead
+  of two (`fetch`'s own automatic per-request memoization can't help
+  here regardless -- ADR-004 signs every request with a fresh
+  `requestId`/timestamp, so two calls for the same location never look
+  like the same `fetch(...)` call to that mechanism). **Correction,
+  logged in sprint 41's row below**: this was later found, once
+  request tracing existed to check it, not to actually work -- two
+  distinct signed calls reach apps/api per page view, not one. A 404
+  (unknown `location_id`) calls `notFound()` from `generateMetadata`
+  too, matching the page body, so a bad link gets Next's real
+  not-found metadata instead of a fabricated title.
 
   `app/layout.tsx` gains `metadataBase` (env-driven via
   `NEXT_PUBLIC_SITE_URL`, defaulting to `http://localhost:3000`), a
@@ -1648,6 +1651,59 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   pages found zero violations. `npm run build`'s route table gained
   `/robots.txt` and `/opengraph-image` as new static routes;
   `/forecast/[locationId]` is still `ƒ Dynamic`. `npm run lint`/
+  `npm run build` both pass clean.
+- **Sprint 41, partial (structured observability -- the dependency-free
+  half)**: `apps/api/app/infra/request_logging.py`'s `log_requests`
+  middleware emits one structured JSON trace line per request
+  (`request_id`/method/path/status_code/duration_ms -- "safe context,"
+  no query string, headers, or body), correlated with
+  `apps/web/lib/internal-api-client.ts`'s own trace line for the same
+  call via ADR-004's `X-Internal-Request-Id` header, already generated
+  for signing rather than a new correlation scheme invented here.
+  Fires even for a request that never reaches a route handler (an
+  unsigned/unauthenticated call rejected by
+  `require_internal_signature`), since Starlette middleware wraps the
+  whole ASGI call, not just the routes behind that dependency --
+  `apps/api/tests/test_request_logging.py` proves this explicitly, not
+  just the happy path.
+
+  Caught and fixed a real bug in the process: the middleware's
+  `logger.info(...)` calls were silently dropped under a real
+  `uvicorn app.main:app` run -- no handler was ever attached to the
+  `app.request` logger (uvicorn's own logging config only wires up its
+  own `uvicorn`/`uvicorn.access`/`uvicorn.error` loggers, and nothing
+  else in this app calls `logging.basicConfig()`), while pytest's
+  `caplog` fixture had been masking this the whole time by attaching
+  its own handler to the root logger regardless of this logger's own
+  configuration -- exactly the "tests pass, runtime is silent" pattern
+  this session's discipline of checking a real running server, not
+  just unit tests, exists to catch. Fixed by giving the logger its own
+  `StreamHandler(sys.stdout)`, deliberately leaving `propagate` at its
+  default `True` so both the real output and `caplog`'s test capture
+  keep working side by side.
+
+  Verified end-to-end against two real running servers: made one real
+  page request through `apps/web` to `apps/api` and grepped the same
+  `request_id` out of both services' real log output, not asserted
+  from unit tests alone. In the process, this same trace caught and
+  corrected a real inaccuracy already merged in sprint 49's checkpoint
+  entry above and in `apps/web/README.md`/the affected source files'
+  docstrings: `generateMetadata`'s `cache()`-wrapped fetch was claimed
+  to dedupe with the page body's own call, "confirmed by checking
+  apps/api's own request logs" -- logs that did not yet exist at the
+  time that claim was written. The real trace showed two distinct
+  `request_id`s reaching apps/api for one page view; `apps/api`'s own
+  sprint-24 `SnapshotCache` keeps the real cost of the second call low
+  (single-digit milliseconds, versus several seconds for the first,
+  cold call) regardless, so this is a known, now-honestly-documented
+  inefficiency, not a correctness problem -- and a concrete argument
+  for why this sprint's tracing is worth having: it caught a false
+  claim nothing else in this recovery's process had. Per-source
+  (NWS/NOAA CO-OPS/NDBC provider) log lines remain uncorrelated with
+  the request trace -- a larger refactor threading the request id
+  through every provider call, not attempted here without evidence
+  it's worth the churn. `apps/api`: ruff, ruff format, mypy, pytest
+  (348 passed) all pass clean. `apps/web`: `npm run lint`/
   `npm run build` both pass clean.
 - **Incident (sprint 6, resolved earlier)**: a scratch branch explicitly
   titled `DO NOT MERGE` was merged into `main` under the repo owner's own

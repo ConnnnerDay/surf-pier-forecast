@@ -501,6 +501,35 @@ Boots, has real CI, and now has:
   present/absent matrix, rather than adding parallel duplicate tests.
   All of `apps/api`'s checks (ruff, ruff format, mypy, pytest — 344
   passed) pass clean.
+- Sprint 41's dependency-free half ("Structured observability, one
+  request trace across web/API/sources with safe context" — no
+  observability vendor): `app/infra/request_logging.py`'s
+  `log_requests` middleware (wired onto `app.main.app` via
+  `app.middleware("http")`) emits one structured JSON trace line per
+  request — `request_id`/method/path/`status_code`/`duration_ms`,
+  "safe context" meaning exactly that and nothing else, no query
+  string/headers/body — correlated with `apps/web/lib/
+  internal-api-client.ts`'s own trace line for the same call via
+  ADR-004's `X-Internal-Request-Id` header, already generated for
+  signing rather than a new correlation scheme. Fires even for a
+  request that never reaches a route handler (an unsigned call
+  `require_internal_signature` rejects), since Starlette middleware
+  wraps the whole ASGI call — `apps/api/tests/
+  test_request_logging.py` proves this explicitly. Caught and fixed a
+  real bug: the middleware's `logger.info(...)` calls were silently
+  dropped under a real `uvicorn app.main:app` run (uvicorn only wires
+  up its own loggers; nothing else calls `logging.basicConfig()`),
+  while pytest's `caplog` fixture had been masking this by attaching
+  its own handler regardless — fixed with an explicit
+  `StreamHandler(sys.stdout)` on the logger itself. Verified
+  end-to-end against two real running servers: grepped the same
+  `request_id` out of both services' real log output for one real
+  page load, not asserted from unit tests alone — and in the process
+  caught and corrected a real inaccuracy already merged in `apps/web`
+  (sprint 49's `generateMetadata`/`cache()` dedup claim; see
+  `docs/CANONICAL_ROADMAP.md`'s sprint 41 checkpoint entry for the
+  full account). All of `apps/api`'s checks (ruff, ruff format, mypy,
+  pytest — 348 passed) pass clean.
 
 It does not yet have a Postgres connection. That lands in whichever
 Phase 2 sprint or infra work adds it, behind its own characterization

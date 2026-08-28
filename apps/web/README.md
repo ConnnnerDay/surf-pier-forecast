@@ -17,17 +17,24 @@ page type worth indexing individually. The description is deliberately
 static copy about the location, never live score/warning text — a
 degraded-conditions sentence (a real "could not connect to..." warning)
 has no business being cached into a search result or link-preview
-card. Wrapped the actual `internalApiFetch` call in React's `cache()`
-(not relying on `fetch`'s own automatic per-request memoization, which
-can't dedupe here — ADR-004 signs every request with a fresh
-`requestId`/timestamp, so two calls for the same location never look
-like the same `fetch(...)` call to Next's dedup) so `generateMetadata`
-and the page body share one real network round trip per request, not
-two — confirmed by checking `apps/api`'s own request logs during
-verification, not assumed. A 404 (unknown `location_id`) calls
-`notFound()` from `generateMetadata` too, matching the page body, so a
-bad link gets Next's real not-found metadata instead of a fabricated
-title.
+card. The actual `internalApiFetch` call was wrapped in React's
+`cache()`, intended to make `generateMetadata` and the page body share
+one real network round trip per request instead of two (`fetch`'s own
+automatic per-request memoization can't help here regardless — ADR-004
+signs every request with a fresh `requestId`/timestamp, so two calls
+for the same location never look like the same `fetch(...)` call to
+that mechanism). **Correction, found once sprint 41's request tracing
+existed to check it**: `cache()` does not actually dedupe this in
+apps/web's Next.js/Turbopack setup — a real two-server trace (grepping
+one `request_id` across both services' logs) showed two distinct
+signed calls reaching apps/api per page view, not one. See
+`app/forecast/[locationId]/page.tsx`'s `getForecast` docstring for the
+full account; `apps/api`'s own sprint-24 `SnapshotCache` keeps the
+real-world cost of the second call low (single-digit milliseconds)
+regardless, so this is a known, measured inefficiency, not a
+correctness problem. A 404 (unknown `location_id`) calls `notFound()`
+from `generateMetadata` too, matching the page body, so a bad link
+gets Next's real not-found metadata instead of a fabricated title.
 
 `app/layout.tsx` gains `metadataBase` (env-driven via
 `NEXT_PUBLIC_SITE_URL`, defaulting to `http://localhost:3000` so

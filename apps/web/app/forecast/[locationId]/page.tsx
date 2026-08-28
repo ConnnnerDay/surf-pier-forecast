@@ -13,12 +13,28 @@ export const dynamic = 'force-dynamic'
 type Props = { params: Promise<{ locationId: string }> }
 
 /**
- * Wrapped in React's `cache()` (not relying on `fetch`'s own automatic
- * per-request memoization -- ADR-004 signs every request with a fresh
- * `requestId`/timestamp, so two calls for the same location never look
- * like the same `fetch(...)` call to Next's dedup) so `generateMetadata`
- * and the page body share one real network round trip per request
- * instead of two.
+ * Wrapped in React's `cache()`, which was intended to make
+ * `generateMetadata` and the page body share one real network round
+ * trip per request instead of two (`fetch`'s own automatic per-request
+ * memoization can't help here regardless: ADR-004 signs every request
+ * with a fresh `requestId`/timestamp, so two calls for the same
+ * location never look like the same `fetch(...)` call to that
+ * mechanism). **Verified not to work as intended, kept anyway because
+ * it's harmless**: a real two-server trace (sprint 41's
+ * `app.infra.request_logging`, checked by grepping the same
+ * `request_id` across both services' logs for one page load) showed
+ * two distinct signed calls reaching apps/api for a single page view,
+ * not one -- `generateMetadata` and this component's own call are not
+ * being deduped by `cache()` in this Next.js/Turbopack setup, for a
+ * reason not root-caused here (candidates: `force-dynamic` rendering,
+ * or `generateMetadata` resolving in a separate pass with its own
+ * request-scoped cache). The real-world cost stays low regardless:
+ * `apps/api`'s own sprint-24 `SnapshotCache` (a 4-hour freshness
+ * window) absorbs the second call almost for free (single-digit
+ * milliseconds in that same trace, versus several seconds for the
+ * first, cold call) -- so this is a known, measured inefficiency, not
+ * an invented "it works" claim, and not worth a deeper fix without
+ * more evidence it matters in practice.
  */
 const getForecast = cache((locationId: string) =>
   internalApiFetch<ForecastEnvelope>(`/v1/forecasts/${encodeURIComponent(locationId)}`),
