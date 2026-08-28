@@ -345,7 +345,7 @@ to reconciliation, not proof that the agreed outcome passed.
 | 37 | Saved locations | Ordered favorites, ownership, duplicates, deletion, empty state; ownership model built so a free-tier cap (target: 1 location) is a natural later addition, without building billing now | Candidate in `/v2` |
 | 38 | PWA baseline | Installable shell with full offline navigation and graceful degradation, not just last-cached-forecast viewing; authenticated forecasts not cached forever | Candidate in `/v2` |
 | 39 | Responsive polish | Layout shift, assets, tap targets, Lighthouse, screenshot budgets | **Partially complete** — the "Lighthouse" sub-item: a real Lighthouse audit (mobile, all four categories) run against a real production build for `/`, `/locations`, and `/forecast/wrightsville-beach-nc` — accessibility/best-practices/SEO all 100, performance 96-98. Found and fixed one genuine bug: no `favicon`/`icon` file existed, so every page 404'd on `GET /favicon.ico` (a real logged console error, not cosmetic); `apps/web/app/icon.tsx` generates a real branded PNG via `next/og`'s `ImageResponse` (design-system teal/coral, no new branding decision). Confirmed fixed (`best-practices` 96→100). Remaining performance-timing audits recorded as a noisy sandbox baseline, not chased. Layout shift, tap targets, and screenshot budgets not attempted |
-| 40 | Accessibility pass | WCAG 2.2 AA, axe plus keyboard/screen-reader evidence | Not accepted |
+| 40 | Accessibility pass | WCAG 2.2 AA, axe plus keyboard/screen-reader evidence | **Complete** — a real `axe-core` sweep (`wcag2a`/`wcag2aa`/`wcag22aa`) across every page x 2 viewports x 2 color schemes, plus `LocationSearch`'s interactive dropdown states specifically (the earlier per-sprint spot-checks only ever covered pages at rest) — 0 violations. A scripted keyboard-only walkthrough (Tab to the combobox, type, Arrow through results, Escape, re-open, Enter to select, Tab away) confirmed focus order, visible focus rings, and no keyboard trap. Playwright's `page.accessibility.snapshot()` gives automated accessibility-tree evidence (real names/roles/disabled-state reaching the platform tree) — explicitly not a claim of testing with real screen-reader software, which this environment can't run. Found and fixed three real bugs in the process: (1) `LocationSearch`'s combobox `aria-controls` pointed at a listbox `<div>` that only existed when there were results, dangling in the zero-match state (`aria-valid-attr-value`) — fixed by always rendering the listbox and toggling it with the native `hidden` attribute (the ARIA APG combobox convention), with the "no matches" state rendered as a disabled `role="option"` row rather than a sibling `<p>` so an always-present `role="listbox"` never has zero owned children; (2) `ForecastErrorCard`'s troubleshooting text named `INTERNAL_SIGNING_KEY_SECRET` in an unbreakable inline `<code>`, overflowing past a 390px mobile viewport (WCAG 1.4.10 Reflow — axe-core can't catch this automatically, only the sweep's own overflow check did), fixed with the same `break-words` class already used one line above it; (3) the keyboard walkthrough caught selecting a result re-triggering the debounced search effect on the newly-filled query and reopening the dropdown ~300ms later with no user action, fixed with a ref flag that skips exactly one search-effect run after a selection. See `apps/web/README.md`'s sprint-40 paragraph for the full account |
 
 ### Phase 4 — Make it operable and launch it
 
@@ -433,7 +433,13 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 - Last merged PR: #373 (sprint 41 partial — structured per-request
   trace logging across web/API, plus a correction to a false
   sprint-49 `cache()`-dedup claim it caught, `cab646a`, merged as
-  `caa6971`).
+  `caa6971`). This PR completes **sprint 40** (accessibility pass) —
+  full axe-core + keyboard + accessibility-tree evidence, and three
+  real bugs found and fixed along the way (a dangling `aria-controls`
+  reference, a mobile-viewport reflow overflow, and a dropdown that
+  silently reopened after keyboard selection). See the checkpoint
+  narrative below and `apps/web/README.md`'s sprint-40 paragraph for
+  the full account.
 - **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
   1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
   (#332). Phase 1's only remaining items (9, 10) need external accounts —
@@ -1706,6 +1712,67 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   it's worth the churn. `apps/api`: ruff, ruff format, mypy, pytest
   (348 passed) all pass clean. `apps/web`: `npm run lint`/
   `npm run build` both pass clean.
+- **Sprint 40, complete (accessibility pass)**: a real `axe-core` sweep
+  (`wcag2a`/`wcag2aa`/`wcag22aa` tags) against real running servers
+  across every page x 2 viewports (desktop/phone) x 2 color schemes (20
+  combinations) -- 0 violations -- plus a second sweep specifically
+  covering `LocationSearch`'s interactive dropdown states (open with
+  results, open with zero matches), since every earlier per-sprint spot
+  check in this recovery only ever loaded a page at rest and never
+  exercised this component's own conditional rendering. A scripted
+  keyboard-only walkthrough (Tab to the combobox, type a query, Arrow
+  through results, Escape, re-open, Enter to select, Tab past it)
+  confirmed real focus order, visible focus rings, and no keyboard trap.
+  Playwright's `page.accessibility.snapshot()` gives automated
+  accessibility-tree evidence -- real names/roles/`disabled` state
+  reaching the same platform tree a screen reader consumes -- explicitly
+  labeled an automated proxy, not a claim of testing with actual
+  screen-reader software, which this sandbox cannot run.
+
+  The interactive sweep caught a real bug: `LocationSearch`'s
+  `<input role="combobox">` set `aria-controls` to the listbox's id
+  unconditionally, but the listbox `<div>` was only ever rendered when
+  there were results -- `aria-valid-attr-value` flagged the dangling
+  reference whenever the dropdown was open with zero matches. The first
+  fix attempt (only setting `aria-controls` when the listbox was
+  rendered) traded that violation for `aria-required-attr`, since ARIA's
+  combobox role requires `aria-controls` present at all times -- the two
+  rules are only satisfiable together if the listbox element always
+  exists. The actual fix: the listbox is now always rendered, with
+  visibility toggled via the native `hidden` attribute (the convention
+  the ARIA APG combobox pattern itself uses), which also excludes the
+  idle, option-less listbox from axe's checks so it never trips
+  `aria-required-children`; the "no matches" state now renders a single
+  disabled `role="option"` row inside the listbox instead of a sibling
+  `<p>`, for the same required-owned-elements reason.
+
+  The full-page sweep's own overflow check (not an axe-core rule --
+  axe-core cannot detect WCAG 1.4.10 Reflow automatically) caught a
+  second real bug: `ForecastErrorCard`'s troubleshooting paragraph names
+  `INTERNAL_SIGNING_KEY_SECRET` inside an inline `<code>`, one long
+  unbreakable token that pushed real horizontal overflow past a 390px
+  mobile viewport. Fixed with the same `break-words` class already
+  applied one line above it in that component.
+
+  The keyboard walkthrough caught a third real bug, unrelated to ARIA
+  attributes: `selectResult` sets `query` to the chosen result's full
+  name to fill the field, and since that name still meets
+  `MIN_QUERY_LENGTH`, it re-triggered the same debounced search effect
+  and silently reopened the dropdown (`aria-expanded` flipping back to
+  `true` on its own) about 300ms after a keyboard selection, with no
+  further user action. Fixed with a ref flag that skips exactly one
+  search-effect run when the query change came from a selection rather
+  than an edit.
+
+  Verified against two real running servers (`apps/api` on 8000,
+  `apps/web` built with `npm run build`/started with `npm run start`,
+  signed with the real dev `INTERNAL_SIGNING_KEY_ID`/`_SECRET` pair so
+  `LocationSearch` returned real results, not the generic error state --
+  an earlier verification pass in this same sprint had missed this and
+  nearly axe-checked the error state under both "with results" and
+  "no results" labels). `apps/api`: unaffected, no changes this sprint;
+  348 tests still pass. `apps/web`: `npm run lint`/`npm run build` both
+  pass clean, no new warnings.
 - **Incident (sprint 6, resolved earlier)**: a scratch branch explicitly
   titled `DO NOT MERGE` was merged into `main` under the repo owner's own
   account, landing deliberately-broken code; reverted within ~10 minutes
