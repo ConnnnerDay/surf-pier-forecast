@@ -1,3 +1,5 @@
+import { cache } from 'react'
+import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { Container } from '@/app/components/ui'
 import { ForecastCard, ForecastErrorCard, type ForecastEnvelope } from '@/app/components/forecast-card'
@@ -8,6 +10,59 @@ import { internalApiFetch, InternalApiError } from '@/lib/internal-api-client'
 // checkpoint for why this matters with Next.js 16's static prerendering.
 export const dynamic = 'force-dynamic'
 
+type Props = { params: Promise<{ locationId: string }> }
+
+/**
+ * Wrapped in React's `cache()` (not relying on `fetch`'s own automatic
+ * per-request memoization -- ADR-004 signs every request with a fresh
+ * `requestId`/timestamp, so two calls for the same location never look
+ * like the same `fetch(...)` call to Next's dedup) so `generateMetadata`
+ * and the page body share one real network round trip per request
+ * instead of two.
+ */
+const getForecast = cache((locationId: string) =>
+  internalApiFetch<ForecastEnvelope>(`/v1/forecasts/${encodeURIComponent(locationId)}`),
+)
+
+/**
+ * Sprint 49's "public non-personal forecast pages (organic-growth
+ * surface)": real per-location title/description/canonical/OpenGraph
+ * metadata, not the root layout's generic default. The description is
+ * deliberately static copy about the location, never live score/warning
+ * text -- a degraded-conditions sentence (e.g. a real "could not
+ * connect to..." warning) has no business being cached into a search
+ * result or link-preview card. A 404 (unknown `location_id`) calls
+ * `notFound()` here too, matching the page body below, so a bad link
+ * gets Next's real not-found metadata instead of a fabricated title.
+ * Any other fetch failure falls back to generic metadata rather than
+ * throwing -- a metadata error shouldn't take down a page whose body
+ * would otherwise render its own graceful `ForecastErrorCard`.
+ */
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locationId } = await params
+
+  let forecast: ForecastEnvelope | null = null
+  try {
+    forecast = await getForecast(locationId)
+  } catch (err) {
+    if (err instanceof InternalApiError && err.status === 404) {
+      notFound()
+    }
+    return { title: 'Forecast' }
+  }
+
+  const title = `${forecast.location.label} Fishing Forecast`
+  const description = `Surf and pier fishing conditions for ${forecast.location.label}: wind, waves, water temperature, tides, and the best times to fish today.`
+  const canonicalPath = `/forecast/${encodeURIComponent(locationId)}`
+
+  return {
+    title,
+    description,
+    alternates: { canonical: canonicalPath },
+    openGraph: { title, description, url: canonicalPath },
+  }
+}
+
 /**
  * The real per-location forecast lookup (replaces the earlier fixed
  * `/forecast/demo` proof page -- same signed-request path, but for any
@@ -16,20 +71,14 @@ export const dynamic = 'force-dynamic'
  * apps/api (unknown location_id) becomes this page's own not-found
  * state via `notFound()`, distinct from a generic fetch failure.
  */
-export default async function ForecastPage({
-  params,
-}: {
-  params: Promise<{ locationId: string }>
-}) {
+export default async function ForecastPage({ params }: Props) {
   const { locationId } = await params
 
   let forecast: ForecastEnvelope | null = null
   let error: string | null = null
 
   try {
-    forecast = await internalApiFetch<ForecastEnvelope>(
-      `/v1/forecasts/${encodeURIComponent(locationId)}`,
-    )
+    forecast = await getForecast(locationId)
   } catch (err) {
     if (err instanceof InternalApiError && err.status === 404) {
       notFound()

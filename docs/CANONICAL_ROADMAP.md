@@ -359,7 +359,7 @@ to reconciliation, not proof that the agreed outcome passed.
 | 46 | Database resilience | Migrations, constraints, indexes, pooling, backups, blank restore drill | Not accepted |
 | 47 | Degraded-mode UX | Database/API/email/upstream chaos yields actionable UI | Not accepted |
 | 48 | Release controls | Promotion, migration gate, smoke, rollback and staging drill | Not accepted |
-| 49 | SEO and sharing | **Required for v1**, not just later phase-4 sequencing: public non-personal forecast pages (organic-growth surface); private dashboards | Not accepted |
+| 49 | SEO and sharing | **Required for v1**, not just later phase-4 sequencing: public non-personal forecast pages (organic-growth surface); private dashboards | **Partially complete** — the "public non-personal forecast pages" half: `apps/web/app/forecast/[locationId]/page.tsx` gains real per-location `generateMetadata` (title, description, canonical URL, OpenGraph tags — static copy, never live score/warning text), sharing its `internalApiFetch` call with the page body via React `cache()` so metadata resolution costs no extra network round trip. `app/layout.tsx` gains `metadataBase`/a title template/OpenGraph+Twitter defaults; `app/opengraph-image.tsx` generates a real 1200×630 PNG link-preview card via `next/og` (design-system palette, no new branding decision); `app/robots.ts` allows every page (nothing private exists yet — sprint 28's job). Verified against two real running servers (`curl` confirmed real tags/canonical/404-fallback/robots output/OG-image response) plus a fresh `axe-core` spot-check, zero violations. A real sitemap.xml (this sprint's other named piece, needing a small `apps/api` addition to enumerate curated locations — `/v1/locations/search` is query-based only, not a full listing) and the "private dashboards" half (needs sprint 28's auth) remain open |
 | 50 | Launch readiness | Cross-device, load, security, a11y, restore, outage evidence | Not accepted |
 | 51 | Limited beta | Small angler cohort recruited via personal network and local fishing communities (not a public open beta); severity/reproduction report | Not accepted |
 | 52 | Public-launch runbook | Owners, freeze rules, alerts, go/no-go and rollback triggers | Not accepted |
@@ -430,9 +430,9 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #370 (sprint 34's hourly-outlook accessible chart —
-  `HourlyOutlookChart`, an `aria-hidden` SVG bar chart alongside the
-  existing text table, `ede11a2`, merged as `932ad30`).
+- Last merged PR: #371 (sprint 34's tide visual chart, closing the
+  sprint entirely — `TideChart`, a point chart with straight lines
+  between real predictions, `d588cb0`, merged as `8ffc649`).
 - **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
   1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
   (#332). Phase 1's only remaining items (9, 10) need external accounts —
@@ -1602,6 +1602,53 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   pass clean. **This closes sprint 34's acceptance bar entirely** --
   accessible charts, text alternatives, and timezone/DST tests are all
   done for both tides and the hourly outlook.
+- **Sprint 49, partial (SEO and sharing -- "public non-personal
+  forecast pages" half)**: `apps/web/app/forecast/[locationId]/
+  page.tsx` gains a real `generateMetadata` -- per-location title
+  (`"{label} Fishing Forecast"`), description, canonical URL, and
+  OpenGraph tags, replacing the root layout's generic default on the
+  one page type worth indexing individually. The description is
+  deliberately static copy about the location, never live score/
+  warning text -- a degraded-conditions sentence (a real "could not
+  connect to..." warning) has no business being cached into a search
+  result or link-preview card. The actual `internalApiFetch` call is
+  wrapped in React's `cache()` (not relying on `fetch`'s own automatic
+  per-request memoization, which can't dedupe here -- ADR-004 signs
+  every request with a fresh `requestId`/timestamp, so two calls for
+  the same location never look like the same `fetch(...)` call to
+  Next's dedup) so `generateMetadata` and the page body share one real
+  network round trip per request, not two. A 404 (unknown
+  `location_id`) calls `notFound()` from `generateMetadata` too,
+  matching the page body, so a bad link gets Next's real not-found
+  metadata instead of a fabricated title.
+
+  `app/layout.tsx` gains `metadataBase` (env-driven via
+  `NEXT_PUBLIC_SITE_URL`, defaulting to `http://localhost:3000`), a
+  title template, and `openGraph`/`twitter` defaults.
+  `app/opengraph-image.tsx` generates a real 1200x630 PNG link-preview
+  card at build time via `next/og`'s `ImageResponse` (same technique
+  as `app/icon.tsx`'s favicon), using the design system's own
+  teal/coral palette -- no new branding decision; a per-location card
+  is a follow-up. `app/robots.ts` allows every page (nothing private
+  exists yet -- sprint 28's job) and deliberately omits a `Sitemap`
+  directive: a real sitemap needs an endpoint that can enumerate every
+  curated location, and `apps/api`'s 101-spot dataset isn't exposed
+  that way today (only via `/v1/locations/search`'s query-based
+  lookup) -- inventing a partial sitemap from whatever happens to be
+  searchable would misrepresent the site's real page count more than
+  omitting it entirely; that's this sprint's remaining open piece,
+  needing a small `apps/api` addition first, alongside the "private
+  dashboards" half (needs sprint 28's auth).
+
+  Verified against two real running servers: `curl` confirmed the real
+  per-location `<title>`/description/canonical/`og:*` tags, the 404
+  page's fallback to the generic title, `robots.txt`'s real output,
+  and the OG image's real `image/png` response (`file` confirmed
+  1200x630). A fresh `axe-core` spot-check on the forecast and home
+  pages found zero violations. `npm run build`'s route table gained
+  `/robots.txt` and `/opengraph-image` as new static routes;
+  `/forecast/[locationId]` is still `ƒ Dynamic`. `npm run lint`/
+  `npm run build` both pass clean.
 - **Incident (sprint 6, resolved earlier)**: a scratch branch explicitly
   titled `DO NOT MERGE` was merged into `main` under the repo owner's own
   account, landing deliberately-broken code; reverted within ~10 minutes
