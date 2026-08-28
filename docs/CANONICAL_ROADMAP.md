@@ -338,7 +338,7 @@ to reconciliation, not proof that the agreed outcome passed.
 | 30 | Onboarding shell | Mobile recording from registration to dashboard | Candidate in `/v2` |
 | 31 | Location search | Text, device, map, station preview, denial/ambiguity tests | **Partially complete** — text search only: `apps/web/app/components/location-search.tsx` (a hand-rolled WAI-ARIA combobox, no dependency) calls `apps/web/app/api/locations/search/route.ts` (a BFF Route Handler proxying apps/api's `GET /v1/locations/search` through the signed internal path — the browser never calls apps/api directly, ADR-004), demonstrated on `apps/web/app/locations/page.tsx`, where selecting a result links to a real `apps/web/app/forecast/[locationId]/page.tsx` lookup (any recognized `location_id`, replacing the earlier fixed-location `/forecast/demo` proof, which now just redirects there). Device geolocation, map search, and station-preview/ambiguity states are not attempted; empty-results and fetch-failure states are handled distinctly, and an unknown location 404s via Next's `notFound()`. Verified interactively (typing, debounce, keyboard nav, selection, navigation to a real rendered forecast) via headless Chromium, not just curl |
 | 32 | Dashboard hierarchy | Go/no-go as a simple traffic-light headline (score/narrative expandable, not primary); best window, conditions, confidence, freshness first | **Partially complete** — hierarchy restructuring on the existing single-location forecast page, not the multi-location dashboard (that needs sprint 37's saved locations first): `apps/web/app/components/forecast-card.tsx`'s `ForecastCard` leads with an enlarged verdict `Badge` (the traffic light), a `deriveBestWindow`-derived "best window" callout (computed purely from `hourly_outlook`, no new fetch), a new `ConditionsSummary` (wind/wave/water-temperature, one line, e.g. "Wind 10–15 kt SW · Waves 2–3 ft · Water 76°F"), then confidence/state/freshness, then the numeric score/narrative demoted into a `<details>`/`<summary>`. `ConditionsSummary` reads `apps/api/app/domain/assembly.py`'s new `ForecastConditions.wind_range_kt`/`wave_range_ft`/`wind_direction` fields — the exact already-reconciled range `score_conditions` was computed from — rather than re-deriving that reconciliation policy on the frontend. Verified via temporary mock preview pages (this sandbox's live path always has `Unknown`/empty-summary and `null` wind/wave) plus a fresh `axe-core` spot-check on both the live page and the mock previews — zero violations. Only the multi-location dashboard itself (sprint 37) remains open |
-| 33 | Conditions experience | Full/partial/stale/unavailable source-attributed snapshots | **Partially complete** — `apps/web/app/components/forecast-card.tsx`'s `ForecastCard` renders `forecast.state` as a badge using apps/api's own fresh/stale/partial/unavailable vocabulary, and a new `SourceStatusList` shows every fanned-out source individually (human-readable label, ok/degraded/unavailable badge, raw provider error for non-ok sources) — real per-source attribution, not just the aggregate already shown. Verified against a real running server and re-audited with `axe-core` (zero violations); caught and fixed a real text-overflow bug (long provider-error URLs not wrapping at phone width) in the process |
+| 33 | Conditions experience | Full/partial/stale/unavailable source-attributed snapshots | **Complete** — `apps/web/app/components/forecast-card.tsx`'s `ForecastCard` renders `forecast.state` as a badge using apps/api's own fresh/stale/partial/unavailable vocabulary, and `SourceStatusList` shows every fanned-out source individually (human-readable label, ok/degraded/unavailable badge, raw provider error for non-ok sources) — real per-source attribution, not just the aggregate already shown. Originally verified against this sandbox's real running server (network-egress-blocked, so the live path only ever produces `partial`/`unavailable`) plus a fresh `axe-core` re-audit that caught and fixed a real text-overflow bug (long provider-error URLs not wrapping at phone width). The `fresh` and `stale` states, and a multi-source `degraded` fan-out, had never actually been rendered or axe-checked — closed with a temporary mock preview page (same throwaway technique as sprints 32/34) covering all four states plus warnings, screenshotted in light/dark and axe-checked (zero violations), then deleted before commit, `npm run build`'s route table confirmed unaffected |
 | 34 | Tides and timing | Accessible charts, text alternatives, timezone/DST tests | **Complete** — backend, tides: `apps/api/app/domain/assembly.py` fetches tide predictions (`app.providers.noaa_coops.fetch_tide_predictions`) in the same `asyncio.gather` as the other independent sources, for a local-date window computed in the location's own timezone (`app.infra.timezones.safe_zone`, not naive UTC, DST-safe per sprint 14's `zoneinfo`-based parsing tests); `ForecastTides` is the sprint-34-owned shape of `ForecastEnvelope.tides`, degrading to `None` with an advisory `Warning` on failure. Backend, timing: `apps/api/app/domain/timing.py`'s `build_hourly_outlook` ports the legacy 24-hour fish-activity timeline from typed inputs already on hand, populated on every request (never degrades to `None`, unlike `tides`) — pressure-trend and the profile-dependent parts of the legacy "best times" summary are deliberately deferred, see the module docstring. Frontend, text alternatives: `apps/web/app/components/forecast-card.tsx`'s `TideTable`/`HourlyOutlookTable` are plain, properly-labeled `<table>`s (times in the *location's* timezone, not the viewer's). Frontend, accessible charts: `TideChart` (a point chart with straight lines between real predictions, not an interpolated curve — inventing an in-between shape would misrepresent NOAA's own `hilo`-only predictions product) and `HourlyOutlookChart` (a bar chart) — both single-hue sequential encodings on `--color-primary` per the `dataviz` skill's form heuristic for a magnitude series, both `aria-hidden="true"` alongside their already-complete text tables. `HourlyOutlookTable`/`HourlyOutlookChart` were verified against the real, live forecast page (`hourly_outlook` never degrades to `None`); `TideTable`/`TideChart` were verified against a temporary mock preview page (`tides` is always `None` on this sandbox's live path) — all four with a fresh `axe-core` spot-check, zero violations, no overflow. Sprint 32's "best window" headline built from this data is done (see that row) |
 | 35 | Fishing guidance | Limited supported suggestions; every recommendation explains why | Existing broad feature is out of scope; adapt |
 | 36 | Preferences | Units, thresholds, style, default location persistence | Candidate in `/v2` |
@@ -430,18 +430,17 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #375 (checkpoint-only bump to #374 — sprint 40,
-  complete — accessibility pass: full axe-core + keyboard +
-  accessibility-tree evidence, and three real bugs found and fixed along
-  the way — a dangling `aria-controls` reference, a mobile-viewport
-  reflow overflow, and a dropdown that silently reopened after keyboard
-  selection — `4859358`, merged as `92ae8cb`; checkpoint bump merged as
-  `32cf295`). This PR completes **sprint 39** (responsive polish) —
-  layout shift, tap targets, and screenshot budgets, the three items
-  left open after an earlier Lighthouse pass, all verified clean with no
-  code changes needed. See the checkpoint narrative below and
-  `apps/web/README.md`'s sprint-40 and sprint-39 paragraphs for the full
-  account.
+- Last merged PR: #376 (sprint 39, complete — responsive polish: layout
+  shift, tap targets, and screenshot budgets, the three items left open
+  after an earlier Lighthouse pass, all verified clean against real
+  servers with no code changes needed — `647885c`, merged as `db4e132`).
+  This PR completes **sprint 33** (conditions experience) — the
+  `fresh`/`stale`/multi-source-`degraded` states the ledger names had
+  never actually been rendered or axe-checked in this network-blocked
+  sandbox; closed with a temporary mock preview (deleted before commit)
+  covering all four states. Sprints 33, 39, and 40 are now all fully
+  complete. See the checkpoint narrative below and `apps/web/README.md`'s
+  sprint-33/39/40 paragraphs for the full account.
 - **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
   1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
   (#332). Phase 1's only remaining items (9, 10) need external accounts —
@@ -1812,6 +1811,28 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   measured well within budget (29KB-274KB). `apps/api`: unaffected, no
   changes this sprint. `apps/web`: unaffected, no changes this sprint --
   everything already met the bar.
+- **Sprint 33, complete (conditions experience)**: the `SourceStatusList`/
+  `state` badge work was already done (see the sprint-33 row); this
+  closes the sprint by actually demonstrating all four states the
+  ledger names. This sandbox's network egress is blocked, so the real
+  forecast page's live path has only ever produced `partial`/
+  `unavailable` -- `fresh`, `stale`, and a multi-source `degraded`
+  fan-out had never actually been rendered or axe-checked, only
+  asserted to work from reading the code. Closed with a temporary
+  `apps/web/app/preview-sprint33/page.tsx` (same throwaway-mock-preview
+  technique as sprints 32/34's tide chart and dashboard hierarchy
+  passes) rendering `ForecastCard` four times with hand-built
+  `ForecastEnvelope` mocks for `fresh` (all sources ok), `partial` (one
+  source degraded, with its raw provider error shown), `stale` (a real
+  `warnings` entry surfaced), and `unavailable` (every source down,
+  `conditions: null`, a `no_data` warning) -- screenshotted in light and
+  dark (confirmed visually: correct badge colors and copy per state,
+  provider errors shown only for non-ok sources, warnings rendered only
+  when present) and `axe-core`-checked in both themes, zero violations.
+  Deleted before this commit -- `git status` confirmed no trace, and a
+  fresh `npm run build` confirmed the real route table is unaffected (no
+  `/preview-sprint33` route leaked into the build). No bugs found this
+  time; no code changes needed beyond the roadmap/README write-up.
 - **Incident (sprint 6, resolved earlier)**: a scratch branch explicitly
   titled `DO NOT MERGE` was merged into `main` under the repo owner's own
   account, landing deliberately-broken code; reverted within ~10 minutes
