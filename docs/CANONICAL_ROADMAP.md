@@ -430,9 +430,9 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #371 (sprint 34's tide visual chart, closing the
-  sprint entirely — `TideChart`, a point chart with straight lines
-  between real predictions, `d588cb0`, merged as `8ffc649`).
+- Last merged PR: #372 (sprint 49 partial — real per-location SEO
+  metadata, OpenGraph image, and robots.txt for `apps/web`'s forecast
+  pages, `4588d23`, merged as `ac4f15a`).
 - **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
   1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
   (#332). Phase 1's only remaining items (9, 10) need external accounts —
