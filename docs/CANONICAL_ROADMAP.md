@@ -430,17 +430,14 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #376 (sprint 39, complete — responsive polish: layout
-  shift, tap targets, and screenshot budgets, the three items left open
-  after an earlier Lighthouse pass, all verified clean against real
-  servers with no code changes needed — `647885c`, merged as `db4e132`).
-  This PR completes **sprint 33** (conditions experience) — the
+- Last merged PR: #378 (sprint 33, complete — conditions experience: the
   `fresh`/`stale`/multi-source-`degraded` states the ledger names had
   never actually been rendered or axe-checked in this network-blocked
-  sandbox; closed with a temporary mock preview (deleted before commit)
-  covering all four states. Sprints 33, 39, and 40 are now all fully
-  complete. See the checkpoint narrative below and `apps/web/README.md`'s
-  sprint-33/39/40 paragraphs for the full account.
+  sandbox, closed with a temporary mock preview covering all four states
+  — `f0e8464`, merged as `8989577`). Sprints 33, 39, and 40 are now all
+  fully complete. See the checkpoint narrative below and
+  `apps/web/README.md`'s sprint-33/39/40 paragraphs for the full
+  account.
 - **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
   1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
   (#332). Phase 1's only remaining items (9, 10) need external accounts —
