@@ -430,18 +430,13 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #375 (checkpoint-only bump to #374 — sprint 40,
-  complete — accessibility pass: full axe-core + keyboard +
-  accessibility-tree evidence, and three real bugs found and fixed along
-  the way — a dangling `aria-controls` reference, a mobile-viewport
-  reflow overflow, and a dropdown that silently reopened after keyboard
-  selection — `4859358`, merged as `92ae8cb`; checkpoint bump merged as
-  `32cf295`). This PR completes **sprint 39** (responsive polish) —
-  layout shift, tap targets, and screenshot budgets, the three items
-  left open after an earlier Lighthouse pass, all verified clean with no
-  code changes needed. See the checkpoint narrative below and
-  `apps/web/README.md`'s sprint-40 and sprint-39 paragraphs for the full
-  account.
+- Last merged PR: #376 (sprint 39, complete — responsive polish: layout
+  shift, tap targets, and screenshot budgets, the three items left open
+  after an earlier Lighthouse pass, all verified clean against real
+  servers with no code changes needed — `647885c`, merged as `db4e132`).
+  Sprints 39 and 40 are now both fully complete. See the checkpoint
+  narrative below and `apps/web/README.md`'s sprint-39/sprint-40
+  paragraphs for the full account.
 - **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
   1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
   (#332). Phase 1's only remaining items (9, 10) need external accounts —
