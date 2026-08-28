@@ -8,8 +8,40 @@ app authenticates the user and signs the internal request instead.
 
 ## Status
 
-Sprint 34's remaining "accessible charts" sub-item: `ForecastCard`
-gains `HourlyOutlookChart`, a hand-rolled SVG bar chart rendered
+Sprint 34's last remaining open piece, the tide visual chart:
+`ForecastCard` gains `TideChart`, rendered alongside (not instead of)
+the already-complete `TideTable`. This is a **point chart with
+straight lines between real predictions, not an interpolated curve**:
+NOAA CO-OPS's `hilo` predictions product
+(`app.providers.noaa_coops.fetch_tide_predictions`) gives real
+predicted heights only at each high/low extremum, not a continuous
+hourly series, so drawing a smooth cosine-shaped curve between them
+would be *inventing* the in-between shape rather than showing real
+predicted values — the same Integrity discipline this recovery already
+enforces server-side (e.g. `is_fallback` labeling) applied to a
+frontend chart choice. A small point count (typically 4-6 across the
+2-day fetch window) means every point gets its own direct height
+label, unlike the 24-bar hourly chart's sparser labeling — `dataviz`'s
+"label selectively" guidance explicitly allows labeling every point
+when there are only a handful. Single-hue on `--color-primary` (a
+magnitude series, not identity — same reasoning as
+`HourlyOutlookChart`), `aria-hidden="true"`, no `tabindex` inside it.
+The x-axis is real elapsed time between the first and last prediction
+(not evenly-spaced-by-index), since predictions can span more than one
+day unevenly. Caught and fixed one real rendering bug in the process:
+the first/last point's centered height label was clipped by the
+`viewBox` edge with zero horizontal padding — added
+`_TIDE_CHART_SIDE_PADDING` and confirmed both edge labels fully
+visible in a re-screenshot. Since `tides` is always `null` on this
+sandbox's live path (blocked upstream calls), verified against a
+temporary mock preview page (six realistic alternating high/low
+predictions; screenshotted in both color schemes at desktop and phone
+widths, then deleted before committing) plus a fresh `axe-core`
+spot-check — zero violations, no overflow. This closes sprint 34's
+acceptance bar entirely.
+
+Sprint 34's earlier "accessible charts" sub-item: `ForecastCard` gains
+`HourlyOutlookChart`, a hand-rolled SVG bar chart rendered
 alongside (not instead of) the already-complete `HourlyOutlookTable`.
 Per the `dataviz` skill's own form heuristic, one activity level per
 hour is a **magnitude** series, not a categorical identity, so it gets

@@ -148,12 +148,113 @@ function SourceStatusList({ sources }: { sources: SourceStatus[] }) {
   )
 }
 
+const _TIDE_CHART_WIDTH = 600
+const _TIDE_CHART_HEIGHT = 110
+const _TIDE_CHART_TOP = 16
+const _TIDE_CHART_BOTTOM = 84
+// Horizontal padding so the first/last point's centered height label
+// (text-anchor="middle") isn't clipped by the viewBox edge.
+const _TIDE_CHART_SIDE_PADDING = 18
+
+/**
+ * Sprint 34's remaining "accessible charts" sub-item for tides -- a
+ * point chart, not an interpolated curve: NOAA CO-OPS's `hilo`
+ * predictions product (`app.providers.noaa_coops.fetch_tide_predictions`)
+ * gives real predicted heights only at each high/low extremum, not a
+ * continuous hourly series, so plotting a smooth cosine-shaped curve
+ * between them would be *inventing* the in-between shape rather than
+ * showing real predicted values -- exactly the kind of unsupported
+ * invention `docs/product-definition.md`'s Integrity rule (already
+ * enforced server-side, e.g. `is_fallback` labeling) argues against
+ * doing on the frontend too. Straight lines between real points are
+ * an honest visual summary of the same handful of values
+ * `TideTable` already lists as text; every point still gets a native
+ * SVG `<title>` with its exact time/height, and each point's height
+ * is labeled directly (a small point count, unlike the 24-bar hourly
+ * chart, is exactly the case `dataviz`'s "label selectively" guidance
+ * allows labeling every point). Single-hue on `--color-primary` (a
+ * magnitude series, not a categorical one -- same reasoning as
+ * `HourlyOutlookChart`), `aria-hidden="true"` alongside the
+ * already-complete `TideTable`, no `tabindex` inside it (an
+ * `aria-hidden` subtree must never contain a keyboard-focusable
+ * element). The x-axis is real elapsed time between the first and
+ * last prediction, not evenly-spaced-by-index, since predictions can
+ * span more than one day unevenly.
+ */
+function TideChart({ tides, timezone }: { tides: ForecastTides; timezone: string }) {
+  const points = tides.predictions
+  if (points.length < 2) return null
+
+  const times = points.map((p) => new Date(p.time).getTime())
+  const heights = points.map((p) => p.height_ft)
+  const minTime = Math.min(...times)
+  const maxTime = Math.max(...times)
+  const minHeight = Math.min(...heights)
+  const maxHeight = Math.max(...heights)
+  const timeSpan = maxTime - minTime || 1
+  const heightSpan = maxHeight - minHeight || 1
+
+  const timeFormatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    weekday: 'short',
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+
+  const plotWidth = _TIDE_CHART_WIDTH - _TIDE_CHART_SIDE_PADDING * 2
+  const coords = points.map((prediction, index) => ({
+    prediction,
+    x: _TIDE_CHART_SIDE_PADDING + ((times[index] - minTime) / timeSpan) * plotWidth,
+    y:
+      _TIDE_CHART_BOTTOM -
+      ((prediction.height_ft - minHeight) / heightSpan) *
+        (_TIDE_CHART_BOTTOM - _TIDE_CHART_TOP),
+  }))
+
+  const linePath = coords.map((c, i) => `${i === 0 ? 'M' : 'L'} ${c.x} ${c.y}`).join(' ')
+
+  return (
+    <div aria-hidden="true" className="flex flex-col gap-1">
+      <svg
+        viewBox={`0 0 ${_TIDE_CHART_WIDTH} ${_TIDE_CHART_HEIGHT}`}
+        role="presentation"
+        className="w-full"
+      >
+        <path d={linePath} fill="none" strokeWidth={2} className="stroke-primary" />
+        {coords.map(({ prediction, x, y }) => (
+          <g key={prediction.time}>
+            <circle cx={x} cy={y} r={4} className="fill-primary">
+              <title>
+                {`${prediction.kind === 'high' ? 'High' : 'Low'} tide, ${timeFormatter.format(
+                  new Date(prediction.time),
+                )}: ${prediction.height_ft.toFixed(1)} ft`}
+              </title>
+            </circle>
+            <text
+              x={x}
+              y={prediction.kind === 'high' ? y - 10 : y + 18}
+              textAnchor="middle"
+              className="fill-text-muted text-[9px]"
+            >
+              {prediction.height_ft.toFixed(1)}
+            </text>
+          </g>
+        ))}
+      </svg>
+      <p className="text-xs text-text-muted">
+        Predicted tide height over time; each point is a high or low tide.
+      </p>
+    </div>
+  )
+}
+
 /**
  * Sprint 34's tide table -- the text-alternative half of that sprint's
- * "accessible charts, text alternatives" acceptance bar. A visual
- * chart is deliberately not attempted here; a plain, properly-labeled
- * `<table>` is itself an accessible representation, not a fallback for
- * one. Times are formatted in the *location's* timezone
+ * "accessible charts, text alternatives" acceptance bar, rendered
+ * alongside `TideChart` above (the real accessible representation --
+ * the chart is `aria-hidden`). A plain, properly-labeled `<table>` is
+ * itself an accessible representation, not a fallback for one. Times
+ * are formatted in the *location's* timezone
  * (`forecast.location.timezone`), not the viewer's browser timezone --
  * a tide time is only meaningful relative to the place it's for.
  */
@@ -571,7 +672,10 @@ export function ForecastCard({ forecast }: { forecast: ForecastEnvelope }) {
       {forecast.sources.length > 0 && <SourceStatusList sources={forecast.sources} />}
 
       {forecast.tides && (
-        <TideTable tides={forecast.tides} timezone={forecast.location.timezone} />
+        <>
+          <TideChart tides={forecast.tides} timezone={forecast.location.timezone} />
+          <TideTable tides={forecast.tides} timezone={forecast.location.timezone} />
+        </>
       )}
 
       {forecast.hourly_outlook && (
