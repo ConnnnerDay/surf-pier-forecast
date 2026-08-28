@@ -8,6 +8,24 @@ app authenticates the user and signs the internal request instead.
 
 ## Status
 
+Sprint 33 ("Conditions experience"), closing out the sprint whose
+`SourceStatusList`/`state`-badge implementation was already built (see
+the sprint-33 paragraph further down): this sandbox's network egress is
+blocked, so the real forecast page's live path has only ever produced
+`ForecastEnvelope.state` values of `partial`/`unavailable` -- `fresh`,
+`stale`, and a multi-source `degraded` fan-out had never actually been
+rendered or `axe-core`-checked, only asserted to work from reading the
+code. Closed with a temporary `apps/web/app/preview-sprint33/page.tsx`
+(the same throwaway-mock-preview technique already used for sprint 32's
+dashboard hierarchy and sprint 34's tide chart) rendering `ForecastCard`
+four times with hand-built `ForecastEnvelope` mocks for all four states
+-- screenshotted in light/dark (confirmed visually: correct badge colors
+and copy per state, provider errors shown only for non-ok sources,
+`warnings` rendered only when present) and `axe-core`-checked in both
+themes, zero violations. Deleted before commit -- `git status` confirmed
+no trace, and a fresh `npm run build` confirmed the real route table is
+unaffected. No bugs found this time; no code changes needed.
+
 Sprint 39 ("Responsive polish"), the three items left open after an
 earlier Lighthouse pass already covered the "assets"/"Lighthouse"
 sub-items (see below). All three verified clean against real running
