@@ -430,9 +430,10 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #372 (sprint 49 partial — real per-location SEO
-  metadata, OpenGraph image, and robots.txt for `apps/web`'s forecast
-  pages, `4588d23`, merged as `ac4f15a`).
+- Last merged PR: #373 (sprint 41 partial — structured per-request
+  trace logging across web/API, plus a correction to a false
+  sprint-49 `cache()`-dedup claim it caught, `cab646a`, merged as
+  `caa6971`).
 - **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
   1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
   (#332). Phase 1's only remaining items (9, 10) need external accounts —
