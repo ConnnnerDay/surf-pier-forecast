@@ -42,6 +42,7 @@ export function LocationSearch({
   const listboxId = useId()
   const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const containerRef = useRef<HTMLDivElement>(null)
+  const skipNextSearchRef = useRef(false)
 
   useEffect(() => {
     function handleOutsideClick(event: MouseEvent) {
@@ -55,6 +56,18 @@ export function LocationSearch({
 
   useEffect(() => {
     clearTimeout(debounceRef.current)
+
+    // `selectResult` below sets `query` to the chosen result's full name
+    // to fill the field, which -- since that name still meets
+    // MIN_QUERY_LENGTH -- would otherwise re-trigger this same search
+    // effect and reopen the dropdown ~DEBOUNCE_MS after a selection,
+    // found via a keyboard-only walkthrough (arrow to a result, Enter,
+    // then watch aria-expanded flip back to true on its own). Selecting
+    // a result is not a query edit, so it skips search exactly once.
+    if (skipNextSearchRef.current) {
+      skipNextSearchRef.current = false
+      return
+    }
 
     if (query.trim().length < MIN_QUERY_LENGTH) {
       setResults([])
@@ -87,6 +100,7 @@ export function LocationSearch({
 
   function selectResult(result: LocationSearchResult) {
     onSelect(result)
+    skipNextSearchRef.current = true
     setQuery(result.name)
     setIsOpen(false)
     setActiveIndex(-1)
@@ -112,6 +126,21 @@ export function LocationSearch({
 
   const activeOptionId =
     activeIndex >= 0 ? `${listboxId}-option-${activeIndex}` : undefined
+  const showNoResults = isOpen && results.length === 0 && !error
+  // ARIA's combobox role requires `aria-controls` to be present at all
+  // times (axe-core's aria-required-attr) *and* to reference an element
+  // that actually exists in the DOM (aria-valid-attr-value). Those two
+  // rules are only satisfiable together if the listbox element is always
+  // rendered -- so, unlike the first fix attempt here (which only
+  // existed when there were results, and left aria-controls dangling in
+  // the zero-results state), the listbox below is now unconditional and
+  // its visibility is toggled with the native `hidden` attribute, the
+  // convention the ARIA APG combobox pattern itself uses
+  // (https://www.w3.org/WAI/ARIA/apg/patterns/combobox/). `hidden` also
+  // removes it (and the empty-listbox case) from axe's accessibility-tree
+  // checks while closed, which sidesteps aria-required-children on a
+  // listbox with no option children in the idle state.
+  const listboxHasContent = (isOpen && results.length > 0) || showNoResults
 
   return (
     <div className="relative" ref={containerRef}>
@@ -123,7 +152,7 @@ export function LocationSearch({
         onKeyDown={handleKeyDown}
         onFocus={() => results.length > 0 && setIsOpen(true)}
         role="combobox"
-        aria-expanded={isOpen}
+        aria-expanded={listboxHasContent}
         aria-controls={listboxId}
         aria-autocomplete="list"
         aria-activedescendant={activeOptionId}
@@ -131,47 +160,54 @@ export function LocationSearch({
         error={error ?? undefined}
       />
 
-      {isOpen && results.length === 0 && !error && (
-        <p className="mt-1 text-sm text-text-muted">
-          No matches for &ldquo;{query.trim()}&rdquo;.
-        </p>
-      )}
-
-      {isOpen && results.length > 0 && (
-        <Card className="absolute z-10 mt-1 w-full p-0">
-          {/* role="listbox"/"option" on plain divs, not ul/li: overriding
-              li's implicit "listitem" role to "option" breaks the ARIA
-              required-owned-elements relationship a real <ul> expects
-              from its children (axe-core's aria-required-children/
-              aria-required-parent/list rules all catch this) -- divs
-              carry no conflicting implicit role. */}
-          <div
-            id={listboxId}
-            role="listbox"
-            className="max-h-64 overflow-y-auto py-1"
-          >
-            {results.map((result, index) => (
-              <div
-                key={result.id}
-                id={`${listboxId}-option-${index}`}
-                role="option"
-                aria-selected={index === activeIndex}
-                className={cx(
-                  'cursor-pointer px-3 py-2 text-sm',
-                  index === activeIndex ? 'bg-primary text-primary-contrast' : 'text-text',
-                )}
-                onMouseDown={(event) => {
-                  event.preventDefault()
-                  selectResult(result)
-                }}
-                onMouseEnter={() => setActiveIndex(index)}
-              >
-                {result.name}, {result.state}
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
+      <Card className="absolute z-10 mt-1 w-full p-0" hidden={!listboxHasContent}>
+        {/* role="listbox"/"option" on plain divs, not ul/li: overriding
+            li's implicit "listitem" role to "option" breaks the ARIA
+            required-owned-elements relationship a real <ul> expects
+            from its children (axe-core's aria-required-children/
+            aria-required-parent/list rules all catch this) -- divs
+            carry no conflicting implicit role. */}
+        <div
+          id={listboxId}
+          role="listbox"
+          className="max-h-64 overflow-y-auto py-1"
+        >
+          {results.length > 0
+            ? results.map((result, index) => (
+                <div
+                  key={result.id}
+                  id={`${listboxId}-option-${index}`}
+                  role="option"
+                  aria-selected={index === activeIndex}
+                  className={cx(
+                    'cursor-pointer px-3 py-2 text-sm',
+                    index === activeIndex ? 'bg-primary text-primary-contrast' : 'text-text',
+                  )}
+                  onMouseDown={(event) => {
+                    event.preventDefault()
+                    selectResult(result)
+                  }}
+                  onMouseEnter={() => setActiveIndex(index)}
+                >
+                  {result.name}, {result.state}
+                </div>
+              ))
+            : showNoResults && (
+                // A non-selectable option row, not a plain <p>, so the
+                // listbox still has a valid owned "option" child while
+                // it's open with zero matches -- an empty role="listbox"
+                // here would re-trigger aria-required-children.
+                <div
+                  role="option"
+                  aria-disabled="true"
+                  aria-selected="false"
+                  className="px-3 py-2 text-sm text-text-muted"
+                >
+                  No matches for &ldquo;{query.trim()}&rdquo;.
+                </div>
+              )}
+        </div>
+      </Card>
     </div>
   )
 }

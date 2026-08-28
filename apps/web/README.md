@@ -8,6 +8,56 @@ app authenticates the user and signs the internal request instead.
 
 ## Status
 
+Sprint 40 ("Accessibility pass"), ledger acceptance "WCAG 2.2 AA, axe plus
+keyboard/screen-reader evidence." Scope actually run against real servers,
+not just static markup: (1) a full `axe-core` sweep (`wcag2a`/`wcag2aa`/
+`wcag22aa` tags) across every real page in 2 viewports (desktop/phone) x
+2 color schemes -- 20 combinations, 0 violations; (2) the same sweep
+against `LocationSearch`'s interactive states specifically (dropdown open
+with results, dropdown open with zero matches), since the earlier static
+sweep only ever loaded pages at rest; (3) a scripted keyboard-only
+walkthrough (Tab to the combobox, type a query, Arrow through results,
+Escape, re-open, Enter to select, Tab away) checking focus order, visible
+focus rings, and no keyboard trap; (4) Playwright's
+`page.accessibility.snapshot()` as an **automated proxy for
+screen-reader-consumable structure** -- confirming real names/roles reach
+the platform accessibility tree the way a screen reader would read them,
+explicitly *not* a claim of testing with actual screen-reader software,
+which this environment cannot run.
+
+Step (2) caught a real bug: `LocationSearch`'s `<input role="combobox">`
+pointed `aria-controls` at the listbox's id unconditionally, but the
+listbox `<div>` was only ever rendered when there were results to show
+-- axe's `aria-valid-attr-value` flagged the dangling reference whenever
+the dropdown was open with zero matches. The first fix (only setting
+`aria-controls` when the listbox was rendered) traded that violation for
+`aria-required-attr` instead, since ARIA's combobox role requires
+`aria-controls` to be present unconditionally. The actual fix: the
+listbox `<div id role="listbox">` is now always rendered (so
+`aria-controls` always resolves), with visibility toggled via the native
+`hidden` attribute -- the convention the ARIA APG combobox pattern itself
+uses, and one that also excludes the empty/idle listbox from axe's checks
+so an option-less `role="listbox"` never gets flagged by
+`aria-required-children`. The "no matches" state renders a single
+non-selectable `role="option"` (`aria-disabled`) row inside the listbox
+rather than a sibling `<p>`, for the same required-owned-elements reason.
+
+Step (1)'s sweep also caught a real WCAG 1.4.10 (Reflow) bug axe-core
+can't detect automatically: `ForecastErrorCard`'s troubleshooting
+paragraph named `INTERNAL_SIGNING_KEY_SECRET` in an inline `<code>` --
+one long unbreakable token -- which pushed real horizontal overflow past
+a 390px mobile viewport. Fixed with the same `break-words` class already
+used one line above it in that component.
+
+Step (3)'s walkthrough caught a second real bug, unrelated to ARIA
+attributes: selecting a result sets `query` to the result's full name to
+fill the field, and since that name still meets `MIN_QUERY_LENGTH`, it
+re-triggered the same debounced search effect and reopened the dropdown
+~300ms after a keyboard selection (`aria-expanded` flipping back to
+`true` on its own, with no user action). Fixed with a ref flag that skips
+exactly one search-effect run when the query change came from
+`selectResult` rather than an edit.
+
 Sprint 49 ("SEO and sharing"), the "public non-personal forecast pages
 (organic-growth surface)" half of the acceptance bar: `app/forecast/
 [locationId]/page.tsx` gains a real `generateMetadata` -- per-location
