@@ -8,6 +8,33 @@ app authenticates the user and signs the internal request instead.
 
 ## Status
 
+Sprint 39 ("Responsive polish"), the three items left open after an
+earlier Lighthouse pass already covered the "assets"/"Lighthouse"
+sub-items (see below). All three verified clean against real running
+servers with no code changes needed:
+
+- **Layout shift**: real Cumulative Layout Shift measured via the
+  browser's own Layout Instability API (`PerformanceObserver`, the same
+  signal Lighthouse itself reads) across every page x 2 viewports, on
+  initial load and through `LocationSearch`'s open/select interaction --
+  `0.0000` everywhere, since the dropdown's `position: absolute` popup
+  never reflows surrounding content.
+- **Tap targets**: axe-core's `target-size` rule is tagged `wcag22aa`
+  but ships *disabled by default* -- sprint 40's tag-based sweep
+  (`runOnly: {type: 'tag', ...}`) silently skipped it despite the tag
+  match, caught only by inspecting the rule's own `enabled` flag in
+  `axe.min.js` directly. Ran it explicitly enabled across every page x 2
+  viewports -- 0 violations -- cross-checked independently with a manual
+  Playwright `boundingBox()` measurement of every real interactive
+  element against the WCAG 2.5.8 24x24 CSS px minimum -- 0 undersized.
+- **Screenshot budgets**: this ledger phrase has no prior definition
+  anywhere in the repo. Interpreted conservatively and documented as
+  such: a literal full-page-PNG byte-size ceiling (1.5MB) per page x
+  viewport, explicitly *not* a full visual-regression CI system --
+  choosing a tool and a baseline-image storage/review workflow is a
+  bigger process decision, flagged as open rather than made here. All
+  pages measured well within budget (29KB-274KB).
+
 Sprint 40 ("Accessibility pass"), ledger acceptance "WCAG 2.2 AA, axe plus
 keyboard/screen-reader evidence." Scope actually run against real servers,
 not just static markup: (1) a full `axe-core` sweep (`wcag2a`/`wcag2aa`/
