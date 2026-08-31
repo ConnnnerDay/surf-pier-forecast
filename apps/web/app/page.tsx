@@ -1,91 +1,152 @@
-import { Badge, Button, Card, Container, Field } from './components/ui'
+import { Button, Container } from './components/ui'
 
+/**
+ * The real landing page, replacing sprint 27's component gallery (moved
+ * to `/design-system`) now that the Saltline rebrand gives the app an
+ * actual identity to put here. No fabricated verdict badges on the
+ * "Popular spots" links below -- showing a plausible-looking Good/
+ * Marginal status without a real, current forecast behind it would be
+ * exactly the kind of invented data this product's own Integrity rule
+ * (docs/product-definition.md) argues against; these are plain links
+ * to real curated locations, not a live preview.
+ */
 export default function Home() {
   return (
     <main>
-      <Container>
-        <header className="py-10 sm:py-16">
-          <p className="text-sm font-medium tracking-wide text-primary uppercase">
-            Placeholder identity — see docs/CANONICAL_ROADMAP.md sprint 27
+      <div
+        className="ph-photo flex flex-col justify-between px-5 py-6 sm:px-8 sm:py-10"
+        style={{ minHeight: '420px' }}
+      >
+        <div className="relative z-10 flex items-center gap-2 text-white">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="white"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M2 10 L22 10" />
+            <path d="M6 10 A6 6 0 0 1 18 10" />
+            <path d="M2 15 Q5 13 8 15 T14 15 T20 15" />
+          </svg>
+          <span className="font-display text-lg font-bold">Saltline</span>
+        </div>
+
+        <div className="relative z-10 flex flex-col gap-4">
+          <p className="ph-photo-label">
+            Photo placeholder: pier at first light, warm backlight, low horizon
           </p>
-          <h1 className="mt-2 text-4xl font-bold text-text sm:text-5xl">
-            Surf &amp; Pier Forecast
+          <h1 className="max-w-md text-4xl font-bold leading-[1.05] tracking-tight text-white sm:text-5xl">
+            Know before you go.
           </h1>
-          <p className="mt-3 max-w-prose text-lg text-text-muted">
-            Clear go / no-go fishing forecasts for surf and pier anglers —
-            condition data, not just numbers, explained in plain language.
+          <p className="max-w-sm text-base leading-relaxed text-white/85">
+            Real tide, wind, and wave data turned into one honest answer —
+            go, wait, or skip it.
           </p>
-        </header>
+        </div>
+      </div>
 
-        <section aria-labelledby="gallery-heading" className="flex flex-col gap-10 pb-16">
-          <h2 id="gallery-heading" className="text-2xl font-semibold text-text">
-            Design-system gallery
+      <Container>
+        <div className="flex flex-col gap-3 py-6">
+          <Button variant="primary" href="/locations" className="w-full text-base">
+            Find your spot
+          </Button>
+        </div>
+
+        <section aria-labelledby="value-props-heading" className="py-6">
+          <h2 id="value-props-heading" className="sr-only">
+            Why Saltline
           </h2>
-
-          <div className="flex flex-col gap-3">
-            <h3 className="text-lg font-medium text-text">Forecast verdict</h3>
-            <p className="text-sm text-text-muted">
-              Sprint 32&apos;s traffic-light dashboard headline — color
-              reinforces the verdict, the text label always states it.
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <Badge variant="go">Go</Badge>
-              <Badge variant="marginal">Marginal</Badge>
-              <Badge variant="nogo">No-go</Badge>
-              <Badge variant="neutral">Unavailable</Badge>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-3">
-            <h3 className="text-lg font-medium text-text">Buttons</h3>
-            <div className="flex flex-wrap gap-3">
-              <Button variant="primary">Primary action</Button>
-              <Button variant="secondary">Secondary action</Button>
-              <Button variant="ghost">Ghost action</Button>
-              <Button variant="primary" href="/">
-                Link button
-              </Button>
-              <Button variant="primary" disabled>
-                Disabled
-              </Button>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-3">
-            <h3 className="text-lg font-medium text-text">Cards</h3>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Card>
-                <h4 className="font-semibold text-text">Wrightsville Beach, NC</h4>
-                <p className="mt-1 text-sm text-text-muted">
-                  A card is a bordered surface for grouping related content —
-                  a forecast summary, a saved location, a catch-log entry.
+          <div className="flex flex-col gap-6">
+            <div className="flex items-start gap-4">
+              <div
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.625rem] bg-go-bg"
+                aria-hidden="true"
+              >
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-go-text" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 7 L12 12 L15.5 14" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-text">One clear verdict</h3>
+                <p className="mt-1 text-sm leading-relaxed text-text-muted">
+                  Go, marginal, or skip it — with the reasoning shown, not
+                  hidden behind a score.
                 </p>
-              </Card>
-              <Card>
-                <h4 className="font-semibold text-text">Montauk, NY</h4>
-                <p className="mt-1 text-sm text-text-muted">
-                  Same primitive, any content. Padding and radius come from
-                  the shared design tokens in <code>app/globals.css</code>.
+              </div>
+            </div>
+
+            <div className="flex items-start gap-4">
+              <div
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.625rem] bg-nogo-bg"
+                aria-hidden="true"
+              >
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-accent" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 12 Q7 6 11 12 T19 12 T27 12" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-text">Every source shown</h3>
+                <p className="mt-1 text-sm leading-relaxed text-text-muted">
+                  Marine zone, buoy, tide station — each labeled fresh,
+                  degraded, or down. No hidden guesses.
                 </p>
-              </Card>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-4">
+              <div
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.625rem] bg-marginal-bg"
+                aria-hidden="true"
+              >
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-marginal-text" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 20 L4 10 L9 10 L9 4 L15 4 L15 14 L20 14 L20 20 Z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-text">
+                  The best hour, not just today
+                </h3>
+                <p className="mt-1 text-sm leading-relaxed text-text-muted">
+                  Tide swings and solunar windows narrowed down to when it&apos;s
+                  actually worth showing up.
+                </p>
+              </div>
             </div>
           </div>
+        </section>
 
-          <div className="flex flex-col gap-3">
-            <h3 className="text-lg font-medium text-text">Form fields</h3>
-            <Card className="max-w-sm">
-              <Field label="Location name" placeholder="e.g. Wrightsville Beach" />
-              <Field
-                label="Email"
-                type="email"
-                hint="Used for account alerts, never shared."
-              />
-              <Field
-                label="Password"
-                type="password"
-                error="Password must be at least 8 characters."
-              />
-            </Card>
+        <section aria-labelledby="popular-spots-heading" className="flex flex-col gap-3 pb-16">
+          <h2
+            id="popular-spots-heading"
+            className="text-xs font-bold uppercase tracking-wide text-text-muted"
+          >
+            Popular spots
+          </h2>
+          <div className="flex flex-col gap-2.5">
+            <a
+              href="/forecast/wrightsville-beach-nc"
+              className="flex items-center justify-between rounded-[0.875rem] border border-border bg-surface px-4 py-3.5 text-text no-underline transition-colors hover:bg-bg"
+            >
+              <span className="font-semibold">Wrightsville Beach, NC</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-text-muted" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M9 6 L15 12 L9 18" />
+              </svg>
+            </a>
+            <a
+              href="/forecast/cocoa-beach-fl"
+              className="flex items-center justify-between rounded-[0.875rem] border border-border bg-surface px-4 py-3.5 text-text no-underline transition-colors hover:bg-bg"
+            >
+              <span className="font-semibold">Cocoa Beach / Port Canaveral, FL</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-text-muted" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M9 6 L15 12 L9 18" />
+              </svg>
+            </a>
           </div>
         </section>
       </Container>

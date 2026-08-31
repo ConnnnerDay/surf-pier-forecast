@@ -14,7 +14,7 @@ export default function NotFound() {
             That page doesn&apos;t exist, or the link is out of date.
           </p>
           <Button variant="primary" href="/">
-            Back to the dashboard
+            Back home
           </Button>
         </div>
       </Container>

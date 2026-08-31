@@ -8,10 +8,14 @@ import type { NextConfig } from 'next'
 // Sprint 44's remaining "security hardening" piece (CSP + security
 // headers), adapted from the legacy Flask app's `_set_security_headers`
 // (app.py) rather than ported verbatim: apps/web has no third-party
-// scripts, external fonts, or non-self image origins today (unlike the
-// legacy app's map tiles/CDN allowances), so this CSP is deliberately
-// stricter — self-only across every directive, no allow-listed external
-// hosts to grow stale. `'unsafe-inline'` on `script-src`/`style-src` is
+// scripts or non-self image origins (unlike the legacy app's map
+// tiles/CDN allowances), so this CSP is otherwise self-only, no
+// allow-listed external hosts to grow stale — except Google Fonts
+// (style-src/font-src), the one deliberate external allowance, needed
+// for the Saltline rebrand's Space Grotesk/Public Sans (loaded via a
+// <link> in app/layout.tsx, not next/font/google, which fetches at
+// build time and would fail wherever outbound network is restricted).
+// `'unsafe-inline'` on `script-src`/`style-src` is
 // still required without a nonce: Next.js inlines its hydration payload
 // and (in dev) React's error-overlay styles, per
 // node_modules/next/dist/docs/01-app/02-guides/content-security-policy.md's
@@ -29,9 +33,9 @@ const isDev = process.env.NODE_ENV === 'development'
 const CSP_DIRECTIVES = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,
-  "style-src 'self' 'unsafe-inline'",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "img-src 'self' data:",
-  "font-src 'self'",
+  "font-src 'self' https://fonts.gstatic.com",
   "connect-src 'self'",
   "object-src 'none'",
   "base-uri 'self'",

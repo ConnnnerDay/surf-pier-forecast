@@ -8,6 +8,51 @@ app authenticates the user and signs the internal request instead.
 
 ## Status
 
+Sprint 27 ("Design system"), the branding decision: the app is now
+**Saltline** -- a full visual rebrand in a Surfline-style bright/coastal
+direction, replacing the "Surf & Pier Forecast" placeholder identity.
+A concept canvas (name options, palette, type, key-screen mockups) was
+reviewed with the product owner before any code changed.
+
+`app/globals.css`'s `@theme` tokens carry a new oklch-based coastal
+palette (light and dark defined separately per token, semantic
+go/marginal/no-go tokens re-tuned per theme rather than inverted) and a
+Space Grotesk (headlines) / Public Sans (body) type pairing, loaded via
+a `<link rel="stylesheet">` in `app/layout.tsx` -- deliberately not
+`next/font/google`, which fetches font files at *build* time and fails
+under restricted outbound network (this sandbox included); a `<link>`
+loads client-side instead and behaves identically once deployed.
+`next.config.ts`'s CSP gained one deliberate external allowance
+(`style-src`/`font-src` for Google's two font hosts) for this, its only
+exception otherwise being self-only.
+
+`app/components/ui/`'s primitives needed **zero code changes** -- every
+real page repaints correctly from the token change alone, the payoff
+of sprint 27's original "real accessible primitives" architecture.
+`app/page.tsx` is now a real landing page (hero, value props, links to
+real curated locations, no fabricated verdict badges on them); the
+former component gallery moved to `/design-system`. `app/icon.tsx` and
+`app/opengraph-image.tsx` carry the new logomark: a horizon line, a
+sunrise arc, and a wave -- the line where tide meets shore. Real
+photography doesn't exist yet, so hero art is an explicit, clearly
+labeled placeholder pattern (`.ph-photo`/`.ph-photo-label` in
+`globals.css`) naming the real shot needed, never an AI-generated
+stand-in.
+
+Caught and fixed one real bug: `--color-primary` serves both as a
+button background (with white text) and as bare text directly on the
+page background (`Button`'s "secondary" variant, eyebrow labels) -- the
+initial brighter teal cleared AA contrast for the first role but failed
+the second at 3.6-3.8:1, caught by a real `axe-core` sweep. Fixed by
+computing actual WCAG contrast ratios (canvas-rendered oklch resolved
+to real sRGB, not estimated) and choosing a lightness clearing 4.5:1 in
+both roles at once. Verified against two real running servers: a full
+`axe-core` sweep (5 pages x 2 viewports x 2 themes, 0 violations), the
+existing combobox interactive-state checks re-run under the new palette
+(0 violations), and a clean `npm run build` (`/design-system` added,
+nothing leaked). Real photography and i18n string externalization
+remain open.
+
 Sprint 33 ("Conditions experience"), closing out the sprint whose
 `SourceStatusList`/`state`-badge implementation was already built (see
 the sprint-33 paragraph further down): this sandbox's network egress is

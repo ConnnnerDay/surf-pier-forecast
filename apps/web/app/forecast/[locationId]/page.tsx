@@ -106,16 +106,9 @@ export default async function ForecastPage({ params }: Props) {
     <main>
       <Container>
         <header className="py-10 sm:py-16">
-          <p className="text-sm font-medium tracking-wide text-primary uppercase">
-            Signed-request forecast lookup — not the real dashboard (sprint 32)
-          </p>
-          <h1 className="mt-2 text-3xl font-bold text-text sm:text-4xl">
+          <h1 className="text-3xl font-bold text-text sm:text-4xl">
             {forecast?.location.label ?? 'Forecast'}
           </h1>
-          <p className="mt-3 max-w-prose text-text-muted">
-            Fetched server-side from apps/api through a signed internal
-            request for a real, searched location — not a fixed demo.
-          </p>
         </header>
 
         <div className="pb-16">
