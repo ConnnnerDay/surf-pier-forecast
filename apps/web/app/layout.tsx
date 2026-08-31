@@ -12,13 +12,13 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: 'Surf & Pier Forecast',
-    template: '%s — Surf & Pier Forecast',
+    default: 'Saltline',
+    template: '%s — Saltline',
   },
   description:
-    'Clear go/no-go fishing forecasts for surf and pier anglers. Working title — see docs/CANONICAL_ROADMAP.md sprint 27.',
+    'Clear go/no-go fishing forecasts for surf and pier anglers, built from real tide, wind, and wave data.',
   openGraph: {
-    siteName: 'Surf & Pier Forecast',
+    siteName: 'Saltline',
     type: 'website',
   },
   twitter: {
@@ -30,8 +30,8 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#f4f7f8' },
-    { media: '(prefers-color-scheme: dark)', color: '#0b1f2a' },
+    { media: '(prefers-color-scheme: light)', color: '#f2f6f7' },
+    { media: '(prefers-color-scheme: dark)', color: '#0d2530' },
   ],
 }
 
@@ -42,6 +42,23 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      {/*
+        Space Grotesk / Public Sans load via a plain stylesheet link, not
+        next/font/google -- that API fetches the font files at *build*
+        time, which fails wherever outbound network access is
+        restricted (this sandbox included). A <link> loads client-side
+        at runtime instead, works identically once actually deployed,
+        and is the one external stylesheet host apps/web's CSP already
+        allows (next.config.ts's style-src).
+      */}
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Public+Sans:wght@400;500;600;700&display=swap"
+        />
+      </head>
       <body>{children}</body>
     </html>
   )

@@ -214,6 +214,22 @@ record; they do not reopen or contradict R0.
   concept. This is a directional target for calibrating sprints 57-59, not a
   committed metric.
 
+## Product decisions on record (2026-08-31, round 4)
+
+- **Branding — the name is Saltline.** Resolves sprint 27's
+  long-standing open item: "Surf & Pier Forecast" was always a
+  placeholder, not a decision. The product owner directed a full
+  visual rebrand in a Surfline-style outdoor/adventure direction
+  (bright/coastal, not the darker, moodier extreme-sports register),
+  reviewed as a concept canvas (name options, palette, type, key-screen
+  mockups) before implementation. `docs/product-definition.md`'s
+  opening line still names the old placeholder verbatim, per how this
+  document handles the doc it was recovered from (see sprint 2's row)
+  — this entry is the correction of record, not a rewrite of that file.
+  Real photography for the product doesn't exist yet; hero imagery is
+  an explicitly labeled placeholder pattern, never an AI-generated
+  stand-in, per direct instruction on that point.
+
 ## Canonical technical contract
 
 | Area | Required product architecture |
@@ -332,7 +348,7 @@ to reconciliation, not proof that the agreed outcome passed.
 
 | Sprint | Outcome | Acceptance focus | Current state |
 |---:|---|---|---|
-| 27 | Design system | Gallery at phone/desktop widths and accessible primitives; branding decided first (name included, not just visual identity — "Surf & Pier Forecast" is a placeholder); clean/utility-first tone, Surfline-for-fishing positioning | **Partially complete** — **product owner directed proceeding under the placeholder identity rather than blocking on a final branding decision.** `apps/web/app/globals.css` (Tailwind v4 `@theme` tokens, light/dark) and `app/components/ui/` (`Button`/`Card`/`Badge`/`Field`/`Container`) replace `v2/frontend`'s flagged `.button`/`.card`/`.field` global-CSS classes (`docs/R1_RECONCILIATION_AUDIT.md` §3.2) with real accessible primitives; `app/page.tsx` is the gallery page at phone/desktop widths. i18n-ready string externalization (bundled into this sprint by R1's disposition) and formal WCAG 2.2 AA verification (sprint 40's job) remain open |
+| 27 | Design system | Gallery at phone/desktop widths and accessible primitives; branding decided first (name included, not just visual identity — "Surf & Pier Forecast" is a placeholder); clean/utility-first tone, Surfline-for-fishing positioning | **Complete** — **the branding decision is made: "Saltline."** Product owner directed a full visual rebrand in a Surfline-style outdoor/adventure direction (bright/coastal, not the darker moodier extreme-sports register), open to a new name; a concept canvas (name options, palette, type, key-screen mockups) was reviewed before implementation. Shipped in `apps/web`: `app/globals.css`'s `@theme` tokens carry a new oklch-based coastal palette (light/dark, semantic go/marginal/no-go tokens tuned per-theme, not a naive inversion) and a Space Grotesk/Public Sans type pairing (loaded via a `<link>` in `app/layout.tsx`, not `next/font/google` — that API fetches font files at *build* time, which fails under restricted outbound network, this sandbox included; `next.config.ts`'s CSP gained the one deliberate external allowance for it). `app/components/ui/` (`Button`/`Card`/`Badge`/`Field`/`Container`) needed no code changes — the whole app repaints from the token change alone, proving out the sprint's own "real accessible primitives, not global CSS classes" bet. `app/page.tsx` is now a real landing page (hero, value props, popular-spots links to real curated locations — deliberately no fabricated verdict badges on them, the product's own Integrity rule); the former component gallery moved to `/design-system`. `app/icon.tsx`/`opengraph-image.tsx` carry the new Saltline logomark (a horizon line, sunrise arc, and wave — literally "where the tide meets the shore"). Real photography doesn't exist yet, so hero art is an explicitly-labeled placeholder pattern (`.ph-photo` in `globals.css`), never an AI-generated fake. Caught and fixed one real bug in the process: the brighter initial teal (`--color-primary`) cleared AA contrast as a button background but failed as bare text (`Button`'s "secondary" variant, eyebrow labels) — axe-core caught it at 3.6-3.8:1; fixed by computing real WCAG contrast ratios (canvas-rendered oklch → sRGB, not eyeballed) and choosing a lightness that clears 4.5:1 in both roles at once. Verified against two real running servers: a full `axe-core` sweep (5 pages × 2 viewports × 2 themes) plus the sprint-40 interactive combobox states, 0 violations; tap-target and route-table checks unaffected. i18n-ready string externalization (bundled into this sprint by R1's disposition) remains open, as does real photography (needs actual shot assets, not attempted here) |
 | 28 | Authentication | Email/password lifecycle, session rotation, bot/CAPTCHA defense on registration, abuse tests | Divergent auth exists; replace/adapt |
 | 29 | Account-required routing | Public exceptions and authorization/redirect tests | Candidate in `/v2` |
 | 30 | Onboarding shell | Mobile recording from registration to dashboard | Candidate in `/v2` |
@@ -430,14 +446,15 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #378 (sprint 33, complete — conditions experience: the
-  `fresh`/`stale`/multi-source-`degraded` states the ledger names had
-  never actually been rendered or axe-checked in this network-blocked
-  sandbox, closed with a temporary mock preview covering all four states
-  — `f0e8464`, merged as `8989577`). Sprints 33, 39, and 40 are now all
-  fully complete. See the checkpoint narrative below and
-  `apps/web/README.md`'s sprint-33/39/40 paragraphs for the full
-  account.
+- Last merged PR: #378 (sprint 33, complete — conditions experience).
+  This PR completes **sprint 27** (design system): the branding
+  decision blocking Phase 3 the longest is finally made — **"Saltline"**
+  — a full visual rebrand in a Surfline-style bright/coastal direction,
+  shipped across `apps/web`'s tokens, typography, logomark, and a real
+  landing page, with no code changes needed in `app/components/ui/`
+  (the tokens-only architecture paid for itself). See the checkpoint
+  narrative below and `apps/web/README.md`'s rebrand paragraph for the
+  full account.
 - **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
   1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
   (#332). Phase 1's only remaining items (9, 10) need external accounts —
@@ -1830,6 +1847,65 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
   fresh `npm run build` confirmed the real route table is unaffected (no
   `/preview-sprint33` route leaked into the build). No bugs found this
   time; no code changes needed beyond the roadmap/README write-up.
+- **Sprint 27, complete (design system -- the branding decision)**: the
+  product owner directed a full visual rebrand -- a Surfline-style
+  outdoor/adventure direction, bright/coastal rather than the darker,
+  moodier extreme-sports register Surfline itself often uses, open to
+  a new name. A concept canvas (three name directions, a light/dark
+  palette, type pairing, and mockups of the home/search/forecast
+  screens) was reviewed before any code changed; **"Saltline"** was the
+  lead pick and is the name that shipped.
+
+  Implementation, `apps/web` only (`apps/api` untouched): `app/globals.css`'s
+  `@theme` tokens carry a new oklch-based coastal palette -- light and
+  dark defined separately per token (not a naive light-palette
+  inversion), semantic go/marginal/no-go tokens re-tuned per theme --
+  plus a Space Grotesk (headlines) / Public Sans (body) type pairing.
+  The fonts load via a plain `<link rel="stylesheet">` in
+  `app/layout.tsx`, deliberately not `next/font/google`: that API
+  fetches the actual font files at *build* time, which fails wherever
+  outbound network is restricted, this sandbox included -- a `<link>`
+  loads client-side at runtime instead and works identically once
+  actually deployed. `next.config.ts`'s CSP gained exactly one
+  deliberate external allowance (`style-src`/`font-src` for Google's
+  two font hosts) for this, its only exception otherwise being
+  self-only.
+
+  `app/components/ui/`'s primitives (`Button`/`Card`/`Badge`/`Field`)
+  needed zero code changes -- every real page (home, search, the live
+  forecast page with real fanned-out source data) repainted correctly
+  from the token change alone, which is exactly the bet sprint 27's own
+  "real accessible primitives, not global CSS classes" architecture was
+  making. `app/page.tsx` is now a real landing page (hero, three value
+  props, links to two real curated locations) instead of sprint 27's
+  original component gallery, which moved to `/design-system` rather
+  than being deleted. `app/icon.tsx` and `app/opengraph-image.tsx`
+  carry the new Saltline logomark -- a horizon line with a sunrise arc
+  above it and a wave below, literally the line where tide meets shore.
+  Real photography doesn't exist for this product yet, so hero art is
+  an explicit, clearly-labeled placeholder pattern (`.ph-photo`/
+  `.ph-photo-label` in `globals.css`) naming the real shot that belongs
+  there -- never an AI-generated stand-in, per the product owner's own
+  instruction on this point.
+
+  Caught and fixed one real bug in the process: `--color-primary` does
+  double duty as a button *background* (paired with white text) and as
+  bare *text* directly on the page background (`Button`'s "secondary"
+  variant, eyebrow labels) -- the initial brighter teal cleared AA
+  contrast for the first role but failed the second at 3.6-3.8:1, caught
+  by a real `axe-core` sweep, not eyeballing the new palette. Fixed by
+  computing actual WCAG contrast ratios (canvas-rendered oklch resolved
+  to real sRGB bytes, not estimated) across a range of candidate
+  lightness values and picking one that clears 4.5:1 in both roles at
+  once, the same dual-role reasoning `--color-danger-text` already
+  existed for. Verified end-to-end against two real running servers: a
+  full `axe-core` sweep (5 pages x 2 viewports x 2 themes, 0
+  violations), the sprint-40 combobox interactive states re-checked
+  under the new palette (0 violations), tap-target sizes unaffected,
+  and `npm run build`'s route table confirmed correct (`/design-system`
+  added, nothing leaked). i18n-ready string externalization (bundled
+  into this sprint by R1's disposition) and real photography (needs
+  actual shot assets, not attempted here) remain open.
 - **Incident (sprint 6, resolved earlier)**: a scratch branch explicitly
   titled `DO NOT MERGE` was merged into `main` under the repo owner's own
   account, landing deliberately-broken code; reverted within ~10 minutes

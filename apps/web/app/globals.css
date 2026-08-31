@@ -1,15 +1,13 @@
 @import 'tailwindcss';
 
 /*
- * Design tokens for sprint 27's design system (docs/CANONICAL_ROADMAP.md).
- * Color values start from v2/frontend/src/index.css's already-reasonable
- * teal/coral palette (R1_RECONCILIATION_AUDIT.md §3.2 flagged that app's
- * *component* layer -- global .button/.card/.field classes, not real
- * primitives -- as Replace, not its color choices), extended here with
- * semantic go/marginal/no-go tokens for sprint 32's traffic-light dashboard
- * headline. "Surf & Pier Forecast" and this palette are a working
- * placeholder identity, not a final branding decision -- see
- * docs/CANONICAL_ROADMAP.md's sprint 27 row.
+ * Design tokens for the Saltline rebrand (docs/CANONICAL_ROADMAP.md
+ * sprint 27's branding decision, made after the "Surf & Pier Forecast"
+ * placeholder identity sat unresolved through Phase 3). A bright,
+ * photographic, Surfline-adjacent coastal palette in oklch -- same
+ * lightness/chroma across the teal/coral accent pair (varying only
+ * hue), semantic go/marginal/no-go tokens tuned separately per theme
+ * rather than a naive light-palette inversion.
  *
  * Declared via Tailwind v4's @theme so every token also becomes a utility
  * class (bg-primary, text-go-text, ...); dark-mode values below override
@@ -17,59 +15,84 @@
  * utilities pick up automatically since they reference var(--color-*).
  */
 @theme {
-  --color-bg: #f4f7f8;
-  --color-surface: #ffffff;
-  --color-text: #0b1f2a;
-  --color-text-muted: #4a5c63;
-  --color-border: #d8e0e2;
+  --color-bg: oklch(97% 0.012 200);
+  --color-surface: oklch(99% 0.006 200);
+  --color-text: oklch(22% 0.03 240);
+  --color-text-muted: oklch(46% 0.03 240);
+  --color-border: oklch(88% 0.02 220);
 
-  --color-primary: #0e7480;
-  --color-primary-hover: #0b5f69;
-  --color-primary-contrast: #ffffff;
-  --color-accent: #ff8552;
-  --color-focus-ring: #0e7480;
+  /* L=48% is a deliberate compromise, not the palette's initial 58%:
+   * --color-primary does double duty as a button *background* (paired
+   * with white text) and as bare *text* directly on --color-bg/surface
+   * (Button's "secondary" variant, eyebrow labels) -- 58% cleared 4.5:1
+   * for white-on-primary but fell to 3.6-3.8:1 for primary-as-text,
+   * caught by axe-core. Verified by computing real WCAG contrast ratios
+   * (canvas-rendered oklch -> sRGB, not eyeballed): 48% gives ~5.3:1
+   * white-on-primary and ~5.4-5.7:1 primary-as-text, comfortable AA
+   * margin on both uses at once. */
+  --color-primary: oklch(48% 0.14 220);
+  --color-primary-hover: oklch(40% 0.15 220);
+  --color-primary-contrast: oklch(99% 0.006 200);
+  --color-accent: oklch(68% 0.17 40);
+  --color-focus-ring: oklch(48% 0.14 220);
 
-  --color-go-bg: #ecfdf3;
-  --color-go-text: #15803d;
-  --color-go-border: #86efac;
-  --color-marginal-bg: #fffbeb;
-  --color-marginal-text: #92400e;
-  --color-marginal-border: #fcd34d;
-  --color-nogo-bg: #fef2f2;
-  --color-nogo-text: #b91c1c;
-  --color-nogo-border: #fca5a5;
+  --color-go-bg: oklch(94% 0.05 145);
+  --color-go-text: oklch(32% 0.1 145);
+  --color-go-border: oklch(78% 0.1 145);
+  --color-marginal-bg: oklch(95% 0.05 80);
+  --color-marginal-text: oklch(38% 0.09 80);
+  --color-marginal-border: oklch(80% 0.1 80);
+  --color-nogo-bg: oklch(94% 0.05 25);
+  --color-nogo-text: oklch(40% 0.13 25);
+  --color-nogo-border: oklch(78% 0.12 25);
 
   /* Deliberately distinct from --color-nogo-text: that token pairs with
    * --color-nogo-bg inside Badge's own pill (always a light tint, by
-   * design theme-invariant -- see the dark-mode block below), so
-   * #b91c1c-on-#fef2f2 always has enough contrast regardless of page
-   * theme. This token is for bare status text directly on the page
-   * background (Field's error message, ForecastErrorCard), which *does*
-   * need to adapt per theme -- axe-core caught #b91c1c failing WCAG AA
-   * (2.6:1) against the dark background before this token existed. */
-  --color-danger-text: #b91c1c;
+   * design theme-invariant -- see the dark-mode block below), so it
+   * always has enough contrast regardless of page theme. This token is
+   * for bare status text directly on the page background (Field's
+   * error message, ForecastErrorCard), which *does* need to adapt per
+   * theme -- axe-core caught the previous palette's danger-text failing
+   * WCAG AA (2.6:1) against the dark background before this token
+   * existed, so it stays theme-specific here too rather than reusing
+   * --color-nogo-text as-is. */
+  --color-danger-text: oklch(40% 0.13 25);
 
   --font-sans:
-    system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    'Public Sans', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica,
+    Arial, sans-serif;
+  --font-display:
+    'Space Grotesk', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica,
+    Arial, sans-serif;
 
-  --radius-md: 0.75rem;
-  --radius-lg: 1rem;
+  --radius-md: 0.875rem;
+  --radius-lg: 1.25rem;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-bg: #0b1f2a;
-    --color-surface: #122c3a;
-    --color-text: #eef5f6;
-    --color-text-muted: #a9bdc4;
-    --color-border: #234152;
+    --color-bg: oklch(20% 0.03 235);
+    --color-surface: oklch(26% 0.03 235);
+    --color-text: oklch(95% 0.01 220);
+    --color-text-muted: oklch(72% 0.02 220);
+    --color-border: oklch(36% 0.03 235);
 
-    --color-primary: #35b6c4;
-    --color-primary-hover: #5ecbd6;
-    --color-primary-contrast: #06222a;
-    --color-accent: #ff9d72;
-    --color-focus-ring: #35b6c4;
-    --color-danger-text: #ff8a75;
+    --color-primary: oklch(74% 0.12 205);
+    --color-primary-hover: oklch(82% 0.11 205);
+    --color-primary-contrast: oklch(20% 0.03 235);
+    --color-accent: oklch(75% 0.15 45);
+    --color-focus-ring: oklch(74% 0.12 205);
+
+    --color-go-bg: oklch(30% 0.06 150);
+    --color-go-text: oklch(88% 0.06 150);
+    --color-go-border: oklch(45% 0.09 150);
+    --color-marginal-bg: oklch(32% 0.05 85);
+    --color-marginal-text: oklch(88% 0.05 85);
+    --color-marginal-border: oklch(48% 0.08 85);
+    --color-nogo-bg: oklch(32% 0.07 25);
+    --color-nogo-text: oklch(88% 0.07 25);
+    --color-nogo-border: oklch(48% 0.1 25);
+    --color-danger-text: oklch(80% 0.1 25);
   }
 }
 
@@ -87,4 +110,57 @@ body {
   color: var(--color-text);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+}
+
+/* Headlines/verdicts carry the display face site-wide; body copy, form
+ * fields, and tables stay on --font-sans. A global element selector
+ * (rather than a utility class on every heading) so existing headings
+ * across forecast-card.tsx/location-search.tsx pick this up for free. */
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+/* Repeating-stripe placeholder for a real photo not yet shot (see
+ * apps/web/README.md's rebrand paragraph) -- deliberately not a fake
+ * AI-generated image, and unmistakable as a placeholder rather than a
+ * broken image. .ph-photo-label names the real shot that belongs there. */
+.ph-photo {
+  position: relative;
+  background-image: repeating-linear-gradient(
+    135deg,
+    var(--color-primary) 0px,
+    var(--color-primary) 14px,
+    color-mix(in oklch, var(--color-primary) 55%, var(--color-surface)) 14px,
+    color-mix(in oklch, var(--color-primary) 55%, var(--color-surface)) 28px
+  );
+  overflow: hidden;
+}
+
+.ph-photo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgb(10 20 25 / 72%),
+    rgb(10 20 25 / 5%) 55%
+  );
+}
+
+.ph-photo-label {
+  position: relative;
+  z-index: 2;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: white;
+  background: rgb(0 0 0 / 35%);
+  padding: 0.375rem 0.625rem;
+  border-radius: 0.5rem;
+  width: fit-content;
 }

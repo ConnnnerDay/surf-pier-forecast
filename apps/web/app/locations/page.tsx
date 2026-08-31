@@ -19,16 +19,12 @@ export default function LocationsPage() {
     <main>
       <Container>
         <header className="py-10 sm:py-16">
-          <p className="text-sm font-medium tracking-wide text-primary uppercase">
-            Sprint 31 (partial) — text search only
-          </p>
-          <h1 className="mt-2 text-3xl font-bold text-text sm:text-4xl">
-            Find a location
+          <h1 className="text-3xl font-bold text-text sm:text-4xl">
+            Find your spot
           </h1>
           <p className="mt-3 max-w-prose text-text-muted">
-            Search apps/api&apos;s curated coastal locations through the
-            signed BFF path — device geolocation, map search, and
-            station-preview states aren&apos;t built yet.
+            Search 101 curated beaches, piers, and inlets from Texas to
+            New Jersey.
           </p>
         </header>
 
