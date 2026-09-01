@@ -1,5 +1,6 @@
 import { cache } from 'react'
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Container } from '@/app/components/ui'
 import { ForecastCard, ForecastErrorCard, type ForecastEnvelope } from '@/app/components/forecast-card'
@@ -104,14 +105,36 @@ export default async function ForecastPage({ params }: Props) {
 
   return (
     <main>
-      <Container>
-        <header className="py-10 sm:py-16">
-          <h1 className="text-3xl font-bold text-text sm:text-4xl">
+      <div className="ph-photo flex flex-col justify-between px-5 py-5" style={{ minHeight: '190px' }}>
+        <Link
+          href="/locations"
+          className="relative z-10 flex h-9 w-9 items-center justify-center rounded-[0.625rem] bg-white/20 text-white no-underline"
+          aria-label="Back to search"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M15 5 L8 12 L15 19" />
+          </svg>
+        </Link>
+        <div className="relative z-10 flex flex-col gap-1.5">
+          <p className="ph-photo-label">Photo placeholder: pier pilings at low tide, wide shot</p>
+          <h1 className="text-2xl font-bold text-white sm:text-3xl">
             {forecast?.location.label ?? 'Forecast'}
           </h1>
-        </header>
+        </div>
+      </div>
 
-        <div className="pb-16">
+      <Container>
+        <div className="py-6 pb-16">
           {error && <ForecastErrorCard message={error} />}
           {forecast && <ForecastCard forecast={forecast} />}
         </div>

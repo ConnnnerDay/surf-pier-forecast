@@ -50,8 +50,36 @@ both roles at once. Verified against two real running servers: a full
 `axe-core` sweep (5 pages x 2 viewports x 2 themes, 0 violations), the
 existing combobox interactive-state checks re-run under the new palette
 (0 violations), and a clean `npm run build` (`/design-system` added,
-nothing leaked). Real photography and i18n string externalization
-remain open.
+nothing leaked).
+
+**Follow-up layout pass**: the rebrand above only re-themed the existing
+page layouts (new colors/fonts on the same structure). A second pass
+actually reworked the forecast and search pages' composition to match
+the reviewed concept canvas, not just recolor them:
+
+- The forecast page (`app/forecast/[locationId]/page.tsx`) gained a
+  real photo-hero band (`.ph-photo`) above `ForecastCard`, with a
+  back-to-search link and the location name overlaid, replacing the
+  old plain-text `<h1>` header.
+- `BestWindowCallout` (`forecast-card.tsx`) became a distinct
+  coral-tinted callout card (`--color-accent-tint`, new this pass) with
+  a clock icon, instead of a plain text line.
+- The conditions-summary/score-details block gained a `bg-bg`
+  sunken-panel treatment inside the card, visually separating it from
+  the rest without a second border.
+- `LocationSearch`'s dropdown gained row dividers, a softer
+  selected-row highlight (`--color-primary-tint`, new this pass)
+  instead of a solid fill, and a checkmark on the active option.
+
+Caught a second real contrast bug immediately, same method as before:
+the new callout's "Best window" label at `text-accent` on
+`bg-accent-tint` measured 2.49:1 in light mode -- badly failing AA.
+Fixed by using `text-text-muted` instead, matching the color other
+eyebrow-style labels in the same component already use. Re-verified
+with the same full `axe-core` sweep, the interactive combobox states,
+a keyboard-only walkthrough, and tap-target checks -- 0 violations, no
+regressions. Real photography and i18n string externalization remain
+open.
 
 Sprint 33 ("Conditions experience"), closing out the sprint whose
 `SourceStatusList`/`state`-badge implementation was already built (see
