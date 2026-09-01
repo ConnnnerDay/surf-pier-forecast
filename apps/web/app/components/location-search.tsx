@@ -170,7 +170,7 @@ export function LocationSearch({
         <div
           id={listboxId}
           role="listbox"
-          className="max-h-64 overflow-y-auto py-1"
+          className="max-h-64 divide-y divide-border overflow-y-auto py-1"
         >
           {results.length > 0
             ? results.map((result, index) => (
@@ -180,8 +180,8 @@ export function LocationSearch({
                   role="option"
                   aria-selected={index === activeIndex}
                   className={cx(
-                    'cursor-pointer px-3 py-2 text-sm',
-                    index === activeIndex ? 'bg-primary text-primary-contrast' : 'text-text',
+                    'flex cursor-pointer items-center justify-between gap-2 px-3 py-2.5 text-sm text-text',
+                    index === activeIndex && 'bg-primary-tint',
                   )}
                   onMouseDown={(event) => {
                     event.preventDefault()
@@ -189,7 +189,25 @@ export function LocationSearch({
                   }}
                   onMouseEnter={() => setActiveIndex(index)}
                 >
-                  {result.name}, {result.state}
+                  <span>
+                    {result.name}, {result.state}
+                  </span>
+                  {index === activeIndex && (
+                    <svg
+                      width="15"
+                      height="15"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      className="shrink-0 text-primary"
+                      strokeWidth="2.4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M5 13 L10 18 L20 6" />
+                    </svg>
+                  )}
                 </div>
               ))
             : showNoResults && (

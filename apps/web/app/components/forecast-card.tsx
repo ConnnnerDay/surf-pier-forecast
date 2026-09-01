@@ -583,11 +583,29 @@ function BestWindowCallout({ window, timezone }: { window: BestWindow; timezone:
       : `${formatter.format(new Date(start.time))} – ${formatter.format(new Date(end.time))}`
 
   return (
-    <p className="text-sm text-text-muted">
-      Best window <span className="font-medium text-text">{rangeLabel}</span>
-      {' · '}
-      <Badge variant={ACTIVITY_TAG_TO_BADGE[window.tag]}>{capitalize(window.tag)}</Badge>
-    </p>
+    <div className="flex flex-col gap-1 rounded-[1.25rem] bg-accent-tint px-4 py-3.5">
+      <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-text-muted">
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 7 L12 12 L15.5 14" />
+        </svg>
+        Best window
+      </div>
+      <p className="flex flex-wrap items-center gap-2 text-text">
+        <span className="font-display text-lg">{rangeLabel}</span>
+        <Badge variant={ACTIVITY_TAG_TO_BADGE[window.tag]}>{capitalize(window.tag)}</Badge>
+      </p>
+    </div>
   )
 }
 
@@ -639,15 +657,19 @@ export function ForecastCard({ forecast }: { forecast: ForecastEnvelope }) {
         )}
       </div>
 
-      {forecast.conditions && <ConditionsSummary conditions={forecast.conditions} />}
+      {(forecast.conditions || score?.summary) && (
+        <div className="flex flex-col gap-2 rounded-[1.25rem] bg-bg px-4 py-3.5">
+          {forecast.conditions && <ConditionsSummary conditions={forecast.conditions} />}
 
-      {score?.summary && (
-        <details className="text-sm">
-          <summary className="cursor-pointer text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring">
-            Score details{score.score !== null ? ` (${score.score}/100)` : ''}
-          </summary>
-          <p className="mt-2 text-text-muted">{score.summary}</p>
-        </details>
+          {score?.summary && (
+            <details className="text-sm">
+              <summary className="cursor-pointer text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring">
+                Score details{score.score !== null ? ` (${score.score}/100)` : ''}
+              </summary>
+              <p className="mt-2 text-text-muted">{score.summary}</p>
+            </details>
+          )}
+        </div>
       )}
 
       <dl className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-3">

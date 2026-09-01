@@ -36,6 +36,16 @@
   --color-accent: oklch(68% 0.17 40);
   --color-focus-ring: oklch(48% 0.14 220);
 
+  /* Light tints of --color-primary/--color-accent, for a callout or a
+   * selected-row background where a solid fill would be too loud --
+   * distinct roles: primary-tint marks interactive selection (the
+   * search dropdown's active option), accent-tint marks an emphasized
+   * callout (the best-window card). Contrast-checked the same way as
+   * --color-primary above: --color-text on either tint clears AA in
+   * both themes. */
+  --color-primary-tint: oklch(93% 0.035 220);
+  --color-accent-tint: oklch(94% 0.05 40);
+
   --color-go-bg: oklch(94% 0.05 145);
   --color-go-text: oklch(32% 0.1 145);
   --color-go-border: oklch(78% 0.1 145);
@@ -82,6 +92,8 @@
     --color-primary-contrast: oklch(20% 0.03 235);
     --color-accent: oklch(75% 0.15 45);
     --color-focus-ring: oklch(74% 0.12 205);
+    --color-primary-tint: oklch(30% 0.05 205);
+    --color-accent-tint: oklch(32% 0.06 45);
 
     --color-go-bg: oklch(30% 0.06 150);
     --color-go-text: oklch(88% 0.06 150);
