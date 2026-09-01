@@ -446,27 +446,27 @@ Before switching from Codex to Claude, Claude to Codex, or to a human:
 
 ## Live checkpoint
 
-- Last merged PR: #380 (sprint 27, complete — the "Saltline" rebrand: a
-  full visual rebrand in a Surfline-style bright/coastal direction,
-  shipped across `apps/web`'s tokens, typography, logomark, and a real
-  landing page, with no code changes needed in `app/components/ui/` —
-  `ae138c1`, merged as `53a30a3`). See the checkpoint narrative below
-  and `apps/web/README.md`'s rebrand paragraph for the full account.
-  **Process note**: this PR (#380) was opened and merged automatically
-  within 7 seconds of the push, before its own CI run finished (`test
-  (3.10)`/`(3.11)`/`(3.12)` were still `in_progress` at merge time,
-  confirmed via the Actions API) — every other PR this session went
-  through an explicit `create_pull_request` call and waited for a green
-  check run before merging; this one didn't, some other automation on
-  this repo/branch did. The change itself was still fully verified
-  locally beforehand (lint, build, a real `axe-core` sweep against two
-  running servers) before the push that triggered this, so nothing
-  shipped unverified — and all 22 check runs (both the PR-triggered and
-  the push-to-main-triggered set) finished **green** a couple of
-  minutes later, confirmed via the Actions API after the fact. `main`
-  is not red. But the merge mechanism itself bypassed the CI gate this
-  ledger's own workflow otherwise depends on, worth the next agent's
-  awareness in case it recurs on a change that *doesn't* pass.
+- Last merged PR: #382 (finishes sprint 27's Saltline rebrand: the
+  forecast and search pages' actual layout reworked to match the
+  reviewed concept — a real photo-hero band, a coral-tinted best-window
+  callout, a sunken conditions panel, and a restyled search dropdown —
+  not just the token-level recolor #380 shipped. Caught a second real
+  contrast bug the same way as the first, before it hit CI — `5b4a5f4`,
+  merged as `30b2832`). See the checkpoint narrative below and
+  `apps/web/README.md`'s "Follow-up layout pass" paragraph for the full
+  account. The Saltline rebrand (branding + layout) is now complete
+  end-to-end.
+  **Process note (#380, still relevant)**: that PR was opened and
+  merged automatically within 7 seconds of the push, before its own CI
+  run finished — every other PR this session went through an explicit
+  `create_pull_request` call and waited for a green check run first;
+  this one didn't, the human merged it directly, quickly. The change
+  was still fully verified locally beforehand, and all 22 check runs
+  finished green shortly after, confirmed via the Actions API — `main`
+  was never red. #381 and #382 both went through the normal wait-for-
+  green flow, so this looks like a one-off rather than a standing
+  automation; worth the next agent's awareness regardless in case it
+  recurs on a change that doesn't pass.
 - **All recovery gates (R0-R3) are complete.** Phase 1 sprints complete:
   1-3 (#333), 4 (#326), 5 (#327), 6 (#329 + #330 revert), 7 (#331), 8
   (#332). Phase 1's only remaining items (9, 10) need external accounts —
