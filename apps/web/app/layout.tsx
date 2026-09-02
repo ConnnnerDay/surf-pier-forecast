@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
+import { SiteHeader } from './components/site-header'
 
 // Sprint 49 ("SEO and sharing"): NEXT_PUBLIC_SITE_URL lets metadataBase
 // (and every relative canonical/OpenGraph URL built from it, here and
@@ -59,7 +60,10 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Public+Sans:wght@400;500;600;700&display=swap"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <SiteHeader />
+        {children}
+      </body>
     </html>
   )
 }
