@@ -14,28 +14,9 @@ export default function Home() {
   return (
     <main>
       <div
-        className="ph-photo flex flex-col justify-between px-5 py-6 sm:px-8 sm:py-10"
+        className="ph-photo flex flex-col justify-end px-5 py-6 sm:px-8 sm:py-10"
         style={{ minHeight: '420px' }}
       >
-        <div className="relative z-10 flex items-center gap-2 text-white">
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="white"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M2 10 L22 10" />
-            <path d="M6 10 A6 6 0 0 1 18 10" />
-            <path d="M2 15 Q5 13 8 15 T14 15 T20 15" />
-          </svg>
-          <span className="font-display text-lg font-bold">Saltline</span>
-        </div>
-
         <div className="relative z-10 flex flex-col gap-4">
           <p className="ph-photo-label">
             Photo placeholder: pier at first light, warm backlight, low horizon
